@@ -1,13 +1,17 @@
 package de.schnorrenbergers.survival;
 
+import de.hems.ListenerAdapter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Survival extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
-
+        try {
+            new ListenerAdapter();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
