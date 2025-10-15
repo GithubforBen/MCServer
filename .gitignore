@@ -37,3 +37,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+## MC Server
+/paper/
+/velocity/
+/dowloads/

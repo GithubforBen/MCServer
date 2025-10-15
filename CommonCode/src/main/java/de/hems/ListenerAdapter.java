@@ -4,11 +4,12 @@ import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
 import org.jgroups.blocks.cs.ReceiverAdapter;
+import org.jgroups.util.MessageBatch;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListenerAdapter extends ReceiverAdapter {
+public class ListenerAdapter implements Receiver {
 
     private static boolean isIniotialized = false;
 
@@ -16,9 +17,11 @@ public class ListenerAdapter extends ReceiverAdapter {
         if (isIniotialized) return;
         isIniotialized = true;
         JChannel jChannel = new JChannel();
+        jChannel.setReceiver(this);
         jChannel.connect("MCServer");
-        jChannel.setReceiver((Receiver) this);
     }
+
+
 
     private static List<CommunicationListener<Event>> listeners = new ArrayList<>();
     public static void register(CommunicationListener<Event> listener) {
@@ -36,5 +39,11 @@ public class ListenerAdapter extends ReceiverAdapter {
         if (object instanceof Event) {
             excecuteListeners((Event) object);
         }
+    }
+
+    @Override
+    public void receive(MessageBatch batch) {
+        Receiver.super.receive(batch);
+        batch.forEach(this::receive);
     }
 }
