@@ -1,6 +1,7 @@
-package de.hems;
+package de.hems.utils;
 
-import org.eclipse.aether.util.FileUtils;
+import de.hems.FileHandler;
+import de.hems.FileType;
 
 import java.io.*;
 import java.nio.file.Files;

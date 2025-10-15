@@ -1,30 +1,38 @@
 package de.hems;
 
-import org.eclipse.aether.util.FileUtils;
+import de.hems.communication.ListenerAdapter;
+import de.hems.events.RespondDataEvent;
+import de.hems.utils.Configuration;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     private static Main instance;
+    private Configuration configuration;
+    private ListenerAdapter listenerAdapter;
 
-    public Main() throws IOException {
-        if (true) return;
+    public Main() throws Exception {
         if (instance == null) {
             instance = this;
         } else {
             throw new IllegalStateException("Already initialized");
         }
+        configuration = new Configuration();
+        listenerAdapter = new ListenerAdapter("ServerLauncher");
+        new RespondDataEvent();
     }
 
     public static void main(String[] args) throws Exception {
-        new File("test.txt").createNewFile();
         new Main();
-        new ListenerAdapter();
+    }
+
+    public static Main getInstance() {
+        return instance;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public ListenerAdapter getListenerAdapter() {
+        return listenerAdapter;
     }
 }
