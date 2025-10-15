@@ -1,6 +1,6 @@
 package de.schnorrenbergers.survival;
 
-import de.hems.ListenerAdapter;
+import de.hems.communication.ListenerAdapter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Survival extends JavaPlugin {

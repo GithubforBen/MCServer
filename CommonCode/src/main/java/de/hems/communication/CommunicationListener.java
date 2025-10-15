@@ -1,4 +1,4 @@
-package de.hems;
+package de.hems.communication;
 
 public interface CommunicationListener<E> {
     public boolean checkE(Event event);

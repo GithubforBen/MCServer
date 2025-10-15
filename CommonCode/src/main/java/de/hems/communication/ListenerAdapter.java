@@ -1,4 +1,4 @@
-package de.hems;
+package de.hems.communication;
 
 import org.jgroups.JChannel;
 import org.jgroups.Message;

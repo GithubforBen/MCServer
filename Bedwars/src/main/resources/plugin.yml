@@ -2,3 +2,6 @@ name: Bedwars
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.bedwars.Bedwars
 api-version: '1.21'
+commands:
+  gameSettings:
+    permission: gameManager
