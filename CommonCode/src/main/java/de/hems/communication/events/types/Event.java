@@ -1,7 +1,6 @@
-package de.hems.communication.events;
+package de.hems.communication.events.types;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 public interface Event extends Serializable {
     //maker interface

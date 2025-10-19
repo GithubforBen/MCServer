@@ -2,9 +2,8 @@ package de.hems.communication;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import de.hems.communication.events.Event;
-import de.hems.communication.events.EventHandler;
-import de.hems.communication.events.RequestDataFromConfigEvent;
+import de.hems.communication.events.types.Event;
+import de.hems.communication.events.types.EventHandler;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
