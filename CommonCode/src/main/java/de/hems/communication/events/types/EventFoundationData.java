@@ -1,4 +1,4 @@
-package de.hems.communication.events;
+package de.hems.communication.events.types;
 
 import java.util.UUID;
 

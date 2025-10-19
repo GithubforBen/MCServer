@@ -1,4 +1,7 @@
-package de.hems.communication.events;
+package de.hems.communication.events.configs;
+
+import de.hems.communication.events.types.Event;
+import de.hems.communication.events.types.EventFoundationData;
 
 import java.util.UUID;
 

@@ -1,0 +1,42 @@
+package de.schnorrenbergers.survival.utils;
+
+import de.schnorrenbergers.survival.Survival;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.eclipse.sisu.launch.Main;
+
+import java.util.List;
+import java.util.UUID;
+
+public class MoneyHandler {
+
+    public static void addMoney(int amount, UUID uuid){
+        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
+        if (config.contains(uuid.toString() + ".money")) {
+            config.set(uuid + ".money", config.getInt(uuid + ".money") + amount);
+        } else {
+            config.set(uuid + ".money", amount);
+            config.setComments(uuid.toString() + ".money", List.of("This is the money of the player + <PlayerName>"));//TODO: set player name
+        }
+        Survival.getInstance().getMoneyConfig().save();
+    }
+
+    public static boolean removeMoney(int amount, UUID uuid){
+        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
+        if (config.contains(uuid.toString() + ".money")) {
+            if (config.getInt(uuid.toString() + ".money") < amount) return false;
+            config.set(uuid.toString() + ".money", config.getInt(uuid + ".money") - amount);
+        } else {
+            return false;
+        }
+        Survival.getInstance().getMoneyConfig().save();
+        return true;
+    }
+
+    public static int getMoney(UUID uuid){
+        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
+        if (config.contains(uuid.toString() + ".money")) {
+            return config.getInt(uuid.toString() + ".money");
+        }
+        return 0;
+    }
+}

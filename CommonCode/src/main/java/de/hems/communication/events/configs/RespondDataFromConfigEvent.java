@@ -1,8 +1,11 @@
-package de.hems.communication.events;
+package de.hems.communication.events.configs;
+
+import de.hems.communication.events.types.Event;
+import de.hems.communication.events.types.EventFoundationData;
 
 import java.util.UUID;
 
-public class RespondDataFromConfigEvent extends EventFoundationData implements Event{
+public class RespondDataFromConfigEvent extends EventFoundationData implements Event {
     private Object data;
     private String key;
     private UUID requestId;

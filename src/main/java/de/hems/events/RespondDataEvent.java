@@ -2,10 +2,10 @@ package de.hems.events;
 
 import de.hems.Main;
 import de.hems.communication.ListenerAdapter;
-import de.hems.communication.events.Event;
-import de.hems.communication.events.EventHandler;
-import de.hems.communication.events.RequestDataFromConfigEvent;
-import de.hems.communication.events.RespondDataFromConfigEvent;
+import de.hems.communication.events.types.Event;
+import de.hems.communication.events.types.EventHandler;
+import de.hems.communication.events.configs.RequestDataFromConfigEvent;
+import de.hems.communication.events.configs.RespondDataFromConfigEvent;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class RespondDataEvent implements EventHandler<RequestDataFromConfigEvent> {
