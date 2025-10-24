@@ -1,8 +1,7 @@
-package de.schnorrenbergers.survival.utils;
+package de.schnorrenbergers.survival.featrues.money;
 
 import de.schnorrenbergers.survival.Survival;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.eclipse.sisu.launch.Main;
 
 import java.util.List;
 import java.util.UUID;

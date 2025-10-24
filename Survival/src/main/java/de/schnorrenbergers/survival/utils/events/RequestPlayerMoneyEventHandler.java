@@ -6,7 +6,7 @@ import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventHandler;
 import de.hems.communication.events.money.RequestPlayerMoneyEvent;
 import de.schnorrenbergers.survival.Survival;
-import de.schnorrenbergers.survival.utils.MoneyHandler;
+import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 
 public class RequestPlayerMoneyEventHandler implements EventHandler<RequestPlayerMoneyEvent> {
     public RequestPlayerMoneyEventHandler() {

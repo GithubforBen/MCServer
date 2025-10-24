@@ -2,3 +2,6 @@ name: Survival
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.survival.Survival
 api-version: '1.21'
+commands:
+  debug:
+  admin:
