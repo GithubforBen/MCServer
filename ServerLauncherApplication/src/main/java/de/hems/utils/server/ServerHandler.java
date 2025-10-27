@@ -16,6 +16,12 @@ public class ServerHandler {
         velocity.start();
     }
 
+    public void startNewInstance(String name, int allocatedMemoryMB, FileType jarFile) throws IOException {
+        ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile);
+        instances.add(instance);
+        instance.start();
+    }
+
     public void shutdownNetwork() throws IOException {
         for (ServerInstance instance : instances) {
             instance.stop();

@@ -1,6 +1,8 @@
 package de.schnorrenbergers.survival.commands;
 
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
+import de.schnorrenbergers.survival.utils.customInventory.CustomInventory;
+import de.schnorrenbergers.survival.utils.customInventory.types.Inventorys;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.command.Command;
@@ -24,6 +26,11 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
             case "animation": {
                 Player player = (Player) sender;
                 new ParticleLine(player.getLocation(), new Location(player.getWorld(), 0, 100,0), Particle.HAPPY_VILLAGER, 0.1).drawParticleLine();
+                break;
+            }
+            case "inv": {
+                Player player = (Player) sender;
+                player.openInventory(Inventorys.ADD_MONEY_INVENTORY().getInventory());
             }
         }
         return false;
@@ -31,6 +38,6 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        return List.of("animation");
+        return List.of("animation", "inv");
     }
 }

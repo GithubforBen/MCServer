@@ -28,6 +28,7 @@ public class Main {
         listenerAdapter = new ListenerAdapter("ServerLauncher");
         new RespondDataEvent();
         serverHandler = new ServerHandler();
+        serverHandler.startNewInstance("Paper", 4000, FileType.PAPER);
     }
 
     public static void main(String[] args) throws Exception {

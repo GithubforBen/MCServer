@@ -1,5 +1,6 @@
-package de.schnorrenbergers.survival.utils.customInventory;
+package de.schnorrenbergers.survival.utils.customInventory.types;
 
+import de.schnorrenbergers.survival.utils.customInventory.CustomInventory;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.UUID;

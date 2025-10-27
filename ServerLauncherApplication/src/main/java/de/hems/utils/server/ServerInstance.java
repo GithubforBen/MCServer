@@ -53,6 +53,7 @@ public class ServerInstance {
                     throw new RuntimeException(e);
                 }
             }
+            System.out.println("Server " + name + " exited");
         }).start();
         System.out.println("Server " + name + " started");
     }

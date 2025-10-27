@@ -11,6 +11,7 @@
     <modules>
         <module>Survival</module>
         <module>CommonCode</module>
+        <module>ServerLauncherApplication</module>
     </modules>
 
     <properties>
@@ -29,12 +30,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>33.5.0-jre</version>
-        </dependency>
-        <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>1.21.8-R0.1-SNAPSHOT</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
     <repositories>
