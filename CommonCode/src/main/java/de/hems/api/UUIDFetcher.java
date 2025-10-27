@@ -62,7 +62,11 @@ public class UUIDFetcher {
         }
     }
 
-    public static UUID findUUIDByName(String name) {
+    public static String findNameByUUID(UUID uuid) {
+        return findNameByUUID(uuid.toString());
+    }
+
+    public static UUID findUUIDByName(String name, boolean returnFormatted) {
         try {
             String apiEndPoint = "https://api.mojang.com/users/profiles/minecraft/" + name;
             String uuid = formatUUID(Objects.requireNonNull(getApiReponse(apiEndPoint, "id")));
