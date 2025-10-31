@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival.utils.customInventory;
 
 import de.hems.api.ItemApi;
+import de.schnorrenbergers.survival.utils.customInventory.types.Inventorys;
 import de.schnorrenbergers.survival.utils.customInventory.types.ItemAction;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -18,16 +19,18 @@ import java.util.function.Consumer;
 
 public class CustomInventory {
     private Inventory inventory;
-    private Consumer<InventoryCloseEvent> onClose;
     private static final ItemStack placeholder = new ItemApi(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "[]").build();
     private static HashMap<UUID, ItemAction> actions = new HashMap<>();
+    private static HashMap<Inventory, Consumer<InventoryCloseEvent>> closeActions = new HashMap<>();
 
-    public CustomInventory(int size, String title) {
+    public CustomInventory(int size, String title, Consumer<InventoryCloseEvent> onClose) {
         inventory = Bukkit.createInventory(null, size, title);
+        closeActions.put(inventory, onClose);
     }
 
-    public CustomInventory(InventoryType type, String title) {
+    public CustomInventory(InventoryType type, String title, Consumer<InventoryCloseEvent> onClose) {
         inventory = Bukkit.createInventory(null, type, title);
+        closeActions.put(inventory, onClose);
     }
 
     /**
@@ -56,30 +59,6 @@ public class CustomInventory {
         setItem(position, placeholder, ItemAction.placeholder);
     }
 
-    /**
-     * Sets a consumer that will be triggered when the inventory is closed.
-     * The specified consumer accepts an {@link InventoryCloseEvent} instance, allowing
-     * custom handling of the close event for the inventory.
-     *
-     * @param consumer the consumer to handle the inventory close event
-     */
-    public void onClose(Consumer<InventoryCloseEvent> consumer) {
-        onClose = consumer;
-    }
-
-    /**
-     * Executes the close action when the inventory is closed. If a consumer is set for the
-     * close action via the {@code onClose} method, it is invoked with the provided
-     * {@link InventoryCloseEvent}. This allows for custom handling of inventory close events.
-     *
-     * @param event the inventory close event containing information about the closure,
-     *              such as the player who closed the inventory and the inventory details
-     */
-    public void performeCloseAction(InventoryCloseEvent event) {
-        if (onClose != null) {
-            onClose.accept(event);
-        }
-    }
 
     public static HashMap<UUID, ItemAction> getActions() {
         return actions;
@@ -87,5 +66,9 @@ public class CustomInventory {
 
     public Inventory getInventory() {
         return inventory;
+    }
+
+    public static HashMap<Inventory, Consumer<InventoryCloseEvent>> getCloseActions() {
+        return closeActions;
     }
 }

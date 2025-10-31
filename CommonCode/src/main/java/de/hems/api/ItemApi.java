@@ -1,6 +1,8 @@
 package de.hems.api;
 
 
+import com.destroystokyo.paper.profile.ProfileProperty;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -10,6 +12,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.profile.PlayerProfile;
 import org.bukkit.profile.PlayerTextures;
 
+import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -101,14 +104,6 @@ public class ItemApi {
         itemMeta.setDisplayName(name);
         itemMeta.addEnchant(enchantment, enchantmentlevel, true);
     }
-
-    //code below only skull creation
-    public ItemApi(String skullowner) {
-        itemStack = new ItemStack(Material.PLAYER_HEAD);
-        itemMeta = itemStack.getItemMeta();
-        skullMeta = (SkullMeta) itemStack.getItemMeta();
-        skullMeta.setOwner(skullowner);
-    } //creates skull
 
     public ItemApi(String linktoskin, UUID uuid) {
         itemStack = new ItemStack(Material.PLAYER_HEAD);
@@ -285,6 +280,18 @@ public class ItemApi {
         skullMeta.setOwner(skullowner);
         skullMeta.addEnchant(enchantment, enchantmentlevel, true);
     } //creates skull with enchantment
+
+    //TODO: Test when minecraft servers are back online
+    public ItemApi(URL textures, String name) {
+        itemStack = new ItemStack(Material.PLAYER_HEAD);
+        skullMeta = (SkullMeta) itemStack.getItemMeta();
+        skullMeta.setDisplayName(name);
+        com.destroystokyo.paper.profile.PlayerProfile playerProfile = Bukkit.createProfile(UUID.randomUUID(),null);
+        PlayerTextures textures1 = playerProfile.getTextures();
+        textures1.setSkin(textures);
+        playerProfile.setTextures(textures1);
+        skullMeta.setPlayerProfile(playerProfile);
+    }
 
     public ItemStack build() {
         itemStack.setItemMeta(itemMeta);

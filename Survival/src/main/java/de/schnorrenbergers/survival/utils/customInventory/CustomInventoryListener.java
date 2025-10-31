@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.eclipse.sisu.launch.Main;
@@ -13,6 +14,7 @@ import org.eclipse.sisu.launch.Main;
 import java.nio.Buffer;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class CustomInventoryListener implements org.bukkit.event.Listener {
 
@@ -56,5 +58,15 @@ public class CustomInventoryListener implements org.bukkit.event.Listener {
             System.out.println(ignored.toString());
         }
 
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (event.getInventory().getHolder() != null) {
+            return;
+        }
+        Consumer<InventoryCloseEvent> inventoryCloseEventConsumer = CustomInventory.getCloseActions().get(event.getInventory());
+        if (inventoryCloseEventConsumer == null) return;
+        inventoryCloseEventConsumer.accept(event);
     }
 }

@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.MalformedURLException;
 import java.util.List;
 
 public class DebugCommand implements CommandExecutor, TabCompleter {
@@ -30,7 +31,11 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
             }
             case "inv": {
                 Player player = (Player) sender;
-                player.openInventory(Inventorys.ADD_MONEY_INVENTORY().getInventory());
+                try {
+                    player.openInventory(Inventorys.ADD_MONEY_INVENTORY().getInventory());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         return false;
