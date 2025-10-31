@@ -2,6 +2,7 @@ package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
 import de.schnorrenbergers.survival.commands.DebugCommand;
+import de.schnorrenbergers.survival.commands.TeamCommand;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
 import de.schnorrenbergers.survival.utils.configs.TeamConfig;
@@ -34,6 +35,8 @@ public final class Survival extends JavaPlugin {
         getCommand("admin").setTabCompleter(new de.schnorrenbergers.survival.commands.AdminCommand());
         getCommand("debug").setExecutor(new DebugCommand());
         getCommand("debug").setTabCompleter(new DebugCommand());
+        getCommand("team").setExecutor(new TeamCommand());
+        getCommand("team").setTabCompleter(new TeamCommand());
         new Tablist();
         new CustomInventoryListener();
     }
