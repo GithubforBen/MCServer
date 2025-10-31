@@ -25,6 +25,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
             sendUsage(sender);
             return false;
         }
+        //TODO: test
 
         switch (args[0].toLowerCase()) {
             case "chunks": {
