@@ -2,8 +2,10 @@ package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
 import de.schnorrenbergers.survival.commands.DebugCommand;
+import de.schnorrenbergers.survival.commands.TeamCommand;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
+import de.schnorrenbergers.survival.utils.configs.TeamConfig;
 import de.schnorrenbergers.survival.utils.customInventory.CustomInventoryListener;
 import de.schnorrenbergers.survival.utils.events.RequestPlayerMoneyEventHandler;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,11 +14,13 @@ public final class Survival extends JavaPlugin {
     private static Survival instance;
     private MoneyConfig moneyConfig;
     private ListenerAdapter listenerAdapter;
+    private TeamConfig teamConfig;
 
     @Override
     public void onLoad() {
         instance = this;
         moneyConfig = new MoneyConfig();
+        teamConfig = new TeamConfig();
     }
 
     @Override
@@ -31,13 +35,16 @@ public final class Survival extends JavaPlugin {
         getCommand("admin").setTabCompleter(new de.schnorrenbergers.survival.commands.AdminCommand());
         getCommand("debug").setExecutor(new DebugCommand());
         getCommand("debug").setTabCompleter(new DebugCommand());
+        getCommand("team").setExecutor(new TeamCommand());
+        getCommand("team").setTabCompleter(new TeamCommand());
         new Tablist();
         new CustomInventoryListener();
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        moneyConfig.save();
+        teamConfig.save();
     }
 
     public static Survival getInstance() {
@@ -50,5 +57,9 @@ public final class Survival extends JavaPlugin {
 
     public ListenerAdapter getListenerAdapter() {
         return listenerAdapter;
+    }
+
+    public TeamConfig getTeamConfig() {
+        return teamConfig;
     }
 }
