@@ -1,9 +1,7 @@
 package de.schnorrenbergers.survival.utils.customInventory;
 
 import de.hems.api.ItemApi;
-import de.schnorrenbergers.survival.utils.customInventory.types.Inventorys;
 import de.schnorrenbergers.survival.utils.customInventory.types.ItemAction;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;

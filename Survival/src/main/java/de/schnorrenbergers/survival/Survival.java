@@ -35,8 +35,8 @@ public final class Survival extends JavaPlugin {
         getCommand("admin").setTabCompleter(new de.schnorrenbergers.survival.commands.AdminCommand());
         getCommand("debug").setExecutor(new DebugCommand());
         getCommand("debug").setTabCompleter(new DebugCommand());
-        getCommand("team").setExecutor(new TeamCommand());
-        getCommand("team").setTabCompleter(new TeamCommand());
+        getCommand("cteam").setExecutor(new TeamCommand());
+        getCommand("cteam").setTabCompleter(new TeamCommand());
         new Tablist();
         new CustomInventoryListener();
     }

@@ -6,6 +6,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -13,6 +14,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,11 +49,14 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                         if (value != null) {
                             String teamOfChunk = ClaimManager.getTeamOfChunk(value);
                             if (teamOfChunk == null) {
-                                component.append(Component.text("[" + NamedTextColor.WHITE + "▒▒]"));
+                                component.append(Component.text("["));
+                                component.append(Component.text( "▒").color(NamedTextColor.WHITE));
+                                component.append(Component.text("] "));
                             } else {
                                 HoverEvent<Component> componentHoverEvent = HoverEvent.showText(Component.text(teamOfChunk));
-                                TextComponent text = Component.text("[" + player.getScoreboard().getTeam(teamOfChunk).color() + "▒▒" + NamedTextColor.WHITE + "] ").hoverEvent(componentHoverEvent);
-                                component.append(text);
+                                component.append(Component.text("[").hoverEvent(componentHoverEvent));
+                                component.append(Component.text( "▒").color(player.getScoreboard().getTeam(teamOfChunk).color()).hoverEvent(componentHoverEvent));
+                                component.append(Component.text("] ").hoverEvent(componentHoverEvent));
                             }
                         }
                     }
@@ -65,7 +70,12 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                     return true;
                 }
                 Player player = (Player) sender;
-                boolean b = new TeamManager(player.getScoreboard().getPlayerTeam(player).getName()).claimChunk(player.getChunk(), player);
+                Team playerTeam = player.getScoreboard().getPlayerTeam(player);
+                if (playerTeam == null) {
+                    player.sendMessage(Component.text("You dont have a team!"));
+                    return true;
+                }
+                boolean b = new TeamManager(playerTeam.getName()).claimChunk(player.getChunk(), player);
                 if (b) {
                     player.sendMessage(Component.text("You claimed this chunk!"));
                 } else {
@@ -86,6 +96,6 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        return List.of("chunks");
+        return List.of("chunks", "claim");
     }
 }

@@ -4,6 +4,7 @@ import de.hems.api.ItemApi;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import de.schnorrenbergers.survival.utils.customInventory.CustomInventory;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
@@ -32,7 +33,7 @@ public class Inventorys {
         customInventory.setPlaceHolder(5);
         customInventory.setPlaceHolder(6);
         customInventory.setPlaceHolder(7);
-        customInventory.setItem(8, new ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), NamedTextColor.GREEN + "Bestätigen").buildSkull(),
+        customInventory.setItem(8, new ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(),
                 new ItemAction() {
                     @Override
                     public UUID getID() {

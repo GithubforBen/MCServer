@@ -18,6 +18,7 @@ public class TeamManager {
             return false;
         }
         boolean b = ClaimManager.claimChunk(chunk, name);
+        System.out.println("Chunk cost" + getChunkCost());
         if (b) {
             if (!MoneyHandler.removeMoney(getChunkCost(), player.getUniqueId())) {
                 ClaimManager.unclaimChunk(chunk);
@@ -29,7 +30,7 @@ public class TeamManager {
     
     public int getChunkCost() {
         int teamChunkAmount = ClaimManager.getTeamChunkAmount(name);
-        return high(0.1, teamChunkAmount);
+        return high(1.1, teamChunkAmount);
     }
     
     private int high(double btm, int top) {
