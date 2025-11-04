@@ -39,7 +39,7 @@ build/
 .DS_Store
 
 ## MC Server
-/paper/
-/velocity/
-/dowloads/
-/servers/
+/paper/*
+/velocity/*
+/dowloads/*
+/servers/*
