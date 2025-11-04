@@ -18,20 +18,21 @@ public class TeamManager {
             return false;
         }
         boolean b = ClaimManager.claimChunk(chunk, name);
-        System.out.println("Chunk cost" + getChunkCost());
         if (b) {
             if (!MoneyHandler.removeMoney(getChunkCost(), player.getUniqueId())) {
                 ClaimManager.unclaimChunk(chunk);
                 return false;
             }
         }
+        player.sendMessage("You have claimed this chunk for " +getChunkCost() +"!");
         return b;
     }
     
     public int getChunkCost() {
         int teamChunkAmount = ClaimManager.getTeamChunkAmount(name);
         int i = 50 * high(1.1, teamChunkAmount);
-        if (i < 0 ) return Integer.MAX_VALUE;
+        if (i > 1000) i = 1000;
+        if (i < 0 ) return 1000;
         return i;
     }
     
