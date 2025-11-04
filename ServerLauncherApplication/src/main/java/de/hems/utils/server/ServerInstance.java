@@ -1,12 +1,12 @@
 package de.hems.utils.server;
 
-import de.hems.FileHandler;
 import de.hems.FileType;
+import de.hems.Main;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.List;
+import java.util.UUID;
 
 public class ServerInstance {
     private Process process;
@@ -16,7 +16,7 @@ public class ServerInstance {
     private final FileType jarFile;
     private boolean printStream = true;
 
-    public ServerInstance(String name, int allocatedMemoryMB, FileType jarFile) throws IOException {
+    public ServerInstance(String name, int allocatedMemoryMB, FileType jarFile, int port, boolean isProxied) throws Exception {
         this.name = name;
         this.allocatedMemoryMB = allocatedMemoryMB;
         this.jarFile = jarFile;
@@ -26,12 +26,12 @@ public class ServerInstance {
         }
         File jar = new File(directory.getPath() + "/" + FileType.getFileName(jarFile));
         if (!jar.exists()) {
-            File file = new FileHandler().provideFile(jarFile);
-            Files.copy(file.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            String str = "eula=true";
-            BufferedWriter writer = new BufferedWriter(new FileWriter(directory + "/eula.txt"));
-            writer.write(str);
-            writer.close();
+            switch (jarFile) {
+                case PAPER -> {
+                    List<String> ops = Main.getInstance().getConfiguration().getConfig().getStringList("ops");
+                    new PaperConfigurator(Main.getInstance().getIp(), port, isProxied, ops.stream().map((x) -> UUID.fromString(x)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath()).configure();
+                }
+            }
         }
     }
 

@@ -30,7 +30,9 @@ public class TeamManager {
     
     public int getChunkCost() {
         int teamChunkAmount = ClaimManager.getTeamChunkAmount(name);
-        return high(1.1, teamChunkAmount);
+        int i = 50 * high(1.1, teamChunkAmount);
+        if (i < 0 ) return Integer.MAX_VALUE;
+        return i;
     }
     
     private int high(double btm, int top) {

@@ -1,7 +1,9 @@
 package de.schnorrenbergers.survival.commands;
 
+import de.hems.FileType;
+import de.hems.communication.ListenerAdapter;
+import de.hems.communication.events.server.RequestServerStartEvent;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
-import de.schnorrenbergers.survival.utils.customInventory.CustomInventory;
 import de.schnorrenbergers.survival.utils.customInventory.types.Inventorys;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.UUID;
 
 public class DebugCommand implements CommandExecutor, TabCompleter {
     @Override
@@ -26,7 +29,7 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
         switch (args[0].toLowerCase()) {
             case "animation": {
                 Player player = (Player) sender;
-                new ParticleLine(player.getLocation(), new Location(player.getWorld(), 0, 100,0), Particle.HAPPY_VILLAGER, 0.1).drawParticleLine();
+                new ParticleLine(player.getLocation(), new Location(player.getWorld(), 0, 100, 0), Particle.HAPPY_VILLAGER, 0.1).drawParticleLine();
                 break;
             }
             case "inv": {
@@ -36,6 +39,23 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
+                break;
+            }
+            case "start": {
+                try {
+                    ListenerAdapter.sendListeners(new RequestServerStartEvent(
+                            "test",
+                            "ewq",
+                            UUID.randomUUID(),
+                            "debug",
+                            FileType.PAPER,
+                            4000,
+                            2000
+                    ));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                break;
             }
         }
         return false;

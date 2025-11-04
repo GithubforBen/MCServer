@@ -6,6 +6,7 @@ import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventHandler;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
+import org.jgroups.MessageFactory;
 import org.jgroups.Receiver;
 import org.jgroups.util.MessageBatch;
 
@@ -14,13 +15,14 @@ import java.util.*;
 public class ListenerAdapter implements Receiver {
 
     private static boolean isIniotialized = false;
-    private String name;
+    private static String name;
+    private static JChannel jChannel;
 
     public ListenerAdapter(String name) throws Exception {
         if (isIniotialized) return;
-        this.name = name;
+        name = name;
         isIniotialized = true;
-        JChannel jChannel = new JChannel();
+        jChannel = new JChannel();
         jChannel.setReceiver(this);
         jChannel.connect("MCServer");
     }
@@ -37,8 +39,16 @@ public class ListenerAdapter implements Receiver {
             return;
         }
         eventHandlers.forEach((k) -> {
-            k.onEvent(event);
+            try {
+                k.onEvent(event);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
+    }
+
+    public static void sendListeners(Event event) throws Exception {
+        jChannel.send(MessageFactory.create(Message.OBJ_MSG).setObject(event).create().get());
     }
 
     public void receive(Message msg) {
