@@ -4,9 +4,11 @@ import de.hems.FileType;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
 
+import java.io.Serializable;
 import java.util.UUID;
 
-public class RequestServerStartEvent extends EventFoundationData implements Event {
+public class RequestServerStartEvent extends EventFoundationData implements Event, Serializable {
+    private static final long serialVersionUID = 5L;
     private String serverName;
     private FileType type;
     private Integer port;
@@ -18,6 +20,9 @@ public class RequestServerStartEvent extends EventFoundationData implements Even
         this.type = type;
         this.port = port;
         this.memory = memory;
+    }
+
+    public RequestServerStartEvent() {
     }
 
 

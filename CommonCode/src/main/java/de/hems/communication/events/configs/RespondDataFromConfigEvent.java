@@ -3,9 +3,11 @@ package de.hems.communication.events.configs;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
 
+import java.io.Serializable;
 import java.util.UUID;
 
-public class RespondDataFromConfigEvent extends EventFoundationData implements Event {
+public class RespondDataFromConfigEvent extends EventFoundationData implements Event, Serializable {
+    private static final long serialVersionUID = 2L;
     private Object data;
     private String key;
     private UUID requestId;
@@ -15,6 +17,9 @@ public class RespondDataFromConfigEvent extends EventFoundationData implements E
         this.data = data;
         this.key = key;
         this.requestId = requestId;
+    }
+
+    public RespondDataFromConfigEvent() {
     }
 
     public Object getData() {

@@ -1,6 +1,7 @@
 package de.hems;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.communication.events.money.RequestPlayerMoneyEvent;
 import de.hems.events.RespondDataEvent;
 import de.hems.events.StartServerEvent;
 import de.hems.utils.Configuration;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.UUID;
 
 public class Main {
     private static Main instance;
@@ -37,7 +39,15 @@ public class Main {
         new RespondDataEvent();
         serverHandler = new ServerHandler();
         new StartServerEvent();
-        serverHandler.startNewInstance("lobby", 1024, FileType.PAPER, 25565, false);
+        serverHandler.startNewInstance("lobby", 4000, FileType.PAPER, 25565, false);
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000 * 40);
+                ListenerAdapter.sendListeners(new RequestPlayerMoneyEvent("ServerLauncher", "Survival", UUID.randomUUID()));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     public static void main(String[] args) throws Exception {

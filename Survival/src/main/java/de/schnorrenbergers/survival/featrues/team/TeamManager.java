@@ -38,7 +38,7 @@ public class TeamManager {
     private int high(double btm, int top) {
         BigDecimal result = new BigDecimal(btm);
         for (int i = 0; i < top; i++) {
-            result.multiply(new BigDecimal(btm));
+            result = result.multiply(new BigDecimal(btm));
         }
         return result.intValue();
     }

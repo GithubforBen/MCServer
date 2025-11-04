@@ -15,7 +15,7 @@ public class RespondDataEvent implements EventHandler<RequestDataFromConfigEvent
     }
 
     @Override
-    public void onEvent(Event event) {
+    public void onEvent(Event event) throws Exception {
         YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
         RequestDataFromConfigEvent e = (RequestDataFromConfigEvent) event;
         if (config.contains(e.getKey())) {
@@ -26,10 +26,10 @@ public class RespondDataEvent implements EventHandler<RequestDataFromConfigEvent
                     e.getKey(),
                     e.getEventId()
             );
-            ListenerAdapter.excecuteListeners(respondDataFromConfigEvent);
+            ListenerAdapter.sendListeners(respondDataFromConfigEvent);
             return;
         }
-        ListenerAdapter.excecuteListeners(new RespondDataFromConfigEvent(Main.getInstance().getListenerAdapter().getName(),
+        ListenerAdapter.sendListeners(new RespondDataFromConfigEvent(Main.getInstance().getListenerAdapter().getName(),
                 e.getSender(),
                 null,
                 e.getKey(),

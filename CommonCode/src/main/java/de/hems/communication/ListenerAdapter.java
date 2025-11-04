@@ -2,29 +2,29 @@ package de.hems.communication;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import de.hems.communication.events.server.RequestServerStartEvent;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventHandler;
-import org.jgroups.JChannel;
-import org.jgroups.Message;
-import org.jgroups.MessageFactory;
-import org.jgroups.Receiver;
+import org.jgroups.*;
 import org.jgroups.util.MessageBatch;
 
 import java.util.*;
 
 public class ListenerAdapter implements Receiver {
 
-    private static boolean isIniotialized = false;
+    private static boolean isInitialized = false;
     private static String name;
     private static JChannel jChannel;
 
     public ListenerAdapter(String name) throws Exception {
-        if (isIniotialized) return;
-        name = name;
-        isIniotialized = true;
+        if (isInitialized) return;
+        ListenerAdapter.name = name;
+        isInitialized = true;
         jChannel = new JChannel();
+        jChannel.setName(name);
         jChannel.setReceiver(this);
         jChannel.connect("MCServer");
+        System.out.println("[JGroups] Connected as '" + name + "' to cluster MCServer. View=" + jChannel.getView());
     }
 
     private final static Multimap<Class<? extends Event>, EventHandler<? extends Event>> listeners = ArrayListMultimap.create();
@@ -33,13 +33,15 @@ public class ListenerAdapter implements Receiver {
         listeners.put(eventType, listener);
     }
 
-    public static void excecuteListeners(Event event) {
+    public static void executeListeners(Event event) {
         Collection<EventHandler<? extends Event>> eventHandlers = listeners.get(event.getClass());
+        System.out.println(eventHandlers.size() + ":" + Arrays.toString(eventHandlers.toArray()) + ":" + event.getClass().toString() + ":" + RequestServerStartEvent.class);
         if (eventHandlers.isEmpty()) {
             return;
         }
         eventHandlers.forEach((k) -> {
             try {
+                System.out.println("running listener: " +  k.getClass().toString());
                 k.onEvent(event);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -48,20 +50,25 @@ public class ListenerAdapter implements Receiver {
     }
 
     public static void sendListeners(Event event) throws Exception {
-        jChannel.send(MessageFactory.create(Message.OBJ_MSG).setObject(event).create().get());
-    }
-
-    public void receive(Message msg) {
-        Object object = msg.getObject();
-        if (object instanceof Event) {
-            excecuteListeners((Event) object);
-        }
+        Message message = new ObjectMessage(null, event);
+        System.out.println(message.getObject().toString());
+        jChannel.send(message);
     }
 
     @Override
-    public void receive(MessageBatch batch) {
-        Receiver.super.receive(batch);
-        batch.forEach(this::receive);
+    public void viewAccepted(View new_view) {
+        System.out.println("** view: " + new_view + " **");
+    }
+
+    @Override
+    public void receive(Message msg) {
+        System.out.println(name + "received message");
+        Object object = msg.getObject();
+        System.out.println(object);
+        if (object instanceof Event) {
+            System.out.println(name +"sending event");
+            executeListeners((Event) object);
+        }
     }
 
     public String getName() {

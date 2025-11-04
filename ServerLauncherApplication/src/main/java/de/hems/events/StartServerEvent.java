@@ -14,7 +14,7 @@ public class StartServerEvent implements EventHandler<RequestServerStartEvent> {
     }
 
     @Override
-    public void onEvent(Event event) throws IOException {
+    public void onEvent(Event event) {
         if (!(event instanceof RequestServerStartEvent)) {
             return;
         }
