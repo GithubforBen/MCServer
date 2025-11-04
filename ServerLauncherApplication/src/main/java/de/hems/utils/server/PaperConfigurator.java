@@ -2,8 +2,13 @@ package de.hems.utils.server;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import de.hems.FileHandler;
+import de.hems.FileType;
 import de.hems.api.UUIDFetcher;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +30,9 @@ public class PaperConfigurator extends ServerConfigurator {
     }
 
     public void configure() throws Exception {
+        File jar = new File(this.directory + "/" + FileType.getFileName(FileType.PAPER));
+        File file = new FileHandler().provideFile(FileType.PAPER);
+        Files.copy(file.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         writeToFile("eula.txt", "eula=true");
         writeToFile("server.properties", "server-ip=" + ip);
         writeToFile("server.properties", "server-port=" + port);

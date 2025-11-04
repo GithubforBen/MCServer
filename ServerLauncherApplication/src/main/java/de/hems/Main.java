@@ -37,7 +37,7 @@ public class Main {
         new RespondDataEvent();
         serverHandler = new ServerHandler();
         new StartServerEvent();
-        serverHandler.startNewInstance("lobby", 2000, FileType.PAPER);
+        serverHandler.startNewInstance("lobby", 1024, FileType.PAPER, 25565, false);
     }
 
     public static void main(String[] args) throws Exception {

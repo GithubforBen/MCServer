@@ -49,6 +49,13 @@ public class ServerInstance {
                             System.out.println(line);
                         }
                     }
+                    BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    String errorLine;
+                    while ((errorLine = error.readLine()) != null) {
+                        if (printStream) {
+                            System.out.println(errorLine);
+                        }
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -82,6 +89,12 @@ public class ServerInstance {
     }
 
     public void executeCommand(String command) throws IOException {
+        if (process == null) {
+            return;
+        }
+        if (!process.isAlive()) {
+            return;
+        }
         OutputStream outputStream = process.getOutputStream();
         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
         outputStreamWriter.write(command + "\n");

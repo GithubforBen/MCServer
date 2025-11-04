@@ -4,7 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 
 public class ServerConfigurator {
-    private final String directory;
+    protected final String directory;
 
     public ServerConfigurator(String directory) {
         this.directory = directory;

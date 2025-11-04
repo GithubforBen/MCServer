@@ -9,15 +9,15 @@ import java.util.List;
 public class ServerHandler {
     private List<ServerInstance> instances;
 
-    public ServerHandler() throws IOException {
+    public ServerHandler() throws Exception {
         instances = new ArrayList<>();
-        ServerInstance velocity = new ServerInstance("VELOCITY", 512, FileType.VELOCITY);
+        ServerInstance velocity = new ServerInstance("VELOCITY", 512, FileType.VELOCITY, 25565, true);
         instances.add(velocity);
-        velocity.start();
+        //TODO: add velocity.start();
     }
 
-    public void startNewInstance(String name, int allocatedMemoryMB, FileType jarFile) throws IOException {
-        ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile);
+    public void startNewInstance(String name, int allocatedMemoryMB, FileType jarFile, int port, boolean isProxied) throws Exception {
+        ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, port, isProxied);
         instances.add(instance);
         instance.start();
     }
