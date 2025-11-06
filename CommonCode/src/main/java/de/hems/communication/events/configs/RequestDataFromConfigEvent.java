@@ -1,5 +1,6 @@
 package de.hems.communication.events.configs;
 
+import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
 
@@ -10,8 +11,8 @@ public class RequestDataFromConfigEvent extends EventFoundationData implements E
     private static final long serialVersionUID = 1L;
     private String key;
 
-    public RequestDataFromConfigEvent(String sender, String key) {
-        super(sender, "ServerLauncher", UUID.randomUUID());
+    public RequestDataFromConfigEvent(ListenerAdapter.ServerName sender, UUID eventId, String key) {
+        super(sender, ListenerAdapter.ServerName.HOST, eventId);
         this.key = key;
     }
 

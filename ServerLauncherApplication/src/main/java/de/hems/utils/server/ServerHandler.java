@@ -3,6 +3,7 @@ package de.hems.utils.server;
 import de.hems.FileType;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +23,43 @@ public class ServerHandler {
         instance.start();
     }
 
+    public void stop(String name) {
+        instances.stream().filter(ServerInstance -> ServerInstance.getName().equals(name)).findFirst().ifPresent(ServerInstance -> {
+            try {
+                ServerInstance.stop();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        new Thread(() -> {
+            try {
+                Thread.sleep(Duration.ofSeconds(10L));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            instances.stream().filter(ServerInstance -> ServerInstance.getName().equals(name)).findFirst().ifPresent(ServerInstance -> {
+                if (!ServerInstance.isAlive()) {
+                    instances.remove(ServerInstance);
+                }
+            });
+            try {
+                Thread.sleep(Duration.ofSeconds(10L));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            instances.stream().filter(ServerInstance -> ServerInstance.getName().equals(name)).findFirst().ifPresent(ServerInstance -> {
+                if (ServerInstance.isAlive()) {
+                    ServerInstance.kill();
+                    instances.remove(ServerInstance);
+                }
+            });
+        }).start();
+    }
     public void shutdownNetwork() throws IOException {
         for (ServerInstance instance : instances) {
             instance.stop();
         }
     }
+
+
 }

@@ -3,6 +3,7 @@ package de.hems;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.money.RequestPlayerMoneyEvent;
 import de.hems.events.RespondDataEvent;
+import de.hems.events.RestartServerEvent;
 import de.hems.events.StartServerEvent;
 import de.hems.utils.Configuration;
 import de.hems.utils.server.ServerHandler;
@@ -35,15 +36,16 @@ public class Main {
             }
         }));
         configuration = new Configuration();
-        listenerAdapter = new ListenerAdapter("ServerLauncher");
+        listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.HOST);
         new RespondDataEvent();
         serverHandler = new ServerHandler();
         new StartServerEvent();
+        new RestartServerEvent();
         serverHandler.startNewInstance("lobby", 4000, FileType.PAPER, 25565, false);
         new Thread(() -> {
             try {
                 Thread.sleep(1000 * 40);
-                ListenerAdapter.sendListeners(new RequestPlayerMoneyEvent("ServerLauncher", "Survival", UUID.randomUUID()));
+                ListenerAdapter.sendListeners(new RequestPlayerMoneyEvent(ListenerAdapter.ServerName.HOST, ListenerAdapter.ServerName.SURVIVAL, UUID.randomUUID()));
             } catch (Exception e) {
                 e.printStackTrace();
             }

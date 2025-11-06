@@ -12,16 +12,23 @@ import java.util.*;
 
 public class ListenerAdapter implements Receiver {
 
+    public enum ServerName {
+        SURVIVAL,
+        LOBBY,
+        EVENT,
+        HOST;
+    }
+
     private static boolean isInitialized = false;
-    private static String name;
+    private static ServerName name;
     private static JChannel jChannel;
 
-    public ListenerAdapter(String name) throws Exception {
+    public ListenerAdapter(ServerName name) throws Exception {
         if (isInitialized) return;
         ListenerAdapter.name = name;
         isInitialized = true;
         jChannel = new JChannel();
-        jChannel.setName(name);
+        jChannel.setName(name.toString());
         jChannel.setReceiver(this);
         jChannel.connect("MCServer");
         System.out.println("[JGroups] Connected as '" + name + "' to cluster MCServer. View=" + jChannel.getView());
@@ -71,7 +78,7 @@ public class ListenerAdapter implements Receiver {
         }
     }
 
-    public String getName() {
+    public ServerName getName() {
         return name;
     }
 }

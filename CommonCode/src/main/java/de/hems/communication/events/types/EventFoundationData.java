@@ -1,13 +1,15 @@
 package de.hems.communication.events.types;
 
+import de.hems.communication.ListenerAdapter;
+
 import java.util.UUID;
 
 public class EventFoundationData {
-    private String sender;
-    private String receiver;
+    private ListenerAdapter.ServerName sender;
+    private ListenerAdapter.ServerName receiver;
     private UUID eventId;
 
-    public EventFoundationData(String sender, String receiver, UUID eventId) {
+    public EventFoundationData(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId) {
         this.sender = sender;
         this.receiver = receiver;
         this.eventId = eventId;
@@ -15,11 +17,11 @@ public class EventFoundationData {
 
     public EventFoundationData() {}
 
-    public String getSender() {
+    public ListenerAdapter.ServerName getSender() {
         return sender;
     }
 
-    public String getReceiver() {
+    public ListenerAdapter.ServerName getReceiver() {
         return receiver;
     }
 

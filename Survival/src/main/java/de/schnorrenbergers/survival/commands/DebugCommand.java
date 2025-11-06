@@ -44,8 +44,8 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
             case "start": {
                 try {
                     ListenerAdapter.sendListeners(new RequestServerStartEvent(
-                            "test",
-                            "ServerLauncher",
+                            ListenerAdapter.ServerName.SURVIVAL,
+                            ListenerAdapter.ServerName.HOST,
                             UUID.randomUUID(),
                             "debug",
                             FileType.PAPER,

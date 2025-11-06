@@ -1,5 +1,6 @@
 package de.hems.communication.events.money;
 
+import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
 
@@ -10,8 +11,9 @@ public class RespondPlayerMoneyEvent extends EventFoundationData implements Even
     private static final long serialVersionUID = 4L;
     private  UUID playerId;
     private  int money;
-    public RespondPlayerMoneyEvent(String sender, String receiver, UUID playerId, int money) {
-        super(sender, receiver, UUID.randomUUID());
+
+    public RespondPlayerMoneyEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId, UUID playerId, int money) {
+        super(sender, receiver, eventId);
         this.playerId = playerId;
         this.money = money;
     }

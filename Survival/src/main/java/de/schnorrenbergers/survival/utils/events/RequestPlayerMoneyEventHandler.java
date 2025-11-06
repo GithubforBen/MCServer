@@ -16,7 +16,7 @@ public class RequestPlayerMoneyEventHandler implements EventHandler<RequestPlaye
     @Override
     public void onEvent(Event event) throws Exception {
         RequestPlayerMoneyEvent e = (RequestPlayerMoneyEvent) event;
-        RespondPlayerMoneyEvent respondDataFromConfigEvent = new RespondPlayerMoneyEvent(Survival.getInstance().getListenerAdapter().getName(),
+        RespondPlayerMoneyEvent respondDataFromConfigEvent = new RespondPlayerMoneyEvent(ListenerAdapter.ServerName.SURVIVAL,
                 e.getSender(), e.getPlayerId(),
                 MoneyHandler.getMoney(e.getPlayerId()));
         ListenerAdapter.sendListeners(respondDataFromConfigEvent);

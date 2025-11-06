@@ -1,5 +1,6 @@
 package de.hems.communication.events.money;
 
+import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
 
@@ -13,10 +14,11 @@ public class RequestPlayerMoneyEvent extends EventFoundationData implements Even
     public RequestPlayerMoneyEvent() {
     }
 
-    public RequestPlayerMoneyEvent(String sender, String receiver, UUID playerId) {
+    public RequestPlayerMoneyEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID playerId) {
         super(sender, receiver, UUID.randomUUID());
         this.playerId = playerId;
     }
+
     public UUID getPlayerId() {
         return playerId;
     }

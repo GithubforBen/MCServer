@@ -85,6 +85,7 @@ public class ServerInstance {
     public void kill() {
         if (process.isAlive()) {
             process.destroyForcibly();
+            System.out.println("Server " + name + " killed");
         }
     }
 
@@ -101,4 +102,12 @@ public class ServerInstance {
         outputStreamWriter.flush();
         outputStreamWriter.close();
     }
+
+    public String getName() {
+        return name;
+    }
+    public boolean isAlive() {
+        return process.isAlive();
+    }
+
 }

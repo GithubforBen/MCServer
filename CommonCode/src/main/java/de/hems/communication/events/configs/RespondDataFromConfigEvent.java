@@ -1,5 +1,6 @@
 package de.hems.communication.events.configs;
 
+import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
 
@@ -12,7 +13,7 @@ public class RespondDataFromConfigEvent extends EventFoundationData implements E
     private String key;
     private UUID requestId;
 
-    public RespondDataFromConfigEvent(String sender, String receiver, Object data, String key, UUID requestId) {
+    public RespondDataFromConfigEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, Object data, String key, UUID requestId) {
         super(sender, receiver, UUID.randomUUID());
         this.data = data;
         this.key = key;
