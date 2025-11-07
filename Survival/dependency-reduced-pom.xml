@@ -38,7 +38,7 @@
   </build>
   <repositories>
     <repository>
-      <id>papermc-repo</id>
+      <id>papermc</id>
       <url>https://repo.papermc.io/repository/maven-public/</url>
     </repository>
   </repositories>
@@ -51,7 +51,7 @@
     </dependency>
   </dependencies>
   <properties>
-    <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>21</java.version>
   </properties>
 </project>

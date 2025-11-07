@@ -12,11 +12,13 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class DebugCommand implements CommandExecutor, TabCompleter {
@@ -34,10 +36,18 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
             }
             case "inv": {
                 Player player = (Player) sender;
-                try {
-                    player.openInventory(Inventorys.ADD_MONEY_INVENTORY().getInventory());
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
+                Inventory inv = null;
+                switch (args[1].toLowerCase()) {
+                    case "atm":
+                        try {
+                            player.openInventory(Inventorys.ATM_INVENTORY().getInventory());
+                        } catch (MalformedURLException e) {
+                            throw new RuntimeException(e);
+                        }
+                        break;
+                    default:
+                        sender.sendMessage("gibt es nicht du idiot!");
+                        break;
                 }
                 break;
             }
@@ -64,6 +74,13 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
+        if(args.length == 1) {
+            String parentCommand = args[0].toLowerCase();
+            if (parentCommand.equals("inv ")) {
+                return List.of("atm");
+            }
+        }
+
         return List.of("animation", "inv", "start");
     }
 }
