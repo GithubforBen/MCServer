@@ -14,13 +14,15 @@ public class RequestServerStartEvent extends EventFoundationData implements Even
     private FileType.SERVER type;
     private Integer port;
     private Integer memory;
+    private FileType.PLUGIN[] plugins;
 
-    public RequestServerStartEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId, String serverName, FileType.SERVER type, Integer port, Integer memory) {
+    public RequestServerStartEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId, String serverName, FileType.SERVER type, Integer port, Integer memory, FileType.PLUGIN[] plugins) {
         super(sender, receiver, eventId);
         this.serverName = serverName;
         this.type = type;
         this.port = port;
         this.memory = memory;
+        this.plugins = plugins;
     }
 
     public RequestServerStartEvent() {
@@ -41,5 +43,8 @@ public class RequestServerStartEvent extends EventFoundationData implements Even
 
     public Integer getMemory() {
         return memory;
+    }
+    public FileType.PLUGIN[] getPlugins() {
+        return plugins;
     }
 }

@@ -50,7 +50,8 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
                             "debug",
                             FileType.SERVER.PAPER,
                             4000,
-                            2000
+                            2000,
+                            new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT}
                     ));
                 } catch (Exception e) {
                     throw new RuntimeException(e);

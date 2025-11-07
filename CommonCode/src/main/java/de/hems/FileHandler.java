@@ -19,6 +19,10 @@ public class FileHandler {
         downloadIfNeeded(type);
         return new File("./downloads/" + FileType.SERVER.getFileName(type));
     }
+    public File provideFile(FileType.PLUGIN type) {
+        downloadIfNeeded(type);
+        return new File("./downloads/" + FileType.PLUGIN.getFileName(type));
+    }
 
     public void downloadIfNeeded(FileType.SERVER type) {
         File file = new File("./downloads/" + FileType.SERVER.getFileName(type));
@@ -28,6 +32,24 @@ public class FileHandler {
         System.out.println("Downloading " + type );
         try {
             BufferedInputStream in = new BufferedInputStream(new URL(FileType.SERVER.getFileURL(type)).openStream());
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            byte dataBuffer[] = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+                fileOutputStream.write(dataBuffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("Download complete");
+    }public void downloadIfNeeded(FileType.PLUGIN type) {
+        File file = new File("./downloads/" + FileType.PLUGIN.getFileName(type));
+        if (file.exists()) {
+            return;
+        }
+        System.out.println("Downloading " + type );
+        try {
+            BufferedInputStream in = new BufferedInputStream(new URL(FileType.PLUGIN.getFileURL(type)).openStream());
             FileOutputStream fileOutputStream = new FileOutputStream(file);
             byte dataBuffer[] = new byte[1024];
             int bytesRead;

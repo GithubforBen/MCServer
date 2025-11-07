@@ -19,20 +19,28 @@ public class PaperConfigurator extends ServerConfigurator {
     private final boolean isProxyed;
     private final List<UUID> ops;
     private final String[] whitelist;
+    private final FileType.PLUGIN[] plugins;
 
-    public PaperConfigurator(String ip, int port, boolean isProxyed, List<UUID> ops, String[] whitelist, String directory) {
+    public PaperConfigurator(String ip, int port, boolean isProxyed, List<UUID> ops, String[] whitelist, String directory, FileType.PLUGIN[] plugins) {
         super(directory);
         this.ip = ip;
         this.port = port;
         this.isProxyed = isProxyed;
         this.ops = ops;
         this.whitelist = whitelist;
+        this.plugins = plugins;
     }
 
     public void configure() throws Exception {
         File jar = new File(this.directory + "/" + FileType.SERVER.getFileName(FileType.SERVER.PAPER));
-        File file = new FileHandler().provideFile(FileType.SERVER.PAPER);
-        Files.copy(file.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        File jarFile = new FileHandler().provideFile(FileType.SERVER.PAPER);
+        Files.copy(jarFile.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        for (FileType.PLUGIN plugin : plugins) {
+            File pluginF = new File(this.directory + "/plugins/" + FileType.PLUGIN.getFileName(plugin));
+            pluginF.getParentFile().mkdirs();
+            File pluginFile = new FileHandler().provideFile(plugin);
+            Files.copy(pluginFile.toPath(), pluginF.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
         writeToFile("eula.txt", "eula=true");
         writeToFile("server.properties", "server-ip=" + ip);
         writeToFile("server.properties", "server-port=" + port);

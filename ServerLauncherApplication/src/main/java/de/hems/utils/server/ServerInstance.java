@@ -17,18 +17,20 @@ public class ServerInstance {
     private boolean printStream = true;
     private int port;
     private boolean isProxied;
+    private FileType.PLUGIN[] plugins;
 
     public int getPort() {
         return port;
     }
 
-    public ServerInstance(String name, int allocatedMemoryMB, FileType.SERVER jarFile, int port, boolean isProxied) throws Exception {
+    public ServerInstance(String name, int allocatedMemoryMB, FileType.SERVER jarFile, int port, boolean isProxied, FileType.PLUGIN[] plugins) throws Exception {
         this.name = name;
         this.allocatedMemoryMB = allocatedMemoryMB;
         this.jarFile = jarFile;
         this.port = port;
         this.directory = new File("./servers/" + name + "/");
         this.isProxied = isProxied;
+        this.plugins = plugins;
         if (!directory.exists()) {
             directory.mkdirs();
         }
@@ -37,7 +39,7 @@ public class ServerInstance {
             switch (jarFile) {
                 case PAPER -> {
                     List<String> ops = Main.getInstance().getConfiguration().getConfig().getStringList("ops");
-                    new PaperConfigurator(Main.getInstance().getIp(), port, isProxied, ops.stream().map((x) -> UUID.fromString(x)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath()).configure();
+                    new PaperConfigurator(Main.getInstance().getIp(), port, isProxied, ops.stream().map((x) -> UUID.fromString(x)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
                 }
             }
         }
@@ -132,5 +134,9 @@ public class ServerInstance {
 
     public boolean isProxied() {
         return isProxied;
+    }
+
+    public FileType.PLUGIN[] getPlugins() {
+        return plugins;
     }
 }

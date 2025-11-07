@@ -1,6 +1,9 @@
 package de.hems;
 
-public class FileType {
+import java.io.Serializable;
+
+public class FileType implements Serializable {
+    private static final long serialVersionUID = 100L;
     public enum SERVER {
         PAPER,
         VELOCITY;
@@ -18,7 +21,7 @@ public class FileType {
         WORLDEDIT;
         public static String getFileURL(FileType.PLUGIN type) {
             return switch (type) {
-                case PLUGIN.WORLDEDIT -> "https://dev.bukkit.org/projects/worldedit/files/7150859/download";
+                case PLUGIN.WORLDEDIT -> "https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=0https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=1";
             };
         }
         public static String getFileName(FileType.PLUGIN type) {

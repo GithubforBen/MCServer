@@ -13,13 +13,13 @@ public class ServerHandler {
 
     public ServerHandler() throws Exception {
         instances = new ArrayList<>();
-        ServerInstance velocity = new ServerInstance("VELOCITY", 512, FileType.SERVER.VELOCITY, 25565, true);
+        ServerInstance velocity = new ServerInstance("VELOCITY", 512, FileType.SERVER.VELOCITY, 25565, true, new FileType.PLUGIN[0]);
         instances.add(velocity);
         //TODO: add velocity.start();
     }
 
-    public void startNewInstance(String name, int allocatedMemoryMB, FileType.SERVER jarFile, int port, boolean isProxied) throws Exception {
-        ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, port, isProxied);
+    public void startNewInstance(String name, int allocatedMemoryMB, FileType.SERVER jarFile, int port, boolean isProxied, FileType.PLUGIN[] plugins) throws Exception {
+        ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, port, isProxied, plugins);
         instances.add(instance);
         instance.start();
     }

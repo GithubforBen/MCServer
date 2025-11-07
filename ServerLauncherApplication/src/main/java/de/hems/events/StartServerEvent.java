@@ -21,7 +21,7 @@ public class StartServerEvent implements EventHandler<RequestServerStartEvent> {
         event = (RequestServerStartEvent) event;
         try {
             Main.getInstance().getServerHandler().startNewInstance(((RequestServerStartEvent) event).getServerName(),
-                    ((RequestServerStartEvent) event).getMemory(), ((RequestServerStartEvent) event).getType(), ((RequestServerStartEvent) event).getPort(), false); //TODO: set to True
+                    ((RequestServerStartEvent) event).getMemory(), ((RequestServerStartEvent) event).getType(), ((RequestServerStartEvent) event).getPort(), false, ((RequestServerStartEvent) event).getPlugins()); //TODO: set to True
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

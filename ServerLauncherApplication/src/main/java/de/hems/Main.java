@@ -42,7 +42,7 @@ public class Main {
         new StartServerEvent();
         new RestartServerEvent();
         serverHandler.startNewInstance(
-                ListenerAdapter.ServerName.SURVIVAL.toString(), 4000, FileType.SERVER.PAPER, 25565, false);
+                ListenerAdapter.ServerName.SURVIVAL.toString(), 4000, FileType.SERVER.PAPER, 25565, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
         new Thread(() -> {
             try {
                 Thread.sleep(1000 * 40);
