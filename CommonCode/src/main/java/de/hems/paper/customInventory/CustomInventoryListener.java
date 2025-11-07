@@ -1,25 +1,24 @@
-package de.schnorrenbergers.survival.utils.customInventory;
+package de.hems.paper.customInventory;
 
-import de.schnorrenbergers.survival.Survival;
-import de.schnorrenbergers.survival.utils.customInventory.types.ItemAction;
+import de.hems.paper.customInventory.types.ItemAction;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.persistence.PersistentDataType;
-import org.eclipse.sisu.launch.Main;
+import org.bukkit.plugin.Plugin;
 
-import java.nio.Buffer;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 public class CustomInventoryListener implements org.bukkit.event.Listener {
 
-    public CustomInventoryListener() {
-        Bukkit.getPluginManager().registerEvents(this, Survival.getInstance());
+    private static boolean registered = false;
+
+    public CustomInventoryListener(Plugin plugin) {
+        Bukkit.getPluginManager().registerEvents(this, plugin);
+        registered = true;
     }
 
     /**
@@ -68,5 +67,9 @@ public class CustomInventoryListener implements org.bukkit.event.Listener {
         Consumer<InventoryCloseEvent> inventoryCloseEventConsumer = CustomInventory.getCloseActions().get(event.getInventory());
         if (inventoryCloseEventConsumer == null) return;
         inventoryCloseEventConsumer.accept(event);
+    }
+
+    public static boolean hasBeenRegistered() {
+        return registered;
     }
 }

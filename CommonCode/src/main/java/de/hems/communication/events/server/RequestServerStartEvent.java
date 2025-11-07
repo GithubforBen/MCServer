@@ -1,6 +1,6 @@
 package de.hems.communication.events.server;
 
-import de.hems.FileType;
+import de.hems.types.FileType;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
@@ -16,8 +16,8 @@ public class RequestServerStartEvent extends EventFoundationData implements Even
     private Integer memory;
     private FileType.PLUGIN[] plugins;
 
-    public RequestServerStartEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId, String serverName, FileType.SERVER type, Integer port, Integer memory, FileType.PLUGIN[] plugins) {
-        super(sender, receiver, eventId);
+    public RequestServerStartEvent(ListenerAdapter.ServerName receiver, String serverName, FileType.SERVER type, Integer port, Integer memory, FileType.PLUGIN[] plugins) {
+        super(receiver);
         this.serverName = serverName;
         this.type = type;
         this.port = port;

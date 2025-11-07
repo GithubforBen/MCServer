@@ -1,10 +1,10 @@
 package de.schnorrenbergers.survival.commands;
 
-import de.hems.FileType;
+import de.hems.types.FileType;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.server.RequestServerStartEvent;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
-import de.schnorrenbergers.survival.utils.customInventory.types.Inventorys;
+import de.schnorrenbergers.survival.utils.Inventorys;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.command.Command;
@@ -44,9 +44,7 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
             case "start": {
                 try {
                     ListenerAdapter.sendListeners(new RequestServerStartEvent(
-                            ListenerAdapter.ServerName.SURVIVAL,
                             ListenerAdapter.ServerName.HOST,
-                            UUID.randomUUID(),
                             "debug",
                             FileType.SERVER.PAPER,
                             4000,

@@ -6,6 +6,7 @@ import de.hems.communication.events.server.RequestServerStartEvent;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
 import de.hems.communication.events.types.EventHandler;
+import de.hems.communication.events.types.RespondDataEvent;
 import org.jgroups.*;
 import org.jgroups.util.MessageBatch;
 
@@ -36,6 +37,7 @@ public class ListenerAdapter implements Receiver {
     }
 
     private final static Multimap<Class<? extends Event>, EventHandler<? extends Event>> listeners = ArrayListMultimap.create();
+    private final static List<RespondDataEvent> respondDataEvents = new LinkedList<>();
 
     public static <T extends Event> void register(Class<T> eventType, EventHandler<T> listener) {
         listeners.put(eventType, listener);
@@ -49,7 +51,7 @@ public class ListenerAdapter implements Receiver {
         }
         eventHandlers.forEach((k) -> {
             try {
-                System.out.println("running listener: " +  k.getClass().toString());
+                System.out.println("running listener: " + k.getClass().toString());
                 k.onEvent(event);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -79,11 +81,26 @@ public class ListenerAdapter implements Receiver {
                 System.out.println(name + " Event not for me");
                 return;
             }
+            if (event instanceof RespondDataEvent) {
+                respondDataEvents.add((RespondDataEvent) event);
+            }
             executeListeners((Event) object);
         }
     }
 
-    public ServerName getName() {
+    public static RespondDataEvent waitForEvent(UUID requestId) throws InterruptedException {
+        while (respondDataEvents.isEmpty()) {
+            Thread.sleep(100);
+        }
+        RespondDataEvent event = respondDataEvents.stream().filter(e -> e.getRequestId().equals(requestId)).findFirst().orElse(null);
+        if (event == null) {
+            return waitForEvent(requestId);
+        }
+        respondDataEvents.remove(event);
+        return event;
+    }
+
+    public static ServerName getName() {
         return name;
     }
 }

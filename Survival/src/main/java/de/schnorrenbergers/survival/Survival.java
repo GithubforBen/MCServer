@@ -1,14 +1,17 @@
 package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.commands.ServerManagerCommand;
 import de.schnorrenbergers.survival.commands.DebugCommand;
 import de.schnorrenbergers.survival.commands.RestartCommand;
 import de.schnorrenbergers.survival.commands.TeamCommand;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
 import de.schnorrenbergers.survival.utils.configs.TeamConfig;
-import de.schnorrenbergers.survival.utils.customInventory.CustomInventoryListener;
+import de.hems.paper.customInventory.CustomInventoryListener;
 import de.schnorrenbergers.survival.utils.events.RequestPlayerMoneyEventHandler;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Survival extends JavaPlugin {
@@ -32,15 +35,18 @@ public final class Survival extends JavaPlugin {
             throw new RuntimeException(e);
         }
         new RequestPlayerMoneyEventHandler();
-        getCommand("admin").setExecutor(new de.schnorrenbergers.survival.commands.AdminCommand());
-        getCommand("admin").setTabCompleter(new de.schnorrenbergers.survival.commands.AdminCommand());
-        getCommand("debug").setExecutor(new DebugCommand());
-        getCommand("debug").setTabCompleter(new DebugCommand());
-        getCommand("cteam").setExecutor(new TeamCommand());
-        getCommand("cteam").setTabCompleter(new TeamCommand());
+        registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
+        registerCommand("debug", new DebugCommand());
+        registerCommand("cteam", new TeamCommand());
         getCommand("rs").setExecutor(new RestartCommand());
+        registerCommand("servermanger", new ServerManagerCommand());
         new Tablist();
-        new CustomInventoryListener();
+        new CustomInventoryListener(this);
+    }
+
+    private void registerCommand(String commandName, Object command) {
+        getCommand(commandName).setExecutor((CommandExecutor) command);
+        getCommand(commandName).setTabCompleter((TabCompleter) command);
     }
 
     @Override

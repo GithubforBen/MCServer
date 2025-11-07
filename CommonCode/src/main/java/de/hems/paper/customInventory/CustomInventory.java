@@ -1,7 +1,7 @@
-package de.schnorrenbergers.survival.utils.customInventory;
+package de.hems.paper.customInventory;
 
 import de.hems.api.ItemApi;
-import de.schnorrenbergers.survival.utils.customInventory.types.ItemAction;
+import de.hems.paper.customInventory.types.ItemAction;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;

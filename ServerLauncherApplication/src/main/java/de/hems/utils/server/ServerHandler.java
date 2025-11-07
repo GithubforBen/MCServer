@@ -1,6 +1,7 @@
 package de.hems.utils.server;
 
-import de.hems.FileType;
+import de.hems.types.FileType;
+import de.hems.types.Server;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -13,8 +14,6 @@ public class ServerHandler {
 
     public ServerHandler() throws Exception {
         instances = new ArrayList<>();
-        ServerInstance velocity = new ServerInstance("VELOCITY", 512, FileType.SERVER.VELOCITY, 25565, true, new FileType.PLUGIN[0]);
-        instances.add(velocity);
         //TODO: add velocity.start();
     }
 
@@ -70,5 +69,11 @@ public class ServerHandler {
     public boolean doesInstanceExist(String name) {
         return instances.stream().anyMatch(ServerInstance -> ServerInstance.getName().equals(name));
     }
-
+    public Server[] collectToServer() {
+        List<Server> servers = new ArrayList<>();
+        for (ServerInstance instance : instances) {
+            servers.add(new Server(instance.getName(), instance.getPort(), instance.getAllocatedMemoryMB()));
+        }
+        return servers.toArray(new Server[0]);
+    }
 }

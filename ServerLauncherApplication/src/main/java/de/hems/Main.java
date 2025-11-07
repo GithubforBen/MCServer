@@ -2,9 +2,10 @@ package de.hems;
 
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.money.RequestPlayerMoneyEvent;
-import de.hems.events.RespondDataEvent;
-import de.hems.events.RestartServerEvent;
-import de.hems.events.StartServerEvent;
+import de.hems.communication.events.server.RequestServersEvent;
+import de.hems.events.*;
+import de.hems.types.FileType;
+import de.hems.types.Server;
 import de.hems.utils.Configuration;
 import de.hems.utils.server.ServerHandler;
 import de.hems.utils.types.RunningMode;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Main {
@@ -41,16 +44,12 @@ public class Main {
         serverHandler = new ServerHandler();
         new StartServerEvent();
         new RestartServerEvent();
+        new StopServerEvent();
+        new RequestServerDataEvent();
         serverHandler.startNewInstance(
                 ListenerAdapter.ServerName.SURVIVAL.toString(), 4000, FileType.SERVER.PAPER, 25565, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
-        new Thread(() -> {
-            try {
-                Thread.sleep(1000 * 40);
-                ListenerAdapter.sendListeners(new RequestPlayerMoneyEvent(ListenerAdapter.ServerName.HOST, ListenerAdapter.ServerName.SURVIVAL, UUID.randomUUID()));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
+        serverHandler.startNewInstance(
+                ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
     }
 
     public static void main(String[] args) throws Exception {
@@ -105,4 +104,5 @@ public class Main {
         }
         throw new IllegalStateException("Unknown running mode");
     }
+
 }

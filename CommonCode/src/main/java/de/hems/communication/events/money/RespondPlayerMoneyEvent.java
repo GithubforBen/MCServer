@@ -12,8 +12,8 @@ public class RespondPlayerMoneyEvent extends EventFoundationData implements Even
     private  UUID playerId;
     private  int money;
 
-    public RespondPlayerMoneyEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID playerId, int money) {
-        super(sender, receiver, UUID.randomUUID());
+    public RespondPlayerMoneyEvent(ListenerAdapter.ServerName receiver, UUID playerId, int money) {
+        super(receiver);
         this.playerId = playerId;
         this.money = money;
     }

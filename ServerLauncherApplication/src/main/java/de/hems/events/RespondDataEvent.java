@@ -20,7 +20,6 @@ public class RespondDataEvent implements EventHandler<RequestDataFromConfigEvent
         RequestDataFromConfigEvent e = (RequestDataFromConfigEvent) event;
         if (config.contains(e.getKey())) {
             RespondDataFromConfigEvent respondDataFromConfigEvent = new RespondDataFromConfigEvent(
-                    Main.getInstance().getListenerAdapter().getName(),
                     e.getSender(),
                     config.get(e.getKey()),
                     e.getKey(),
@@ -29,7 +28,7 @@ public class RespondDataEvent implements EventHandler<RequestDataFromConfigEvent
             ListenerAdapter.sendListeners(respondDataFromConfigEvent);
             return;
         }
-        ListenerAdapter.sendListeners(new RespondDataFromConfigEvent(Main.getInstance().getListenerAdapter().getName(),
+        ListenerAdapter.sendListeners(new RespondDataFromConfigEvent(
                 e.getSender(),
                 null,
                 e.getKey(),

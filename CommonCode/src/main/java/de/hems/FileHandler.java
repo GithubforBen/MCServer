@@ -1,5 +1,7 @@
 package de.hems;
 
+import de.hems.types.FileType;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;

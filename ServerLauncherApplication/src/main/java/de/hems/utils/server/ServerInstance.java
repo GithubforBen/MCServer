@@ -1,6 +1,6 @@
 package de.hems.utils.server;
 
-import de.hems.FileType;
+import de.hems.types.FileType;
 import de.hems.Main;
 
 import java.io.*;

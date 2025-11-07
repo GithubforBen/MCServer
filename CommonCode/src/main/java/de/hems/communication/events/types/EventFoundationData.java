@@ -9,10 +9,10 @@ public class EventFoundationData implements Event {
     private ListenerAdapter.ServerName receiver;
     private UUID eventId;
 
-    public EventFoundationData(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId) {
-        this.sender = sender;
+    public EventFoundationData(ListenerAdapter.ServerName receiver) {
+        this.sender = ListenerAdapter.getName();
         this.receiver = receiver;
-        this.eventId = eventId;
+        this.eventId = UUID.randomUUID();
     }
 
     public EventFoundationData() {}

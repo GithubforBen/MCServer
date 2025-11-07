@@ -1,9 +1,10 @@
-package de.schnorrenbergers.survival.utils.customInventory.types;
+package de.schnorrenbergers.survival.utils;
 
 import de.hems.api.ItemApi;
+import de.hems.paper.customInventory.CustomInventory;
+import de.hems.paper.customInventory.types.InventoryBase;
+import de.hems.paper.customInventory.types.ItemAction;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
-import de.schnorrenbergers.survival.utils.customInventory.CustomInventory;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -14,7 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
-public class Inventorys {
+public class Inventorys extends InventoryBase {
     /**
      * @return a configured {@link CustomInventory} instance
      * representing an inventory setup for adding money

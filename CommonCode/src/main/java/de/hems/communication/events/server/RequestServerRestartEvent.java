@@ -18,8 +18,8 @@ public class RequestServerRestartEvent extends EventFoundationData implements Ev
     public RequestServerRestartEvent() {
     }
 
-    public RequestServerRestartEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId, String serverName) {
-        super(sender, receiver, eventId);
+    public RequestServerRestartEvent(ListenerAdapter.ServerName receiver,String serverName) {
+        super(receiver);
         this.serverName = serverName;
     }
 }

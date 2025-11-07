@@ -1,4 +1,4 @@
-package de.hems;
+package de.hems.types;
 
 import java.io.Serializable;
 

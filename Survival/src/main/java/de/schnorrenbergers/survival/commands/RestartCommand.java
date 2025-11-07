@@ -19,9 +19,7 @@ public class RestartCommand implements CommandExecutor {
         if (args.length != 1) {
             try {
                 ListenerAdapter.sendListeners(new RequestServerRestartEvent(
-                        ListenerAdapter.ServerName.SURVIVAL,
                         ListenerAdapter.ServerName.HOST,
-                        UUID.randomUUID(),
                         ListenerAdapter.ServerName.SURVIVAL.toString()
                 ));
             } catch (Exception e) {
@@ -31,9 +29,7 @@ public class RestartCommand implements CommandExecutor {
         }
         try {
             ListenerAdapter.sendListeners(new RequestServerRestartEvent(
-                    ListenerAdapter.ServerName.SURVIVAL,
                     ListenerAdapter.ServerName.HOST,
-                    UUID.randomUUID(),
                     args[0]
             ));
         } catch (Exception e) {

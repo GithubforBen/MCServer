@@ -14,8 +14,8 @@ public class RequestPlayerMoneyEvent extends EventFoundationData implements Even
     public RequestPlayerMoneyEvent() {
     }
 
-    public RequestPlayerMoneyEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID playerId) {
-        super(sender, receiver, UUID.randomUUID());
+    public RequestPlayerMoneyEvent(ListenerAdapter.ServerName receiver, UUID playerId) {
+        super(receiver);
         this.playerId = playerId;
     }
 

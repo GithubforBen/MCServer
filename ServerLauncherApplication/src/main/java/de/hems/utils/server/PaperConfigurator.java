@@ -3,7 +3,7 @@ package de.hems.utils.server;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import de.hems.FileHandler;
-import de.hems.FileType;
+import de.hems.types.FileType;
 import de.hems.api.UUIDFetcher;
 
 import java.io.File;

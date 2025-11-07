@@ -11,8 +11,8 @@ public class RequestDataFromConfigEvent extends EventFoundationData implements E
     private static final long serialVersionUID = 1L;
     private String key;
 
-    public RequestDataFromConfigEvent(ListenerAdapter.ServerName sender, UUID eventId, String key) {
-        super(sender, ListenerAdapter.ServerName.HOST, eventId);
+    public RequestDataFromConfigEvent(String key) {
+        super(ListenerAdapter.ServerName.HOST);
         this.key = key;
     }
 

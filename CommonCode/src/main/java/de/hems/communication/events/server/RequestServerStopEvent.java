@@ -11,8 +11,8 @@ public class RequestServerStopEvent extends EventFoundationData implements Event
     private static final long serialVersionUID = 7L;
     private String serverName;
 
-    public RequestServerStopEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId, String serverName) {
-        super(sender, receiver, eventId);
+    public RequestServerStopEvent(ListenerAdapter.ServerName receiver, String serverName) {
+        super(receiver);
         this.serverName = serverName;
     }
 
