@@ -13,12 +13,12 @@ public class ServerHandler {
 
     public ServerHandler() throws Exception {
         instances = new ArrayList<>();
-        ServerInstance velocity = new ServerInstance("VELOCITY", 512, FileType.VELOCITY, 25565, true);
+        ServerInstance velocity = new ServerInstance("VELOCITY", 512, FileType.SERVER.VELOCITY, 25565, true);
         instances.add(velocity);
         //TODO: add velocity.start();
     }
 
-    public void startNewInstance(String name, int allocatedMemoryMB, FileType jarFile, int port, boolean isProxied) throws Exception {
+    public void startNewInstance(String name, int allocatedMemoryMB, FileType.SERVER jarFile, int port, boolean isProxied) throws Exception {
         ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, port, isProxied);
         instances.add(instance);
         instance.start();
@@ -29,6 +29,13 @@ public class ServerHandler {
         if (!first.isPresent()) {
             throw new RuntimeException("Server with name " + name + " not found");
         }
+        first.ifPresent(ServerInstance -> {
+            try {
+                ServerInstance.stop();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
         new Thread(() -> {
             try {
                 Thread.sleep(Duration.ofSeconds(10L));

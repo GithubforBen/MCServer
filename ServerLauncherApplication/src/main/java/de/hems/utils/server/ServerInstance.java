@@ -13,7 +13,7 @@ public class ServerInstance {
     private final String name;
     private final File directory;
     private int allocatedMemoryMB;
-    private final FileType jarFile;
+    private final FileType.SERVER jarFile;
     private boolean printStream = true;
     private int port;
     private boolean isProxied;
@@ -22,7 +22,7 @@ public class ServerInstance {
         return port;
     }
 
-    public ServerInstance(String name, int allocatedMemoryMB, FileType jarFile, int port, boolean isProxied) throws Exception {
+    public ServerInstance(String name, int allocatedMemoryMB, FileType.SERVER jarFile, int port, boolean isProxied) throws Exception {
         this.name = name;
         this.allocatedMemoryMB = allocatedMemoryMB;
         this.jarFile = jarFile;
@@ -32,7 +32,7 @@ public class ServerInstance {
         if (!directory.exists()) {
             directory.mkdirs();
         }
-        File jar = new File(directory.getPath() + "/" + FileType.getFileName(jarFile));
+        File jar = new File(directory.getPath() + "/" + FileType.SERVER.getFileName(jarFile));
         if (!jar.exists()) {
             switch (jarFile) {
                 case PAPER -> {
@@ -45,7 +45,7 @@ public class ServerInstance {
 
     public void start() throws IOException {
         System.out.println("Starting server " + name);
-        ProcessBuilder pb = new ProcessBuilder("java", "-jar", "-Xmx" + allocatedMemoryMB + "m", FileType.getFileName(jarFile)).directory(directory);
+        ProcessBuilder pb = new ProcessBuilder("java", "-jar", "-Xmx" + allocatedMemoryMB + "m", FileType.SERVER.getFileName(jarFile)).directory(directory);
         process = pb.start();
         new Thread(() -> {
             while (process.isAlive()) {
@@ -126,7 +126,7 @@ public class ServerInstance {
         return allocatedMemoryMB;
     }
 
-    public FileType getJarFile() {
+    public FileType.SERVER getJarFile() {
         return jarFile;
     }
 

@@ -48,7 +48,7 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
                             ListenerAdapter.ServerName.HOST,
                             UUID.randomUUID(),
                             "debug",
-                            FileType.PAPER,
+                            FileType.SERVER.PAPER,
                             4000,
                             2000
                     ));

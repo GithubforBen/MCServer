@@ -11,11 +11,11 @@ import java.util.UUID;
 public class RequestServerStartEvent extends EventFoundationData implements Event, Serializable {
     private static final long serialVersionUID = 5L;
     private String serverName;
-    private FileType type;
+    private FileType.SERVER type;
     private Integer port;
     private Integer memory;
 
-    public RequestServerStartEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId, String serverName, FileType type, Integer port, Integer memory) {
+    public RequestServerStartEvent(ListenerAdapter.ServerName sender, ListenerAdapter.ServerName receiver, UUID eventId, String serverName, FileType.SERVER type, Integer port, Integer memory) {
         super(sender, receiver, eventId);
         this.serverName = serverName;
         this.type = type;
@@ -31,7 +31,7 @@ public class RequestServerStartEvent extends EventFoundationData implements Even
         return serverName;
     }
 
-    public FileType getType() {
+    public FileType.SERVER getType() {
         return type;
     }
 

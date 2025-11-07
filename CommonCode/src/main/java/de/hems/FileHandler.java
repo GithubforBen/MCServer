@@ -15,19 +15,19 @@ public class FileHandler {
         }
     }
 
-    public File provideFile(FileType type) {
+    public File provideFile(FileType.SERVER type) {
         downloadIfNeeded(type);
-        return new File("./downloads/" + FileType.getFileName(type));
+        return new File("./downloads/" + FileType.SERVER.getFileName(type));
     }
 
-    public void downloadIfNeeded(FileType type) {
-        File file = new File("./downloads/" + FileType.getFileName(type));
+    public void downloadIfNeeded(FileType.SERVER type) {
+        File file = new File("./downloads/" + FileType.SERVER.getFileName(type));
         if (file.exists()) {
             return;
         }
         System.out.println("Downloading " + type );
         try {
-            BufferedInputStream in = new BufferedInputStream(new URL(FileType.getFileURL(type)).openStream());
+            BufferedInputStream in = new BufferedInputStream(new URL(FileType.SERVER.getFileURL(type)).openStream());
             FileOutputStream fileOutputStream = new FileOutputStream(file);
             byte dataBuffer[] = new byte[1024];
             int bytesRead;

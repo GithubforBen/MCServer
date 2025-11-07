@@ -30,8 +30,8 @@ public class PaperConfigurator extends ServerConfigurator {
     }
 
     public void configure() throws Exception {
-        File jar = new File(this.directory + "/" + FileType.getFileName(FileType.PAPER));
-        File file = new FileHandler().provideFile(FileType.PAPER);
+        File jar = new File(this.directory + "/" + FileType.SERVER.getFileName(FileType.SERVER.PAPER));
+        File file = new FileHandler().provideFile(FileType.SERVER.PAPER);
         Files.copy(file.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         writeToFile("eula.txt", "eula=true");
         writeToFile("server.properties", "server-ip=" + ip);
