@@ -17,7 +17,16 @@ public class RestartCommand implements CommandExecutor {
             return false;
         }
         if (args.length != 1) {
-            sender.sendMessage("Please specify a server name");
+            try {
+                ListenerAdapter.sendListeners(new RequestServerRestartEvent(
+                        ListenerAdapter.ServerName.SURVIVAL,
+                        ListenerAdapter.ServerName.HOST,
+                        UUID.randomUUID(),
+                        ListenerAdapter.ServerName.SURVIVAL.toString()
+                ));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             return false;
         }
         try {

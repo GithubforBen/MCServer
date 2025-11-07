@@ -41,7 +41,8 @@ public class Main {
         serverHandler = new ServerHandler();
         new StartServerEvent();
         new RestartServerEvent();
-        serverHandler.startNewInstance("lobby", 4000, FileType.PAPER, 25565, false);
+        serverHandler.startNewInstance(
+                ListenerAdapter.ServerName.SURVIVAL.toString(), 4000, FileType.PAPER, 25565, false);
         new Thread(() -> {
             try {
                 Thread.sleep(1000 * 40);

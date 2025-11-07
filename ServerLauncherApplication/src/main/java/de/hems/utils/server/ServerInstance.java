@@ -15,12 +15,20 @@ public class ServerInstance {
     private int allocatedMemoryMB;
     private final FileType jarFile;
     private boolean printStream = true;
+    private int port;
+    private boolean isProxied;
+
+    public int getPort() {
+        return port;
+    }
 
     public ServerInstance(String name, int allocatedMemoryMB, FileType jarFile, int port, boolean isProxied) throws Exception {
         this.name = name;
         this.allocatedMemoryMB = allocatedMemoryMB;
         this.jarFile = jarFile;
+        this.port = port;
         this.directory = new File("./servers/" + name + "/");
+        this.isProxied = isProxied;
         if (!directory.exists()) {
             directory.mkdirs();
         }
@@ -110,4 +118,19 @@ public class ServerInstance {
         return process.isAlive();
     }
 
+    public File getDirectory() {
+        return directory;
+    }
+
+    public int getAllocatedMemoryMB() {
+        return allocatedMemoryMB;
+    }
+
+    public FileType getJarFile() {
+        return jarFile;
+    }
+
+    public boolean isProxied() {
+        return isProxied;
+    }
 }

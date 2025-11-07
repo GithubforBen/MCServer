@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.hems.communication.events.server.RequestServerStartEvent;
 import de.hems.communication.events.types.Event;
+import de.hems.communication.events.types.EventFoundationData;
 import de.hems.communication.events.types.EventHandler;
 import org.jgroups.*;
 import org.jgroups.util.MessageBatch;
@@ -69,11 +70,15 @@ public class ListenerAdapter implements Receiver {
 
     @Override
     public void receive(Message msg) {
-        System.out.println(name + "received message");
+        System.out.println(name + " received message");
         Object object = msg.getObject();
         System.out.println(object);
         if (object instanceof Event) {
-            System.out.println(name +"sending event");
+            EventFoundationData event = (EventFoundationData) object;
+            if (event.getReceiver() == null || !event.getReceiver().equals(name)) {
+                System.out.println(name + " Event not for me");
+                return;
+            }
             executeListeners((Event) object);
         }
     }

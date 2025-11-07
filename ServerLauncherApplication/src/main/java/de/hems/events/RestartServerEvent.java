@@ -5,8 +5,9 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.server.RequestServerRestartEvent;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventHandler;
+import de.hems.utils.server.ServerInstance;
 
-public class RestartServerEvent  implements EventHandler<RequestServerRestartEvent> {
+public class RestartServerEvent implements EventHandler<RequestServerRestartEvent> {
     public RestartServerEvent() {
         ListenerAdapter.register(RequestServerRestartEvent.class, this);
     }
@@ -16,6 +17,24 @@ public class RestartServerEvent  implements EventHandler<RequestServerRestartEve
         if (!(event instanceof RequestServerRestartEvent)) {
             return;
         }
-        Main.getInstance().getServerHandler().stop(((RequestServerRestartEvent) event).getServerName());
+        System.out.println(1);
+        ServerInstance stop = Main.getInstance().getServerHandler().stop(((RequestServerRestartEvent) event).getServerName());
+        System.out.println(2);
+        new Thread(() -> {
+            System.out.println("Thread");
+            while (!Main.getInstance().getServerHandler().doesInstanceExist(((RequestServerRestartEvent) event).getServerName())) {
+                System.out.println("Waiting for server to stop...");
+                try {
+                    Thread.sleep(1000L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            try {
+                Main.getInstance().getServerHandler().startNewInstance(stop.getName(), stop.getAllocatedMemoryMB(), stop.getJarFile(), stop.getPort(), stop.isProxied());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
     }
 }

@@ -2,6 +2,7 @@ package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
 import de.schnorrenbergers.survival.commands.DebugCommand;
+import de.schnorrenbergers.survival.commands.RestartCommand;
 import de.schnorrenbergers.survival.commands.TeamCommand;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
@@ -26,7 +27,7 @@ public final class Survival extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
-            listenerAdapter = new ListenerAdapter("Survival");
+            listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.SURVIVAL);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -37,6 +38,7 @@ public final class Survival extends JavaPlugin {
         getCommand("debug").setTabCompleter(new DebugCommand());
         getCommand("cteam").setExecutor(new TeamCommand());
         getCommand("cteam").setTabCompleter(new TeamCommand());
+        getCommand("rs").setExecutor(new RestartCommand());
         new Tablist();
         new CustomInventoryListener();
     }

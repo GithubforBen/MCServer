@@ -4,7 +4,7 @@ import de.hems.communication.ListenerAdapter;
 
 import java.util.UUID;
 
-public class EventFoundationData {
+public class EventFoundationData implements Event {
     private ListenerAdapter.ServerName sender;
     private ListenerAdapter.ServerName receiver;
     private UUID eventId;
