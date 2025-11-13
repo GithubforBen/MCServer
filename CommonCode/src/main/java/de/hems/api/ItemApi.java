@@ -281,7 +281,6 @@ public class ItemApi {
         skullMeta.addEnchant(enchantment, enchantmentlevel, true);
     } //creates skull with enchantment
 
-    //TODO: Test when minecraft servers are back online
     public ItemApi(URL textures, String name) {
         itemStack = new ItemStack(Material.PLAYER_HEAD);
         skullMeta = (SkullMeta) itemStack.getItemMeta();

@@ -1,5 +1,6 @@
 package de.schnorrenbergers.survival.featrues.money;
 
+import de.hems.api.UUIDFetcher;
 import de.schnorrenbergers.survival.Survival;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -14,7 +15,8 @@ public class MoneyHandler {
             config.set(uuid + ".money", config.getInt(uuid + ".money") + amount);
         } else {
             config.set(uuid + ".money", amount);
-            config.setComments(uuid.toString() + ".money", List.of("This is the money of the player + <PlayerName>"));//TODO: set player name
+            config.setComments(uuid.toString() + ".money", List.of("This is the money of the player " +
+                    UUIDFetcher.findNameByUUID(uuid)));
         }
         Survival.getInstance().getMoneyConfig().save();
     }
