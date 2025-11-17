@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class MoneyConfig {
     private File file;
-    private YamlConfiguration config;
+    private CustomConfig config;
     public MoneyConfig() {
         file = new File("./configs/money-config.yml");
         if(!file.exists()) {
@@ -18,7 +18,7 @@ public class MoneyConfig {
                 throw new RuntimeException(e);
             }
         }
-        config = YamlConfiguration.loadConfiguration(file);
+        config = CustomConfig.loadConfiguration(file);
     }
 
     public void  save() {
@@ -29,7 +29,7 @@ public class MoneyConfig {
         }
     }
 
-    public YamlConfiguration getConfig() {
+    public CustomConfig getConfig() {
         return config;
     }
 }

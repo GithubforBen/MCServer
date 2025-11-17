@@ -8,19 +8,13 @@ import de.hems.communication.events.types.EventFoundationData;
 import de.hems.communication.events.types.EventHandler;
 import de.hems.communication.events.types.RespondDataEvent;
 import org.jgroups.*;
-import org.jgroups.util.MessageBatch;
 
 import java.util.*;
 
 public class ListenerAdapter implements Receiver {
 
-    public enum ServerName {
-        SURVIVAL,
-        LOBBY,
-        EVENT,
-        HOST;
-    }
-
+    private final static Multimap<Class<? extends Event>, EventHandler<? extends Event>> listeners = ArrayListMultimap.create();
+    private final static List<RespondDataEvent> respondDataEvents = new LinkedList<>();
     private static boolean isInitialized = false;
     private static ServerName name;
     private static JChannel jChannel;
@@ -35,9 +29,6 @@ public class ListenerAdapter implements Receiver {
         jChannel.connect("MCServer");
         System.out.println("[JGroups] Connected as '" + name + "' to cluster MCServer. View=" + jChannel.getView());
     }
-
-    private final static Multimap<Class<? extends Event>, EventHandler<? extends Event>> listeners = ArrayListMultimap.create();
-    private final static List<RespondDataEvent> respondDataEvents = new LinkedList<>();
 
     public static <T extends Event> void register(Class<T> eventType, EventHandler<T> listener) {
         listeners.put(eventType, listener);
@@ -65,29 +56,6 @@ public class ListenerAdapter implements Receiver {
         jChannel.send(message);
     }
 
-    @Override
-    public void viewAccepted(View new_view) {
-        System.out.println("** view: " + new_view + " **");
-    }
-
-    @Override
-    public void receive(Message msg) {
-        System.out.println(name + " received message");
-        Object object = msg.getObject();
-        System.out.println(object);
-        if (object instanceof Event) {
-            EventFoundationData event = (EventFoundationData) object;
-            if (event.getReceiver() == null || !event.getReceiver().equals(name)) {
-                System.out.println(name + " Event not for me");
-                return;
-            }
-            if (event instanceof RespondDataEvent) {
-                respondDataEvents.add((RespondDataEvent) event);
-            }
-            executeListeners((Event) object);
-        }
-    }
-
     public static RespondDataEvent waitForEvent(UUID requestId) throws InterruptedException {
         while (respondDataEvents.isEmpty()) {
             Thread.sleep(100);
@@ -102,5 +70,36 @@ public class ListenerAdapter implements Receiver {
 
     public static ServerName getName() {
         return name;
+    }
+
+    @Override
+    public void viewAccepted(View new_view) {
+        System.out.println("** view: " + new_view + " **");
+    }
+
+    @Override
+    public void receive(Message msg) {
+        System.out.println(name + " received message");
+        Object object = msg.getObject();
+        System.out.println(object);
+        if (object instanceof Event) {
+            EventFoundationData event = (EventFoundationData) object;
+            if (event.getReceiver() != ServerName.ALL && (event.getReceiver() == null || !event.getReceiver().equals(name))) {
+                System.out.println(name + " Event not for me");
+                return;
+            }
+            if (event instanceof RespondDataEvent) {
+                respondDataEvents.add((RespondDataEvent) event);
+            }
+            executeListeners((Event) object);
+        }
+    }
+
+    public enum ServerName {
+        ALL,
+        SURVIVAL,
+        LOBBY,
+        EVENT,
+        HOST;
     }
 }
