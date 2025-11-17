@@ -17,7 +17,7 @@ public class RequestPlayerMoneyEventHandler implements EventHandler<RequestPlaye
     public void onEvent(Event event) throws Exception {
         RequestPlayerMoneyEvent e = (RequestPlayerMoneyEvent) event;
         RespondPlayerMoneyEvent respondDataFromConfigEvent = new RespondPlayerMoneyEvent(
-                e.getSender(), e.getPlayerId(),
+                e.getSender(), e.getEventId(),
                 MoneyHandler.getMoney(e.getPlayerId()));
         ListenerAdapter.sendListeners(respondDataFromConfigEvent);
     }
