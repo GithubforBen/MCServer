@@ -1,0 +1,4 @@
+name: LobbyPlugin
+version: '1.0-SNAPSHOT'
+main: de.schnorrenbergers.lobbyPlugin.LobbyPlugin
+api-version: '1.21'
