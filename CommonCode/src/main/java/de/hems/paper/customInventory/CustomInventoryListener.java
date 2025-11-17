@@ -17,6 +17,9 @@ public class CustomInventoryListener implements org.bukkit.event.Listener {
     private static boolean registered = false;
 
     public CustomInventoryListener(Plugin plugin) {
+        if (registered) {
+            return;
+        }
         Bukkit.getPluginManager().registerEvents(this, plugin);
         registered = true;
     }
