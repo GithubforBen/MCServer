@@ -30,10 +30,6 @@ public class CustomConfig extends YamlConfiguration {
             set(path + ".size", shopkeeper.getItems().size());
             return;
         }
-        if (value instanceof UUID) {
-            super.set(path, value.toString());
-            return;
-        }
         if (value instanceof ItemForSale) {
             ItemForSale itemForSale = (ItemForSale) value;
             set(path + ".item", itemForSale.getItem());
@@ -42,35 +38,5 @@ public class CustomConfig extends YamlConfiguration {
         super.set(path, value);
     }
 
-    public Shopkeeper getShopkeeper(String path) {
-        return new Shopkeeper(getUUID(path + ".id"),
-                getLocation(path + ".location.shop"),
-                getLocation(path + ".location.chest"),
-                getString(path + ".ownerTeam"),
-                getItemList(path+ ".items"));
-    }
 
-    public List<ItemForSale> getItemList(@NotNull String path) {
-        List<ItemForSale> result = new ArrayList<>();
-        if (!contains(path + ".size")) return result;
-        if (getInt(path + ".size") == 0) {
-            return result;
-        }
-        for (int i = 0; i < getInt(path + ".size"); i++) {
-            result.add(getItemForSale(path + ".[" + i + "]"));
-        }
-        return result;
-    }
-
-    public ItemForSale getItemForSale(String path) {
-        return new ItemForSale(getItemStack(path+ ".item"), getInt(path + ".price"));
-    }
-
-    public UUID getUUID(String path) {
-        return UUID.fromString(getString(path));
-    }
-
-    public static CustomConfig loadConfiguration(File file) {
-        return (CustomConfig) YamlConfiguration.loadConfiguration(file);
-    }
 }

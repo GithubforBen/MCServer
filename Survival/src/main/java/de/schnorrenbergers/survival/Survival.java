@@ -7,6 +7,7 @@ import de.schnorrenbergers.survival.commands.RestartCommand;
 import de.schnorrenbergers.survival.commands.TeamCommand;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
+import de.schnorrenbergers.survival.utils.configs.ShopConfig;
 import de.schnorrenbergers.survival.utils.configs.TeamConfig;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.schnorrenbergers.survival.utils.events.RequestPlayerMoneyEventHandler;
@@ -19,12 +20,14 @@ public final class Survival extends JavaPlugin {
     private MoneyConfig moneyConfig;
     private ListenerAdapter listenerAdapter;
     private TeamConfig teamConfig;
+    private ShopConfig shopConfig;
 
     @Override
     public void onLoad() {
         instance = this;
         moneyConfig = new MoneyConfig();
         teamConfig = new TeamConfig();
+        shopConfig = new ShopConfig();
     }
 
     @Override
@@ -69,5 +72,9 @@ public final class Survival extends JavaPlugin {
 
     public TeamConfig getTeamConfig() {
         return teamConfig;
+    }
+
+    public ShopConfig getShopConfig() {
+        return shopConfig;
     }
 }

@@ -5,10 +5,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 
-public class MoneyConfig {
+public class ShopConfig {
     private File file;
     private YamlConfiguration config;
-    public MoneyConfig() {
+    public ShopConfig() {
         file = new File("./configs/money-config.yml");
         if(!file.exists()) {
             file.getParentFile().mkdirs();

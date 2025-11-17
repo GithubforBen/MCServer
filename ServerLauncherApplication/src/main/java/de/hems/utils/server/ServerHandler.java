@@ -60,16 +60,25 @@ public class ServerHandler {
         }).start();
         return first.get();
     }
+
     public void shutdownNetwork() throws IOException {
+        updateInstances();
         for (ServerInstance instance : instances) {
             instance.stop();
         }
     }
 
     public boolean doesInstanceExist(String name) {
+        updateInstances();
         return instances.stream().anyMatch(ServerInstance -> ServerInstance.getName().equals(name));
     }
+
+    public void updateInstances() {
+        instances.removeIf(instance -> !instance.isAlive());
+    }
+
     public Server[] collectToServer() {
+        updateInstances();
         List<Server> servers = new ArrayList<>();
         for (ServerInstance instance : instances) {
             servers.add(new Server(instance.getName(), instance.getPort(), instance.getAllocatedMemoryMB()));

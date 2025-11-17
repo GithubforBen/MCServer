@@ -12,6 +12,8 @@
         <module>Survival</module>
         <module>CommonCode</module>
         <module>ServerLauncherApplication</module>
+        <module>LobbyPlugin</module>
+        <module>Bedwars</module>
     </modules>
 
     <properties>
