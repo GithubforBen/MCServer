@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public class MoneyHandler {
 
-    public static void addMoney(int amount, UUID uuid){
+    public static synchronized void addMoney(int amount, UUID uuid){
         YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
         if (config.contains(uuid.toString() + ".money")) {
             config.set(uuid + ".money", config.getInt(uuid + ".money") + amount);
@@ -21,7 +21,7 @@ public class MoneyHandler {
         Survival.getInstance().getMoneyConfig().save();
     }
 
-    public static boolean removeMoney(int amount, UUID uuid){
+    public static synchronized boolean removeMoney(int amount, UUID uuid){
         YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
         if (config.contains(uuid.toString() + ".money")) {
             if (config.getInt(uuid.toString() + ".money") < amount) return false;
@@ -33,7 +33,7 @@ public class MoneyHandler {
         return true;
     }
 
-    public static int getMoney(UUID uuid){
+    public static synchronized int getMoney(UUID uuid){
         YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
         if (config.contains(uuid.toString() + ".money")) {
             return config.getInt(uuid.toString() + ".money");
