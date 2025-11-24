@@ -48,8 +48,8 @@ public class Main {
         new RequestServerDataEvent();
         serverHandler.startNewInstance(
                 ListenerAdapter.ServerName.SURVIVAL.toString(), 4000, FileType.SERVER.PAPER, 25565, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT, FileType.PLUGIN.SIMPLE_VOICECHAT});
-        serverHandler.startNewInstance(
-                ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
+        //serverHandler.startNewInstance(
+        //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
     }
 
     public static void main(String[] args) throws Exception {

@@ -4,12 +4,19 @@ import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.InventoryBase;
 import de.hems.paper.customInventory.types.ItemAction;
+import de.schnorrenbergers.survival.Survival;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
+import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
+import org.bukkit.*;
+import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -72,6 +79,64 @@ public class Inventorys extends InventoryBase {
                         return null;
                     }
                 });
+        return customInventory;
+    }
+
+    public static CustomInventory ADMIN_SHOPKEEPER_INVENTORY(Shopkeeper shopkeeper) {
+        CustomInventory customInventory = new CustomInventory(9*5, "Shopkeeper:" + shopkeeper.getUuid(), (event) -> {});
+        for (int i = 0; i < 9*5; i++) {
+            customInventory.setPlaceHolder(i);
+        }
+        customInventory.setItem(10, new ItemApi(Material.CHEST, "Set Chest Location").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUID.fromString("30a2efe7-a143-4507-a879-e573f2c76d97");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+                event.getWhoClicked().getPersistentDataContainer().set(
+                       new NamespacedKey("shopkeeper", "chestlocation"), PersistentDataType.STRING, shopkeeper.getUuid().toString());
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (!(event.getWhoClicked() instanceof Player)) {
+                            cancel();
+                            return;
+                        }
+                        String s = event.getWhoClicked().getPersistentDataContainer().get(
+                                new NamespacedKey("shopkeeper", "chestlocation"), PersistentDataType.STRING
+                        );
+                        if (s == null) {
+                            cancel();
+                            return;
+                        }
+                        Shopkeeper shopkeeper1 = ShopkeeperManager.getShopkeeper(UUID.fromString(s));
+                        if (shopkeeper1 == null) {
+                            cancel();
+                            return;
+                        }
+                        new ParticleLine(event.getWhoClicked().getLocation(), shopkeeper1.getShop(), Particle.HAPPY_VILLAGER, 0.1).drawParticleLine();
+                    }
+                }.runTaskTimer(Survival.getInstance(), 0L, 100L);
+                event.getWhoClicked().closeInventory();
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return null;
+            }
+        });
         return customInventory;
     }
 }

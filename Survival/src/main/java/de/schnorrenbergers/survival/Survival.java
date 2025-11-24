@@ -4,7 +4,11 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.paper.commands.ServerManagerCommand;
 import de.schnorrenbergers.survival.commands.DebugCommand;
 import de.schnorrenbergers.survival.commands.RestartCommand;
+import de.schnorrenbergers.survival.commands.ShopkeeperCommand;
 import de.schnorrenbergers.survival.commands.TeamCommand;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
 import de.schnorrenbergers.survival.utils.configs.ShopConfig;
@@ -28,6 +32,7 @@ public final class Survival extends JavaPlugin {
         moneyConfig = new MoneyConfig();
         teamConfig = new TeamConfig();
         shopConfig = new ShopConfig();
+        new ShopkeeperManager();
     }
 
     @Override
@@ -43,8 +48,10 @@ public final class Survival extends JavaPlugin {
         registerCommand("cteam", new TeamCommand());
         getCommand("rs").setExecutor(new RestartCommand());
         registerCommand("servermanger", new ServerManagerCommand());
+        registerCommand("shopkeeper", new ShopkeeperCommand());
         new Tablist();
         new CustomInventoryListener(this);
+        new ShopkeeperListener();
     }
 
     private void registerCommand(String commandName, Object command) {

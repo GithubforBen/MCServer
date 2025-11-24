@@ -4,13 +4,16 @@ import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Chest;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ public class Shopkeeper {
     private Location chest;
     private String ownerTeam;
     private List<ItemForSale> items;
+    private Villager villager;
 
     public Shopkeeper(UUID uuid, Location shop, Location chest, String ownerTeam, List<ItemForSale> items) {
         this.uuid = uuid;
@@ -31,6 +35,11 @@ public class Shopkeeper {
         this.chest = chest;
         this.ownerTeam = ownerTeam;
         this.items = items;
+        this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
+        villager.setAdult();
+        villager.setAI(false);
+        villager.setInvulnerable(true);
+        villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING,uuid.toString());
     }
 
     public Shopkeeper(UUID uuid) {
@@ -41,6 +50,11 @@ public class Shopkeeper {
         this.chest = config.getLocation(path + ".location.chest");
         this.ownerTeam = config.getString(path + ".ownerTeam");
         this.items = getItemList(path + ".items");
+        this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
+        villager.setAdult();
+        villager.setAI(false);
+        villager.setInvulnerable(true);
+        villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING,uuid.toString());
     }
 
     public void buyItem(Player player, ItemForSale item) {
@@ -50,7 +64,7 @@ public class Shopkeeper {
         }
         Chest chestBlock = (Chest) chest.getBlock();
         if (calculateContent(chestBlock.getInventory(), item.getItem()) < item.getItem().getAmount()) {
-            player.sendMessage("Insuficent stock in the shopkeeper's chest");
+            player.sendMessage("Insufficient stock in the shopkeeper's chest");
             return;
         }
         if (MoneyHandler.removeMoney(item.getPrice(), player.getUniqueId())) {
@@ -149,6 +163,15 @@ public class Shopkeeper {
 
     public void save() {
         YamlConfiguration config = Survival.getInstance().getShopConfig().getConfig();
+        if (config.contains("shopkeepers.ids")) {
+            List<String> stringList = config.getStringList("shopkeepers.ids");
+            if (!stringList.contains(uuid.toString())) {
+                stringList.add(uuid.toString());
+                config.set("shopkeepers.ids", stringList);
+            }
+        } else {
+            config.set("shopkeepers.ids", List.of(uuid.toString()));
+        }
         String path = "shopkeepers." + uuid.toString();
         config.set(path + ".id", uuid);
         config.set(path + ".location.shop", getShop());
@@ -160,6 +183,8 @@ public class Shopkeeper {
             config.set(path + ".price", itemForSale.getPrice());
         }
         config.set(path + ".size", getItems().size());
+        villager.setInvulnerable(false);
+        villager.damage(1000000000);
     }
 
     public UUID getUuid() {
