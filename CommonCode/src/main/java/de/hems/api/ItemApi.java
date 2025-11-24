@@ -37,6 +37,13 @@ public class ItemApi {
         itemMeta.setDisplayName(name);
     }
 
+    public ItemApi(Material material, String name, int amount) {//generiert item mit standard material und name und amount
+        itemStack = new ItemStack(material);
+        itemMeta = itemStack.getItemMeta();
+        itemMeta.setDisplayName(name);
+        itemStack.setAmount(amount);
+    }
+
     public ItemApi(Material material, String name, boolean hasEnchatmentGlint) {//generiert item mit standard material und name
         itemStack = new ItemStack(material);
         itemMeta = itemStack.getItemMeta();

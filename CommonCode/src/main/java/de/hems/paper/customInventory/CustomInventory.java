@@ -2,9 +2,13 @@ package de.hems.paper.customInventory;
 
 import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.types.ItemAction;
+import de.schnorrenbergers.survival.utils.customInventory.types.Inventorys;
+import de.schnorrenbergers.survival.utils.customInventory.types.ItemAction;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
@@ -12,12 +16,14 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.function.Consumer;
 
 public class CustomInventory {
     private Inventory inventory;
-    private static final ItemStack placeholder = new ItemApi(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "[]").build();
+    private static final ItemStack placeholder = new ItemApi(Material.BLACK_STAINED_GLASS_PANE, " ").build();
     private static HashMap<UUID, ItemAction> actions = new HashMap<>();
     private static HashMap<Inventory, Consumer<InventoryCloseEvent>> closeActions = new HashMap<>();
 
@@ -55,6 +61,43 @@ public class CustomInventory {
      */
     public void setPlaceHolder(int position) {
         setItem(position, placeholder, ItemAction.placeholder);
+    }
+
+    public void fillPlaceHolder() {
+        int inventorySize = inventory.getSize();
+        for(int i = 0; i < inventorySize; i++) {
+            setItem(i, placeholder, ItemAction.placeholder);
+        }
+    }
+
+    public void addBackButton(int slot, UUID uuid, CustomInventory backInventory) throws MalformedURLException {
+        setItem(slot, new ItemApi(new URL("http://textures.minecraft.net/texture/cdc9e4dcfa4221a1fadc1b5b2b11d8beeb57879af1c42362142bae1edd5"), ChatColor.ITALIC.toString() + ChatColor.AQUA.toString() + "Gehe zurück").buildSkull(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return uuid;
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+                event.getWhoClicked().closeInventory();
+                event.getWhoClicked().openInventory(backInventory.getInventory());
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return null;
+            }
+        });
     }
 
 
