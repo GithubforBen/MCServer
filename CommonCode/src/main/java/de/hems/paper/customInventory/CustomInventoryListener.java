@@ -57,7 +57,6 @@ public class CustomInventoryListener implements org.bukkit.event.Listener {
                 event.getWhoClicked().openInventory(itemAction.loadInventoryOnClick().getInventory());
             }
         } catch (Exception ignored) {
-            System.out.println(ignored.toString());
         }
 
     }

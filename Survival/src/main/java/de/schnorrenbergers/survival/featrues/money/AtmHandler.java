@@ -11,13 +11,13 @@ public class AtmHandler {
         boolean invContains = player.getInventory().containsAtLeast(ItemStack.of(MoneyHandler.MONEY_ITEM), amount);
         if(invContains) {
             removeItems(player.getInventory(), MoneyHandler.MONEY_ITEM, amount);
-            MoneyHandler.addMoney(amount, player.getUniqueId());
+            MoneyHandler.addMoney(amount*100, player.getUniqueId());
             return;
         }
     }
 
     public static boolean payout(Player player, int amount) {
-        boolean removedMoney = MoneyHandler.removeMoney(amount, player.getUniqueId());
+        boolean removedMoney = MoneyHandler.removeMoney(amount*100, player.getUniqueId());
         if(removedMoney) {
             ItemStack itemStack = new ItemApi(MoneyHandler.MONEY_ITEM, amount).build();
             player.getInventory().addItem(itemStack);

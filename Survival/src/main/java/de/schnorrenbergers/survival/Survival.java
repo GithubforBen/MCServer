@@ -29,14 +29,13 @@ public final class Survival extends JavaPlugin {
     @Override
     public void onLoad() {
         instance = this;
-        moneyConfig = new MoneyConfig();
-        teamConfig = new TeamConfig();
-        shopConfig = new ShopConfig();
-        new ShopkeeperManager();
     }
 
     @Override
     public void onEnable() {
+        moneyConfig = new MoneyConfig();
+        teamConfig = new TeamConfig();
+        shopConfig = new ShopConfig();
         try {
             listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.SURVIVAL);
         } catch (Exception e) {
@@ -51,6 +50,7 @@ public final class Survival extends JavaPlugin {
         registerCommand("shopkeeper", new ShopkeeperCommand());
         new Tablist();
         new CustomInventoryListener(this);
+        new ShopkeeperManager();
         new ShopkeeperListener();
     }
 
@@ -61,8 +61,10 @@ public final class Survival extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ShopkeeperManager.save();
         moneyConfig.save();
         teamConfig.save();
+        shopConfig.save();
     }
 
     public static Survival getInstance() {

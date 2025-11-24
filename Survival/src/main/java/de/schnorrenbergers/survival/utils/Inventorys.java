@@ -119,7 +119,7 @@ public class Inventorys extends InventoryBase {
                         }
                         new ParticleLine(event.getWhoClicked().getLocation(), shopkeeper1.getShop(), Particle.HAPPY_VILLAGER, 0.1).drawParticleLine();
                     }
-                }.runTaskTimer(Survival.getInstance(), 0L, 100L);
+                }.runTaskTimer(Survival.getInstance(), 0L, 10L);
                 event.getWhoClicked().closeInventory();
             }
 
@@ -173,7 +173,7 @@ public class Inventorys extends InventoryBase {
             @Override
             public CustomInventory loadInventoryOnClick() {
                 try {
-                    return de.schnorrenbergers.survival.utils.customInventory.types.Inventorys.ATM_DEPOSIT_INVENTORY();
+                    return ATM_DEPOSIT_INVENTORY();
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
@@ -205,7 +205,7 @@ public class Inventorys extends InventoryBase {
             @Override
             public CustomInventory loadInventoryOnClick() {
                 try {
-                    return de.schnorrenbergers.survival.utils.customInventory.types.Inventorys.ATM_PAYOUT_INVENTORY();
+                    return ATM_PAYOUT_INVENTORY();
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }

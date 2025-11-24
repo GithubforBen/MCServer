@@ -1,11 +1,15 @@
 package de.schnorrenbergers.survival.commands;
 
+import de.hems.api.ItemApi;
 import de.hems.types.FileType;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.server.RequestServerStartEvent;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.ItemForSale;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
 import de.schnorrenbergers.survival.utils.Inventorys;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -66,6 +70,23 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
                 }
                 break;
             }
+            case "sk": {
+                ShopkeeperManager.createShopkeeper(((Player) sender), "TEST").setItems(List.of(
+                        new ItemForSale(
+                                new ItemApi(Material.DIAMOND).build(),
+                                100
+                        ),
+                        new ItemForSale(
+                                new ItemApi(Material.DIRT).build(),
+                                1
+                        ),
+                        new ItemForSale(
+                                new ItemApi(Material.PAPER).build(),
+                                10
+                        )
+                ));
+                break;
+            }
         }
         return false;
     }
@@ -79,6 +100,6 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        return List.of("animation", "inv", "start");
+        return List.of("animation", "inv", "start", "sk");
     }
 }

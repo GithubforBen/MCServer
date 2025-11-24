@@ -23,8 +23,12 @@ public class ShopkeeperCommand implements TabCompleter, org.bukkit.command.Comma
             sender.sendMessage("You must be a player to use this command");
             return false;
         }
+        if (args.length != 1) {
+            sender.sendMessage("Usage: /shopkeeper <name>");
+            return false;
+        }
         Player player = (Player) sender;
-        Shopkeeper shopkeeper = ShopkeeperManager.createShopkeeper(player);
+        Shopkeeper shopkeeper = ShopkeeperManager.createShopkeeper(player, args[0]);
         if (shopkeeper == null) {
             sender.sendMessage("No Shopkeeper could be created!");
             return false;

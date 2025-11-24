@@ -5,6 +5,7 @@ import de.schnorrenbergers.survival.Survival;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scoreboard.Team;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +41,36 @@ public class MoneyHandler {
         YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
         if (config.contains(uuid.toString() + ".money")) {
             return config.getInt(uuid.toString() + ".money");
+        }
+        return 0;
+    }
+    public static synchronized void addMoney(int amount, Team team){
+        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
+        if (config.contains(team.getName() + ".money")) {
+            config.set(team.getName() + ".money", config.getInt(team.getName() + ".money") + amount);
+        } else {
+            config.set(team.getName() + ".money", amount);
+            config.setComments(team.getName() + ".money", List.of("This is the money of the team " + team.getName()));
+        }
+        Survival.getInstance().getMoneyConfig().save();
+    }
+
+    public static synchronized boolean removeMoney(int amount, Team team){
+        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
+        if (config.contains(team.getName() + ".money")) {
+            if (config.getInt(team.getName() + ".money") < amount) return false;
+            config.set(team.getName() + ".money", config.getInt(team.getName() + ".money") - amount);
+        } else {
+            return false;
+        }
+        Survival.getInstance().getMoneyConfig().save();
+        return true;
+    }
+
+    public static synchronized int getMoney(Team team){
+        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
+        if (config.contains(team.getName() + ".money")) {
+            return config.getInt(team.getName() + ".money");
         }
         return 0;
     }

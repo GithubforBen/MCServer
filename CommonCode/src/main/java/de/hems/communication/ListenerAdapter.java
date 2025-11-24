@@ -28,6 +28,7 @@ public class ListenerAdapter implements Receiver {
         jChannel.setReceiver(this);
         jChannel.connect("MCServer");
         System.out.println("[JGroups] Connected as '" + name + "' to cluster MCServer. View=" + jChannel.getView());
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> jChannel.close()));
     }
 
     public static <T extends Event> void register(Class<T> eventType, EventHandler<T> listener) {

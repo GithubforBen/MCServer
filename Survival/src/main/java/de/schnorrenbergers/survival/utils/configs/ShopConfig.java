@@ -9,7 +9,7 @@ public class ShopConfig {
     private File file;
     private YamlConfiguration config;
     public ShopConfig() {
-        file = new File("./configs/money-config.yml");
+        file = new File("./configs/shop-config.yml");
         if(!file.exists()) {
             file.getParentFile().mkdirs();
             try {
