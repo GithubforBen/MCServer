@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival.utils.customInventory.types;
 
 import de.hems.api.ItemApi;
+import de.schnorrenbergers.survival.featrues.money.AtmHandler;
 import de.schnorrenbergers.survival.utils.customInventory.CustomInventory;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -102,7 +103,7 @@ public class Inventorys {
         customInventory.addBackButton(18, UUID.fromString("cd283a6b-48d5-4b0b-a96a-f9f0955b20c6"), ATM_INVENTORY());
 
         // 1, 32, 64
-        int currentInventoryPos = 10; // 27
+        int currentInventoryPos = 10;
         int[] amountMap = {1, 32, 64};
         String[] uuidMap = {"8e3a39d2-cb10-4fdf-b502-16fa5eaaaa13", "4181a762-de4d-490f-a00f-0134de937062", "a8606788-f848-4473-aadf-c47a7691a150"};
 
@@ -120,7 +121,8 @@ public class Inventorys {
 
                 @Override
                 public void onClick(InventoryClickEvent event) {
-                    event.getWhoClicked().sendMessage(String.valueOf(amount));
+                    Player player = (Player) event.getWhoClicked();
+                    AtmHandler.deposit(player, amount);
                 }
 
                 @Override
@@ -141,7 +143,7 @@ public class Inventorys {
             currentInventoryPos += 3;
         }
 
-        customInventory.setItem(26, new ItemApi(Material.DARK_OAK_SIGN, ChatColor.GREEN + "Anzahl eingeben").build(), new ItemAction() {
+        /*customInventory.setItem(26, new ItemApi(Material.DARK_OAK_SIGN, ChatColor.GREEN + "Anzahl eingeben").build(), new ItemAction() {
             @Override
             public UUID getID() {
                 return UUID.fromString("e05317b2-8bdd-4364-b72d-8da5f7063a28");
@@ -174,7 +176,7 @@ public class Inventorys {
             public CustomInventory loadInventoryOnClick() {
                 return null;
             }
-        });
+        });*/
 
         return customInventory;
     }
@@ -183,6 +185,48 @@ public class Inventorys {
         CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.RED + "Geld auszahlen", (event) -> {});
         customInventory.fillPlaceHolder();
         customInventory.addBackButton(18, UUID.fromString("39ed12c5-6a5c-4f52-8f4b-6d8bc2869f81"), ATM_INVENTORY());
+
+        // 1, 32, 64
+        int currentInventoryPos = 10;
+        int[] amountMap = {1, 32, 64};
+        String[] uuidMap = {"1db84b7f-625e-40ec-b21d-5ec010022294", "b0933f0a-9618-4255-ad83-92c91cad4b75", "843e033d-c4b6-4ec0-919a-ae90b75c138a"};
+
+        for(int i = 0; i < amountMap.length; i++) {
+            int amount = amountMap[i];
+
+            ItemStack itemStack = new ItemApi(Material.DIAMOND, ChatColor.BLUE.toString() + amount + " Bits einzahlen", amount).build();
+
+            int finalI = i;
+            customInventory.setItem(currentInventoryPos, itemStack, new ItemAction() {
+                @Override
+                public UUID getID() {
+                    return UUID.fromString(uuidMap[finalI]);
+                }
+
+                @Override
+                public void onClick(InventoryClickEvent event) {
+                    Player player = (Player) event.getWhoClicked();
+                    AtmHandler.payout(player, amount);
+                }
+
+                @Override
+                public boolean isMovable() {
+                    return false;
+                }
+
+                @Override
+                public boolean fireEvent() {
+                    return true;
+                }
+
+                @Override
+                public CustomInventory loadInventoryOnClick() {
+                    return null;
+                }
+            });
+            currentInventoryPos += 3;
+        }
+
         return customInventory;
     }
 }

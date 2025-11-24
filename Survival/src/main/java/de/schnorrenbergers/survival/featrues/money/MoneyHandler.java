@@ -2,12 +2,15 @@ package de.schnorrenbergers.survival.featrues.money;
 
 import de.hems.api.UUIDFetcher;
 import de.schnorrenbergers.survival.Survival;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.UUID;
 
 public class MoneyHandler {
+    public static final Material MONEY_ITEM = Material.DIAMOND;
 
     public static synchronized void addMoney(int amount, UUID uuid){
         YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
