@@ -1,25 +1,19 @@
 package de.schnorrenbergers.survival.utils.customInventory.types;
 
 import de.hems.api.ItemApi;
+import de.hems.paper.customInventory.CustomInventory;
+import de.hems.paper.customInventory.types.ItemAction;
 import de.schnorrenbergers.survival.featrues.money.AtmHandler;
-import de.schnorrenbergers.survival.utils.customInventory.CustomInventory;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Color;
 import org.bukkit.Material;
-import org.bukkit.block.Sign;
-import org.bukkit.block.sign.Side;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.AnvilInventory;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.awt.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.UUID;
 
 public class Inventorys {

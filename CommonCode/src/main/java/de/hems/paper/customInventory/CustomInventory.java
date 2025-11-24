@@ -2,8 +2,6 @@ package de.hems.paper.customInventory;
 
 import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.types.ItemAction;
-import de.schnorrenbergers.survival.utils.customInventory.types.Inventorys;
-import de.schnorrenbergers.survival.utils.customInventory.types.ItemAction;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
