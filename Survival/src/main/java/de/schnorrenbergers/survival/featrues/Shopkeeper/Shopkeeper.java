@@ -95,6 +95,7 @@ public class Shopkeeper {
                     inventory.removeItem(itemStack);
                 } else if (itemStack.getAmount() > amount) {
                     itemStack.setAmount(itemStack.getAmount() - amount);
+                    return;
                 }
             }
         }
