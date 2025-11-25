@@ -3,6 +3,7 @@ package de.hems.api;
 
 import com.destroystokyo.paper.profile.ProfileProperty;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -307,5 +308,13 @@ public class ItemApi {
     public ItemStack buildSkull() {
         itemStack.setItemMeta(skullMeta);
         return itemStack;
+    }
+
+    public static ItemStack CHECKMARKSKULL(String name) {
+        try {
+            return new ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), name).buildSkull();
+        } catch (MalformedURLException e) {
+            return new ItemApi(Material.PLAYER_HEAD, name).buildSkull();
+        }
     }
 }
