@@ -110,4 +110,8 @@ public class CustomInventory {
     public static HashMap<Inventory, Consumer<InventoryCloseEvent>> getCloseActions() {
         return closeActions;
     }
+
+    public void removeItem(int i) {
+        inventory.setItem(i, null);
+    }
 }

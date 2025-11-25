@@ -150,7 +150,7 @@ public class Inventorys extends InventoryBase {
                 return null;
             }
         });
-        customInventory.setItem(11, new ItemApi(Material.DIAMOND, "Items bearbeiten").build(), new ItemAction() {
+        customInventory.setItem(11, new ItemApi(Material.DIAMOND, "Items bearbeitenS").build(), new ItemAction() {
             @Override
             public UUID getID() {
                 return UUID.fromString("41d990e3-050d-42bc-9b66-85b8f456efaa");
@@ -172,14 +172,14 @@ public class Inventorys extends InventoryBase {
             }
 
             @Override
-            public CustomInventory loadInventoryOnClick() {
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
                 return ITEM_MANAGER_INVENTORY(shopkeeper, 1);
             }
         });
         return customInventory;
     }
 
-    public static CustomInventory ITEM_MANAGER_INVENTORY(Shopkeeper shopkeeper, int page) {
+    public static CustomInventory ITEM_MANAGER_INVENTORY(Shopkeeper shopkeeper, int page) throws MalformedURLException {
         CustomInventory customInventory = new CustomInventory(9 * 6, shopkeeper.getName(), (event) -> {
         });
         List<ItemForSale> items = shopkeeper.getItems();
@@ -243,11 +243,37 @@ public class Inventorys extends InventoryBase {
                 }
 
                 @Override
-                public CustomInventory loadInventoryOnClick() {
+                public CustomInventory loadInventoryOnClick() throws MalformedURLException {
                     return ITEM_MANAGER_INVENTORY(shopkeeper, page - 1);
                 }
             });
         }
+        customInventory.setItem(9*6-2, new ItemApi(new URL("http://textures.minecraft.net/texture/5ff31431d64587ff6ef98c0675810681f8c13bf96f51d9cb07ed7852b2ffd1"), "Neu erstellen").buildSkull(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(shopkeeper.getUuid().toString() + ".imi.newitem");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) throws MalformedURLException {
+
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return false;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return ADD_ITEM_INVENTORY(shopkeeper);
+            }
+        });
         if (items.size() > (page * 9 * 4)) {
             customInventory.setItem(9 * 6 - 1, new ItemApi(Material.ARROW, "Next").build(), new ItemAction() {
                 @Override
@@ -271,11 +297,52 @@ public class Inventorys extends InventoryBase {
                 }
 
                 @Override
-                public CustomInventory loadInventoryOnClick() {
+                public CustomInventory loadInventoryOnClick() throws MalformedURLException {
                     return ITEM_MANAGER_INVENTORY(shopkeeper, page + 1);
                 }
             });
         }
+        return customInventory;
+    }
+
+    public static CustomInventory ADD_ITEM_INVENTORY(Shopkeeper shopkeeper) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":Add Item", (event) -> {
+            event.getPlayer().getInventory().addItem(event.getInventory().getItem(4));
+        });
+        customInventory.fillPlaceHolder();
+        customInventory.removeItem(4);
+        customInventory.addBackButton(6, UUIDApi.fromString(shopkeeper.getUuid().toString() + ".backfromitem"), ITEM_MANAGER_INVENTORY(shopkeeper, 1));
+
+
+        customInventory.setItem(8, new  ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(), new ItemAction() {
+
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(shopkeeper.getUuid().toString() + ".imi.deeper.confirmitem");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+                shopkeeper.getItems().add(new ItemForSale(event.getInventory().getItem(4), 1));
+                event.getWhoClicked().closeInventory();
+                event.getWhoClicked().sendMessage("Added a new Item! Set the price!");
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return null;
+            }
+        });
         return customInventory;
     }
 
@@ -635,7 +702,7 @@ public class Inventorys extends InventoryBase {
             }
 
             @Override
-            public CustomInventory loadInventoryOnClick() {
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
                 return ITEM_MANAGER_INVENTORY(shopkeeper, 1);
             }
         });
@@ -689,7 +756,7 @@ public class Inventorys extends InventoryBase {
             }
 
             @Override
-            public CustomInventory loadInventoryOnClick() {
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
                 return ITEM_MANAGER_INVENTORY(shopkeeper,1);
             }
         });
