@@ -58,13 +58,13 @@ public class CustomInventory {
      * @param position the slot position in the inventory where the placeholder item should be placed
      */
     public void setPlaceHolder(int position) {
-        setItem(position, placeholder, ItemAction.placeholder);
+        setItem(position, placeholder, ItemAction.NOTMOVABLE);
     }
 
     public void fillPlaceHolder() {
         int inventorySize = inventory.getSize();
         for(int i = 0; i < inventorySize; i++) {
-            setItem(i, placeholder, ItemAction.placeholder);
+            setItem(i, placeholder, ItemAction.NOTMOVABLE);
         }
     }
 

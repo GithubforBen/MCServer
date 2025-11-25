@@ -28,7 +28,7 @@ public class Shopkeeper {
     private Location shop;
     private Location chest;
     private String ownerTeam;
-    private List<ItemForSale> items;//TODO: add a way to modify this
+    private List<ItemForSale> items;
     private Villager villager;
     private String name;
 
@@ -333,5 +333,13 @@ public class Shopkeeper {
 
     public void setVillager(Villager villager) {
         this.villager = villager;
+    }
+
+    public Villager getVillager() {
+        return villager;
+    }
+
+    public String getName() {
+        return name;
     }
 }

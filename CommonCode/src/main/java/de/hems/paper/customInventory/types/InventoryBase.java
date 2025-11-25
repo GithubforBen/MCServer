@@ -120,7 +120,7 @@ public class InventoryBase {
                 return null;
             }
         });//minus
-        customInventory.setItem(4, new ItemApi(Material.REDSTONE_BLOCK, ramGB, "Ram").build(), ItemAction.placeholder);
+        customInventory.setItem(4, new ItemApi(Material.REDSTONE_BLOCK, ramGB, "Ram").build(), ItemAction.NOTMOVABLE);
         customInventory.setItem(5, new ItemApi(new URL("http://textures.minecraft.net/texture/171d8979c1878a05987a7faf21b56d1b744f9d068c74cffcde1ea1edad5852"), "+").buildSkull(), new ItemAction() {
             @Override
             public UUID getID() {

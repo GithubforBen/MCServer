@@ -1,26 +1,37 @@
 package de.schnorrenbergers.survival.utils;
 
 import de.hems.api.ItemApi;
+import de.hems.api.UUIDApi;
+import de.hems.communication.ListenerAdapter;
+import de.hems.communication.events.server.RequestServerStartEvent;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.InventoryBase;
 import de.hems.paper.customInventory.types.ItemAction;
+import de.hems.types.FileType;
 import de.schnorrenbergers.survival.Survival;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.ItemForSale;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
 import de.schnorrenbergers.survival.featrues.money.AtmHandler;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
-import org.bukkit.*;
+import net.kyori.adventure.text.Component;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Inventorys extends InventoryBase {
@@ -84,8 +95,9 @@ public class Inventorys extends InventoryBase {
     }
 
     public static CustomInventory ADMIN_SHOPKEEPER_INVENTORY(Shopkeeper shopkeeper) {
-        CustomInventory customInventory = new CustomInventory(9*5, "Shopkeeper:" + shopkeeper.getUuid(), (event) -> {});
-        for (int i = 0; i < 9*5; i++) {
+        CustomInventory customInventory = new CustomInventory(9 * 5, "Shopkeeper:" + shopkeeper.getUuid(), (event) -> {
+        });
+        for (int i = 0; i < 9 * 5; i++) {
             customInventory.setPlaceHolder(i);
         }
         customInventory.setItem(10, new ItemApi(Material.CHEST, "Set Chest Location").build(), new ItemAction() {
@@ -97,7 +109,7 @@ public class Inventorys extends InventoryBase {
             @Override
             public void onClick(InventoryClickEvent event) {
                 event.getWhoClicked().getPersistentDataContainer().set(
-                       new NamespacedKey("shopkeeper", "chestlocation"), PersistentDataType.STRING, shopkeeper.getUuid().toString());
+                        new NamespacedKey("shopkeeper", "chestlocation"), PersistentDataType.STRING, shopkeeper.getUuid().toString());
                 new BukkitRunnable() {
                     @Override
                     public void run() {
@@ -138,14 +150,559 @@ public class Inventorys extends InventoryBase {
                 return null;
             }
         });
+        customInventory.setItem(11, new ItemApi(Material.DIAMOND, "Items bearbeiten").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUID.fromString("41d990e3-050d-42bc-9b66-85b8f456efaa");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return false;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return ITEM_MANAGER_INVENTORY(shopkeeper, 1);
+            }
+        });
         return customInventory;
     }
+
+    public static CustomInventory ITEM_MANAGER_INVENTORY(Shopkeeper shopkeeper, int page) {
+        CustomInventory customInventory = new CustomInventory(9 * 6, shopkeeper.getName(), (event) -> {
+        });
+        List<ItemForSale> items = shopkeeper.getItems();
+        customInventory.fillPlaceHolder();
+        for (int i = ((page - 1) * 9 * 4); i < items.size(); i++) {
+            int place = i + 9 - ((page - 1) * 9 * 4);
+            if (place > 9 * 5) break;
+            ItemForSale itemForSale = items.get(i);
+            ItemStack item = itemForSale.getItem().clone();
+            List<Component> lore = item.lore();
+            if (lore == null) lore = new ArrayList<>();
+            lore.addFirst(Component.text("Price: " + itemForSale.getPrice() + " Bits"));
+            item.lore(lore);
+            customInventory.setItem(place, item, new ItemAction() {
+                @Override
+                public UUID getID() {
+                    return UUIDApi.fromString(itemForSale.getUuid().toString() + ".imi");
+                }
+
+                @Override
+                public void onClick(InventoryClickEvent event) {
+                }
+
+                @Override
+                public boolean isMovable() {
+                    return false;
+                }
+
+                @Override
+                public boolean fireEvent() {
+                    return true;
+                }
+
+                @Override
+                public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                    return ITEM_MANAGE_INVENTORY(shopkeeper, itemForSale);
+                }
+            });
+        }
+        //TODO: add option
+        if (page > 1) {
+            customInventory.setItem(9 * 6 - 9, new ItemApi(Material.ARROW, "Back").build(), new ItemAction() {
+                @Override
+                public UUID getID() {
+                    return UUID.randomUUID();
+                }
+
+                @Override
+                public void onClick(InventoryClickEvent event) {
+
+                }
+
+                @Override
+                public boolean isMovable() {
+                    return false;
+                }
+
+                @Override
+                public boolean fireEvent() {
+                    return false;
+                }
+
+                @Override
+                public CustomInventory loadInventoryOnClick() {
+                    return ITEM_MANAGER_INVENTORY(shopkeeper, page - 1);
+                }
+            });
+        }
+        if (items.size() > (page * 9 * 4)) {
+            customInventory.setItem(9 * 6 - 1, new ItemApi(Material.ARROW, "Next").build(), new ItemAction() {
+                @Override
+                public UUID getID() {
+                    return UUID.randomUUID();
+                }
+
+                @Override
+                public void onClick(InventoryClickEvent event) {
+
+                }
+
+                @Override
+                public boolean isMovable() {
+                    return false;
+                }
+
+                @Override
+                public boolean fireEvent() {
+                    return false;
+                }
+
+                @Override
+                public CustomInventory loadInventoryOnClick() {
+                    return ITEM_MANAGER_INVENTORY(shopkeeper, page + 1);
+                }
+            });
+        }
+        return customInventory;
+    }
+
+    public static CustomInventory CHANGE_ITEM_COST_INVENTORY(Shopkeeper shopkeeper, ItemForSale item) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItem().getType().toString(), (event) -> {
+        });
+        customInventory.fillPlaceHolder();
+
+        customInventory.setItem(3, new ItemApi(new URL("http://textures.minecraft.net/texture/93d7a9ee31348a35754383c167fa33abc02e8e68ca2c4a9691400e7fe34b3eb5"), "-").buildSkull(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getUuid().toString() + ".imi.deeper.minus");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+                item.setPrice(item.getPrice() - 1);
+                try {
+                    event.getWhoClicked().openInventory(CHANGE_ITEM_COST_INVENTORY(
+                            shopkeeper,
+                            item
+                    ).getInventory());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return null;
+            }
+        });//minus
+        ItemStack clone = item.getItem().clone();
+        List<Component> lore = clone.lore();
+        if (lore == null) lore = new ArrayList<>();
+        lore.addFirst(Component.text("Kosten: " + item.getPrice()));
+        clone.lore(lore);
+        customInventory.setItem(4, clone, ItemAction.NOTMOVABLE);
+        customInventory.setItem(5, new ItemApi(new URL("http://textures.minecraft.net/texture/171d8979c1878a05987a7faf21b56d1b744f9d068c74cffcde1ea1edad5852"), "+").buildSkull(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getUuid().toString() + ".imi.deeper.plus");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+                try {
+                    item.setPrice(item.getPrice() + 1);
+                    try {
+                        event.getWhoClicked().openInventory(CHANGE_ITEM_COST_INVENTORY(
+                                shopkeeper,
+                                item
+                        ).getInventory());
+                    } catch (MalformedURLException e) {
+                        throw new RuntimeException(e);
+                    }
+                } catch (Exception e) {
+                }
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return null;
+            }
+        });//plus
+        customInventory.setItem(6, new ItemApi(Material.ARROW, "Back").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return false;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return ITEM_MANAGE_INVENTORY(shopkeeper, item);
+            }
+        });
+
+        customInventory.setItem(8, new  ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(), new ItemAction() {
+
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getUuid().toString() + ".imi.deeper.confirmprice");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return ITEM_MANAGE_INVENTORY(shopkeeper, item);
+            }
+        });
+        return customInventory;
+    }
+    public static CustomInventory CHANGE_ITEM_AMOUNT_INVENTORY(Shopkeeper shopkeeper, ItemForSale item) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItem().getType().toString(), (event) -> {
+        });
+        customInventory.fillPlaceHolder();
+
+        customInventory.setItem(3, new ItemApi(new URL("http://textures.minecraft.net/texture/93d7a9ee31348a35754383c167fa33abc02e8e68ca2c4a9691400e7fe34b3eb5"), "-").buildSkull(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getUuid().toString() + ".imi.deeper.minus.amount");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+                if (item.getItem().getAmount() - 1 <1) return;
+                item.getItem().setAmount(item.getItem().getAmount() - 1);
+                try {
+                    event.getWhoClicked().openInventory(CHANGE_ITEM_AMOUNT_INVENTORY(
+                            shopkeeper,
+                            item
+                    ).getInventory());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return null;
+            }
+        });//minus
+        customInventory.setItem(4, new ItemApi(Material.DIAMOND, item.getItem().getAmount(), "Kosten").build(), ItemAction.NOTMOVABLE);
+        customInventory.setItem(5, new ItemApi(new URL("http://textures.minecraft.net/texture/171d8979c1878a05987a7faf21b56d1b744f9d068c74cffcde1ea1edad5852"), "+").buildSkull(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getUuid().toString() + ".imi.deeper.plus.amount");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+                if (item.getItem().getAmount() + 1 > 64) {
+                    event.getWhoClicked().sendMessage("Du kannst maximal 64 items veraufen.");
+                    return;
+                }
+                item.getItem().setAmount(item.getItem().getAmount() + 1);
+                try {
+                    event.getWhoClicked().openInventory(CHANGE_ITEM_AMOUNT_INVENTORY(
+                            shopkeeper,
+                            item
+                    ).getInventory());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return null;
+            }
+        });//plus
+        customInventory.setItem(6, new ItemApi(Material.ARROW, "Back").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return false;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return ITEM_MANAGE_INVENTORY(shopkeeper, item);
+            }
+        });
+
+        customInventory.setItem(8, new  ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(), new ItemAction() {
+
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getUuid().toString() + ".imi.deeper.confirmprice");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return ITEM_MANAGE_INVENTORY(shopkeeper, item);
+            }
+        });
+        return customInventory;
+    }
+
+    public static CustomInventory ITEM_MANAGE_INVENTORY(Shopkeeper shopkeeper, ItemForSale item) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItem().getType().toString(), (event) -> {
+        });
+        customInventory.fillPlaceHolder();
+        customInventory.setItem(3, new ItemApi(Material.DIAMOND, "Change Cost").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper.cost");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return false;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return CHANGE_ITEM_COST_INVENTORY(shopkeeper, item);
+            }
+        });
+        ItemStack clone = item.getItem().clone();
+        List<Component> lore = clone.lore();
+        if (lore == null) lore = new ArrayList<>();
+        lore.addFirst(Component.text("Kosten: " + item.getPrice()));
+        clone.lore(lore);
+        customInventory.setItem(4, clone, ItemAction.NOTMOVABLE);
+        customInventory.setItem(5, new ItemApi(Material.CHEST, "Change Amount").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper.amount");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) throws MalformedURLException {
+
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return false;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return CHANGE_ITEM_AMOUNT_INVENTORY(shopkeeper, item);
+            }
+        });
+        customInventory.setItem(6, new ItemApi(Material.ARROW, "Back").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return false;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return ITEM_MANAGER_INVENTORY(shopkeeper, 1);
+            }
+        });
+        customInventory.setItem(7, new ItemApi(Material.BARRIER, "Delete Item").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getUuid().toString() + ".imi.deeper.delete");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) throws MalformedURLException {
+                shopkeeper.getItems().remove(item);
+                event.getWhoClicked().openInventory(ITEM_MANAGER_INVENTORY(shopkeeper, 1).getInventory());
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return null;
+            }
+        });
+
+        customInventory.setItem(8, new  ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(), new ItemAction() {
+
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(item.getUuid().toString() + ".imi.deeper.confirmchange");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) {
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() {
+                return ITEM_MANAGER_INVENTORY(shopkeeper,1);
+            }
+        });
+        return customInventory;
+    }
+
     /**
      * @return a configured {@link CustomInventory} instance
      * representing an inventory setup for adding money
      */
     public static CustomInventory ATM_INVENTORY() throws MalformedURLException {
-        CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.DARK_GREEN + "Geldautomat", (event) -> {});
+        CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.DARK_GREEN + "Geldautomat", (event) -> {
+        });
         customInventory.fillPlaceHolder();
 
         // Einzahlen
@@ -215,7 +772,8 @@ public class Inventorys extends InventoryBase {
     }
 
     public static CustomInventory ATM_DEPOSIT_INVENTORY() throws MalformedURLException {
-        CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.DARK_GREEN + "Geld einzahlen", (event) -> {});
+        CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.DARK_GREEN + "Geld einzahlen", (event) -> {
+        });
         customInventory.fillPlaceHolder();
         customInventory.addBackButton(18, UUID.fromString("cd283a6b-48d5-4b0b-a96a-f9f0955b20c6"), ATM_INVENTORY());
 
@@ -224,7 +782,7 @@ public class Inventorys extends InventoryBase {
         int[] amountMap = {1, 32, 64};
         String[] uuidMap = {"8e3a39d2-cb10-4fdf-b502-16fa5eaaaa13", "4181a762-de4d-490f-a00f-0134de937062", "a8606788-f848-4473-aadf-c47a7691a150"};
 
-        for(int i = 0; i < amountMap.length; i++) {
+        for (int i = 0; i < amountMap.length; i++) {
             int amount = amountMap[i];
 
             ItemStack itemStack = new ItemApi(Material.DIAMOND, ChatColor.BLUE.toString() + amount + " Bits einzahlen", amount).build();
@@ -299,7 +857,8 @@ public class Inventorys extends InventoryBase {
     }
 
     public static CustomInventory ATM_PAYOUT_INVENTORY() throws MalformedURLException {
-        CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.RED + "Geld auszahlen", (event) -> {});
+        CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.RED + "Geld auszahlen", (event) -> {
+        });
         customInventory.fillPlaceHolder();
         customInventory.addBackButton(18, UUID.fromString("39ed12c5-6a5c-4f52-8f4b-6d8bc2869f81"), ATM_INVENTORY());
 
@@ -308,7 +867,7 @@ public class Inventorys extends InventoryBase {
         int[] amountMap = {1, 32, 64};
         String[] uuidMap = {"1db84b7f-625e-40ec-b21d-5ec010022294", "b0933f0a-9618-4255-ad83-92c91cad4b75", "843e033d-c4b6-4ec0-919a-ae90b75c138a"};
 
-        for(int i = 0; i < amountMap.length; i++) {
+        for (int i = 0; i < amountMap.length; i++) {
             int amount = amountMap[i];
 
             ItemStack itemStack = new ItemApi(Material.DIAMOND, ChatColor.BLUE.toString() + amount + " Bits einzahlen", amount).build();

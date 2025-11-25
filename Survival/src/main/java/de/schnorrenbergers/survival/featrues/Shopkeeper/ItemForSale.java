@@ -26,4 +26,13 @@ public class ItemForSale {
     public UUID getUuid() {
         return uuid;
     }
+
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
+
+    public void setItem(ItemStack item) {
+        this.item = item;
+    }
 }
