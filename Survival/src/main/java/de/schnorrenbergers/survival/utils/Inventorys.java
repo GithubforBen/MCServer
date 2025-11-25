@@ -100,7 +100,7 @@ public class Inventorys extends InventoryBase {
         for (int i = 0; i < 9 * 5; i++) {
             customInventory.setPlaceHolder(i);
         }
-        customInventory.setItem(10, new ItemApi(Material.CHEST, "Set Chest Location").build(), new ItemAction() {
+        customInventory.setItem(10, new ItemApi(Material.CHEST, "Kistenstandort ändern").build(), new ItemAction() {
             @Override
             public UUID getID() {
                 return UUID.fromString("30a2efe7-a143-4507-a879-e573f2c76d97");
@@ -150,7 +150,7 @@ public class Inventorys extends InventoryBase {
                 return null;
             }
         });
-        customInventory.setItem(11, new ItemApi(Material.DIAMOND, "Items bearbeitenS").build(), new ItemAction() {
+        customInventory.setItem(11, new ItemApi(Material.DIAMOND, "Gegenstände bearbeiten").build(), new ItemAction() {
             @Override
             public UUID getID() {
                 return UUID.fromString("41d990e3-050d-42bc-9b66-85b8f456efaa");
