@@ -83,13 +83,13 @@ public class Shopkeeper {
     }
 
     private void removeItem(Inventory inventory, ItemStack item) {
-        int amount = item.getAmount();
+        int amount = item.clone().getAmount();
         for (ItemStack itemStack : inventory) {
             if (itemStack == null) {
                 continue;
             }
             if (amount <= 0) return;
-            if (compareItemStacks(itemStack, item)) {
+            if (compareItemStacks(itemStack, item.clone())) {
                 if (itemStack.getAmount() <= amount) {
                     amount -= itemStack.getAmount();
                     inventory.removeItem(itemStack);
