@@ -483,6 +483,7 @@ public class Inventorys extends InventoryBase {
         });
         return customInventory;
     }
+
     public static CustomInventory CHANGE_ITEM_AMOUNT_INVENTORY(Shopkeeper shopkeeper, ItemForSale item) throws MalformedURLException {
         CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItem().getType().toString(), (event) -> {
         });
@@ -523,7 +524,7 @@ public class Inventorys extends InventoryBase {
                 return null;
             }
         });//minus
-        customInventory.setItem(4, new ItemApi(Material.DIAMOND, item.getItem().getAmount(), "Kosten").build(), ItemAction.NOTMOVABLE);
+        customInventory.setItem(4, new ItemApi(item.getItem().getType(), item.getItem().getAmount(), "Anzahl der Items").build(), ItemAction.NOTMOVABLE);
         customInventory.setItem(5, new ItemApi(new URL("http://textures.minecraft.net/texture/171d8979c1878a05987a7faf21b56d1b744f9d068c74cffcde1ea1edad5852"), "+").buildSkull(), new ItemAction() {
             @Override
             public UUID getID() {

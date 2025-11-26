@@ -6,12 +6,14 @@ import de.hems.paper.customInventory.types.ItemAction;
 import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Chest;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -55,6 +57,16 @@ public class Shopkeeper {
         this.chest = config.getLocation(path + ".location.chest");
         this.ownerTeam = config.getString(path + ".ownerTeam");
         this.items = getItemList(path + ".items");
+        shop.getWorld().getEntities().stream().filter(entity -> entity instanceof Villager).filter((v) -> {
+            String s = v.getPersistentDataContainer().get(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING);
+            if (s == null) return false;
+            try {
+                UUID.fromString(s);
+            } catch (IllegalArgumentException e) {
+                return false;
+            }
+            return s.equals(uuid.toString());
+        }).forEach(Entity::remove);
         this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
         villager.setAdult();
         villager.setAI(false);
@@ -84,7 +96,7 @@ public class Shopkeeper {
 
     private void removeItem(Inventory inventory, ItemStack item) {
         int amount = item.clone().getAmount();
-        for (ItemStack itemStack : inventory) {
+        for (ItemStack itemStack : inventory.getContents()) {
             if (itemStack == null) {
                 continue;
             }

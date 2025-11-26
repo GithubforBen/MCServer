@@ -55,8 +55,12 @@ public class ShopkeeperListener implements Listener {
         if (s != null) {//Set shoptkeeper chest
             if (!event.hasBlock()) return;
             if (!event.getClickedBlock().getType().equals(Material.CHEST)) return;
-            if (team == null) return;
+            if (team == null) {
+                event.getPlayer().sendMessage("You need to be in a team to set the chest!");
+                return;
+            }
             if (ClaimManager.getTeamOfChunk(event.getClickedBlock().getChunk()) == null) {
+                event.getPlayer().sendMessage("You need to claim this chunk first!");
                 return;
             }
             if (!ClaimManager.getTeamOfChunk(event.getClickedBlock().getChunk()).equals(team.getName())) {
