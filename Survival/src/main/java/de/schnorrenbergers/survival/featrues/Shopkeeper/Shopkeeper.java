@@ -43,6 +43,7 @@ public class Shopkeeper {
         this.items = items;
         this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
         villager.setAdult();
+        villager.customName(Component.text(name));
         villager.setAI(false);
         villager.setInvulnerable(true);
         villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
@@ -70,6 +71,7 @@ public class Shopkeeper {
         this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
         villager.setAdult();
         villager.setAI(false);
+        villager.customName(Component.text(name));
         villager.setInvulnerable(true);
         villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
     }
