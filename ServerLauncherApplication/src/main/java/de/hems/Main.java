@@ -1,30 +1,40 @@
 package de.hems;
 
 import de.hems.communication.ListenerAdapter;
-import de.hems.communication.events.money.RequestPlayerMoneyEvent;
-import de.hems.communication.events.server.RequestServersEvent;
 import de.hems.events.*;
 import de.hems.types.FileType;
-import de.hems.types.Server;
 import de.hems.utils.Configuration;
 import de.hems.utils.server.ServerHandler;
+import de.hems.utils.tickets.SetTicketChannelListener;
 import de.hems.utils.types.RunningMode;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URL;
-import java.util.ArrayList;
+import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
 import java.util.List;
-import java.util.UUID;
+import java.util.Properties;
 
 public class Main {
     private static Main instance;
     private Configuration configuration;
     private ListenerAdapter listenerAdapter;
     private ServerHandler serverHandler;
+    private JDA jda;
 
     public Main() throws Exception {
         if (instance == null) {
@@ -46,6 +56,24 @@ public class Main {
         new RestartServerEvent();
         new StopServerEvent();
         new RequestServerDataEvent();
+        if (!configuration.getConfig().contains("discord-token")) {
+            jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
+                    .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                    .addEventListeners(new SetTicketChannelListener())
+                    .setActivity(Activity.playing("Playing on " + getIp()))
+                    .build();
+            jda.awaitReady();
+            CommandListUpdateAction commandListUpdateAction = jda.updateCommands();
+            commandListUpdateAction.addCommands(Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)));
+            commandListUpdateAction.queue();
+        } else {
+            configuration.getConfig().set("discord-token", "<<add token here>>");
+            configuration.getConfig().setComments("discord-token", List.of("The discord token to use for the bot!"));
+            configuration.save();
+            System.out.println("Please add your discord token to the config.yml");
+            System.exit(0);
+            return;
+        }
         serverHandler.startNewInstance(
                 ListenerAdapter.ServerName.SURVIVAL.toString(), 4000, FileType.SERVER.PAPER, 25565, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT, FileType.PLUGIN.SIMPLE_VOICECHAT});
         //serverHandler.startNewInstance(
@@ -61,6 +89,7 @@ public class Main {
     }
 
     public void onShutdown() throws IOException {
+        configuration.save(); //neccessary
         serverHandler.shutdownNetwork();
         configuration.save();
     }
@@ -105,4 +134,13 @@ public class Main {
         throw new IllegalStateException("Unknown running mode");
     }
 
+    public JDA getJda() {
+        return jda;
+    }
+
+    public static EmbedBuilder getEmbedBuilder() {
+        return new EmbedBuilder().setAuthor("The Server Team")
+                .setColor(new Color(255, 0, 0,255))
+                .setTimestamp(Instant.now());
+    }
 }

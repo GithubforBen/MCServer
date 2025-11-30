@@ -8,6 +8,8 @@ import de.hems.communication.events.configs.RequestDataFromConfigEvent;
 import de.hems.communication.events.configs.RespondDataFromConfigEvent;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.util.Properties;
+
 public class RespondDataEvent implements EventHandler<RequestDataFromConfigEvent> {
 
     public RespondDataEvent() {
