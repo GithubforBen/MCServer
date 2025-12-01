@@ -305,6 +305,7 @@ public class ItemApi {
         return itemStack;
     }
 
+    @Deprecated
     public ItemStack buildSkull() {
         itemStack.setItemMeta(skullMeta);
         return itemStack;

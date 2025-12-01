@@ -53,7 +53,7 @@ public class Inventorys extends InventoryBase {
         customInventory.setPlaceHolder(5);
         customInventory.setPlaceHolder(6);
         customInventory.setPlaceHolder(7);
-        customInventory.setItem(8, new ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(),
+        customInventory.setItem(8, ItemApi.CHECKMARKSKULL(ChatColor.GREEN + "Bestätigen"),
                 new ItemAction() {
                     @Override
                     public UUID getID() {
@@ -314,7 +314,7 @@ public class Inventorys extends InventoryBase {
         customInventory.addBackButton(6, UUIDApi.fromString(shopkeeper.getUuid().toString() + ".backfromitem"), ITEM_MANAGER_INVENTORY(shopkeeper, 1));
 
 
-        customInventory.setItem(8, new  ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(), new ItemAction() {
+        customInventory.setItem(8, ItemApi.CHECKMARKSKULL(ChatColor.GREEN + "Bestätigen"), new ItemAction() {
 
             @Override
             public UUID getID() {
@@ -455,7 +455,7 @@ public class Inventorys extends InventoryBase {
             }
         });
 
-        customInventory.setItem(8, new  ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(), new ItemAction() {
+        customInventory.setItem(8, ItemApi.CHECKMARKSKULL( ChatColor.GREEN + "Bestätigen"), new ItemAction() {
 
             @Override
             public UUID getID() {
@@ -590,7 +590,7 @@ public class Inventorys extends InventoryBase {
             }
         });
 
-        customInventory.setItem(8, new  ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(), new ItemAction() {
+        customInventory.setItem(8, ItemApi.CHECKMARKSKULL(ChatColor.GREEN + "Bestätigen"), new ItemAction() {
 
             @Override
             public UUID getID() {
@@ -735,7 +735,7 @@ public class Inventorys extends InventoryBase {
             }
         });
 
-        customInventory.setItem(8, new  ItemApi(new URL("http://textures.minecraft.net/texture/a79a5c95ee17abfef45c8dc224189964944d560f19a44f19f8a46aef3fee4756"), ChatColor.GREEN + "Bestätigen").buildSkull(), new ItemAction() {
+        customInventory.setItem(8, ItemApi.CHECKMARKSKULL( ChatColor.GREEN + "Bestätigen"), new ItemAction() {
 
             @Override
             public UUID getID() {
