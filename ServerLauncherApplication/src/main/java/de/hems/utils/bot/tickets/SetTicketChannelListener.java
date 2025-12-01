@@ -1,4 +1,4 @@
-package de.hems.utils.tickets;
+package de.hems.utils.bot.tickets;
 
 import de.hems.Main;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
@@ -6,8 +6,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Properties;
 
 public class SetTicketChannelListener extends ListenerAdapter {
     @Override
@@ -19,7 +17,7 @@ public class SetTicketChannelListener extends ListenerAdapter {
         MessageChannelUnion channel = event.getChannel();
         config.set("ticket-channel", channel.getId());
         Main.getInstance().getConfiguration().save();
-        event.reply("Ticket channel set to " + channel.getAsMention()).queue();
+        event.reply("Ticket channel set to " + channel.getAsMention()).complete();
         Tickets.updateTicketChannel();
     }
 }

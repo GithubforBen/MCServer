@@ -4,8 +4,10 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.events.*;
 import de.hems.types.FileType;
 import de.hems.utils.Configuration;
+import de.hems.utils.bot.tickets.CreateTicketListener;
+import de.hems.utils.bot.tickets.SetTicketChannelListener;
+import de.hems.utils.bot.verification.OnAccountVerifyCommand;
 import de.hems.utils.server.ServerHandler;
-import de.hems.utils.tickets.SetTicketChannelListener;
 import de.hems.utils.types.RunningMode;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -13,6 +15,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
@@ -25,9 +28,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URL;
 import java.time.Instant;
-import java.time.temporal.TemporalAccessor;
 import java.util.List;
-import java.util.Properties;
 
 public class Main {
     private static Main instance;
@@ -56,15 +57,21 @@ public class Main {
         new RestartServerEvent();
         new StopServerEvent();
         new RequestServerDataEvent();
-        if (!configuration.getConfig().contains("discord-token")) {
+        if (configuration.getConfig().contains("discord-token")) {
             jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                    .addEventListeners(new SetTicketChannelListener())
+                    .addEventListeners(
+                            new SetTicketChannelListener(),
+                            new CreateTicketListener(),
+                            new OnAccountVerifyCommand())
                     .setActivity(Activity.playing("Playing on " + getIp()))
                     .build();
             jda.awaitReady();
             CommandListUpdateAction commandListUpdateAction = jda.updateCommands();
-            commandListUpdateAction.addCommands(Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)));
+            commandListUpdateAction.addCommands(
+                    Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
+                    ));
+            commandListUpdateAction.addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "Minecraft name", "Dein Minecraft name hier einfügen.", true));
             commandListUpdateAction.queue();
         } else {
             configuration.getConfig().set("discord-token", "<<add token here>>");
@@ -88,10 +95,17 @@ public class Main {
         return instance;
     }
 
+    public static EmbedBuilder getEmbedBuilder() {
+        return new EmbedBuilder().setAuthor("The Server Team")
+                .setColor(new Color(255, 0, 0, 255))
+                .setTimestamp(Instant.now());
+    }
+
     public void onShutdown() throws IOException {
         configuration.save(); //neccessary
         serverHandler.shutdownNetwork();
         configuration.save();
+        jda.shutdownNow();
     }
 
     public Configuration getConfiguration() {
@@ -136,11 +150,5 @@ public class Main {
 
     public JDA getJda() {
         return jda;
-    }
-
-    public static EmbedBuilder getEmbedBuilder() {
-        return new EmbedBuilder().setAuthor("The Server Team")
-                .setColor(new Color(255, 0, 0,255))
-                .setTimestamp(Instant.now());
     }
 }

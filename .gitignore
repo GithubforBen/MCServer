@@ -43,3 +43,4 @@ build/
 /velocity/*
 /dowloads/*
 /servers/*
+main-config.yml

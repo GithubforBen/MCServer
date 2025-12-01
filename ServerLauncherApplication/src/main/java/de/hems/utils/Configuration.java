@@ -12,7 +12,7 @@ public class Configuration {
     private File file;
     private YamlConfiguration config;
     public Configuration() {
-        file = new File("./main-config.properties");
+        file = new File("./main-config.yml");
         if(!file.exists()) {
             file.getParentFile().mkdirs();
             try {
