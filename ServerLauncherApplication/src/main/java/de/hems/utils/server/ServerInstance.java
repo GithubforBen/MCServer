@@ -2,11 +2,11 @@ package de.hems.utils.server;
 
 import de.hems.types.FileType;
 import de.hems.Main;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.*;
 import java.time.Duration;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class ServerInstance {
     private Process process;
@@ -38,7 +38,8 @@ public class ServerInstance {
         if (!jar.exists()) {
             switch (jarFile) {
                 case PAPER -> {
-                    List<String> ops = Main.getInstance().getConfiguration().getConfig().getStringList("ops");
+                    YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
+                    List<String> ops = config.getStringList("ops");
                     new PaperConfigurator(Main.getInstance().getIp(), port, isProxied, ops.stream().map((x) -> UUID.fromString(x)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
                 }
             }

@@ -853,7 +853,7 @@ public class Inventorys extends InventoryBase {
         for (int i = 0; i < amountMap.length; i++) {
             int amount = amountMap[i];
 
-            ItemStack itemStack = new ItemApi(Material.DIAMOND, ChatColor.BLUE.toString() + amount + " Bits einzahlen", amount).build();
+            ItemStack itemStack = new ItemApi(Material.DIAMOND, ChatColor.BLUE.toString() + amount*100 + " Bits einzahlen", amount).build();
 
             int finalI = i;
             customInventory.setItem(currentInventoryPos, itemStack, new ItemAction() {
@@ -938,7 +938,7 @@ public class Inventorys extends InventoryBase {
         for (int i = 0; i < amountMap.length; i++) {
             int amount = amountMap[i];
 
-            ItemStack itemStack = new ItemApi(Material.DIAMOND, ChatColor.BLUE.toString() + amount + " Bits einzahlen", amount).build();
+            ItemStack itemStack = new ItemApi(Material.DIAMOND, ChatColor.BLUE.toString() + amount*100 + " Bits einzahlen", amount).build();
 
             int finalI = i;
             customInventory.setItem(currentInventoryPos, itemStack, new ItemAction() {
