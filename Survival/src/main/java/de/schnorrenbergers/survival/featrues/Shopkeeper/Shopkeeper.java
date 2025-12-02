@@ -67,7 +67,11 @@ public class Shopkeeper {
                 return false;
             }
             return s.equals(uuid.toString());
-        }).forEach(Entity::remove);
+        }).forEach((e) -> {
+            villager.setInvulnerable(false);
+            villager.damage(1000000000);
+            e.remove();
+        });
         this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
         villager.setAdult();
         villager.setAI(false);
