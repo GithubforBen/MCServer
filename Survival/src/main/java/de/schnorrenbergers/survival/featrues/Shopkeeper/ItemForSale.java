@@ -19,7 +19,10 @@ public class ItemForSale {
         return price;
     }
 
-    public ItemStack getItem() {
+    public ItemStack getItemClone() {
+        return item.clone();
+    }
+    public ItemStack getItemOrginal() {
         return item.clone();
     }
 

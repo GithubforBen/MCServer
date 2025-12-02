@@ -188,7 +188,7 @@ public class Inventorys extends InventoryBase {
             int place = i + 9 - ((page - 1) * 9 * 4);
             if (place > 9 * 5) break;
             ItemForSale itemForSale = items.get(i);
-            ItemStack item = itemForSale.getItem().clone();
+            ItemStack item = itemForSale.getItemClone();
             List<Component> lore = item.lore();
             if (lore == null) lore = new ArrayList<>();
             lore.addFirst(Component.text("Price: " + itemForSale.getPrice() + " Bits"));
@@ -347,7 +347,7 @@ public class Inventorys extends InventoryBase {
     }
 
     public static CustomInventory CHANGE_ITEM_COST_INVENTORY(Shopkeeper shopkeeper, ItemForSale item) throws MalformedURLException {
-        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItem().getType().toString(), (event) -> {
+        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItemClone().getType().toString(), (event) -> {
         });
         customInventory.fillPlaceHolder();
 
@@ -385,7 +385,7 @@ public class Inventorys extends InventoryBase {
                 return null;
             }
         });//minus
-        ItemStack clone = item.getItem().clone();
+        ItemStack clone = item.getItemClone();
         List<Component> lore = clone.lore();
         if (lore == null) lore = new ArrayList<>();
         lore.addFirst(Component.text("Kosten: " + item.getPrice()));
@@ -431,7 +431,7 @@ public class Inventorys extends InventoryBase {
         customInventory.setItem(6, new ItemApi(Material.ARROW, "Back").build(), new ItemAction() {
             @Override
             public UUID getID() {
-                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper");
+                return UUIDApi.fromString(item.getItemClone().getType().toString() + ".imi.deeper");
             }
 
             @Override
@@ -485,7 +485,7 @@ public class Inventorys extends InventoryBase {
     }
 
     public static CustomInventory CHANGE_ITEM_AMOUNT_INVENTORY(Shopkeeper shopkeeper, ItemForSale item) throws MalformedURLException {
-        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItem().getType().toString(), (event) -> {
+        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItemClone().getType().toString(), (event) -> {
         });
         customInventory.fillPlaceHolder();
 
@@ -497,8 +497,8 @@ public class Inventorys extends InventoryBase {
 
             @Override
             public void onClick(InventoryClickEvent event) {
-                if (item.getItem().getAmount() - 1 <1) return;
-                item.getItem().setAmount(item.getItem().getAmount() - 1);
+                if (item.getItemClone().getAmount() - 1 <1) return;
+                item.getItemOrginal().setAmount(item.getItemOrginal().getAmount() - 1);
                 try {
                     event.getWhoClicked().openInventory(CHANGE_ITEM_AMOUNT_INVENTORY(
                             shopkeeper,
@@ -524,7 +524,7 @@ public class Inventorys extends InventoryBase {
                 return null;
             }
         });//minus
-        customInventory.setItem(4, new ItemApi(item.getItem().getType(), item.getItem().getAmount(), "Anzahl der Items").build(), ItemAction.NOTMOVABLE);
+        customInventory.setItem(4, new ItemApi(item.getItemClone().getType(), item.getItemClone().getAmount(), "Anzahl der Items").build(), ItemAction.NOTMOVABLE);
         customInventory.setItem(5, new ItemApi(new URL("http://textures.minecraft.net/texture/171d8979c1878a05987a7faf21b56d1b744f9d068c74cffcde1ea1edad5852"), "+").buildSkull(), new ItemAction() {
             @Override
             public UUID getID() {
@@ -533,11 +533,11 @@ public class Inventorys extends InventoryBase {
 
             @Override
             public void onClick(InventoryClickEvent event) {
-                if (item.getItem().getAmount() + 1 > 64) {
+                if (item.getItemClone().getAmount() + 1 > 64) {
                     event.getWhoClicked().sendMessage("Du kannst maximal 64 items veraufen.");
                     return;
                 }
-                item.getItem().setAmount(item.getItem().getAmount() + 1);
+                item.getItemOrginal().setAmount(item.getItemOrginal().getAmount() + 1);
                 try {
                     event.getWhoClicked().openInventory(CHANGE_ITEM_AMOUNT_INVENTORY(
                             shopkeeper,
@@ -566,7 +566,7 @@ public class Inventorys extends InventoryBase {
         customInventory.setItem(6, new ItemApi(Material.ARROW, "Back").build(), new ItemAction() {
             @Override
             public UUID getID() {
-                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper");
+                return UUIDApi.fromString(item.getItemClone().getType().toString() + ".imi.deeper");
             }
 
             @Override
@@ -620,13 +620,13 @@ public class Inventorys extends InventoryBase {
     }
 
     public static CustomInventory ITEM_MANAGE_INVENTORY(Shopkeeper shopkeeper, ItemForSale item) throws MalformedURLException {
-        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItem().getType().toString(), (event) -> {
+        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":" + item.getItemClone().getType().toString(), (event) -> {
         });
         customInventory.fillPlaceHolder();
         customInventory.setItem(3, new ItemApi(Material.DIAMOND, "Change Cost").build(), new ItemAction() {
             @Override
             public UUID getID() {
-                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper.cost");
+                return UUIDApi.fromString(item.getItemClone().getType().toString() + ".imi.deeper.cost");
             }
 
             @Override
@@ -649,7 +649,7 @@ public class Inventorys extends InventoryBase {
                 return CHANGE_ITEM_COST_INVENTORY(shopkeeper, item);
             }
         });
-        ItemStack clone = item.getItem().clone();
+        ItemStack clone = item.getItemClone();
         List<Component> lore = clone.lore();
         if (lore == null) lore = new ArrayList<>();
         lore.addFirst(Component.text("Kosten: " + item.getPrice()));
@@ -658,7 +658,7 @@ public class Inventorys extends InventoryBase {
         customInventory.setItem(5, new ItemApi(Material.CHEST, "Change Amount").build(), new ItemAction() {
             @Override
             public UUID getID() {
-                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper.amount");
+                return UUIDApi.fromString(item.getItemClone().getType().toString() + ".imi.deeper.amount");
             }
 
             @Override
@@ -684,7 +684,7 @@ public class Inventorys extends InventoryBase {
         customInventory.setItem(6, new ItemApi(Material.ARROW, "Back").build(), new ItemAction() {
             @Override
             public UUID getID() {
-                return UUIDApi.fromString(item.getItem().getType().toString() + ".imi.deeper");
+                return UUIDApi.fromString(item.getItemClone().getType().toString() + ".imi.deeper");
             }
 
             @Override

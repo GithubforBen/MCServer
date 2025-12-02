@@ -81,15 +81,15 @@ public class Shopkeeper {
             return;
         }
         Chest chestBlock = (Chest) chest.getBlock().getState();
-        if (calculateContent(chestBlock.getInventory(), item.getItem()) < item.getItem().getAmount()) {
+        if (calculateContent(chestBlock.getInventory(), item.getItemClone()) < item.getItemClone().getAmount()) {
             player.sendMessage("Insufficient stock in the shopkeeper's chest");
             return;
         }
         if (MoneyHandler.removeMoney(item.getPrice(), player.getUniqueId())) {
-            removeItem(chestBlock.getInventory(), item.getItem());
-            player.getInventory().addItem(item.getItem());
+            removeItem(chestBlock.getInventory(), item.getItemClone());
+            player.getInventory().addItem(item.getItemClone());
             MoneyHandler.addMoney(item.getPrice(), Objects.requireNonNull(player.getScoreboard().getTeam(ownerTeam)));//TODO: add money to owners account add way to get that moneyy
-            player.sendMessage("You bought " + item.getItem().getAmount() + " " + item.getItem().getType().name() + " for " + item.getPrice() + "!");
+            player.sendMessage("You bought " + item.getItemClone().getAmount() + " " + item.getItemClone().getType().name() + " for " + item.getPrice() + "!");
         } else {
             player.sendMessage("You dont have enough money!");
         }
@@ -172,7 +172,7 @@ public class Shopkeeper {
         config.set(path + ".name", name);
         for (int i = 0; i < items.size(); i++) {
             ItemForSale itemForSale = items.get(i);
-            config.set(path + ".items.[" + i + "].item", itemForSale.getItem());
+            config.set(path + ".items.[" + i + "].item", itemForSale.getItemClone());
             config.set(path + ".items.[" + i + "].price", itemForSale.getPrice());
         }
         config.set(path + ".items.size", getItems().size());
@@ -224,7 +224,7 @@ public class Shopkeeper {
             int place = i + 9 - ((page - 1) * 9 * 4);
             if (place > 9 * 5) break;
             ItemForSale itemForSale = items.get(i);
-            ItemStack item = itemForSale.getItem().clone();
+            ItemStack item = itemForSale.getItemClone();
             List<Component> lore = item.lore();
             if (lore == null) lore = new ArrayList<>();
             lore.addFirst(Component.text("Price: " + itemForSale.getPrice() + " Bits"));
