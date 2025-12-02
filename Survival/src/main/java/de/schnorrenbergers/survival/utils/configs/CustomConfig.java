@@ -32,7 +32,7 @@ public class CustomConfig extends YamlConfiguration {
         }
         if (value instanceof ItemForSale) {
             ItemForSale itemForSale = (ItemForSale) value;
-            set(path + ".item", itemForSale.getItem());
+            set(path + ".item", itemForSale.getItemOrginal());
             set(path + ".price", itemForSale.getPrice());
         }
         super.set(path, value);
