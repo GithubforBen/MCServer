@@ -23,7 +23,7 @@ public class ItemForSale {
         return item.clone();
     }
     public ItemStack getItemOrginal() {
-        return item.clone();
+        return item;
     }
 
     public UUID getUuid() {
