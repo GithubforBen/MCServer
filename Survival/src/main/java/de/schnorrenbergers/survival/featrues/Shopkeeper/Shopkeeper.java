@@ -132,7 +132,8 @@ public class Shopkeeper {
         if (item1 == null || item2 == null) {
             return false;
         }
-
+        return item1.isSimilar(item2);
+        /*
         // Compare the Material (type)
         if (item1.getType() != item2.getType()) {
             return false; // If the materials are different, return false
@@ -161,6 +162,7 @@ public class Shopkeeper {
             return false; // One item has enchantments, the other doesn't
         }
         return true;
+        */
     }
 
 
