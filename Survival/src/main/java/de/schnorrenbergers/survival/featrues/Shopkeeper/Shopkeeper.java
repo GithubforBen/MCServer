@@ -133,36 +133,6 @@ public class Shopkeeper {
             return false;
         }
         return item1.isSimilar(item2);
-        /*
-        // Compare the Material (type)
-        if (item1.getType() != item2.getType()) {
-            return false; // If the materials are different, return false
-        }
-        ItemMeta meta1 = item1.getItemMeta();
-        ItemMeta meta2 = item2.getItemMeta();
-
-        if (meta1 != null && meta2 != null) {
-            String name1 = meta1.hasDisplayName() ? meta1.getDisplayName() : "";
-            String name2 = meta2.hasDisplayName() ? meta2.getDisplayName() : "";
-
-            if (!name1.equals(name2)) {
-                return false; // If names are different, return false
-            }
-        } else if (meta1 != meta2) {
-            return false; // One item has meta, the other doesn't
-        }
-        Map<Enchantment, Integer> enchants1 = meta1 != null ? meta1.getEnchants() : null;
-        Map<Enchantment, Integer> enchants2 = meta2 != null ? meta2.getEnchants() : null;
-
-        if (enchants1 != null && enchants2 != null) {
-            if (!enchants1.equals(enchants2)) {
-                return false; // If enchantments are different, return false
-            }
-        } else if (enchants1 != enchants2) {
-            return false; // One item has enchantments, the other doesn't
-        }
-        return true;
-        */
     }
 
 
