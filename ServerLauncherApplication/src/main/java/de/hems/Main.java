@@ -71,7 +71,7 @@ public class Main {
             commandListUpdateAction.addCommands(
                     Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
                     ));
-            commandListUpdateAction.addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "Minecraft name", "Dein Minecraft name hier einfügen.", true));
+            commandListUpdateAction.addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true));
             commandListUpdateAction.queue();
         } else {
             configuration.getConfig().set("discord-token", "<<add token here>>");
