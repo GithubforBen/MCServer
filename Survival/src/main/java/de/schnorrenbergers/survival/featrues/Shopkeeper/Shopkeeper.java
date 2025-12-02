@@ -68,16 +68,11 @@ public class Shopkeeper {
             }
             return s.equals(uuid.toString());
         }).forEach((e) -> {
+            this.villager = (Villager) e;
             villager.setInvulnerable(false);
             villager.damage(1000000000);
             e.remove();
         });
-        this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
-        villager.setAdult();
-        villager.setAI(false);
-        villager.customName(Component.text(name));
-        villager.setInvulnerable(true);
-        villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
     }
 
     public void buyItem(Player player, ItemForSale item) {
