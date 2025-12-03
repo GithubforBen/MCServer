@@ -53,10 +53,7 @@ public class CreateTicketListener extends ListenerAdapter {
         );
         Tickets.createTicket(ticket);
         PrivateChannel complete = event.getUser().openPrivateChannel().complete();
-        complete.sendMessageEmbeds(Main.getEmbedBuilder().setTitle("Ticket erstellt")
-                .setFooter("ID: " + ticket.getTicketId().toString())
-                .addField("Inhalt: ", ticket.getContent(), true)
-                .addField("Derzeitiger Status:", ticket.getStatus().toString() + "\n Status updates werden automatisch gesendet.", true).build()).queue();
+        complete.sendMessageEmbeds(ticket.getEmbed()).queue();
 
         event.reply("Ticket erstellt!").complete().deleteOriginal().queueAfter(10, TimeUnit.SECONDS);
     }

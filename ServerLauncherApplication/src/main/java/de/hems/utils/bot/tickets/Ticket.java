@@ -1,5 +1,8 @@
 package de.hems.utils.bot.tickets;
 
+import de.hems.Main;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+
 import java.util.UUID;
 
 public class Ticket {
@@ -33,6 +36,13 @@ public class Ticket {
         this.content = content;
         this.status = status;
         this.ticketId = ticketId;
+    }
+
+    public MessageEmbed getEmbed() {
+        return Main.getEmbedBuilder().setTitle("Ticket erstellt")
+                .setFooter("ID: " + getTicketId().toString())
+                .addField("Inhalt: ", getContent(), true)
+                .addField("Derzeitiger Status:", getStatus().toString() + "\n Status updates werden automatisch gesendet.", true).build();
     }
 
     public TicketType getType() {

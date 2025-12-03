@@ -2,8 +2,10 @@ package de.hems.utils.bot.tickets;
 
 import de.hems.Main;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -22,6 +24,15 @@ public class Tickets {
         config.set("ticket-" + config.getInt("tickets") + ".status", ticket.getStatus().toString());
         config.set("ticket-" + config.getInt("tickets") + ".author", ticket.getAuthor());//TODO: add a way for admins to see this
         Main.getInstance().getConfiguration().save();
+        String string = Main.getInstance().getConfiguration().getConfig().getString("ticket-channel");
+        if (string == null) return;
+        TextChannel textChannelById = Main.getInstance().getJda().getTextChannelById(string);
+        Guild x = textChannelById.getGuild();
+        x.getMembers().forEach((y) -> {
+            if (y.hasPermission(Permission.ADMINISTRATOR)) {
+                y.getUser().openPrivateChannel().queue((channel) -> channel.sendMessageEmbeds(ticket.getEmbed()).queue());
+            }
+        });
     }
 
     private static Ticket getTicket(UUID uuid) {
