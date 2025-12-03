@@ -10,6 +10,7 @@ import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
+import de.schnorrenbergers.survival.listener.ATMListener;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
 import de.schnorrenbergers.survival.utils.configs.ShopConfig;
 import de.schnorrenbergers.survival.utils.configs.TeamConfig;
@@ -54,6 +55,7 @@ public final class Survival extends JavaPlugin {
         new CustomInventoryListener(this);
         new ShopkeeperManager();
         new ShopkeeperListener();
+        new ATMListener();
     }
 
     private void registerCommand(String commandName, Object command) {
