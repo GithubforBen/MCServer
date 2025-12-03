@@ -4,8 +4,9 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.events.*;
 import de.hems.types.FileType;
 import de.hems.utils.Configuration;
-import de.hems.utils.bot.tickets.CreateTicketListener;
+import de.hems.utils.bot.tickets.TicketListener;
 import de.hems.utils.bot.tickets.SetTicketChannelListener;
+import de.hems.utils.bot.tickets.Tickets;
 import de.hems.utils.bot.verification.OnAccountVerifyCommand;
 import de.hems.utils.server.ServerHandler;
 import de.hems.utils.types.RunningMode;
@@ -59,10 +60,10 @@ public class Main {
         new RequestServerDataEvent();
         if (configuration.getConfig().contains("discord-token")) {
             jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
-                    .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                    .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                     .addEventListeners(
                             new SetTicketChannelListener(),
-                            new CreateTicketListener(),
+                            new TicketListener(),
                             new OnAccountVerifyCommand())
                     .setActivity(Activity.playing("Playing on " + getIp()))
                     .build();
@@ -85,6 +86,7 @@ public class Main {
                 ListenerAdapter.ServerName.SURVIVAL.toString(), 4000, FileType.SERVER.PAPER, 25565, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT, FileType.PLUGIN.SIMPLE_VOICECHAT});
         //serverHandler.startNewInstance(
         //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
+        if (jda != null) Tickets.updateTicketChannel();
     }
 
     public static void main(String[] args) throws Exception {
@@ -105,7 +107,7 @@ public class Main {
         configuration.save(); //neccessary
         serverHandler.shutdownNetwork();
         configuration.save();
-        jda.shutdownNow();
+        if (jda != null) jda.shutdownNow();
     }
 
     public Configuration getConfiguration() {

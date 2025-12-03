@@ -2,6 +2,7 @@ package de.hems.utils.bot.tickets;
 
 import de.hems.Main;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.UUID;
 
@@ -20,28 +21,41 @@ public class Ticket {
     private String author;
     private String content;
     private Status status;
-    private UUID ticketId;
+    private int ticketId;
+    private String response;
+    private String title;
 
-    public Ticket(TicketType type, String author, String content) {
+    public Ticket(String title, TicketType type, String author, String content, String response) {
         this.type = type;
         this.author = author;
         this.content = content;
         this.status = Status.OPEN;
-        ticketId = UUID.randomUUID();
+        YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
+        int tickets = 0;
+        if (config.contains("tickets")) {
+            tickets = config.getStringList("tickets").size();
+        }
+        ticketId = tickets;
+        this.response = response;
+        this.title = title;
     }
 
-    public Ticket(TicketType type, String author, String content, Status status, UUID ticketId) {
+    public Ticket(String title, TicketType type, String author, String content, Status status, int ticketId, String response) {
         this.type = type;
         this.author = author;
         this.content = content;
         this.status = status;
         this.ticketId = ticketId;
+        this.response = response;
+        this.title = title;
     }
 
+
     public MessageEmbed getEmbed() {
-        return Main.getEmbedBuilder().setTitle("Ticket erstellt")
-                .setFooter("ID: " + getTicketId().toString())
+        return Main.getEmbedBuilder().setTitle("Ticket: " + getTitle())
+                .setFooter("ID: " + getTicketId())
                 .addField("Inhalt: ", getContent(), true)
+                .addField("Antwort: ", response, false)
                 .addField("Derzeitiger Status:", getStatus().toString() + "\n Status updates werden automatisch gesendet.", true).build();
     }
 
@@ -77,11 +91,27 @@ public class Ticket {
         this.status = status;
     }
 
-    public UUID getTicketId() {
+    public int getTicketId() {
         return ticketId;
     }
 
-    public void setTicketId(UUID ticketId) {
+    public void setTicketId(int ticketId) {
         this.ticketId = ticketId;
+    }
+
+    public String getResponse() {
+        return response;
+    }
+
+    public void setResponse(String response) {
+        this.response = response;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 }
