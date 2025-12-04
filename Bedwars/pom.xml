@@ -6,7 +6,7 @@
 
   <groupId>com.github.Github</groupId>
   <artifactId>bedwars</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
   <packaging>jar</packaging>
 
   <name>bedwars</name>
@@ -50,6 +50,12 @@
     </resources>
   </build>
 
+    <parent>
+        <groupId>com.github.GithubforBen</groupId>
+        <artifactId>MCServer</artifactId>
+        <version>1.0</version>
+    </parent>
+
   <repositories>
       <repository>
         <id>papermc-repo</id>
@@ -57,11 +63,12 @@
       </repository>
   </repositories>
 
-  <dependencies>    <dependency>
-      <groupId>io.papermc.paper</groupId>
-      <artifactId>paper-api</artifactId>
-      <version>1.21.10-R0.1-SNAPSHOT</version>
-      <scope>provided</scope>
-  </dependency>
+  <dependencies>
+      <dependency>
+          <groupId>io.papermc.paper</groupId>
+          <artifactId>paper-api</artifactId>
+          <version>1.21.10-R0.1-SNAPSHOT</version>
+          <scope>provided</scope>
+      </dependency>
   </dependencies>
 </project>

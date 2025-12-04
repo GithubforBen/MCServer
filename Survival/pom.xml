@@ -50,6 +50,12 @@
         </resources>
     </build>
 
+    <parent>
+        <groupId>com.github.GithubforBen</groupId>
+        <artifactId>MCServer</artifactId>
+        <version>1.0</version>
+    </parent>
+
     <repositories>
         <repository>
             <id>papermc</id>
