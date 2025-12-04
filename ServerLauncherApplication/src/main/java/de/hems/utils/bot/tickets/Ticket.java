@@ -59,6 +59,7 @@ public class Ticket {
                 .addField("Derzeitiger Status:", getStatus().toString() + "\n Status updates werden automatisch gesendet.", true).build();
     }
 
+
     public TicketType getType() {
         return type;
     }

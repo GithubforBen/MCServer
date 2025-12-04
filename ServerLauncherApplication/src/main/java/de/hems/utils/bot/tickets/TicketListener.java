@@ -19,9 +19,8 @@ import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class TicketListener extends ListenerAdapter {
     @Override
@@ -131,17 +130,21 @@ public class TicketListener extends ListenerAdapter {
         }
         TextChannel textChannelById = Main.getInstance().getJda().getTextChannelById(string);
         new Thread(() -> {
-        textChannelById.getGuild().loadMembers().get().stream().filter((x) -> x.hasPermission(Permission.MESSAGE_MANAGE)).forEach((member) -> {
-            if (!member.getUser().isBot()) {
-                member.getUser().openPrivateChannel().queue((channel) -> channel.sendMessageEmbeds(ticket.getEmbed()).addComponents(
-                        ActionRow.of(
-                                Button.primary("mark-" + ticket.getTicketId(), "mark ticket as in progress ticket"),
-                                Button.primary("close-" + ticket.getTicketId(), "close ticket"),
-                                Button.primary("respond-" + ticket.getTicketId(), "respond ticket")
-                        )
-                ).queue());
-            }
-        });
+            try {
+
+                textChannelById.getGuild().loadMembers().get().stream().filter((x) -> x.hasPermission(Permission.MESSAGE_MANAGE)).forEach((member) -> {
+                            if (!member.getUser().isBot()) {
+                                member.getUser().openPrivateChannel().queue((channel) -> channel.sendMessageEmbeds(ticket.getEmbed()).addComponents(
+                                        ActionRow.of(
+                                                Button.primary("mark-" + ticket.getTicketId(), "mark ticket as in progress ticket"),
+                                                Button.primary("close-" + ticket.getTicketId(), "close ticket"),
+                                                Button.primary("respond-" + ticket.getTicketId(), "respond ticket")
+                                        )
+                                ).queue());
+                            }
+                        }
+                );
+            } catch (Exception e) {}
         }).start();
         return false;
     }
