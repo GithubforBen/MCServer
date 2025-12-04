@@ -6,7 +6,20 @@
 
     <artifactId>CommonCode</artifactId>
     <version>1.0</version>
-    <!--<packaging>jar</packaging>-->
+    <packaging>jar</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <parent>
         <groupId>com.github.GithubforBen</groupId>
