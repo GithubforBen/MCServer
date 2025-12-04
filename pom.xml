@@ -52,10 +52,11 @@
     <distributionManagement>
         <repository>
             <id>github</id>
-            <name>GitHub Packages</name>
+            <name>GithubforBen</name>
             <url>https://maven.pkg.github.com/GithubforBen/MCServer</url>
         </repository>
     </distributionManagement>
+
 
     <repositories>
         <repository>
