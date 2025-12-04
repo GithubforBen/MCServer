@@ -8,8 +8,6 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-  release:
-    types: [created]
 
 jobs:
   build:
@@ -17,7 +15,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
-    - name: Set up JDK 11 for Shared Runner
+    - name: Set up JDK 25 for Shared Runner
       uses: actions/setup-java@v5
       with:
         distribution: 'zulu'
@@ -29,6 +27,6 @@ jobs:
       run: mvn -B package --file pom.xml
 
     - name: Publish to GitHub Packages Apache Maven
-      run: mvn -X deploy -s $GITHUB_WORKSPACE/settings.xml
+      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
       env:
         GITHUB_TOKEN: ${{ github.token }}
