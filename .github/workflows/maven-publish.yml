@@ -29,4 +29,5 @@ jobs:
     - name: Publish github packages
       run: mvn --batch-mode deploy
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_USERNAME: GithubforBen
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
