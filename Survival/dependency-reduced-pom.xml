@@ -6,7 +6,6 @@
     <version>1.0</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.github.GithubforBen</groupId>
   <artifactId>survival</artifactId>
   <name>survival</name>
   <version>1.0</version>
