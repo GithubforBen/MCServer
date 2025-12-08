@@ -26,6 +26,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Team;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -768,7 +769,7 @@ public class Inventorys extends InventoryBase {
      * @return a configured {@link CustomInventory} instance
      * representing an inventory setup for adding money
      */
-    public static CustomInventory ATM_INVENTORY() throws MalformedURLException {
+    public static CustomInventory ATM_INVENTORY(String user) throws MalformedURLException {
         CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.DARK_GREEN + "Geldautomat", (event) -> {
         });
         customInventory.fillPlaceHolder();
@@ -839,7 +840,7 @@ public class Inventorys extends InventoryBase {
         return customInventory;
     }
 
-    public static CustomInventory ATM_DEPOSIT_INVENTORY() throws MalformedURLException {
+    public static CustomInventory ATM_DEPOSIT_INVENTORY(String user) throws MalformedURLException {
         CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.DARK_GREEN + "Geld einzahlen", (event) -> {
         });
         customInventory.fillPlaceHolder();
@@ -924,7 +925,7 @@ public class Inventorys extends InventoryBase {
         return customInventory;
     }
 
-    public static CustomInventory ATM_PAYOUT_INVENTORY() throws MalformedURLException {
+    public static CustomInventory ATM_PAYOUT_INVENTORY(String user) throws MalformedURLException {
         CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.RED + "Geld auszahlen", (event) -> {
         });
         customInventory.fillPlaceHolder();
@@ -974,5 +975,37 @@ public class Inventorys extends InventoryBase {
         return customInventory;
     }
 
+    public static CustomInventory TEAM_ADMIN_INVENTORY(String team) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, "Team manager", (x) -> {
 
+        });
+        customInventory.fillPlaceHolder();
+        customInventory.setItem(3, new ItemApi(Material.CHEST, "Team-ATM").build(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(team + ".atm");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) throws MalformedURLException {
+
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return false;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return ATM_INVENTORY();
+            }
+        });
+        return customInventory;
+    }
 }

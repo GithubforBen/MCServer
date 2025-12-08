@@ -16,6 +16,8 @@ import de.schnorrenbergers.survival.utils.configs.ShopConfig;
 import de.schnorrenbergers.survival.utils.configs.TeamConfig;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.schnorrenbergers.survival.utils.events.RequestPlayerMoneyEventHandler;
+import org.bukkit.DyeColor;
+import org.bukkit.Material;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,6 +30,7 @@ public final class Survival extends JavaPlugin {
     private ShopConfig shopConfig;
     //TODO: cteam allways throws the error message ieven if the command was succsesfull
     //TODO: fix shopkeepers dont work when not an entire stack is bought -> fixed
+    //TODO: add option to remove claimed chunks
 
     @Override
     public void onLoad() {

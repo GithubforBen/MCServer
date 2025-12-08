@@ -4,6 +4,7 @@ package de.hems.api;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -298,6 +299,12 @@ public class ItemApi {
         textures1.setSkin(textures);
         playerProfile.setTextures(textures1);
         skullMeta.setPlayerProfile(playerProfile);
+    }
+
+    public ItemApi(DyeColor color,  String name) {
+        ItemApi itemApi = new ItemApi(Material.valueOf(color.name() + "_DYE"), name);
+        itemMeta = itemApi.itemMeta;
+        itemStack = itemApi.itemStack;
     }
 
     public ItemStack build() {
