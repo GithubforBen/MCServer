@@ -19,15 +19,18 @@ public class FileType implements Serializable {
     }
     public enum PLUGIN {
         WORLDEDIT,
+		CORE_PROTECT,
         SIMPLE_VOICECHAT;
         public static String getFileURL(FileType.PLUGIN type) {
             return switch (type) {
                 case SIMPLE_VOICECHAT -> "https://cdn.modrinth.com/data/9eGKb6K1/versions/ps3C3lpD/voicechat-bukkit-2.6.6.jar";//TODO: setup voicechat
                 case PLUGIN.WORLDEDIT -> "https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=0https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=1";
+				case PLUGIN.CORE_PROTECT -> "https://drive.google.com/uc?export=download&id=1uMlT0X8bzOyhr7lNBY8K-1Md6URNiIE1";
             };
         }
         public static String getFileName(FileType.PLUGIN type) {
             if (type == PLUGIN.WORLDEDIT) return "worldedit-bukkit-7.3.17.jar";
+			if (type == PLUGIN.CORE_PROTECT) return "coreprotect.jar";
             return getFileURL(type).split("/")[getFileURL(type).split("/").length - 1];
         }
     }
