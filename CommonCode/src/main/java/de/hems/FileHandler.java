@@ -26,7 +26,7 @@ public class FileHandler {
         return new File("./downloads/" + FileType.PLUGIN.getFileName(type));
     }
 
-    public void downloadIfNeeded(FileType.SERVER type) {
+    public void downloadIfNeeded(FileType.SERVER type) {//TODO: add a way that the project builds itself and provides the plugins to the application
         File file = new File("./downloads/" + FileType.SERVER.getFileName(type));
         if (file.exists()) {
             return;
