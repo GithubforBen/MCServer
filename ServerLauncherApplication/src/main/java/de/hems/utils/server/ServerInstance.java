@@ -35,13 +35,11 @@ public class ServerInstance {
             directory.mkdirs();
         }
         File jar = new File(directory.getPath() + "/" + FileType.SERVER.getFileName(jarFile));
-        if (!jar.exists()) {
-            switch (jarFile) {
-                case PAPER -> {
-                    YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
-                    List<String> ops = config.getStringList("ops");
-                    new PaperConfigurator(Main.getInstance().getIp(), port, isProxied, ops.stream().map((x) -> UUID.fromString(x)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
-                }
+        switch (jarFile) {//TODO: add velocity
+            case PAPER -> {
+                YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
+                List<String> ops = config.getStringList("ops");
+                new PaperConfigurator(Main.getInstance().getIp(), port, isProxied, ops.stream().map((x) -> UUID.fromString(x)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
             }
         }
     }
