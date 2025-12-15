@@ -10,17 +10,15 @@ import java.util.UUID;
 
 public class RequestServerStartEvent extends EventFoundationData implements Event, Serializable {
     private static final long serialVersionUID = 5L;
-    private String serverName;
+    private ListenerAdapter.ServerName serverName;
     private FileType.SERVER type;
-    private Integer port;
     private Integer memory;
     private FileType.PLUGIN[] plugins;
 
-    public RequestServerStartEvent(ListenerAdapter.ServerName receiver, String serverName, FileType.SERVER type, Integer port, Integer memory, FileType.PLUGIN[] plugins) {
+    public RequestServerStartEvent(ListenerAdapter.ServerName receiver, ListenerAdapter.ServerName serverName, FileType.SERVER type, Integer memory, FileType.PLUGIN[] plugins) {
         super(receiver);
         this.serverName = serverName;
         this.type = type;
-        this.port = port;
         this.memory = memory;
         this.plugins = plugins;
     }
@@ -29,16 +27,12 @@ public class RequestServerStartEvent extends EventFoundationData implements Even
     }
 
 
-    public String getServerName() {
+    public ListenerAdapter.ServerName getServerName() {
         return serverName;
     }
 
     public FileType.SERVER getType() {
         return type;
-    }
-
-    public Integer getPort() {
-        return port;
     }
 
     public Integer getMemory() {

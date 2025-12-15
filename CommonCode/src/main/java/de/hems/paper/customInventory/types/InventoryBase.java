@@ -170,7 +170,7 @@ public class InventoryBase {
                 Integer i = Integer.valueOf(event.getView().getTitle().split(":")[1]);
                 String name = event.getView().getTitle().split(":")[0];
                 try {
-                    ListenerAdapter.sendListeners(new RequestServerStartEvent(ListenerAdapter.ServerName.HOST, name, FileType.SERVER.PAPER, -1, i*1024, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT}));//TODO: detect port, set plugins
+                    ListenerAdapter.sendListeners(new RequestServerStartEvent(ListenerAdapter.ServerName.HOST, ListenerAdapter.ServerName.valueOf(name), FileType.SERVER.PAPER, i*1024, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT}));//TODO: detect port, set plugins
                     event.getWhoClicked().closeInventory();
                 } catch (Exception e) {
                     throw new RuntimeException(e);

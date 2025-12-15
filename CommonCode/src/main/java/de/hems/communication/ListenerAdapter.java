@@ -97,10 +97,21 @@ public class ListenerAdapter implements Receiver {
     }
 
     public enum ServerName {
-        ALL,
-        SURVIVAL,
-        LOBBY,
-        EVENT,
-        HOST;
+        LOBBY(3001),
+        ALL(-1),
+        SURVIVAL(3000),
+        EVENT(3002),
+        HOST(3003),
+        VELOCITY(25565);
+
+        private final int port;
+
+        ServerName(int i) {
+            port = i;
+        }
+
+        public int getPort() {
+            return port;
+        }
     }
 }

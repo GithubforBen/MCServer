@@ -3,6 +3,7 @@ package de.hems;
 import de.hems.communication.ListenerAdapter;
 import de.hems.events.*;
 import de.hems.types.FileType;
+import de.hems.types.MissingConfigurationException;
 import de.hems.utils.Configuration;
 import de.hems.utils.bot.tickets.TicketListener;
 import de.hems.utils.bot.tickets.SetTicketChannelListener;
@@ -78,12 +79,10 @@ public class Main {
             configuration.getConfig().set("discord-token", "<<add token here>>");
             configuration.getConfig().setComments("discord-token", List.of("The discord token to use for the bot!"));
             configuration.save();
-            System.out.println("Please add your discord token to the config.yml");
-            System.exit(0);
-            return;
+            throw new MissingConfigurationException("discord-token is missing in config.yml.");
         }
         serverHandler.startNewInstance(
-                ListenerAdapter.ServerName.SURVIVAL.toString(), 4000, FileType.SERVER.PAPER, 25565, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT, FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.SIMPLE_VOICECHAT});
+                ListenerAdapter.ServerName.SURVIVAL, 4000, FileType.SERVER.PAPER, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT, FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.SIMPLE_VOICECHAT});
         //serverHandler.startNewInstance(
         //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
         if (jda != null) Tickets.updateTicketChannel();

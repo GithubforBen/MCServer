@@ -31,7 +31,7 @@ public class RestartServerEvent implements EventHandler<RequestServerRestartEven
                 }
             }
             try {
-                Main.getInstance().getServerHandler().startNewInstance(stop.getName(), stop.getAllocatedMemoryMB(), stop.getJarFile(), stop.getPort(), stop.isProxied(), stop.getPlugins());
+                Main.getInstance().getServerHandler().startNewInstance(stop.getName(), stop.getAllocatedMemoryMB(), stop.getJarFile(), stop.getPlugins());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

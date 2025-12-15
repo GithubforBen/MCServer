@@ -8,6 +8,7 @@ import de.schnorrenbergers.survival.featrues.Shopkeeper.ItemForSale;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
 import de.schnorrenbergers.survival.utils.Inventorys;
+import org.apache.commons.lang3.NotImplementedException;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -56,12 +57,12 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
                 break;
             }
             case "start": {
+                    /*
                 try {
                     ListenerAdapter.sendListeners(new RequestServerStartEvent(
                             ListenerAdapter.ServerName.HOST,
-                            "debug",
+                            ListenerAdapter.ServerName.LOBBY,
                             FileType.SERVER.PAPER,
-                            4000,
                             2000,
                             new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT}
                     ));
@@ -69,6 +70,9 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
                     throw new RuntimeException(e);
                 }
                 break;
+
+                     */
+                throw new NotImplementedException("Not implemented");
             }
             case "sk": {
                 ShopkeeperManager.createShopkeeper(((Player) sender), "TEST").setItems(List.of(

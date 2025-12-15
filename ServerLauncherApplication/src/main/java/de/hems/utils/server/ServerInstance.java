@@ -1,35 +1,33 @@
 package de.hems.utils.server;
 
-import de.hems.types.FileType;
 import de.hems.Main;
+import de.hems.api.UUIDFetcher;
+import de.hems.communication.ListenerAdapter;
+import de.hems.types.FileType;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 public class ServerInstance {
-    private Process process;
-    private final String name;
+    private final ListenerAdapter.ServerName name;
     private final File directory;
-    private int allocatedMemoryMB;
     private final FileType.SERVER jarFile;
+    private Process process;
+    private int allocatedMemoryMB;
     private boolean printStream = true;
-    private int port;
-    private boolean isProxied;
     private FileType.PLUGIN[] plugins;
 
-    public int getPort() {
-        return port;
-    }
-
-    public ServerInstance(String name, int allocatedMemoryMB, FileType.SERVER jarFile, int port, boolean isProxied, FileType.PLUGIN[] plugins) throws Exception {
+    public ServerInstance(ListenerAdapter.ServerName name, int allocatedMemoryMB, FileType.SERVER jarFile, FileType.PLUGIN[] plugins) throws Exception {
         this.name = name;
         this.allocatedMemoryMB = allocatedMemoryMB;
         this.jarFile = jarFile;
-        this.port = port;
         this.directory = new File("./servers/" + name + "/");
-        this.isProxied = isProxied;
         this.plugins = plugins;
         if (!directory.exists()) {
             directory.mkdirs();
@@ -39,13 +37,22 @@ public class ServerInstance {
             case PAPER -> {
                 YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
                 List<String> ops = config.getStringList("ops");
-                new PaperConfigurator(Main.getInstance().getIp(), port, isProxied, ops.stream().map((x) -> UUID.fromString(x)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
+                new PaperConfigurator(name, true, ops.stream().map((x) -> UUIDFetcher.findUUIDByName(x, true)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
+                break;
+            }
+            case VELOCITY -> {
+                new VelocityConfigurator(directory.getAbsolutePath(), 25565, plugins).configure();
             }
         }
     }
 
     public void start() throws IOException {
         System.out.println("Starting server " + name);
+        if (jarFile != FileType.SERVER.VELOCITY) {
+            Path path = Paths.get(directory + "/server.properties");
+            String read = Files.readAllLines(path).stream().collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
+            System.out.println(read);
+        }
         ProcessBuilder pb = new ProcessBuilder("java", "-jar", "-Xmx" + allocatedMemoryMB + "m", FileType.SERVER.getFileName(jarFile)).directory(directory);
         process = pb.start();
         new Thread(() -> {
@@ -112,9 +119,10 @@ public class ServerInstance {
         outputStreamWriter.close();
     }
 
-    public String getName() {
+    public ListenerAdapter.ServerName getName() {
         return name;
     }
+
     public boolean isAlive() {
         return process.isAlive();
     }
@@ -129,10 +137,6 @@ public class ServerInstance {
 
     public FileType.SERVER getJarFile() {
         return jarFile;
-    }
-
-    public boolean isProxied() {
-        return isProxied;
     }
 
     public FileType.PLUGIN[] getPlugins() {

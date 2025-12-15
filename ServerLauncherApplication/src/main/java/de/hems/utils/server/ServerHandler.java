@@ -1,5 +1,6 @@
 package de.hems.utils.server;
 
+import de.hems.communication.ListenerAdapter;
 import de.hems.types.FileType;
 import de.hems.types.Server;
 
@@ -14,11 +15,13 @@ public class ServerHandler {
 
     public ServerHandler() throws Exception {
         instances = new ArrayList<>();
-        //TODO: add velocity.start();
+        ServerInstance velocity = new ServerInstance(ListenerAdapter.ServerName.VELOCITY, 25565, FileType.SERVER.VELOCITY,  new FileType.PLUGIN[]{});
+        instances.add(velocity);
+        velocity.start();
     }
 
-    public void startNewInstance(String name, int allocatedMemoryMB, FileType.SERVER jarFile, int port, boolean isProxied, FileType.PLUGIN[] plugins) throws Exception {
-        ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, port, isProxied, plugins);
+    public void startNewInstance(ListenerAdapter.ServerName name, int allocatedMemoryMB, FileType.SERVER jarFile, FileType.PLUGIN[] plugins) throws Exception {
+        ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, plugins);
         instances.add(instance);
         instance.start();
     }
@@ -81,7 +84,7 @@ public class ServerHandler {
         updateInstances();
         List<Server> servers = new ArrayList<>();
         for (ServerInstance instance : instances) {
-            servers.add(new Server(instance.getName(), instance.getPort(), instance.getAllocatedMemoryMB()));
+            servers.add(new Server(instance.getName().toString(), instance.getName().getPort(), instance.getAllocatedMemoryMB()));
         }
         return servers.toArray(new Server[0]);
     }
