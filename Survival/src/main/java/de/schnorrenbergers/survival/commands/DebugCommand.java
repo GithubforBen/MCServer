@@ -44,7 +44,7 @@ public class DebugCommand implements CommandExecutor, TabCompleter {
                 switch (args[1].toLowerCase()) {
                     case "atm":
                         try {
-                            player.openInventory(Inventorys.ATM_INVENTORY().getInventory());
+                            player.openInventory(Inventorys.ATM_INVENTORY(player.getUniqueId().toString()).getInventory());
                         } catch (MalformedURLException e) {
                             throw new RuntimeException(e);
                         }

@@ -799,7 +799,7 @@ public class Inventorys extends InventoryBase {
             @Override
             public CustomInventory loadInventoryOnClick() {
                 try {
-                    return ATM_DEPOSIT_INVENTORY();
+                    return ATM_DEPOSIT_INVENTORY(user);
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
@@ -831,7 +831,7 @@ public class Inventorys extends InventoryBase {
             @Override
             public CustomInventory loadInventoryOnClick() {
                 try {
-                    return ATM_PAYOUT_INVENTORY();
+                    return ATM_PAYOUT_INVENTORY(user);
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
@@ -844,7 +844,7 @@ public class Inventorys extends InventoryBase {
         CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.DARK_GREEN + "Geld einzahlen", (event) -> {
         });
         customInventory.fillPlaceHolder();
-        customInventory.addBackButton(18, UUID.fromString("cd283a6b-48d5-4b0b-a96a-f9f0955b20c6"), ATM_INVENTORY());
+        customInventory.addBackButton(18, UUID.fromString("cd283a6b-48d5-4b0b-a96a-f9f0955b20c6"), ATM_INVENTORY(user));
 
         // 1, 32, 64
         int currentInventoryPos = 10;
@@ -866,7 +866,7 @@ public class Inventorys extends InventoryBase {
                 @Override
                 public void onClick(InventoryClickEvent event) {
                     Player player = (Player) event.getWhoClicked();
-                    AtmHandler.deposit(player, amount);
+                    AtmHandler.deposit(player, user, amount);
                 }
 
                 @Override
@@ -929,7 +929,7 @@ public class Inventorys extends InventoryBase {
         CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.RED + "Geld auszahlen", (event) -> {
         });
         customInventory.fillPlaceHolder();
-        customInventory.addBackButton(18, UUID.fromString("39ed12c5-6a5c-4f52-8f4b-6d8bc2869f81"), ATM_INVENTORY());
+        customInventory.addBackButton(18, UUID.fromString("39ed12c5-6a5c-4f52-8f4b-6d8bc2869f81"), ATM_INVENTORY(user));
 
         // 1, 32, 64
         int currentInventoryPos = 10;
@@ -951,7 +951,7 @@ public class Inventorys extends InventoryBase {
                 @Override
                 public void onClick(InventoryClickEvent event) {
                     Player player = (Player) event.getWhoClicked();
-                    AtmHandler.payout(player, amount);
+                    AtmHandler.payout(player, user, amount);
                 }
 
                 @Override
@@ -1003,7 +1003,7 @@ public class Inventorys extends InventoryBase {
 
             @Override
             public CustomInventory loadInventoryOnClick() throws MalformedURLException {
-                return ATM_INVENTORY();
+                return ATM_INVENTORY(team);
             }
         });
         return customInventory;

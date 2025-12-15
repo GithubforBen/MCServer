@@ -28,7 +28,7 @@ public class ATMListener implements Listener {
         if (!event.getPlayer().isSneaking()) return;
         if (!event.getClickedBlock().getType().equals(Material.ENDER_CHEST)) return;
         try {
-            event.getPlayer().openInventory(Inventorys.ATM_INVENTORY().getInventory());
+            event.getPlayer().openInventory(Inventorys.ATM_INVENTORY(event.getPlayer().getUniqueId().toString()).getInventory());
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

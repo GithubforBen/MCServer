@@ -1,6 +1,7 @@
 package de.hems.utils.server;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 
 public class ServerConfigurator {
@@ -16,8 +17,8 @@ public class ServerConfigurator {
         writer.close();
     }
 
-	public boolean doesFileExist(String file) {
-		File file = new File(file);
+	public boolean doesFileExist(String fileName) {
+		File file = new File(fileName);
 		return file.exists();
 	}
 
