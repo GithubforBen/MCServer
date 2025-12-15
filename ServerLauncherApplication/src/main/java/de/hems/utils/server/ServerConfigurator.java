@@ -15,4 +15,15 @@ public class ServerConfigurator {
         writer.write(content);
         writer.close();
     }
+
+	public boolean doesFileExist(String file) {
+		File file = new File(file);
+		return file.exists();
+	}
+
+	public void writeToFileIfFileDoesntExist(String file, String content) throws Exception {
+		if (!doesFileExist(file)) {
+			writeToFile(file, content);
+		}
+	}
 }
