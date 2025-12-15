@@ -54,7 +54,6 @@ public class PaperConfigurator extends ServerConfigurator {
             jsonObject.addProperty("bypassesPlayerLimit", true);
             jsonArray.add(jsonObject);
         }
-        writeToFile("ops.json", jsonArray.toString());
         jsonArray = new JsonArray();
         for (String whitelist : whitelist) {
             JsonObject jsonObject = new JsonObject();
@@ -63,5 +62,6 @@ public class PaperConfigurator extends ServerConfigurator {
             jsonArray.add(jsonObject);
         }
         writeToFile("whitelist.json", jsonArray.toString());
+        writeToFile("ops.json", jsonArray.toString());
     }
 }
