@@ -13,7 +13,7 @@ public class ServerHandler {
 
     public ServerHandler() throws Exception {
         instances = new ArrayList<>();
-        ServerInstance velocity = new ServerInstance(ListenerAdapter.ServerName.VELOCITY, 25565, FileType.SERVER.VELOCITY,  new FileType.PLUGIN[]{});
+        ServerInstance velocity = new ServerInstance(ListenerAdapter.ServerName.VELOCITY, 1000, FileType.SERVER.VELOCITY,  new FileType.PLUGIN[]{});
         instances.add(velocity);
         velocity.start();
     }

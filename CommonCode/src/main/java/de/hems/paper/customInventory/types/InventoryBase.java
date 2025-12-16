@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -197,8 +198,9 @@ public class InventoryBase {
 
     private static CustomInventory SERVERCREATEINVENTORY() {
         CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, "Server erstellen", null);
-        for (int i = 0; i < ListenerAdapter.ServerName.values().length; i++) {//TODO: use actual server list e.g. SURRVIVAL, EVENT, LOBBY, SERVER1
-            customInventory.setItem(i, new ItemApi(Material.WHITE_WOOL, ListenerAdapter.ServerName.values()[i].name()).build(), new ItemAction() {
+        List<ListenerAdapter.ServerName> list = Arrays.stream(ListenerAdapter.ServerName.values()).filter((x) -> x.getPort() != -1).toList();
+        for (int i = 0; i < list.size(); i++) {//TODO: use actual server list e.g. SURRVIVAL, EVENT, LOBBY, SERVER1
+            customInventory.setItem(i, new ItemApi(Material.WHITE_WOOL, list.get(i).name()).build(), new ItemAction() {
 
                 @Override
                 public UUID getID() {

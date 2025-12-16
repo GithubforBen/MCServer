@@ -8,6 +8,7 @@ import de.hems.communication.events.types.EventFoundationData;
 import de.hems.communication.events.types.EventHandler;
 import de.hems.communication.events.types.RespondDataEvent;
 import org.jgroups.*;
+import org.jgroups.conf.ProtocolStackConfigurator;
 
 import java.util.*;
 
