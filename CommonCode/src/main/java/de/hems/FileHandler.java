@@ -49,7 +49,7 @@ public class FileHandler {
         }
         System.out.println("Download complete");
     }
-    public void downloadIfNeeded(FileType.PLUGIN type) throws IOException, InterruptedException {//TODO: add a way that the project builds itself and provides the plugins to the application
+    public void downloadIfNeeded(FileType.PLUGIN type) throws IOException, InterruptedException {
         File file = new File("./downloads/" + FileType.PLUGIN.getFileName(type));
         if (type.isBuildable()) buildFile(type);
         if (file.exists()) {
@@ -79,6 +79,8 @@ public class FileHandler {
     }
 
     public void buildFile(FileType.PLUGIN type) throws IOException, InterruptedException {
+        build();
+        if (1==1) return;//TODO: remove
         File buildDir = new File("./builds/");
         if (!buildDir.exists()) {
             build();
