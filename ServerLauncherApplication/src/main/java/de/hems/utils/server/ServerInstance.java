@@ -32,7 +32,7 @@ public class ServerInstance {
         if (!directory.exists()) {
             directory.mkdirs();
         }
-        switch (jarFile) {//TODO: add velocity
+        switch (jarFile) {
             case PAPER -> {
                 YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
                 List<String> ops = config.getStringList("ops");

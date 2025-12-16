@@ -16,6 +16,10 @@ public final class LobbyPlugin extends JavaPlugin {
     @Override
     public void onLoad() {
         instance = this;
+    }
+
+    @Override
+    public void onEnable() {
         try {
             new ListenerAdapter(ListenerAdapter.ServerName.LOBBY);
             new CustomInventoryListener(this);
@@ -23,10 +27,6 @@ public final class LobbyPlugin extends JavaPlugin {
             throw new RuntimeException(e);
         }//TODO: parkour
         new CheckpointListener();
-    }
-
-    @Override
-    public void onEnable() {
         registerCommand("servermanger", new ServerManagerCommand());
     }
 
