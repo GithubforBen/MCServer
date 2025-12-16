@@ -6,9 +6,7 @@ import de.hems.types.Server;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class ServerHandler {
     private List<ServerInstance> instances;
@@ -21,6 +19,28 @@ public class ServerHandler {
     }
 
     public void startNewInstance(ListenerAdapter.ServerName name, int allocatedMemoryMB, FileType.SERVER jarFile, FileType.PLUGIN[] plugins) throws Exception {
+        Set<FileType.PLUGIN> pluginList = new HashSet<>(Arrays.asList(plugins));
+        pluginList.addAll(List.of(FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.SIMPLE_VOICECHAT));
+        switch (name) {
+            case SURVIVAL -> {
+                pluginList.add(FileType.PLUGIN.SURVIVAL);
+                break;
+            }
+            case LOBBY -> {
+                pluginList.add(FileType.PLUGIN.LOBBY);
+                break;
+            }
+            case EVENT -> {
+                pluginList.add(FileType.PLUGIN.BEDWARS);
+                break;
+            }
+            case VELOCITY -> {
+                pluginList.clear();
+                pluginList.add(FileType.PLUGIN.VELOCITY);
+                break;
+            }
+        }
+        plugins = pluginList.toArray(new FileType.PLUGIN[0]);
         ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, plugins);
         instances.add(instance);
         instance.start();

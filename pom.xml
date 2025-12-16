@@ -15,6 +15,7 @@
         <module>ServerLauncherApplication</module>
         <module>LobbyPlugin</module>
         <module>Bedwars</module>
+        <module>VelocityPlugin</module>
     </modules>
 
     <build>

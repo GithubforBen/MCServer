@@ -1,13 +1,17 @@
-package de.schnorrenbergers.lobbyPlugin;
+package de.schnorrenbergers.lobby;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.commands.ServerManagerCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
-import de.schnorrenbergers.lobbyPlugin.parkour.CheckpointListener;
+import de.schnorrenbergers.lobby.parkour.CheckpointListener;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class LobbyPlugin extends JavaPlugin {
 
     private static LobbyPlugin instance;
+    private ListenerAdapter listenerAdapter;
 
     @Override
     public void onLoad() {
@@ -23,8 +27,13 @@ public final class LobbyPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
+        registerCommand("servermanger", new ServerManagerCommand());
+    }
 
+
+    private void registerCommand(String commandName, Object command) {
+        getCommand(commandName).setExecutor((CommandExecutor) command);
+        getCommand(commandName).setTabCompleter((TabCompleter) command);
     }
 
     @Override

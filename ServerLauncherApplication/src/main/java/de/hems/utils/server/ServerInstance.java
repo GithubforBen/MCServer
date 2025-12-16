@@ -37,7 +37,7 @@ public class ServerInstance {
                 YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
                 List<String> ops = config.getStringList("ops");
                 new PaperConfigurator(name, true, ops.stream().map((x) -> UUIDFetcher.findUUIDByName(x, true)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
-                printStream = false;
+                printStream = true;
                 break;
             }
             case VELOCITY -> {
@@ -49,6 +49,7 @@ public class ServerInstance {
     public void start() throws IOException {
         System.out.println("Starting server " + name);
         ProcessBuilder pb = new ProcessBuilder("java", "-jar", "-Xmx" + allocatedMemoryMB + "m", FileType.SERVER.getFileName(jarFile)).directory(directory);
+        pb.redirectErrorStream(true);
         process = pb.start();
         new Thread(() -> {
             while (process.isAlive()) {

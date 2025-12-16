@@ -1,6 +1,6 @@
-package de.schnorrenbergers.lobbyPlugin.parkour;
+package de.schnorrenbergers.lobby.parkour;
 
-import de.schnorrenbergers.lobbyPlugin.LobbyPlugin;
+import de.schnorrenbergers.lobby.LobbyPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 
