@@ -100,6 +100,8 @@ public class FileHandler {
 
     private void build() throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("./mvnw", "clean", "install").directory(new File("./"));
+        pb.redirectErrorStream(true);
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         pb.start().waitFor();
     }
 }

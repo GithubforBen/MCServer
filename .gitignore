@@ -39,8 +39,7 @@ build/
 .DS_Store
 
 ## MC Server
-/paper/*
-/velocity/*
-/dowloads/*
+/builds/*
 /servers/*
+/dowloads/*
 main-config.yml
