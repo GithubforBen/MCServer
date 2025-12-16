@@ -101,8 +101,8 @@ public class ListenerAdapter implements Receiver {
         ALL(-1),
         SURVIVAL(3000),
         EVENT(3002),
-        HOST(3003),
-        VELOCITY(25565);
+        HOST(-1),
+        VELOCITY(-1);//you can't connect from velocity to velocity
 
         private final int port;
 

@@ -12,6 +12,7 @@ import de.hems.types.SecureTokenGenerator;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
@@ -26,7 +27,7 @@ public class PaperConfigurator extends ServerConfigurator {
     private final FileType.PLUGIN[] plugins;
     private final ListenerAdapter.ServerName name;
 
-    public PaperConfigurator(ListenerAdapter.ServerName name, boolean isProxyed, List<UUID> ops, String[] whitelist, String directory, FileType.PLUGIN[] plugins) {
+    public PaperConfigurator(ListenerAdapter.ServerName name, boolean isProxyed, List<UUID> ops, String[] whitelist, String directory, FileType.PLUGIN[] plugins) throws IOException {
         super(directory);
         this.port = name.getPort();
         this.isProxyed = isProxyed;
@@ -46,21 +47,18 @@ public class PaperConfigurator extends ServerConfigurator {
             File pluginFile = new FileHandler().provideFile(plugin);
             Files.copy(pluginFile.toPath(), pluginF.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
-        writeToFile("eula.txt", "eula=true");
-        writeToFile("server.properties", "server-ip=" + Main.getInstance().getIp());
-        writeToFile("server.properties", "server-port=" + port);
+        writeToFile("eula.txt", "eula=true", false);
+        writeToFile("server.properties", "server-ip=" + Main.getInstance().getIp(), false);
+        writeToFile("server.properties", "server-port=" + port, false);
         if (isProxyed) {
-            writeToFile("server.properties", "online-mode=false");
-            writeToYmlConfiguration("paper-global.yml", "proxies.velocity.enabled", true);
-            writeToYmlConfiguration("paper-global.yml", "proxies.velocity.online-mode", true);
+            writeToFile("server.properties", "online-mode=false", false);
+            writeToYmlConfiguration("config/paper-global.yml", "proxies.velocity.enabled", true, false);
+            writeToYmlConfiguration("config/paper-global.yml", "proxies.velocity.online-mode", true, false);
 
             if (Main.getInstance().getConfiguration().getConfig().contains("serversecret")) {
-                writeToYmlConfiguration("paper-global.yml","proxies.velocity.secret",  Main.getInstance().getConfiguration().getConfig().getString("serversecret"));
+                writeToYmlConfiguration("config/paper-global.yml","proxies.velocity.secret",  Main.getInstance().getConfiguration().getConfig().getString("serversecret"), false);
             } else {
-                Main.getInstance().getConfiguration().getConfig().setComments("serversecret", List.of("The velocity secret key."));
-                Main.getInstance().getConfiguration().getConfig().set("serversecret", SecureTokenGenerator.generateSecureToken());
-                Main.getInstance().getConfiguration().save();
-                throw new MissingConfigurationException("serversecret is missing in config.yml. ou might want to change it to something else. It was auto set.");
+                throw new MissingConfigurationException("serversecret is missing in config.yml. You need to start the velocity server first!");
             }
         }
         JsonArray jsonArray = new JsonArray();
@@ -73,7 +71,7 @@ public class PaperConfigurator extends ServerConfigurator {
             jsonArray.add(jsonObject);
         }
         System.out.println(ops.size() + ":" + jsonArray.toString());
-        writeToFileIfFileDoesntExist("ops.json", jsonArray.toString());
+        writeToFile("ops.json", jsonArray.toString(), false);
         jsonArray = new JsonArray();
         for (String whitelist : whitelist) {
             JsonObject jsonObject = new JsonObject();
@@ -81,7 +79,7 @@ public class PaperConfigurator extends ServerConfigurator {
             jsonObject.addProperty("name", whitelist);
             jsonArray.add(jsonObject);
         }
-        writeToFileIfFileDoesntExist("whitelist.json", jsonArray.toString());
+        overwriteToFile("whitelist.json", jsonArray.toString(), true);
         System.out.println("Configured server " + name.toString());
     }
 }

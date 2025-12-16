@@ -32,12 +32,12 @@ public class ServerInstance {
         if (!directory.exists()) {
             directory.mkdirs();
         }
-        File jar = new File(directory.getPath() + "/" + FileType.SERVER.getFileName(jarFile));
         switch (jarFile) {//TODO: add velocity
             case PAPER -> {
                 YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
                 List<String> ops = config.getStringList("ops");
                 new PaperConfigurator(name, true, ops.stream().map((x) -> UUIDFetcher.findUUIDByName(x, true)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
+                printStream = false;
                 break;
             }
             case VELOCITY -> {
@@ -48,11 +48,6 @@ public class ServerInstance {
 
     public void start() throws IOException {
         System.out.println("Starting server " + name);
-        if (jarFile != FileType.SERVER.VELOCITY) {
-            Path path = Paths.get(directory + "/server.properties");
-            String read = Files.readAllLines(path).stream().collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
-            System.out.println(read);
-        }
         ProcessBuilder pb = new ProcessBuilder("java", "-jar", "-Xmx" + allocatedMemoryMB + "m", FileType.SERVER.getFileName(jarFile)).directory(directory);
         process = pb.start();
         new Thread(() -> {
