@@ -20,7 +20,7 @@ public class RestartCommand implements CommandExecutor {
             try {
                 ListenerAdapter.sendListeners(new RequestServerRestartEvent(
                         ListenerAdapter.ServerName.HOST,
-                        ListenerAdapter.ServerName.SURVIVAL.toString()
+                        ListenerAdapter.ServerName.SURVIVAL
                 ));
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -30,7 +30,7 @@ public class RestartCommand implements CommandExecutor {
         try {
             ListenerAdapter.sendListeners(new RequestServerRestartEvent(
                     ListenerAdapter.ServerName.HOST,
-                    args[0]
+                    ListenerAdapter.ServerName.valueOf(args[0])
             ));
         } catch (Exception e) {
             throw new RuntimeException(e);

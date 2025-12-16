@@ -16,7 +16,7 @@ public class StopServerEvent implements EventHandler<RequestServerStopEvent> {
         if (!(event instanceof RequestServerStopEvent)) {
             return;
         }
-        event = (RequestServerStopEvent) event;
+        event = event;
         Main.getInstance().getServerHandler().stop(((RequestServerStopEvent) event).getServerName());
     }
 }

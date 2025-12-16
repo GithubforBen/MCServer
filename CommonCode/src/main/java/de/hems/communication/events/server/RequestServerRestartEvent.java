@@ -9,16 +9,16 @@ import java.util.UUID;
 
 public class RequestServerRestartEvent extends EventFoundationData implements Event, Serializable {
     private static final long serialVersionUID = 6L;
-    private String serverName;
+    private ListenerAdapter.ServerName serverName;
 
-    public String getServerName() {
+    public ListenerAdapter.ServerName getServerName() {
         return serverName;
     }
 
     public RequestServerRestartEvent() {
     }
 
-    public RequestServerRestartEvent(ListenerAdapter.ServerName receiver,String serverName) {
+    public RequestServerRestartEvent(ListenerAdapter.ServerName receiver, ListenerAdapter.ServerName serverName) {
         super(receiver);
         this.serverName = serverName;
     }

@@ -255,7 +255,7 @@ public class InventoryBase {
             @Override
             public void onClick(InventoryClickEvent event) {
                 try {
-                    ListenerAdapter.sendListeners(new RequestServerStopEvent(ListenerAdapter.ServerName.HOST, event.getView().getTitle().replace("Server settings:", "")));
+                    ListenerAdapter.sendListeners(new RequestServerStopEvent(ListenerAdapter.ServerName.HOST, ListenerAdapter.ServerName.valueOf(event.getView().getTitle().replace("Server settings:", ""))));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -286,7 +286,7 @@ public class InventoryBase {
             @Override
             public void onClick(InventoryClickEvent event) {
                 try {
-                    ListenerAdapter.sendListeners(new RequestServerRestartEvent(ListenerAdapter.ServerName.HOST, event.getView().getTitle().replace("Server settings:", "")));
+                    ListenerAdapter.sendListeners(new RequestServerRestartEvent(ListenerAdapter.ServerName.HOST, ListenerAdapter.ServerName.valueOf(event.getView().getTitle().replace("Server settings:", ""))));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

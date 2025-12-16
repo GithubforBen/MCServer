@@ -46,7 +46,7 @@ public class ServerHandler {
         instance.start();
     }
 
-    public ServerInstance stop(String name) {
+    public ServerInstance stop(ListenerAdapter.ServerName name) {
         Optional<ServerInstance> first = instances.stream().filter(ServerInstance -> ServerInstance.getName().equals(name)).findFirst();
         if (!first.isPresent()) {
             throw new RuntimeException("Server with name " + name + " not found");
@@ -91,7 +91,7 @@ public class ServerHandler {
         }
     }
 
-    public boolean doesInstanceExist(String name) {
+    public boolean doesInstanceExist(ListenerAdapter.ServerName name) {
         updateInstances();
         return instances.stream().anyMatch(ServerInstance -> ServerInstance.getName().equals(name));
     }

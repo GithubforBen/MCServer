@@ -86,7 +86,7 @@ public class ListenerAdapter implements Receiver {
         if (object instanceof Event) {
             EventFoundationData event = (EventFoundationData) object;
             if (event.getReceiver() != ServerName.ALL && (event.getReceiver() == null || !event.getReceiver().equals(name))) {
-                System.out.println(name + " Event not for me");
+                System.out.println(name + " Event not for me: "+ event.getReceiver());
                 return;
             }
             if (event instanceof RespondDataEvent) {
