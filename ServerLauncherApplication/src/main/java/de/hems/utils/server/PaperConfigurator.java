@@ -47,7 +47,7 @@ public class PaperConfigurator extends ServerConfigurator {
             File pluginFile = new FileHandler().provideFile(plugin);
             Files.copy(pluginFile.toPath(), pluginF.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
-        writeToFile("eula.txt", "eula=true", false);
+        overwriteToFile("eula.txt", "eula=true", true);
         writeToFile("server.properties", "server-ip=" + Main.getInstance().getIp(), false);
         writeToFile("server.properties", "server-port=" + port, false);
         if (isProxyed) {
