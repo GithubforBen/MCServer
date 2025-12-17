@@ -9,6 +9,7 @@ import de.schnorrenbergers.survival.commands.TeamCommand;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
+import de.schnorrenbergers.survival.featrues.chunklimiter.PlayerLoadChunkListener;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
 import de.schnorrenbergers.survival.listener.ATMListener;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
@@ -59,6 +60,7 @@ public final class Survival extends JavaPlugin {
         new ShopkeeperManager();
         new ShopkeeperListener();
         new ATMListener();
+        new PlayerLoadChunkListener();
     }
 
     private void registerCommand(String commandName, Object command) {

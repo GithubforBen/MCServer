@@ -72,7 +72,7 @@ public class PaperConfigurator extends ServerConfigurator {
             jsonObject.addProperty("bypassesPlayerLimit", true);
             jsonArray.add(jsonObject);
         }
-        System.out.println(ops.size() + ":" + jsonArray.toString());//TODO: sync ops
+        System.out.println(ops.size() + ":" + jsonArray.toString());
         overwriteToFile("ops.json", jsonArray.toString(), true);
         jsonArray = new JsonArray();
         for (String whitelist : whitelist) {

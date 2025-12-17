@@ -1,10 +1,12 @@
 package de.hems;
 
+import de.hems.api.UUIDFetcher;
 import de.hems.communication.ListenerAdapter;
 import de.hems.events.*;
 import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
 import de.hems.utils.Configuration;
+import de.hems.utils.bot.payingplayer.PayingPlayerCommand;
 import de.hems.utils.bot.tickets.TicketListener;
 import de.hems.utils.bot.tickets.SetTicketChannelListener;
 import de.hems.utils.bot.tickets.Tickets;
@@ -38,6 +40,7 @@ public class Main {
     private ListenerAdapter listenerAdapter;
     private ServerHandler serverHandler;
     private JDA jda;
+    //TODO: add a way to auto add ops
 
     public Main() throws Exception {
         if (instance == null) {
@@ -52,6 +55,7 @@ public class Main {
             }
         }));
         configuration = new Configuration();
+        if (!configuration.getConfig().contains("paying-players")) configuration.getConfig().set("paying-players", List.of(UUIDFetcher.findUUIDByName("for_sale", true).toString()));
         listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.HOST);
         new RespondDataEvent();
         serverHandler = new ServerHandler();
@@ -65,7 +69,8 @@ public class Main {
                     .addEventListeners(
                             new SetTicketChannelListener(),
                             new TicketListener(),
-                            new OnAccountVerifyCommand())
+                            new OnAccountVerifyCommand(),
+                            new PayingPlayerCommand())
                     .setActivity(Activity.playing("Playing on " + getIp()))
                     .build();
             jda.awaitReady();
@@ -74,6 +79,7 @@ public class Main {
                     Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
                     ));
             commandListUpdateAction.addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true));
+            commandListUpdateAction.addCommands(Commands.slash("payingplayer", "Schreibe auf, dass ein spieler für den Server zahlt!").addOption(OptionType.STRING, "minecraftname", "Den Minecraft name hier einfügen.", true));
             commandListUpdateAction.queue();
         } else {
             configuration.getConfig().set("discord-token", "<<add token here>>");
@@ -82,7 +88,7 @@ public class Main {
             throw new MissingConfigurationException("discord-token is missing in config.yml.");
         }
         serverHandler.startNewInstance(
-                ListenerAdapter.ServerName.LOBBY, 1500, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
+                ListenerAdapter.ServerName.SURVIVAL, 1500, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
         //serverHandler.startNewInstance(
         //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
         if (jda != null) Tickets.updateTicketChannel();
