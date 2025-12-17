@@ -20,7 +20,7 @@ public class ServerHandler {
 
     public void startNewInstance(ListenerAdapter.ServerName name, int allocatedMemoryMB, FileType.SERVER jarFile, FileType.PLUGIN[] plugins) throws Exception {
         Set<FileType.PLUGIN> pluginList = new HashSet<>(Arrays.asList(plugins));
-        pluginList.addAll(List.of(FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.SIMPLE_VOICECHAT));
+        pluginList.addAll(List.of(FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.WORLDEDIT));
         switch (name) {
             case SURVIVAL -> {
                 pluginList.add(FileType.PLUGIN.SURVIVAL);
@@ -37,6 +37,7 @@ public class ServerHandler {
             case VELOCITY -> {
                 pluginList.clear();
                 pluginList.add(FileType.PLUGIN.VELOCITY);
+                pluginList.add(FileType.PLUGIN.SIMPLE_VOICECHAT_VELOCITY);
                 break;
             }
         }

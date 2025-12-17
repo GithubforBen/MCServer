@@ -32,14 +32,16 @@ public class VelocityConfigurator extends ServerConfigurator {
         File jar = new File(this.directory + "/" + FileType.SERVER.getFileName(FileType.SERVER.VELOCITY));
         File jarFile = new FileHandler().provideFile(FileType.SERVER.VELOCITY);
         Files.copy(jarFile.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        File file = new File(this.directory + "/plugins/");
+        if (file.exists()) file.delete();
         for (FileType.PLUGIN plugin : plugins) {
             File pluginF = new File(this.directory + "/plugins/" + FileType.PLUGIN.getFileName(plugin));
             pluginF.getParentFile().mkdirs();
             File pluginFile = new FileHandler().provideFile(plugin);
             Files.copy(pluginFile.toPath(), pluginF.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
-        File file = new File(this.directory + "/velocity.toml");
-        if (file.exists()) {file.delete();}
+        File toml = new File(this.directory + "/velocity.toml");
+        if (toml.exists()) {toml.delete();}
         writeToFile("velocity.toml", "bind = \"" + Main.getInstance().getIp() + ":" + port + "\"", false);
         writeToFile("velocity.toml", "player-info-forwarding-mode = \"modern\"", false);
         if (Main.getInstance().getConfiguration().getConfig().contains("serversecret")) {

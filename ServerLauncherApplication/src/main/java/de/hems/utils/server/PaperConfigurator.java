@@ -41,6 +41,8 @@ public class PaperConfigurator extends ServerConfigurator {
         File jar = new File(this.directory + "/" + FileType.SERVER.getFileName(FileType.SERVER.PAPER));
         File jarFile = new FileHandler().provideFile(FileType.SERVER.PAPER);
         Files.copy(jarFile.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        File file = new File(this.directory + "/plugins/");
+        if (file.exists()) file.delete();
         for (FileType.PLUGIN plugin : plugins) {
             File pluginF = new File(this.directory + "/plugins/" + FileType.PLUGIN.getFileName(plugin));
             pluginF.getParentFile().mkdirs();
@@ -71,7 +73,7 @@ public class PaperConfigurator extends ServerConfigurator {
             jsonArray.add(jsonObject);
         }
         System.out.println(ops.size() + ":" + jsonArray.toString());//TODO: sync ops
-        writeToFile("ops.json", jsonArray.toString(), true);
+        overwriteToFile("ops.json", jsonArray.toString(), true);
         jsonArray = new JsonArray();
         for (String whitelist : whitelist) {
             JsonObject jsonObject = new JsonObject();

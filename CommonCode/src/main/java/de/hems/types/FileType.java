@@ -24,16 +24,18 @@ public class FileType implements Serializable {
         VELOCITY,
         WORLDEDIT,
 		CORE_PROTECT,
-        SIMPLE_VOICECHAT;
+        SIMPLE_VOICECHAT_PAPER,
+        SIMPLE_VOICECHAT_VELOCITY;
         public static String getFileURL(PLUGIN type) {
             return switch (type) {
-                case SIMPLE_VOICECHAT -> "https://cdn.modrinth.com/data/9eGKb6K1/versions/ps3C3lpD/voicechat-bukkit-2.6.6.jar";//TODO: setup voicechat
+                case SIMPLE_VOICECHAT_PAPER -> "https://cdn.modrinth.com/data/9eGKb6K1/versions/ps3C3lpD/voicechat-bukkit-2.6.6.jar";//TODO: setup voicechat
                 case VELOCITY -> null;//TODO:
                 case PLUGIN.WORLDEDIT -> "https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=0https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=1";
 				case PLUGIN.CORE_PROTECT -> "https://drive.google.com/uc?export=download&id=1uMlT0X8bzOyhr7lNBY8K-1Md6URNiIE1";
                 case SURVIVAL -> "build:/survival-1.0.jar";
                 case LOBBY -> "build:/lobby-1.0.jar";
                 case BEDWARS -> "build:/bedwars-1.0.jar";
+                case SIMPLE_VOICECHAT_VELOCITY -> "https://cdn.modrinth.com/data/9eGKb6K1/versions/jMopHMDQ/voicechat-velocity-2.6.4.jar";
             };
         }
         public static String getFileName(PLUGIN type) {
