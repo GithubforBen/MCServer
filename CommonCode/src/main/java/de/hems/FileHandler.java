@@ -60,6 +60,7 @@ public class FileHandler {
             if (!f.exists()) {
                 buildFile(type);
             }
+            file.deleteOnExit();
             Files.copy(f.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return;
         }
