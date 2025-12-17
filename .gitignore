@@ -41,5 +41,5 @@ build/
 ## MC Server
 /builds/*
 /servers/*
-/dowloads/*
+/downloads/*
 main-config.yml
