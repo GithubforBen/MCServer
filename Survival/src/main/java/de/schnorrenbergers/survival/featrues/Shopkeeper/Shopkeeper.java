@@ -57,29 +57,39 @@ public class Shopkeeper {
         this.shop = config.getLocation(path + ".location.shop");
         this.chest = config.getLocation(path + ".location.chest");
         this.ownerTeam = config.getString(path + ".ownerTeam");
-        this.items = getItemList(path + ".items");
-        shop.getWorld().getEntities().stream().filter(entity -> entity instanceof Villager).filter((v) -> {
-            String s = v.getPersistentDataContainer().get(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING);
-            if (s == null) return false;
-            try {
-                UUID.fromString(s);
-            } catch (IllegalArgumentException e) {
-                return false;
-            }
-            return s.equals(uuid.toString());
-        }).forEach((e) -> {
-            this.villager = (Villager) e;
-            villager.setInvulnerable(false);
-            villager.damage(1000000000);
-            e.remove();
-        });
+        this.items = getItemList(path + ".items");/*
+        Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
+            System.out.println(shop.getWorld().getEntitiesByClasses(Villager.class).size());
+            shop.getWorld().getEntitiesByClasses(Villager.class).stream().filter(entity -> entity instanceof Villager).filter((v) -> {
+                System.out.println("Found Villager:");
+                String s = v.getPersistentDataContainer().get(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING);
+                System.out.println("Found Villager:");
+                if (s == null) return false;
+                System.out.println("Found Villager:");
+                try {
+                    UUID.fromString(s);
+                    System.out.println("Found Villager:");
+                } catch (IllegalArgumentException e) {
+                    return false;
+                }
+                System.out.println("Found Villager:");
+                return s.equals(uuid.toString());
+            }).forEach((e) -> {
+                this.villager = (Villager) e;
+                villager.setInvulnerable(false);
+                villager.damage(1000000000);
+                e.remove();
+            });
 
-        this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
-        villager.setAdult();
-        villager.customName(Component.text(name));
-        villager.setAI(false);
-        villager.setInvulnerable(true);
-        villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
+            this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
+            villager.setAdult();
+            villager.customName(Component.text(name));
+            villager.setAI(false);
+            villager.setInvulnerable(true);
+            villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
+
+        }, 1000L);
+        */
     }
 
     public void buyItem(Player player, ItemForSale item) {

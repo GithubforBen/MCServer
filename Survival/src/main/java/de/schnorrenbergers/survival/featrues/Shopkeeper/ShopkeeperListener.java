@@ -30,8 +30,6 @@ public class ShopkeeperListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractAtEntityEvent event) {
-        Team playerTeam = event.getPlayer().getScoreboard().getPlayerTeam(event.getPlayer());
-        if (playerTeam == null) return;
         if (!event.getRightClicked().getType().equals(EntityType.VILLAGER)) {
             return;
         }
@@ -40,6 +38,12 @@ public class ShopkeeperListener implements Listener {
         Shopkeeper shopkeeper = ShopkeeperManager.getShopkeeper(UUID.fromString(s));
         if (shopkeeper == null) return;
         if (event.getPlayer().isSneaking()) {
+            Team playerTeam = event.getPlayer().getScoreboard().getPlayerTeam(event.getPlayer());
+            if (playerTeam == null) return;
+            if (!shopkeeper.getOwnerTeam().equals(playerTeam.getName())) {
+                event.getPlayer().sendMessage("You don't own this shop!");
+                return;
+            }
             ShopkeeperManager.openManagerInventory(event.getPlayer(), UUID.fromString(s));
         } else {
             ShopkeeperManager.openShopInventory(event.getPlayer(), UUID.fromString(s));
