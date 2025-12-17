@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival.featrues.money;
 
 import de.hems.api.ItemApi;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -18,8 +19,10 @@ public class AtmHandler {
             } else {
                 MoneyHandler.addMoney(amount * 100, UUID.fromString(name));
             }
+            target.sendMessage(ChatColor.GREEN + String.format("✓ Du hast %s Bits eingezahlt.", amount * 100));
             return;
         }
+        target.sendMessage(ChatColor.RED + "❌ Du hast nicht genügend Diamanten zum einzahlen.");
     }
 
     public static boolean payout(Player target, String name, int amount) {
@@ -32,6 +35,9 @@ public class AtmHandler {
         if(removedMoney) {
             ItemStack itemStack = new ItemApi(MoneyHandler.MONEY_ITEM, amount).build();
             target.getInventory().addItem(itemStack);
+            target.sendMessage(ChatColor.BLUE + String.format("✓ Du hast %s Bits ausgezahlt.", amount * 100));
+        } else {
+            target.sendMessage(ChatColor.RED + "❌ Dein Kontostand ist nicht ausreichend.");
         }
         return removedMoney;
     }
