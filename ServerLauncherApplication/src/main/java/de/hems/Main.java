@@ -74,13 +74,12 @@ public class Main {
                     .setActivity(Activity.playing("Playing on " + getIp()))
                     .build();
             jda.awaitReady();
-            CommandListUpdateAction commandListUpdateAction = jda.updateCommands();
-            commandListUpdateAction.addCommands(
+            jda.updateCommands().addCommands(Commands.slash("payingplayer", "Schreibe auf, dass ein spieler für den Server zahlt!").addOption(OptionType.STRING, "minecraftname", "Den Minecraft name hier einfügen.", true))
+            .addCommands(
                     Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
-                    ));
-            commandListUpdateAction.addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true));
-            commandListUpdateAction.addCommands(Commands.slash("payingplayer", "Schreibe auf, dass ein spieler für den Server zahlt!").addOption(OptionType.STRING, "minecraftname", "Den Minecraft name hier einfügen.", true));
-            commandListUpdateAction.queue();
+                    ))
+            .addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true))
+            .queue();
         } else {
             configuration.getConfig().set("discord-token", "<<add token here>>");
             configuration.getConfig().setComments("discord-token", List.of("The discord token to use for the bot!"));
