@@ -8,9 +8,11 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.block.data.type.BubbleColumn;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -154,6 +156,9 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
+        if (args.length == 1) {
+            if (args[0].equalsIgnoreCase("invvite")) return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
+        }
         return List.of("create", "invite", "chunks", "claim");
     }
 }
