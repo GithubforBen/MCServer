@@ -1,28 +1,25 @@
 package de.schnorrenbergers.survival.commands;
 
-import de.hems.api.UUIDFetcher;
-import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.team.ClaimManager;
 import de.schnorrenbergers.survival.featrues.team.TeamManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.block.data.type.BubbleColumn;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TeamCommand implements TabCompleter, CommandExecutor {
     @Override
@@ -57,7 +54,37 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                     sendUsage(sender);
                     return false;
                 }
+                if(args.length == 1) {
+                    sendUsage(sender);
+                    return false;
+                }
                 Player player = (Player) sender;
+
+                if(args[1].equalsIgnoreCase("accept") ||  args[1].equalsIgnoreCase("reject")) {
+                    PersistentDataContainer data = player.getPersistentDataContainer();
+                    NamespacedKey key = NamespacedKey.fromString("pending-team-invite");
+                    System.out.println("pending team invite of player " + sender.getName() + ": " + data.get(key, PersistentDataType.STRING));
+
+                    if(!data.has(key)) {
+                        player.sendMessage(ChatColor.RED + "❌ Du hast keine ausstehende Einladung für ein Team erhalten.");
+                        return false;
+                    }
+
+                    TeamManager teamManager = new TeamManager(data.get(key, PersistentDataType.STRING));
+                    data.remove(key);
+
+                    if(args[1].equalsIgnoreCase("accept")) {
+                        teamManager.addPlayer(player);
+                    } else if(args[1].equalsIgnoreCase("reject")) {
+                        OfflinePlayer leader = teamManager.getLeader();
+                        if(leader != null && leader.getPlayer().isOnline()) {
+                            leader.getPlayer().sendMessage(ChatColor.RED + String.format("→ Der Spieler \"%s\" hat deine Team-Einladung abgelehnt.", player.getName()));
+                        }
+                    }
+
+                    return true;
+                }
+
                 Team playerTeam = player.getScoreboard().getPlayerTeam(player);
                 if(playerTeam == null) {
                     player.sendMessage(ChatColor.RED + "❌ Du bist derzeit in keinem Team.");
@@ -144,8 +171,24 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        if (args.length == 1) {
-            if (args[0].equalsIgnoreCase("invvite")) return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
+        if (args.length > 1) {
+            if (args[0].equalsIgnoreCase("invite") && args.length == 2) {
+                List<String> operations = Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList());
+                operations.remove(sender.getName());
+                operations.add("accept");
+                operations.add("reject");
+                return operations;
+            }
+
+            if(args[0].equalsIgnoreCase("create")) {
+                if(args.length == 2) {
+                    return List.of("name");
+                }
+                if(args.length == 3) {
+                    return List.of("tag");
+                }
+            }
+            return List.of();
         }
         return List.of("create", "invite", "chunks", "claim");
     }

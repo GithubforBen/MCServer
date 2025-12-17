@@ -6,12 +6,10 @@ import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.*;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
@@ -38,6 +36,10 @@ public class TeamManager {
         if(sb.getTeam(name) != null) {
             this.team = sb.getTeam(name);
         }
+
+        if(this.team != null) {
+            playerAmount = this.team.getPlayers().size();
+        }
     }
 
     public boolean createTeam(String name, Player leader) {
@@ -60,28 +62,59 @@ public class TeamManager {
     public boolean invitePlayer(Player sender, String inviteName) {
         // Team wurde noch nicht erstellt
         if(this.leaderUUID == null) return false;
-        System.out.println("team manager -> team: " + this.team);
-        if(sender.getScoreboard().getTeam(this.name) == null) return false;
+        if(this.team == null) return false;
 
         if(sender.getScoreboard().getPlayerTeam(sender) == null) return false; // Wenn Sender noch in keinem Team ist
         if(!this.leaderUUID.equals(sender.getUniqueId())) return false; // Wenn Sender nicht der Teamleader ist
         if(sender.getName().equals(inviteName)) return false; // Wenn der Sender sich selbst einladen will
+
+        if(MAX_PLAYER_AMOUNT >= playerAmount) {
+            sender.sendMessage(ChatColor.RED + "❌ Dein Team hat bereits das maximum an Mitgliedern erreicht.");
+            return false;
+        }
 
         UUID inviteUUID = UUIDFetcher.findUUIDByName(inviteName, true);
         System.out.printf("player %s (%s) is inviting %s (%s)%n", sender.getName(), sender.getUniqueId(), inviteName, inviteUUID);
         if(inviteUUID == null) return false;
 
         OfflinePlayer invitePlayer = Survival.getInstance().getServer().getOfflinePlayer(inviteUUID);
-        if(!invitePlayer.isOnline() || !invitePlayer.hasPlayedBefore()) {
+        if(!invitePlayer.isOnline()) {
             sender.sendMessage(ChatColor.RED + String.format("❌ Bitte stelle sicher, dass der Spieler \"%s\" online ist.", inviteName));
             return false;
         }
+        if(invitePlayer.getPersistentDataContainer().has(NamespacedKey.fromString("pending-team-invite"))) {
+            sender.sendMessage(ChatColor.RED + String.format("❌ DerSpieler \"%s\" hat bereits eine ausstehende Einladung.", inviteName));
+            return false;
+        }
 
-        TextComponent textComponent = Component.text(ChatColor.AQUA + String.format("→ Du wurdest von \"%s\" in das Team \"%s\" eingeladen.\n", sender.getName(), this.name));
-        TextComponent acceptComponent = Component.text(ChatColor.GREEN + "[ ✓ Annehmen ]").clickEvent(ClickEvent.runCommand("/cteam invite accept"));
+        TextComponent textComponent = Component.text(ChatColor.BLUE + String.format("→ Du wurdest von \"%s\" in das Team \"%s\" eingeladen.\n", sender.getName(), this.name));
+        TextComponent acceptComponent = Component.text(ChatColor.GREEN + "[ ✓ Annehmen ] ").clickEvent(ClickEvent.runCommand("/cteam invite accept"));
         TextComponent rejectComponent = Component.text(ChatColor.RED + "[ ❌ Ablehnen ]").clickEvent(ClickEvent.runCommand("/cteam invite reject"));
-        sender.sendMessage(textComponent.append(acceptComponent).append(rejectComponent));
+        invitePlayer.getPlayer().sendMessage(textComponent.append(acceptComponent).append(rejectComponent));
+        invitePlayer.getPlayer().getPersistentDataContainer().set(NamespacedKey.fromString("pending-team-invite"), PersistentDataType.STRING, this.name);
 
+        sender.sendMessage(ChatColor.GREEN + String.format("✓ Du hast den Spieler \"%s\" eingeladen.", inviteName));
+
+        return true;
+    }
+
+    public boolean addPlayer(Player player) {
+        if(this.leaderUUID == null) return false;
+        if(this.team == null) return false;
+
+        if(!player.isOnline()) return false;
+        if(player.getScoreboard().getPlayerTeam(player) != null) {
+            player.sendMessage(ChatColor.RED + "❌ Du kannst eine Einladung nur annehmen, wenn du noch in keinem Team bist.");
+            return false;
+        }
+
+        this.team.addPlayer(player);
+
+        OfflinePlayer leader = this.getLeader();
+        if(leader != null && leader.getPlayer().isOnline()) {
+            leader.getPlayer().sendMessage(ChatColor.GREEN + String.format("→ Der Spieler \"%s\" hat deine Team-Einladung angenommen.", player.getName()));
+        }
+        player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast die Einladung für das Team \"%s\" angenommen.", this.name));
         return true;
     }
 
@@ -138,5 +171,12 @@ public class TeamManager {
 
     public void setTeam(Team team) {
         this.team = team;
+    }
+
+    public OfflinePlayer getLeader() {
+        if(this.leaderUUID == null) return null;
+        System.out.println(String.format("getting leader for team %s: %s (%s)", this.name, UUIDFetcher.findNameByUUID(this.leaderUUID), this.leaderUUID));
+        Survival.getInstance().getServer().getOfflinePlayer(leaderUUID);
+        return null;
     }
 }
