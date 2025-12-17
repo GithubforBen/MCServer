@@ -30,19 +30,19 @@ public class TeamManager {
         this.name = name;
 
         YamlConfiguration teamConfig = Survival.getInstance().getTeamConfig().getConfig();
-        if(teamConfig.contains("teams." + name + ".leaderUUID")) {
+        if (teamConfig.contains("teams." + name + ".leaderUUID")) {
             this.leaderUUID = UUID.fromString(teamConfig.getString("teams." + name + ".leaderUUID"));
         }
 
         Scoreboard sb = Bukkit.getScoreboardManager().getMainScoreboard();
-        if(sb.getTeam(name) != null) {
+        if (sb.getTeam(name) != null) {
             this.team = sb.getTeam(name);
         }
     }
 
     public boolean createTeam(String name, Player leader) {
-        if(this.leaderUUID != null) return false;
-        if(leader.getScoreboard().getPlayerTeam(leader) != null) return false;
+        if (this.leaderUUID != null) return false;
+        if (leader.getScoreboard().getPlayerTeam(leader) != null) return false;
 
         // Create minecraft team
         this.team = leader.getScoreboard().registerNewTeam(name);
@@ -59,20 +59,20 @@ public class TeamManager {
 
     public boolean invitePlayer(Player sender, String inviteName) {
         // Team wurde noch nicht erstellt
-        if(this.leaderUUID == null) return false;
+        if (this.leaderUUID == null) return false;
         System.out.println("team manager -> team: " + this.team);
-        if(sender.getScoreboard().getTeam(this.name) == null) return false;
+        if (sender.getScoreboard().getTeam(this.name) == null) return false;
 
-        if(sender.getScoreboard().getPlayerTeam(sender) == null) return false; // Wenn Sender noch in keinem Team ist
-        if(!this.leaderUUID.equals(sender.getUniqueId())) return false; // Wenn Sender nicht der Teamleader ist
-        if(sender.getName().equals(inviteName)) return false; // Wenn der Sender sich selbst einladen will
+        if (sender.getScoreboard().getPlayerTeam(sender) == null) return false; // Wenn Sender noch in keinem Team ist
+        if (!this.leaderUUID.equals(sender.getUniqueId())) return false; // Wenn Sender nicht der Teamleader ist
+        if (sender.getName().equals(inviteName)) return false; // Wenn der Sender sich selbst einladen will
 
         UUID inviteUUID = UUIDFetcher.findUUIDByName(inviteName, true);
         System.out.printf("player %s (%s) is inviting %s (%s)%n", sender.getName(), sender.getUniqueId(), inviteName, inviteUUID);
-        if(inviteUUID == null) return false;
+        if (inviteUUID == null) return false;
 
         OfflinePlayer invitePlayer = Survival.getInstance().getServer().getOfflinePlayer(inviteUUID);
-        if(!invitePlayer.isOnline() || !invitePlayer.hasPlayedBefore()) {
+        if (!invitePlayer.isOnline() || !invitePlayer.hasPlayedBefore()) {
             sender.sendMessage(ChatColor.RED + String.format("❌ Bitte stelle sicher, dass der Spieler \"%s\" online ist.", inviteName));
             return false;
         }
@@ -92,22 +92,31 @@ public class TeamManager {
         boolean b = ClaimManager.claimChunk(chunk, name);
         if (b) {
             if (!MoneyHandler.removeMoney(getChunkCost(), player.getUniqueId())) {
-                ClaimManager.unclaimChunk(chunk);
+                ClaimManager.unclaimChunk(chunk,name);
                 return false;
             }
         }
-        player.sendMessage("You have claimed this chunk for " +getChunkCost() +"!");
+        player.sendMessage("You have claimed this chunk for " + getChunkCost() + "!");
         return b;
     }
-    
+
+    public boolean unclaimChunk(Chunk chunk, Player player) {
+        boolean b = ClaimManager.unclaimChunk(chunk, name);
+        if (b) {
+            MoneyHandler.addMoney(getChunkCost(), player.getUniqueId());
+        }
+        player.sendMessage("You have unclaimed this chunk for " + getChunkCost() + "!");
+        return b;
+    }
+
     public int getChunkCost() {
         int teamChunkAmount = ClaimManager.getTeamChunkAmount(name);
         int i = 50 * high(1.1, teamChunkAmount);
         if (i > 1000) i = 1000;
-        if (i < 0 ) return 1000;
+        if (i < 0) return 1000;
         return i;
     }
-    
+
     private int high(double btm, int top) {
         BigDecimal result = new BigDecimal(btm);
         for (int i = 0; i < top; i++) {

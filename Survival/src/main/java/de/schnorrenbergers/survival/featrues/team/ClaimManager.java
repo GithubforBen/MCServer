@@ -21,9 +21,12 @@ public class ClaimManager {
         return true;
     }
 
-    public static boolean unclaimChunk(Chunk chunk) {
+    public static boolean unclaimChunk(Chunk chunk, String team) {
         YamlConfiguration config = Survival.getInstance().getTeamConfig().getConfig();
         if (!config.contains("claims." + chunk.getWorld().getName() + "." + chunk.getX() + "." + chunk.getZ())) {
+            return false;
+        }
+        if (!config.getString("claims." + chunk.getWorld().getName() + "." + chunk.getX() + "." + chunk.getZ()).equals(team)) {
             return false;
         }
         config.set("claims." + chunk.getWorld().getName() + "." + chunk.getX() + "." + chunk.getZ(), null);
