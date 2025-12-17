@@ -28,7 +28,7 @@ public class FileType implements Serializable {
         SIMPLE_VOICECHAT_VELOCITY;
         public static String getFileURL(PLUGIN type) {
             return switch (type) {
-                case SIMPLE_VOICECHAT_PAPER -> "https://cdn.modrinth.com/data/9eGKb6K1/versions/ps3C3lpD/voicechat-bukkit-2.6.6.jar";//TODO: setup voicechat
+                case SIMPLE_VOICECHAT_PAPER -> "https://cdn.modrinth.com/data/9eGKb6K1/versions/ps3C3lpD/voicechat-bukkit-2.6.6.jar";
                 case VELOCITY -> null;//TODO:
                 case PLUGIN.WORLDEDIT -> "https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=0https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=1";
 				case PLUGIN.CORE_PROTECT -> "https://drive.google.com/uc?export=download&id=1uMlT0X8bzOyhr7lNBY8K-1Md6URNiIE1";

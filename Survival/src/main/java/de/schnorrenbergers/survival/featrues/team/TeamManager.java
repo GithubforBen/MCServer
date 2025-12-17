@@ -6,10 +6,12 @@ import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
@@ -132,7 +134,16 @@ public class TeamManager {
         player.sendMessage("You have claimed this chunk for " +getChunkCost() +"!");
         return b;
     }
-    
+
+    public boolean unclaimChunk(Chunk chunk, Player player) {
+        boolean b = ClaimManager.unclaimChunk(chunk, name);
+        if (b) {
+            MoneyHandler.addMoney(getChunkCost(), player.getUniqueId());
+        }
+        player.sendMessage("You have unclaimed this chunk for " + getChunkCost() + "!");
+        return b;
+    }
+
     public int getChunkCost() {
         int teamChunkAmount = ClaimManager.getTeamChunkAmount(name);
         int i = 50 * high(1.1, teamChunkAmount);

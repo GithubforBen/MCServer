@@ -29,9 +29,6 @@ public final class Survival extends JavaPlugin {
     private ListenerAdapter listenerAdapter;
     private TeamConfig teamConfig;
     private ShopConfig shopConfig;
-    //TODO: cteam allways throws the error message ieven if the command was succsesfull
-    //TODO: fix shopkeepers dont work when not an entire stack is bought -> fixed
-    //TODO: add option to remove claimed chunks
 
     @Override
     public void onLoad() {

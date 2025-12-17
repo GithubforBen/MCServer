@@ -13,9 +13,7 @@ public class ServerHandler {
 
     public ServerHandler() throws Exception {
         instances = new ArrayList<>();
-        ServerInstance velocity = new ServerInstance(ListenerAdapter.ServerName.VELOCITY, 1000, FileType.SERVER.VELOCITY,  new FileType.PLUGIN[]{});
-        instances.add(velocity);
-        velocity.start();
+        startNewInstance(ListenerAdapter.ServerName.VELOCITY, 1000, FileType.SERVER.VELOCITY,  new FileType.PLUGIN[]{});
     }
 
     public void startNewInstance(ListenerAdapter.ServerName name, int allocatedMemoryMB, FileType.SERVER jarFile, FileType.PLUGIN[] plugins) throws Exception {
@@ -36,12 +34,13 @@ public class ServerHandler {
             }
             case VELOCITY -> {
                 pluginList.clear();
-                pluginList.add(FileType.PLUGIN.VELOCITY);
+                //TODO: fix pluginList.add(FileType.PLUGIN.VELOCITY);
                 pluginList.add(FileType.PLUGIN.SIMPLE_VOICECHAT_VELOCITY);
                 break;
             }
         }
         plugins = pluginList.toArray(new FileType.PLUGIN[0]);
+        System.out.println(plugins.length + " plugins will be installed.");
         ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, plugins);
         instances.add(instance);
         instance.start();

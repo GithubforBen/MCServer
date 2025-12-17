@@ -52,7 +52,6 @@ public class InventoryBase {
                 }
             });
         }
-        //TODO: start new instance
         customInventory.setItem(5 * 9 - 1, new ItemApi(new URL("http://textures.minecraft.net/texture/171d8979c1878a05987a7faf21b56d1b744f9d068c74cffcde1ea1edad5852"), ChatColor.GREEN + "Neuer Server").buildSkull(), new ItemAction() {//plus
             @Override
             public UUID getID() {
@@ -199,7 +198,7 @@ public class InventoryBase {
     private static CustomInventory SERVERCREATEINVENTORY() {
         CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, "Server erstellen", null);
         List<ListenerAdapter.ServerName> list = Arrays.stream(ListenerAdapter.ServerName.values()).filter((x) -> x.getPort() != -1).toList();
-        for (int i = 0; i < list.size(); i++) {//TODO: use actual server list e.g. SURRVIVAL, EVENT, LOBBY, SERVER1
+        for (int i = 0; i < list.size(); i++) {
             customInventory.setItem(i, new ItemApi(Material.WHITE_WOOL, list.get(i).name()).build(), new ItemAction() {
 
                 @Override

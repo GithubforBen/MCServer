@@ -156,6 +156,25 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                 } else {
                     player.sendMessage(Component.text("You already claimed this chunk or this chunk is already claimed or you dont have enough money!"));
                 }
+                break;
+            }case "unclaim": {
+                if (!(sender instanceof Player)) {
+                    sendUsage(sender);
+                    return true;
+                }
+                Player player = (Player) sender;
+                Team playerTeam = player.getScoreboard().getPlayerTeam(player);
+                if (playerTeam == null) {
+                    player.sendMessage(Component.text("You dont have a team!"));
+                    return true;
+                }
+                boolean b = new TeamManager(playerTeam.getName()).unclaimChunk(player.getChunk(), player);
+                if (b) {
+                    player.sendMessage(Component.text("You claimed this chunk!"));
+                } else {
+                    player.sendMessage(Component.text("You already claimed this chunk or this chunk is already claimed or you dont have enough money!"));
+                }
+                break;
             }
             default: {
                 sendUsage(sender);
@@ -166,7 +185,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
     }
 
     public void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /cteam <create | invite | chunks | help | claim>");
+        sender.sendMessage("Usage: /cteam <create | invite | chunks | help | claim | unclaim>");
     }
 
     @Override
