@@ -1,5 +1,7 @@
 package de.schnorrenbergers.survival.commands;
 
+import de.hems.api.UUIDFetcher;
+import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.team.ClaimManager;
 import de.schnorrenbergers.survival.featrues.team.TeamManager;
 import net.kyori.adventure.text.Component;
@@ -27,7 +29,65 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
             sendUsage(sender);
             return false;
         }
+
         switch (args[0].toLowerCase()) {
+            case "create": {
+                if (!(sender instanceof Player)) {
+                    sendUsage(sender);
+                    return false;
+                }
+                Player player = (Player) sender;
+                String teamName = args[1];
+
+                TeamManager teamManager = new TeamManager(teamName);
+                boolean teamCreated = teamManager.createTeam(teamName, player);
+
+                if(teamCreated) {
+                    player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast dein Team \"%s\" erfolgreich erstellt.", teamName));
+                } else {
+                    player.sendMessage(ChatColor.RED + "❌ Dein Team konnte nicht erstellt werden. Bitte prüfe, dass du noch in keinem Team bist.");
+                }
+
+                return teamCreated;
+            }
+            case "invite": {
+                if (!(sender instanceof Player)) {
+                    sendUsage(sender);
+                    return false;
+                }
+                Player player = (Player) sender;
+                Team playerTeam = player.getScoreboard().getPlayerTeam(player);
+                if(playerTeam == null) {
+                    player.sendMessage(ChatColor.RED + "❌ Du bist derzeit in keinem Team.");
+                    return false;
+                }
+                TeamManager teamManager = new TeamManager(playerTeam.getName());
+                System.out.println(String.format("player: %s ; team leader: %s", player.getUniqueId(), teamManager.getLeader()));
+                if(!teamManager.getLeader().equals(player.getUniqueId())) {
+                    player.sendMessage(ChatColor.RED + "❌ Du musst der Teamanführer sein, um andere Spieler einladen zu können.");
+                    return false;
+                }
+
+                String inviteName = args[1];
+                if(inviteName.equals(player.getName())) {
+                    player.sendMessage(ChatColor.RED + String.format("❌ Du kannst dich nicht in dein eigenes Team einladen.", inviteName));
+                    return false;
+                }
+
+                boolean playerInvited = teamManager.invitePlayer(player, inviteName);
+                if(playerInvited) {
+                    player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast den Spieler \"%s\" erfolgreich in dein Team eingeladen.", inviteName));
+                } else {
+                    player.sendMessage(ChatColor.RED + String.format("❌ Es ist ein Fehler aufgetreten, beim Einladen des Spielers \"%s\" in dein Team.\nEventuell ist er bereits in einem anderen Team.", inviteName));
+                }
+
+                Player invitePlayer = Survival.getInstance().getServer().getOnlinePlayers().stream().filter(p -> p.getName().equals(inviteName)).findFirst().orElse(null);
+                if(invitePlayer != null) {
+                    invitePlayer.sendMessage(ChatColor.GREEN + String.format("✓ Du bist jetzt im Team \"%s\" von \"%s\".", teamManager.getName(), UUIDFetcher.findNameByUUID(teamManager.getLeader())));
+                }
+
+                return playerInvited;
+            }
             case "chunks": {
                 if (!(sender instanceof Player)) {
                     sendUsage(sender);
@@ -89,11 +149,11 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
     }
 
     public void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /team <chunks|help|claim>");
+        sender.sendMessage("Usage: /cteam <create | invite | chunks | help | claim>");
     }
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        return List.of("chunks", "claim");
+        return List.of("create", "invite", "chunks", "claim");
     }
 }
