@@ -62,8 +62,8 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                     return false;
                 }
                 TeamManager teamManager = new TeamManager(playerTeam.getName());
-                System.out.println(String.format("player: %s ; team leader: %s", player.getUniqueId(), teamManager.getLeader()));
-                if(!teamManager.getLeader().equals(player.getUniqueId())) {
+                System.out.println(String.format("player: %s ; team leader: %s", player.getUniqueId(), teamManager.getLeaderUUID()));
+                if(!teamManager.getLeaderUUID().equals(player.getUniqueId())) {
                     player.sendMessage(ChatColor.RED + "❌ Du musst der Teamanführer sein, um andere Spieler einladen zu können.");
                     return false;
                 }
@@ -74,19 +74,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                     return false;
                 }
 
-                boolean playerInvited = teamManager.invitePlayer(player, inviteName);
-                if(playerInvited) {
-                    player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast den Spieler \"%s\" erfolgreich in dein Team eingeladen.", inviteName));
-                } else {
-                    player.sendMessage(ChatColor.RED + String.format("❌ Es ist ein Fehler aufgetreten, beim Einladen des Spielers \"%s\" in dein Team.\nEventuell ist er bereits in einem anderen Team.", inviteName));
-                }
-
-                Player invitePlayer = Survival.getInstance().getServer().getOnlinePlayers().stream().filter(p -> p.getName().equals(inviteName)).findFirst().orElse(null);
-                if(invitePlayer != null) {
-                    invitePlayer.sendMessage(ChatColor.GREEN + String.format("✓ Du bist jetzt im Team \"%s\" von \"%s\".", teamManager.getName(), UUIDFetcher.findNameByUUID(teamManager.getLeader())));
-                }
-
-                return playerInvited;
+                return teamManager.invitePlayer(player, inviteName);
             }
             case "chunks": {
                 if (!(sender instanceof Player)) {

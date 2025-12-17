@@ -3,11 +3,10 @@ package de.schnorrenbergers.survival.featrues.team;
 import de.hems.api.UUIDFetcher;
 import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
-import de.schnorrenbergers.survival.utils.configs.TeamConfig;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Server;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
@@ -18,15 +17,18 @@ import java.util.UUID;
 
 public class TeamManager {
     private String name;
-    private UUID leader;
+    private UUID leaderUUID;
     private Team team;
+    private int playerAmount;
+
+    private static int MAX_PLAYER_AMOUNT = 8;
 
     public TeamManager(String name) {
         this.name = name;
 
         YamlConfiguration teamConfig = Survival.getInstance().getTeamConfig().getConfig();
-        if(teamConfig.contains("teams." + name + ".leader")) {
-            this.leader = UUID.fromString(teamConfig.getString("teams." + name + ".leader"));
+        if(teamConfig.contains("teams." + name + ".leaderUUID")) {
+            this.leaderUUID = UUID.fromString(teamConfig.getString("teams." + name + ".leaderUUID"));
         }
 
         Scoreboard sb = Bukkit.getScoreboardManager().getMainScoreboard();
@@ -36,32 +38,49 @@ public class TeamManager {
     }
 
     public boolean createTeam(String name, Player leader) {
-        if(this.leader != null) return false;
+        if(this.leaderUUID != null) return false;
         if(leader.getScoreboard().getPlayerTeam(leader) != null) return false;
 
         // Create minecraft team
         this.team = leader.getScoreboard().registerNewTeam(name);
         this.team.addPlayer(leader);
-        this.leader = leader.getUniqueId();
+        this.leaderUUID = leader.getUniqueId();
 
-        // Save leader into team config
+        // Save leaderUUID into team config
         YamlConfiguration teamConfig = Survival.getInstance().getTeamConfig().getConfig();
-        teamConfig.set("teams." + this.name + ".leader", leader.getUniqueId().toString());
+        teamConfig.set("teams." + this.name + ".leaderUUID", leader.getUniqueId().toString());
         Survival.getInstance().getTeamConfig().save();
 
         return true;
     }
 
-    public boolean invitePlayer(Player player, String inviteName) {
-        if(this.leader != null) return false;
-        if(player.getScoreboard().getPlayerTeam(player) == null) return false;
-        if(leader != player.getUniqueId()) return false;
+    public boolean invitePlayer(Player sender, String inviteName) {
+        // Team wurde noch nicht erstellt
+        if(this.leaderUUID == null) return false;
+        System.out.println("team manager -> team: " + this.team);
+        if(sender.getScoreboard().getTeam(this.name) == null) return false;
+
+        if(sender.getScoreboard().getPlayerTeam(sender) == null) return false; // Wenn Sender noch in keinem Team ist
+        if(!this.leaderUUID.equals(sender.getUniqueId())) return false; // Wenn Sender nicht der Teamleader ist
+        if(sender.getName().equals(inviteName)) return false; // Wenn der Sender sich selbst einladen will
 
         UUID inviteUUID = UUIDFetcher.findUUIDByName(inviteName, true);
+        System.out.printf("player %s (%s) is inviting %s (%s)%n", sender.getName(), sender.getUniqueId(), inviteName, inviteUUID);
         if(inviteUUID == null) return false;
 
         OfflinePlayer invitePlayer = Survival.getInstance().getServer().getOfflinePlayer(inviteUUID);
+        if(!invitePlayer.hasPlayedBefore()) {
+            sender.sendMessage(ChatColor.RED + String.format("❌ Bitte stelle sicher, dass der Spieler \"%s\" mindestens einmal auf dem Server war.", inviteName));
+            return false;
+        }
+
+        if(invitePlayer.isOnline()) {
+            invitePlayer.getPlayer().sendMessage(ChatColor.GREEN + String.format("✓ Du bist jetzt im Team \"%s\" von \"%s\".", this.name, UUIDFetcher.findNameByUUID(leaderUUID)));
+        }
+
         this.team.addPlayer(invitePlayer);
+        sender.sendMessage(ChatColor.GREEN + String.format("✓ Du hast den Spieler \"%s\" erfolgreich in dein Team eingeladen.", inviteName));
+
         return true;
     }
 
@@ -96,12 +115,12 @@ public class TeamManager {
         return result.intValue();
     }
 
-    public UUID getLeader() {
-        return leader;
+    public UUID getLeaderUUID() {
+        return leaderUUID;
     }
 
-    public void setLeader(UUID leader) {
-        this.leader = leader;
+    public void setLeaderUUID(UUID leaderUUID) {
+        this.leaderUUID = leaderUUID;
     }
 
     public String getName() {
