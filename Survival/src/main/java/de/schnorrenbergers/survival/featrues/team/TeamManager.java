@@ -3,6 +3,9 @@ package de.schnorrenbergers.survival.featrues.team;
 import de.hems.api.UUIDFetcher;
 import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -69,17 +72,15 @@ public class TeamManager {
         if(inviteUUID == null) return false;
 
         OfflinePlayer invitePlayer = Survival.getInstance().getServer().getOfflinePlayer(inviteUUID);
-        if(!invitePlayer.hasPlayedBefore()) {
-            sender.sendMessage(ChatColor.RED + String.format("❌ Bitte stelle sicher, dass der Spieler \"%s\" mindestens einmal auf dem Server war.", inviteName));
+        if(!invitePlayer.isOnline() || !invitePlayer.hasPlayedBefore()) {
+            sender.sendMessage(ChatColor.RED + String.format("❌ Bitte stelle sicher, dass der Spieler \"%s\" online ist.", inviteName));
             return false;
         }
 
-        if(invitePlayer.isOnline()) {
-            invitePlayer.getPlayer().sendMessage(ChatColor.GREEN + String.format("✓ Du bist jetzt im Team \"%s\" von \"%s\".", this.name, UUIDFetcher.findNameByUUID(leaderUUID)));
-        }
-
-        this.team.addPlayer(invitePlayer);
-        sender.sendMessage(ChatColor.GREEN + String.format("✓ Du hast den Spieler \"%s\" erfolgreich in dein Team eingeladen.", inviteName));
+        TextComponent textComponent = Component.text(ChatColor.AQUA + String.format("→ Du wurdest von \"%s\" in das Team \"%s\" eingeladen.\n", sender.getName(), this.name));
+        TextComponent acceptComponent = Component.text(ChatColor.GREEN + "[ ✓ Annehmen ]").clickEvent(ClickEvent.runCommand("/cteam invite accept"));
+        TextComponent rejectComponent = Component.text(ChatColor.RED + "[ ❌ Ablehnen ]").clickEvent(ClickEvent.runCommand("/cteam invite reject"));
+        sender.sendMessage(textComponent.append(acceptComponent).append(rejectComponent));
 
         return true;
     }
