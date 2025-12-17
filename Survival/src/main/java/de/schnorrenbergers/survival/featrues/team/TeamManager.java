@@ -6,12 +6,10 @@ import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.*;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
@@ -127,7 +125,7 @@ public class TeamManager {
         boolean b = ClaimManager.claimChunk(chunk, name);
         if (b) {
             if (!MoneyHandler.removeMoney(getChunkCost(), player.getUniqueId())) {
-                ClaimManager.unclaimChunk(chunk);
+                ClaimManager.unclaimChunk(chunk, name);
                 return false;
             }
         }
