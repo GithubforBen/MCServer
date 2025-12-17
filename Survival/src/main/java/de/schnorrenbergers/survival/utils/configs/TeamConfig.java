@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival.utils.configs;
 
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
