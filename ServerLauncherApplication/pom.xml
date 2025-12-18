@@ -13,6 +13,34 @@
         <version>1.0</version>
     </parent>
 
+    // Source - https://stackoverflow.com/a
+    // Posted by Martin Baumgartner, modified by community. See post 'Timeline' for change history
+    // Retrieved 2025-12-18, License - CC BY-SA 4.0
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <!-- Here come other details
+                ...
+                -->
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>fully.qualified.MainClass</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <!-- Here come other details
+                ...
+                -->
+            </plugin>
+        </plugins>
+    </build>
+
+
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
