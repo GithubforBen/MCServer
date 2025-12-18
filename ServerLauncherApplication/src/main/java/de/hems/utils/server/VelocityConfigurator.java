@@ -55,7 +55,7 @@ public class VelocityConfigurator extends ServerConfigurator {
             throw new MissingConfigurationException("serversecret is missing in config.yml. You might want to change it to something else. It was auto set.");
         }
         writeToFile("velocity.toml", "show-max-players = 100",false);
-        writeToFile("velocity.toml", "motd = \"Welcome to My Minecraft Network!\"",false);
+        writeToFile("velocity.toml", "motd = \"<blue><b>minecraft server</b></blue>\"",false);
         writeToFile("velocity.toml", "# Should we authenticate players with Mojang? By default, this is on.\n" +
                 "online-mode = true\n" +
                 "\n" +
@@ -105,7 +105,7 @@ public class VelocityConfigurator extends ServerConfigurator {
         writeToFile("velocity.toml", "[servers]",false);
         for (ListenerAdapter.ServerName value : ListenerAdapter.ServerName.values()) {
             if (value.getPort() == -1) continue;
-            writeToFile("velocity.toml", value.toString() + " = \"" + Main.getInstance().getIp() + ":" + value.getPort() + "\"".replaceAll("\t",""),false);
+            writeToFile("velocity.toml", value.toString() + " = \"" + "localhost" + ":" + value.getPort() + "\"".replaceAll("\t",""),false);
         }
         writeToFile("velocity.toml", "try = [\n" +
                 "    \""+ ListenerAdapter.ServerName.LOBBY +"\",\n" +

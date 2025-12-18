@@ -12,6 +12,7 @@ import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
 import de.schnorrenbergers.survival.featrues.money.AtmHandler;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
+import de.schnorrenbergers.survival.featrues.team.TeamColor;
 import de.schnorrenbergers.survival.featrues.team.TeamManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
@@ -1002,19 +1003,22 @@ public class Inventorys extends InventoryBase {
         return customInventory;
     }
 
-    public static CustomInventory TEAM_ADMIN_INVENTORY(TeamManager teamManager) throws MalformedURLException {
+    public static CustomInventory TEAM_ADMIN_INVENTORY(TeamManager teamManager, Player source) throws MalformedURLException {
         CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.GREEN + "Team-Manager", (x) -> {
             
         });
         customInventory.fillPlaceHolder();
 
         List<OfflinePlayer> players = teamManager.getTeam().getPlayers().stream().toList();
+        System.out.println(String.format("opening team manager for team %s (players: %s)", teamManager.getName(), players.stream().map(OfflinePlayer::getName).toList()));
 
-        ItemStack playerOfflineHead = new ItemStack(Material.SKELETON_SKULL);
         for(int i = 0; i < players.size(); i++) {
             OfflinePlayer player = players.get(i);
-            System.out.printf("player skin of %s (%s): %s", player.getName(), player.getUniqueId(), player.getPlayerProfile().getTextures().getSkin());
+            System.out.println(String.format("player skin of %s (online: %s, %s): %s", player.getName(), player.isOnline(), player.getUniqueId(), player.getPlayerProfile().getTextures().getSkin()));
+
             ItemStack playerHead = new ItemApi(player.getPlayerProfile().getTextures().getSkin(), ChatColor.GREEN + player.getName()).buildSkull();
+            ItemStack playerOfflineHead = new ItemApi(Material.SKELETON_SKULL, ChatColor.RED + player.getName()).build();
+
             customInventory.setItem(i, player.isOnline() ? playerHead : playerOfflineHead, new ItemAction() {
                 @Override
                 public UUID getID() {
@@ -1022,8 +1026,8 @@ public class Inventorys extends InventoryBase {
                 }
 
                 @Override
-                public void onClick(InventoryClickEvent event) throws MalformedURLException {
-                    return;
+                public void onClick(InventoryClickEvent event) {
+
                 }
 
                 @Override
@@ -1033,7 +1037,193 @@ public class Inventorys extends InventoryBase {
 
                 @Override
                 public boolean fireEvent() {
+                    return true;
+                }
+
+                @Override
+                public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                    System.out.println(String.format("team manager (%s): %s (%s) is trying to open player management for %s (%s)", teamManager.getName(), source.getName(), source.getUniqueId(), player.getName(), player.getUniqueId()));
+                    if(!source.getUniqueId().equals(teamManager.getLeaderUUID())) return null;
+                    if(player.getUniqueId().equals(teamManager.getLeaderUUID())) return null;
+                    source.closeInventory();
+                    return TEAM_ADMIN_MANAGE_PLAYER(teamManager, source, player);
+                }
+            });
+        }
+        for (int j = teamManager.getPlayerAmount(); j < TeamManager.getMaxPlayerAmount(); j++) {
+            int finalJ = j;
+            customInventory.setItem(j, new ItemApi(new URL("http://textures.minecraft.net/texture/ff9bb9e56125c8227b94bbda9f6e0f862931c229255ba8f1205d13c44c1bb561"), ChatColor.DARK_GRAY + "freier Platz").buildSkull(), new ItemAction() {
+                @Override
+                public UUID getID() {
+                    return UUIDApi.fromString(teamManager.getName() + ".empty." + finalJ);
+                }
+
+                @Override
+                public void onClick(InventoryClickEvent event) throws MalformedURLException {}
+
+                @Override
+                public boolean isMovable() {
                     return false;
+                }
+
+                @Override
+                public boolean fireEvent() {
+                    return false;
+                }
+
+                @Override
+                public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                    return null;
+                }
+            });
+        }
+
+        customInventory.setItem(customInventory.getInventory().getSize() - 1, new ItemApi(new URL("http://textures.minecraft.net/texture/5223afe895d3d4e32f393dd301989a317585d9ebe3f5d76d4380f5a06f95"), ChatColor.GRAY + "Teameinstellungen").buildSkull(), new ItemAction() {
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(teamManager.getName() + ".settings");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) throws MalformedURLException {
+                Player source = (Player) event.getWhoClicked();
+                source.closeInventory();
+                source.openInventory(TEAM_ADMIN_SETTINGS(teamManager, source).getInventory());
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return null;
+            }
+        });
+
+        return customInventory;
+    }
+
+    public static CustomInventory TEAM_ADMIN_MANAGE_PLAYER(TeamManager teamManager, Player source, OfflinePlayer target) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.HOPPER, ChatColor.DARK_GREEN + String.format("%s verwalten", target.getName()), (x) -> {});
+        customInventory.fillPlaceHolder();
+
+        System.out.println(String.format("team manager (%s): %s (%s) has opened player management for %s (%s)", teamManager.getName(), source.getName(), source.getUniqueId(), target.getName(), target.getUniqueId()));
+
+        customInventory.addBackButton(0, UUIDApi.fromString(teamManager.getName() + ".manage." + target.getName() + ".back"), TEAM_ADMIN_INVENTORY(teamManager, source));
+        customInventory.setItem(1, new ItemApi(new URL("http://textures.minecraft.net/texture/314616ad4881c72543a22d8ca67d679ece7b3f84250736d962bd7c0306964"), ChatColor.RED + "Spieler kicken").buildSkull(), new ItemAction() {
+
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(teamManager.getName() + ".kick." + source.getName());
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) throws MalformedURLException {
+                Player source = (Player) event.getWhoClicked();
+                teamManager.kickPlayer(source, target);
+                source.closeInventory();
+                source.openInventory(TEAM_ADMIN_INVENTORY(teamManager, source).getInventory());
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return null;
+            }
+        });
+
+        return customInventory;
+    }
+
+    public static CustomInventory TEAM_ADMIN_SETTINGS(TeamManager teamManager, Player source) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.HOPPER, ChatColor.DARK_GREEN + String.format("Team verwalten"), (x) -> {});
+        customInventory.fillPlaceHolder();
+
+        System.out.println(String.format("team manager (%s): %s (%s) has opened team settings", teamManager.getName(), source.getName(), source.getUniqueId()));
+
+        customInventory.addBackButton(0, UUIDApi.fromString(teamManager.getName() + ".settings.back"), TEAM_ADMIN_INVENTORY(teamManager, source));
+        customInventory.setItem(1, new ItemApi(Material.BLACK_STAINED_GLASS, ChatColor.BLUE + "Teamfarbe").build(), new ItemAction() {
+
+            @Override
+            public UUID getID() {
+                return UUIDApi.fromString(teamManager.getName() + ".settings.color");
+            }
+
+            @Override
+            public void onClick(InventoryClickEvent event) throws MalformedURLException {
+                Player source = (Player) event.getWhoClicked();
+                source.closeInventory();
+                source.openInventory(TEAM_ADMIN_SETTINGS_COLOR(teamManager, source).getInventory());
+            }
+
+            @Override
+            public boolean isMovable() {
+                return false;
+            }
+
+            @Override
+            public boolean fireEvent() {
+                return true;
+            }
+
+            @Override
+            public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                return null;
+            }
+        });
+
+        return customInventory;
+    }
+
+    public static CustomInventory TEAM_ADMIN_SETTINGS_COLOR(TeamManager teamManager, Player source) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.DARK_AQUA + String.format("Teamfarbe anpassen"), (x) -> {});
+        customInventory.fillPlaceHolder();
+
+        System.out.println(String.format("team manager (%s): %s (%s) has opened team color settings", teamManager.getName(), source.getName(), source.getUniqueId()));
+
+        customInventory.addBackButton(0, UUIDApi.fromString(teamManager.getName() + ".settings.color.back"), TEAM_ADMIN_INVENTORY(teamManager, source));
+        TeamColor[] teamColors = TeamColor.values();
+        for(int i = 1; i < teamColors.length; i++) {
+            TeamColor color = teamColors[i];
+            customInventory.setItem(i, new ItemApi(color.getHeadTexture(), color.getColor() + color.getReadableName()).buildSkull(), new ItemAction() {
+
+                @Override
+                public UUID getID() {
+                    return UUIDApi.fromString(teamManager.getName() + ".settings.color." + color.getColor().toString().toLowerCase());
+                }
+
+                @Override
+                public void onClick(InventoryClickEvent event) throws MalformedURLException {
+                    Player source = (Player) event.getWhoClicked();
+                    source.closeInventory();
+                    teamManager.setTeamColor(color, source);
+                    source.openInventory(TEAM_ADMIN_SETTINGS(teamManager, source).getInventory());
+                }
+
+                @Override
+                public boolean isMovable() {
+                    return false;
+                }
+
+                @Override
+                public boolean fireEvent() {
+                    return true;
                 }
 
                 @Override

@@ -36,7 +36,7 @@ public class ServerInstance {
             case PAPER -> {
                 YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
                 List<String> ops = config.getStringList("ops");
-                new PaperConfigurator(name, true, ops.stream().map((x) -> UUIDFetcher.findUUIDByName(x, true)).toList(), new String[]{"for_Sale"}, directory.getAbsolutePath(), plugins).configure();
+                new PaperConfigurator(name, true, ops.stream().map((x) -> UUIDFetcher.findUUIDByName(x, true)).toList(), new String[]{"for_Sale", "SA_MI"}, directory.getAbsolutePath(), plugins).configure();
                 printStream = true;
                 break;
             }

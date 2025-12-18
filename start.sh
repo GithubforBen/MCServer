@@ -1,5 +1,4 @@
 git pull
 java -version
 ./mvnw clean install package
-cd ServerLauncherApplication/target/
-java -jar ServerLauncher.jar
+java -jar ServerLauncherApplication/target/ServerLauncher.jar
