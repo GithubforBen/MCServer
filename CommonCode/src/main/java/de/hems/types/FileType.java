@@ -37,7 +37,7 @@ public class FileType implements Serializable {
                 case VELOCITY -> null;//TODO:
                 case PLUGIN.WORLDEDIT -> "https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=0https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=1";
 				case PLUGIN.CORE_PROTECT -> "https://drive.google.com/uc?export=download&id=1uMlT0X8bzOyhr7lNBY8K-1Md6URNiIE1";
-                case PLUGIN.CHUNKY -> "https://cdn.modrinth.com/data/fALzjamp/versions/kkEljQ4R/Chunky-Fabric-1.4.51.jar";
+                case PLUGIN.CHUNKY -> "https://cdn.modrinth.com/data/fALzjamp/versions/P3y2MXnd/Chunky-Bukkit-1.4.40.jar";
                 case SURVIVAL -> "build:/survival-1.0.jar";
                 case LOBBY -> "build:/lobby-1.0.jar";
                 case BEDWARS -> "build:/bedwars-1.0.jar";
@@ -47,7 +47,7 @@ public class FileType implements Serializable {
         public static String getFileName(PLUGIN type) {
             if (type == PLUGIN.WORLDEDIT) return "worldedit-bukkit-7.3.17.jar";
 			if (type == PLUGIN.CORE_PROTECT) return "coreprotect.jar";
-            if (type == PLUGIN.CHUNKY) return "Chunky-Fabric-1.4.51.jar";
+            if (type == PLUGIN.CHUNKY) return "Chunky-Bukkit-1.4.40.jar";
             return getFileURL(type).split("/")[getFileURL(type).split("/").length - 1];
         }
         public boolean isBuildable() {
