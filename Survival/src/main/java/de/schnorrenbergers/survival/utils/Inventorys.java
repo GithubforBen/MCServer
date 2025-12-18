@@ -1013,11 +1013,12 @@ public class Inventorys extends InventoryBase {
         ItemStack playerOfflineHead = new ItemStack(Material.SKELETON_SKULL);
         for(int i = 0; i < players.size(); i++) {
             OfflinePlayer player = players.get(i);
-            ItemStack playerHead = new ItemApi(new URL("http://textures.minecraft.net/texture/" + player.getUniqueId()), ChatColor.GREEN + player.getName()).buildSkull();
+            System.out.printf("player skin of %s (%s): %s", player.getName(), player.getUniqueId(), player.getPlayerProfile().getTextures().getSkin());
+            ItemStack playerHead = new ItemApi(player.getPlayerProfile().getTextures().getSkin(), ChatColor.GREEN + player.getName()).buildSkull();
             customInventory.setItem(i, player.isOnline() ? playerHead : playerOfflineHead, new ItemAction() {
                 @Override
                 public UUID getID() {
-                    return UUID.fromString(player.getUniqueId() + ".team-admin");
+                    return UUIDApi.fromString(teamManager.getTeam().getName() + "." + player.getName());
                 }
 
                 @Override

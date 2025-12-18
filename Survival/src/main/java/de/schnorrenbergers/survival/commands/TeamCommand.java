@@ -61,9 +61,14 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                     return false;
                 }
                 Player player = (Player) sender;
+                if(args.length == 2) return false;
                 String teamName = args[1];
                 String teamTag = args[2];
-                if(args.length == 2) return false;
+
+                if(teamTag.length() > 5) {
+                    player.sendMessage(ChatColor.RED + "❌ Der Team-Tag darf maximal 5 Zeichen lang sein.");
+                    return false;
+                }
 
                 TeamManager teamManager = new TeamManager(teamName);
                 boolean teamCreated = teamManager.createTeam(teamName, teamTag, player);
@@ -255,10 +260,10 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
 
             if(args[0].equalsIgnoreCase("create")) {
                 if(args.length == 2) {
-                    return List.of("name");
+                    return List.of("<name>");
                 }
                 if(args.length == 3) {
-                    return List.of("tag");
+                    return List.of("[TAG]");
                 }
             }
             return List.of();
