@@ -42,12 +42,12 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
 
             TeamManager teamManager = new TeamManager(playerTeam.getName());
             if(!teamManager.getLeaderUUID().equals(player.getUniqueId())) {
-                player.sendMessage(ChatColor.RED + "❌ Du musst der Teamanführer sein, um andere Spieler einladen zu können.");
+                player.sendMessage(ChatColor.RED + "❌ Du musst der Teamanführer sein, um den Manager zu öffnen.");
                 return false;
             }
 
             try {
-                player.openInventory(Inventorys.TEAM_ADMIN_INVENTORY(teamManager).getInventory());
+                player.openInventory(Inventorys.TEAM_ADMIN_INVENTORY(teamManager, player).getInventory());
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
@@ -65,28 +65,11 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                 String teamName = args[1];
                 String teamTag = args[2];
 
-                if(teamTag.length() > 5) {
-                    player.sendMessage(ChatColor.RED + "❌ Der Team-Tag darf maximal 5 Zeichen lang sein.");
-                    return false;
-                }
-
                 TeamManager teamManager = new TeamManager(teamName);
-                boolean teamCreated = teamManager.createTeam(teamName, teamTag, player);
-
-                if(teamCreated) {
-                    player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast dein Team \"%s\" erfolgreich erstellt.", teamName));
-                } else {
-                    player.sendMessage(ChatColor.RED + "❌ Dein Team konnte nicht erstellt werden. Bitte prüfe, dass du noch in keinem Team bist.");
-                }
-
-                return teamCreated;
+                return teamManager.createTeam(teamName, teamTag, player);
             }
             case "leave": {
                 if (!(sender instanceof Player)) {
-                    sendUsage(sender);
-                    return false;
-                }
-                if(args.length == 1) {
                     sendUsage(sender);
                     return false;
                 }
@@ -98,15 +81,16 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                 }
 
                 TeamManager teamManager = new TeamManager(playerTeam.getName());
-                if (args[1].equalsIgnoreCase("confirm")) {
+                if (args.length == 2 && args[1].equalsIgnoreCase("confirm")) {
                     teamManager.removePlayer(player);
-                    player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast das Team \"%s\" erfolgreich verlassen."), teamManager.getName());
+                    player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast das Team \"%s\" erfolgreich verlassen.", teamManager.getName()));
                     return true;
                 }
 
-                TextComponent component = Component.text(ChatColor.GOLD + "Bist du dir sicher, dass du das Team \"%s\" verlassen möchtest?\nDu brauchst eine erneute Einladung um dem Team wieder beizutreten!\n\n");
+                TextComponent component = Component.text(ChatColor.DARK_RED + String.format("Bist du dir sicher, dass du das Team \"%s\" verlassen möchtest?\nDu brauchst eine erneute Einladung um dem Team wieder beizutreten!\n", teamManager.getName()));
                 TextComponent leaveComponent = Component.text(ChatColor.RED + "[ Team verlassen ]").clickEvent(ClickEvent.runCommand("/cteam leave confirm"));
                 player.sendMessage(component.append(leaveComponent));
+                return true;
             }
             case "invite": {
                 if (!(sender instanceof Player)) {

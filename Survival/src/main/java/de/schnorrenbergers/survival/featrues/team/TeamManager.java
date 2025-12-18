@@ -48,17 +48,27 @@ public class TeamManager {
         if(this.leaderUUID != null) return false;
         if(leader.getScoreboard().getPlayerTeam(leader) != null) return false;
 
+        String sanitizedTag = this.sanitizeTeamTag(tag);
+        if(sanitizedTag.length() > 5) {
+            leader.sendMessage(ChatColor.RED + "❌ Der Team-Tag darf maximal 5 Zeichen lang sein.");
+            return false;
+        }
+
         // Create minecraft team
         this.team = leader.getScoreboard().registerNewTeam(name);
         this.team.addPlayer(leader);
         this.leaderUUID = leader.getUniqueId();
-        this.team.setPrefix("[%s] ".formatted(tag));
         this.team.setColor(ChatColor.WHITE);
+
+        this.tag = String.format("[%s] ", sanitizedTag);
+        this.team.setPrefix(this.tag);
 
         // Save leaderUUID into team config
         YamlConfiguration teamConfig = Survival.getInstance().getTeamConfig().getConfig();
         teamConfig.set("teams." + this.name + ".leaderUUID", leader.getUniqueId().toString());
         Survival.getInstance().getTeamConfig().save();
+
+        leader.sendMessage(ChatColor.GREEN + String.format("✓ Du hast dein Team \"%s\" erfolgreich erstellt.", this.name));
 
         return true;
     }
@@ -72,13 +82,13 @@ public class TeamManager {
         if(!this.leaderUUID.equals(sender.getUniqueId())) return false; // Wenn Sender nicht der Teamleader ist
         if(sender.getName().equals(inviteName)) return false; // Wenn der Sender sich selbst einladen will
 
-        if(MAX_PLAYER_AMOUNT >= playerAmount) {
+        if(MAX_PLAYER_AMOUNT <= playerAmount) {
             sender.sendMessage(ChatColor.RED + "❌ Dein Team hat bereits das Maximum an Mitgliedern erreicht.");
             return false;
         }
 
         UUID inviteUUID = UUIDFetcher.findUUIDByName(inviteName, true);
-        System.out.printf("player %s (%s) is inviting %s (%s)%n", sender.getName(), sender.getUniqueId(), inviteName, inviteUUID);
+        System.out.println(String.format("player %s (%s) is inviting %s (%s)", sender.getName(), sender.getUniqueId(), inviteName, inviteUUID));
         if(inviteUUID == null) return false;
 
         OfflinePlayer invitePlayer = Survival.getInstance().getServer().getOfflinePlayer(inviteUUID);
@@ -127,10 +137,43 @@ public class TeamManager {
         if(this.team == null) return false;
         if(!this.team.getPlayers().contains(player)) return false;
 
+        if(this.leaderUUID.equals(player.getUniqueId()) && player.isOnline()) {
+            player.getPlayer().sendMessage(ChatColor.RED + "❌ Als Teamanführer kannst du dein eigenes Team nicht verlassen.");
+            return false;
+        }
+
         this.team.removePlayer(player);
         this.playerAmount--;
 
         return true;
+    }
+
+    public boolean kickPlayer(Player source, OfflinePlayer target) {
+        if(this.leaderUUID == null) return false;
+        if(this.team == null) return false;
+        if(!this.team.getPlayers().contains(target)) return false;
+
+        if(!this.leaderUUID.equals(source.getUniqueId())) return false;
+        if(this.leaderUUID.equals(target.getUniqueId())) return false;
+
+        this.team.removePlayer(target);
+        this.playerAmount--;
+        source.sendMessage(ChatColor.GREEN + String.format("✓ Du hast den Spieler \"%s\" erfolgreich aus deinem Team entfernt.", target.getName()));
+
+        if(target.isOnline()) {
+            target.getPlayer().sendMessage(ChatColor.RED + String.format("→ Du wurdest aus dem Team \"%s\" entfernt.", this.name));
+        }
+        return true;
+    }
+
+    public void setTeamColor(TeamColor teamColor, Player source) {
+        if(this.leaderUUID == null) return;
+        if(this.team == null) return;
+        if(!source.getUniqueId().equals(this.leaderUUID)) return;
+        if(teamColor == null) return;
+
+        this.team.setColor(teamColor.getColor());
+        source.getScoreboard().getTeam(this.name).setColor(teamColor.getColor());
     }
 
     public boolean claimChunk(Chunk chunk, Player player) {
@@ -202,5 +245,33 @@ public class TeamManager {
         System.out.println(String.format("getting leader for team %s: %s (%s)", this.name, UUIDFetcher.findNameByUUID(this.leaderUUID), this.leaderUUID));
         Survival.getInstance().getServer().getOfflinePlayer(leaderUUID);
         return null;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    public int getPlayerAmount() {
+        return playerAmount;
+    }
+
+    public void setPlayerAmount(int playerAmount) {
+        this.playerAmount = playerAmount;
+    }
+
+    public static int getMaxPlayerAmount() {
+        return MAX_PLAYER_AMOUNT;
+    }
+
+    public static void setMaxPlayerAmount(int maxPlayerAmount) {
+        MAX_PLAYER_AMOUNT = maxPlayerAmount;
+    }
+
+    private String sanitizeTeamTag(String input) {
+        return input.toUpperCase().replaceAll("\\[", "").replaceAll("]", "").replaceAll(" ", "");
     }
 }
