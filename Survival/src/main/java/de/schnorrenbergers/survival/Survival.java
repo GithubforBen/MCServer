@@ -7,6 +7,7 @@ import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.chunklimiter.PlayerLoadChunkListener;
+import de.schnorrenbergers.survival.featrues.flight.FlightListener;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
 import de.schnorrenbergers.survival.listener.ATMListener;
 import de.schnorrenbergers.survival.listener.JoinListener;
@@ -58,6 +59,7 @@ public final class Survival extends JavaPlugin {
         new ATMListener();
         new PlayerLoadChunkListener();
         new JoinListener();
+        new FlightListener();
     }
 
     private void registerCommand(String commandName, Object command) {
