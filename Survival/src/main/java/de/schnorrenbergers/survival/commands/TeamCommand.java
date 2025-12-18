@@ -5,6 +5,7 @@ import de.schnorrenbergers.survival.featrues.team.TeamManager;
 import de.schnorrenbergers.survival.utils.Inventorys;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
@@ -74,6 +75,33 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                 }
 
                 return teamCreated;
+            }
+            case "leave": {
+                if (!(sender instanceof Player)) {
+                    sendUsage(sender);
+                    return false;
+                }
+                if(args.length == 1) {
+                    sendUsage(sender);
+                    return false;
+                }
+                Player player = (Player) sender;
+                Team playerTeam = player.getScoreboard().getPlayerTeam(player);
+                if(playerTeam == null) {
+                    player.sendMessage(ChatColor.RED + "❌ Du bist derzeit in keinem Team, was du verlassen könntest.");
+                    return false;
+                }
+
+                TeamManager teamManager = new TeamManager(playerTeam.getName());
+                if (args[1].equalsIgnoreCase("confirm")) {
+                    teamManager.removePlayer(player);
+                    player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast das Team \"%s\" erfolgreich verlassen."), teamManager.getName());
+                    return true;
+                }
+
+                TextComponent component = Component.text(ChatColor.GOLD + "Bist du dir sicher, dass du das Team \"%s\" verlassen möchtest?\nDu brauchst eine erneute Einladung um dem Team wieder beizutreten!\n\n");
+                TextComponent leaveComponent = Component.text(ChatColor.RED + "[ Team verlassen ]").clickEvent(ClickEvent.runCommand("/cteam leave confirm"));
+                player.sendMessage(component.append(leaveComponent));
             }
             case "invite": {
                 if (!(sender instanceof Player)) {
@@ -211,7 +239,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
     }
 
     public void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /cteam <create | invite | chunks | help | claim | unclaim>");
+        sender.sendMessage("Usage: /cteam <create | leave | invite | chunks | help | claim | unclaim>");
     }
 
     @Override
@@ -235,6 +263,6 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
             }
             return List.of();
         }
-        return List.of("create", "invite", "chunks", "claim");
+        return List.of("create", "leave", "invite", "chunks", "claim");
     }
 }

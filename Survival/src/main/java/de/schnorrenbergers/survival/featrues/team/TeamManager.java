@@ -113,11 +113,23 @@ public class TeamManager {
         }
 
         this.team.addPlayer(player);
+        this.playerAmount++;
 
         if(Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).toList().contains(leaderUUID)) {
             Bukkit.getOnlinePlayers().stream().filter((x) -> x.getUniqueId().equals(leaderUUID)).toList().getFirst().sendMessage(ChatColor.GREEN + String.format("→ Der Spieler \"%s\" hat deine Team-Einladung angenommen.", player.getName()));
         }
         player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast die Einladung für das Team \"%s\" angenommen.", this.name));
+        return true;
+    }
+
+    public boolean removePlayer(OfflinePlayer player) {
+        if(this.leaderUUID == null) return false;
+        if(this.team == null) return false;
+        if(!this.team.getPlayers().contains(player)) return false;
+
+        this.team.removePlayer(player);
+        this.playerAmount--;
+
         return true;
     }
 
