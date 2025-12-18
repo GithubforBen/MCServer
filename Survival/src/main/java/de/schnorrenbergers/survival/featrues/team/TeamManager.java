@@ -18,6 +18,7 @@ import java.util.UUID;
 
 public class TeamManager {
     private String name;
+    private String tag;
     private UUID leaderUUID;
     private Team team;
     private int playerAmount;
@@ -38,11 +39,12 @@ public class TeamManager {
         }
 
         if(this.team != null) {
+            this.tag = team.getPrefix();
             playerAmount = this.team.getPlayers().size();
         }
     }
 
-    public boolean createTeam(String name, Player leader) {
+    public boolean createTeam(String name, String tag, Player leader) {
         if(this.leaderUUID != null) return false;
         if(leader.getScoreboard().getPlayerTeam(leader) != null) return false;
 
@@ -50,6 +52,7 @@ public class TeamManager {
         this.team = leader.getScoreboard().registerNewTeam(name);
         this.team.addPlayer(leader);
         this.leaderUUID = leader.getUniqueId();
+        this.team.setPrefix(tag);
         this.team.setColor(ChatColor.WHITE);
 
         // Save leaderUUID into team config

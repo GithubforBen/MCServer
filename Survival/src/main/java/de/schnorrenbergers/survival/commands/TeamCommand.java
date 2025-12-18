@@ -61,9 +61,11 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                 }
                 Player player = (Player) sender;
                 String teamName = args[1];
+                String teamTag = args[2];
+                if(args.length == 2) return false;
 
                 TeamManager teamManager = new TeamManager(teamName);
-                boolean teamCreated = teamManager.createTeam(teamName, player);
+                boolean teamCreated = teamManager.createTeam(teamName, teamTag, player);
 
                 if(teamCreated) {
                     player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast dein Team \"%s\" erfolgreich erstellt.", teamName));
