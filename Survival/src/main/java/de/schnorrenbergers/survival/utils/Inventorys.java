@@ -1010,11 +1010,12 @@ public class Inventorys extends InventoryBase {
 
         List<OfflinePlayer> players = teamManager.getTeam().getPlayers().stream().toList();
 
-        ItemStack playerOfflineHead = new ItemStack(Material.SKELETON_SKULL);
         for(int i = 0; i < players.size(); i++) {
             OfflinePlayer player = players.get(i);
             System.out.printf("player skin of %s (%s): %s", player.getName(), player.getUniqueId(), player.getPlayerProfile().getTextures().getSkin());
-            ItemStack playerHead = new ItemApi(player.getPlayerProfile().getTextures().getSkin(), ChatColor.GREEN + player.getName()).buildSkull();
+            ItemStack playerHead = new ItemApi(player.getPlayerProfile().getTextures().getSkin(), ChatColor.GREEN + player.getName()).build();
+            ItemStack playerOfflineHead = new ItemApi(Material.SKELETON_SKULL, ChatColor.GRAY + player.getName()).build();
+
             customInventory.setItem(i, player.isOnline() ? playerHead : playerOfflineHead, new ItemAction() {
                 @Override
                 public UUID getID() {
