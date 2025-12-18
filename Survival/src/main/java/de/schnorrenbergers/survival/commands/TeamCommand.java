@@ -62,8 +62,8 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                 }
                 Player player = (Player) sender;
                 if(args.length != 2) return false;
-                String teamName = args[1];
-                String teamTag = args[2];
+                String teamName = args[0];
+                String teamTag = args[1];
 
                 TeamManager teamManager = new TeamManager(teamName);
                 return teamManager.createTeam(teamName, teamTag, player);
