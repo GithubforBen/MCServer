@@ -50,6 +50,7 @@ public class TeamManager {
         this.team = leader.getScoreboard().registerNewTeam(name);
         this.team.addPlayer(leader);
         this.leaderUUID = leader.getUniqueId();
+        this.team.setColor(ChatColor.WHITE);
 
         // Save leaderUUID into team config
         YamlConfiguration teamConfig = Survival.getInstance().getTeamConfig().getConfig();
