@@ -4,9 +4,11 @@ import java.io.Serializable;
 
 public class FileType implements Serializable {
     private static final long serialVersionUID = 100L;
+
     public enum SERVER {
         PAPER,
         VELOCITY;
+
         public static String getFileURL(SERVER type) {
             return switch (type) {
                 case SERVER.PAPER -> "https://fill-data.papermc.io/v1/objects/d5f47f6393aa647759f101f02231fa8200e5bccd36081a3ee8b6a5fd96739057/paper-1.21.10-115.jar";
@@ -17,6 +19,7 @@ public class FileType implements Serializable {
             return getFileURL(type).split("/")[getFileURL(type).split("/").length - 1];
         }
     }
+
     public enum PLUGIN {
         SURVIVAL,
         LOBBY,
@@ -24,14 +27,17 @@ public class FileType implements Serializable {
         VELOCITY,
         WORLDEDIT,
 		CORE_PROTECT,
+        CHUNKY,
         SIMPLE_VOICECHAT_PAPER,
         SIMPLE_VOICECHAT_VELOCITY;
+
         public static String getFileURL(PLUGIN type) {
             return switch (type) {
                 case SIMPLE_VOICECHAT_PAPER -> "https://cdn.modrinth.com/data/9eGKb6K1/versions/ps3C3lpD/voicechat-bukkit-2.6.6.jar";
                 case VELOCITY -> null;//TODO:
                 case PLUGIN.WORLDEDIT -> "https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=0https://www.dropbox.com/scl/fi/c4sqk7ralpgrmxnjiy2z2/worldedit-bukkit-7.3.17.jar?rlkey=diqdimwoz32xjb97mswbgxmat&st=535t6o3f&dl=1";
 				case PLUGIN.CORE_PROTECT -> "https://drive.google.com/uc?export=download&id=1uMlT0X8bzOyhr7lNBY8K-1Md6URNiIE1";
+                case PLUGIN.CHUNKY -> "https://cdn.modrinth.com/data/fALzjamp/versions/kkEljQ4R/Chunky-Fabric-1.4.51.jar";
                 case SURVIVAL -> "build:/survival-1.0.jar";
                 case LOBBY -> "build:/lobby-1.0.jar";
                 case BEDWARS -> "build:/bedwars-1.0.jar";
@@ -41,6 +47,7 @@ public class FileType implements Serializable {
         public static String getFileName(PLUGIN type) {
             if (type == PLUGIN.WORLDEDIT) return "worldedit-bukkit-7.3.17.jar";
 			if (type == PLUGIN.CORE_PROTECT) return "coreprotect.jar";
+            if (type == PLUGIN.CHUNKY) return "Chunky-Fabric-1.4.51.jar";
             return getFileURL(type).split("/")[getFileURL(type).split("/").length - 1];
         }
         public boolean isBuildable() {
