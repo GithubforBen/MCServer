@@ -55,7 +55,7 @@ public class VelocityConfigurator extends ServerConfigurator {
             throw new MissingConfigurationException("serversecret is missing in config.yml. You might want to change it to something else. It was auto set.");
         }
         writeToFile("velocity.toml", "show-max-players = 100",false);
-        writeToFile("velocity.toml", "motd = \"Welcome to My Minecraft Network!\"",false);
+        writeToFile("velocity.toml", "motd = \"&kabc&r &3minecraft server &r&kabc\"",false);
         writeToFile("velocity.toml", "# Should we authenticate players with Mojang? By default, this is on.\n" +
                 "online-mode = true\n" +
                 "\n" +
