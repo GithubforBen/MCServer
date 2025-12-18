@@ -146,6 +146,10 @@ public class Main {
                 return InetAddress.getLocalHost().getHostAddress();
             }
             case PUBLIC -> {
+                if(config.contains("server-ip")) {
+                    return config.get("server-ip").toString();
+                }
+
                 URL ip = new URL("http://checkip.amazonaws.com");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(ip.openStream()));
                 return reader.readLine();

@@ -105,7 +105,7 @@ public class VelocityConfigurator extends ServerConfigurator {
         writeToFile("velocity.toml", "[servers]",false);
         for (ListenerAdapter.ServerName value : ListenerAdapter.ServerName.values()) {
             if (value.getPort() == -1) continue;
-            writeToFile("velocity.toml", value.toString() + " = \"" + Main.getInstance().getIp() + ":" + value.getPort() + "\"".replaceAll("\t",""),false);
+            writeToFile("velocity.toml", value.toString() + " = \"" + "localhost" + ":" + value.getPort() + "\"".replaceAll("\t",""),false);
         }
         writeToFile("velocity.toml", "try = [\n" +
                 "    \""+ ListenerAdapter.ServerName.LOBBY +"\",\n" +
