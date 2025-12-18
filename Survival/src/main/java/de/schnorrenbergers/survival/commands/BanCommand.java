@@ -17,6 +17,10 @@ import java.util.List;
 public class BanCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] args) {
+        if (!commandSender.isOp()) {
+            sendUsage(commandSender);
+            return false;
+        }
         if (args.length != 4) {
             sendUsage(commandSender);
             return false;
