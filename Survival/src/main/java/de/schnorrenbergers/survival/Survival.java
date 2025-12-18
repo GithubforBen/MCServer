@@ -2,10 +2,7 @@ package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.commands.ServerManagerCommand;
-import de.schnorrenbergers.survival.commands.DebugCommand;
-import de.schnorrenbergers.survival.commands.RestartCommand;
-import de.schnorrenbergers.survival.commands.ShopkeeperCommand;
-import de.schnorrenbergers.survival.commands.TeamCommand;
+import de.schnorrenbergers.survival.commands.*;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
@@ -52,6 +49,7 @@ public final class Survival extends JavaPlugin {
         getCommand("rs").setExecutor(new RestartCommand());
         registerCommand("servermanger", new ServerManagerCommand());
         registerCommand("shopkeeper", new ShopkeeperCommand());
+        registerCommand("banane", new BanCommand());
         new Tablist();
         new CustomInventoryListener(this);
         new ShopkeeperManager();
