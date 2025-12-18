@@ -111,9 +111,8 @@ public class TeamManager {
 
         this.team.addPlayer(player);
 
-        OfflinePlayer leader = this.getLeader();
-        if(leader != null && leader.getPlayer().isOnline()) {
-            leader.getPlayer().sendMessage(ChatColor.GREEN + String.format("→ Der Spieler \"%s\" hat deine Team-Einladung angenommen.", player.getName()));
+        if(Bukkit.getOnlinePlayers().stream().map(Player::getUniqueId).toList().contains(leaderUUID)) {
+            Bukkit.getOnlinePlayers().stream().filter((x) -> x.getUniqueId().equals(leaderUUID)).toList().getFirst().sendMessage(ChatColor.GREEN + String.format("→ Der Spieler \"%s\" hat deine Team-Einladung angenommen.", player.getName()));
         }
         player.sendMessage(ChatColor.GREEN + String.format("✓ Du hast die Einladung für das Team \"%s\" angenommen.", this.name));
         return true;
