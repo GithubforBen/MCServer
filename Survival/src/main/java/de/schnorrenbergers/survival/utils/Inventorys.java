@@ -2,12 +2,9 @@ package de.schnorrenbergers.survival.utils;
 
 import de.hems.api.ItemApi;
 import de.hems.api.UUIDApi;
-import de.hems.communication.ListenerAdapter;
-import de.hems.communication.events.server.RequestServerStartEvent;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.InventoryBase;
 import de.hems.paper.customInventory.types.ItemAction;
-import de.hems.types.FileType;
 import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ItemForSale;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
@@ -15,24 +12,20 @@ import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
 import de.schnorrenbergers.survival.featrues.money.AtmHandler;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
+import de.schnorrenbergers.survival.featrues.team.TeamManager;
 import net.kyori.adventure.text.Component;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Particle;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scoreboard.Team;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 public class Inventorys extends InventoryBase {
@@ -975,7 +968,7 @@ public class Inventorys extends InventoryBase {
         return customInventory;
     }
 
-    public static CustomInventory TEAM_ADMIN_INVENTORY(String team) throws MalformedURLException {
+    public static CustomInventory TEAM_ATM_INVENTORY(String team) throws MalformedURLException {
         CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, "Team manager", (x) -> {
 
         });
@@ -1006,6 +999,49 @@ public class Inventorys extends InventoryBase {
                 return ATM_INVENTORY(team);
             }
         });
+        return customInventory;
+    }
+
+    public static CustomInventory TEAM_ADMIN_INVENTORY(TeamManager teamManager) throws MalformedURLException {
+        CustomInventory customInventory = new CustomInventory(InventoryType.CHEST, ChatColor.GREEN + "Team-Manager", (x) -> {
+            
+        });
+        customInventory.fillPlaceHolder();
+
+        List<OfflinePlayer> players = teamManager.getTeam().getPlayers().stream().toList();
+
+        ItemStack playerOfflineHead = new ItemStack(Material.SKELETON_SKULL);
+        for(int i = 0; i < players.size(); i++) {
+            OfflinePlayer player = players.get(i);
+            ItemStack playerHead = new ItemApi(new URL("http://textures.minecraft.net/texture/" + player.getUniqueId()), ChatColor.GREEN + player.getName()).buildSkull();
+            customInventory.setItem(i, player.isOnline() ? playerHead : playerOfflineHead, new ItemAction() {
+                @Override
+                public UUID getID() {
+                    return UUID.fromString(player.getUniqueId() + ".team-admin");
+                }
+
+                @Override
+                public void onClick(InventoryClickEvent event) throws MalformedURLException {
+                    return;
+                }
+
+                @Override
+                public boolean isMovable() {
+                    return false;
+                }
+
+                @Override
+                public boolean fireEvent() {
+                    return false;
+                }
+
+                @Override
+                public CustomInventory loadInventoryOnClick() throws MalformedURLException {
+                    return null;
+                }
+            });
+        }
+
         return customInventory;
     }
 }

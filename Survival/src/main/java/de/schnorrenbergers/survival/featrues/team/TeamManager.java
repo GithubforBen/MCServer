@@ -70,7 +70,7 @@ public class TeamManager {
         if(sender.getName().equals(inviteName)) return false; // Wenn der Sender sich selbst einladen will
 
         if(MAX_PLAYER_AMOUNT >= playerAmount) {
-            sender.sendMessage(ChatColor.RED + "❌ Dein Team hat bereits das maximum an Mitgliedern erreicht.");
+            sender.sendMessage(ChatColor.RED + "❌ Dein Team hat bereits das Maximum an Mitgliedern erreicht.");
             return false;
         }
 

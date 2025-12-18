@@ -2,6 +2,7 @@ package de.schnorrenbergers.survival.commands;
 
 import de.schnorrenbergers.survival.featrues.team.ClaimManager;
 import de.schnorrenbergers.survival.featrues.team.TeamManager;
+import de.schnorrenbergers.survival.utils.Inventorys;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -18,6 +19,7 @@ import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,8 +27,30 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length == 0) {
-            sendUsage(sender);
-            return false;
+            if (!(sender instanceof Player)) {
+                sendUsage(sender);
+                return false;
+            }
+            Player player = (Player) sender;
+            Team playerTeam = player.getScoreboard().getPlayerTeam(player);
+
+            if(playerTeam == null) {
+                player.sendMessage(ChatColor.RED + "❌ Du brauchst ein Team, um den Manager zu öffnen.");
+                return false;
+            }
+
+            TeamManager teamManager = new TeamManager(playerTeam.getName());
+            if(!teamManager.getLeaderUUID().equals(player.getUniqueId())) {
+                player.sendMessage(ChatColor.RED + "❌ Du musst der Teamanführer sein, um andere Spieler einladen zu können.");
+                return false;
+            }
+
+            try {
+                player.openInventory(Inventorys.TEAM_ADMIN_INVENTORY(teamManager).getInventory());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+            return true;
         }
 
         switch (args[0].toLowerCase()) {
