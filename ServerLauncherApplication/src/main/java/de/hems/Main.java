@@ -86,10 +86,10 @@ public class Main {
             configuration.save();
             throw new MissingConfigurationException("discord-token is missing in config.yml.");
         }
-        //serverHandler.startNewInstance(ListenerAdapter.ServerName.LOBBY, 1500, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
         //serverHandler.startNewInstance(
         //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
-        serverHandler.startNewInstance(ListenerAdapter.ServerName.SURVIVAL, 1500, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
+        serverHandler.startNewInstance(ListenerAdapter.ServerName.LOBBY, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
+        serverHandler.startNewInstance(ListenerAdapter.ServerName.SURVIVAL, 12 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
         if (jda != null) Tickets.updateTicketChannel();
     }
 
