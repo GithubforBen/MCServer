@@ -29,7 +29,9 @@ public class FileType implements Serializable {
 		CORE_PROTECT,
         CHUNKY,
         SIMPLE_VOICECHAT_PAPER,
-        SIMPLE_VOICECHAT_VELOCITY;
+        SIMPLE_VOICECHAT_VELOCITY,
+        WORLD_GUARD;
+
 
         public static String getFileURL(PLUGIN type) {
             return switch (type) {
@@ -42,6 +44,7 @@ public class FileType implements Serializable {
                 case LOBBY -> "build:/lobby-1.0.jar";
                 case BEDWARS -> "build:/bedwars-1.0.jar";
                 case SIMPLE_VOICECHAT_VELOCITY -> "https://cdn.modrinth.com/data/9eGKb6K1/versions/jMopHMDQ/voicechat-velocity-2.6.4.jar";
+                case WORLD_GUARD -> "https://cdn.modrinth.com/data/DKY9btbd/versions/Cm1YG6Lt/worldguard-bukkit-7.0.15-beta-01.jar";
             };
         }
         public static String getFileName(PLUGIN type) {

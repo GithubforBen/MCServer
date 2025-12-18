@@ -18,7 +18,7 @@ public class ServerHandler {
 
     public void startNewInstance(ListenerAdapter.ServerName name, int allocatedMemoryMB, FileType.SERVER jarFile, FileType.PLUGIN[] plugins) throws Exception {
         Set<FileType.PLUGIN> pluginList = new HashSet<>(Arrays.asList(plugins));
-        pluginList.addAll(List.of(FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.WORLDEDIT, FileType.PLUGIN.CHUNKY));
+        pluginList.addAll(List.of(FileType.PLUGIN.CORE_PROTECT, FileType.PLUGIN.WORLDEDIT, FileType.PLUGIN.CHUNKY, FileType.PLUGIN.WORLD_GUARD));
         switch (name) {
             case SURVIVAL -> {
                 pluginList.add(FileType.PLUGIN.SURVIVAL);
