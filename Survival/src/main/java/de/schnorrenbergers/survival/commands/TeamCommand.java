@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,6 +55,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
             return true;
         }
 
+        System.out.println(String.format("args of /cteam command: %s (%s)", Arrays.toString(args), args.length));
         switch (args[0].toLowerCase()) {
             case "create": {
                 if (!(sender instanceof Player)) {
@@ -61,9 +63,9 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                     return false;
                 }
                 Player player = (Player) sender;
-                if(args.length != 2) return false;
-                String teamName = args[0];
-                String teamTag = args[1];
+                if(args.length != 3) return false;
+                String teamName = args[1];
+                String teamTag = args[2];
 
                 TeamManager teamManager = new TeamManager(teamName);
                 return teamManager.createTeam(teamName, teamTag, player);

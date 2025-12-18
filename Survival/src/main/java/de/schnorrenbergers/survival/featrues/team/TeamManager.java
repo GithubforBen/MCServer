@@ -45,6 +45,13 @@ public class TeamManager {
     }
 
     public boolean createTeam(String name, String tag, Player leader) {
+        YamlConfiguration teamConfig = Survival.getInstance().getTeamConfig().getConfig();
+
+        if(teamConfig.contains("teams." + name)) {
+            leader.sendMessage(ChatColor.RED + "❌ Dieser Teamname ist bereits vergeben.");
+            return false;
+        }
+
         if(this.leaderUUID != null) return false;
         if(leader.getScoreboard().getPlayerTeam(leader) != null) return false;
 
@@ -64,7 +71,6 @@ public class TeamManager {
         this.team.setPrefix(this.tag);
 
         // Save leaderUUID into team config
-        YamlConfiguration teamConfig = Survival.getInstance().getTeamConfig().getConfig();
         teamConfig.set("teams." + this.name + ".leaderUUID", leader.getUniqueId().toString());
         Survival.getInstance().getTeamConfig().save();
 
