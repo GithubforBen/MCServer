@@ -61,7 +61,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                     return false;
                 }
                 Player player = (Player) sender;
-                if(args.length == 2) return false;
+                if(args.length != 2) return false;
                 String teamName = args[1];
                 String teamTag = args[2];
 
