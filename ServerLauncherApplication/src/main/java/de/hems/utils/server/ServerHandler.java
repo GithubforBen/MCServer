@@ -97,6 +97,13 @@ public class ServerHandler {
         return instances.stream().anyMatch(ServerInstance -> ServerInstance.getName().equals(name));
     }
 
+    public ServerInstance getInstance(ListenerAdapter.ServerName name) {
+        for (ServerInstance instance : instances) {
+            if (instance.getName().equals(name)) return instance;
+        }
+        return null;
+    }
+
     public void updateInstances() {
         instances.removeIf(instance -> !instance.isAlive());
     }

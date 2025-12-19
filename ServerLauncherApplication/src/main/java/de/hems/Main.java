@@ -13,6 +13,7 @@ import de.hems.utils.bot.tickets.Tickets;
 import de.hems.utils.bot.verification.OnAccountVerifyCommand;
 import de.hems.utils.server.ServerHandler;
 import de.hems.utils.types.RunningMode;
+import de.hems.utils.webconsole.WebServer;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -89,8 +90,9 @@ public class Main {
         //serverHandler.startNewInstance(
         //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
         serverHandler.startNewInstance(ListenerAdapter.ServerName.LOBBY, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
-        serverHandler.startNewInstance(ListenerAdapter.ServerName.SURVIVAL, 26 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
+        serverHandler.startNewInstance(ListenerAdapter.ServerName.SURVIVAL, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);//TODO: change bevore prod -> 26 
         if (jda != null) Tickets.updateTicketChannel();
+        new WebServer();
     }
 
     public static void main(String[] args) throws Exception {
