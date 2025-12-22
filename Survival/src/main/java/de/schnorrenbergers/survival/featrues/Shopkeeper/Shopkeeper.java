@@ -62,8 +62,8 @@ public class Shopkeeper {
             shop.getChunk().load();
         }
         Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
-            System.out.println(shop.getWorld().getEntitiesByClasses(Villager.class).size());
-            shop.getWorld().getEntitiesByClasses(Villager.class).stream().filter(entity -> entity instanceof Villager).filter((v) -> {
+            System.out.println(shop.getChunk().getEntities().length);
+            Arrays.stream(shop.getChunk().getEntities()).filter(entity -> entity instanceof Villager).filter((v) -> {
                 System.out.println("Found Villager:");
                 String s = v.getPersistentDataContainer().get(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING);
                 System.out.println("Found Villager:");
