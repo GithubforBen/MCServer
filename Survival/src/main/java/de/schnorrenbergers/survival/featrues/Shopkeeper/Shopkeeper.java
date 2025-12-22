@@ -57,7 +57,10 @@ public class Shopkeeper {
         this.shop = config.getLocation(path + ".location.shop");
         this.chest = config.getLocation(path + ".location.chest");
         this.ownerTeam = config.getString(path + ".ownerTeam");
-        this.items = getItemList(path + ".items");/*
+        this.items = getItemList(path + ".items");
+        if (!shop.getChunk().isLoaded()) {
+            shop.getChunk().load();
+        }
         Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
             System.out.println(shop.getWorld().getEntitiesByClasses(Villager.class).size());
             shop.getWorld().getEntitiesByClasses(Villager.class).stream().filter(entity -> entity instanceof Villager).filter((v) -> {
@@ -89,7 +92,6 @@ public class Shopkeeper {
             villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
 
         }, 1000L);
-        */
     }
 
     public void buyItem(Player player, ItemForSale item) {
