@@ -6,6 +6,10 @@ import de.hems.events.*;
 import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
 import de.hems.utils.Configuration;
+import de.hems.utils.bot.adminabuse.AdminAbuseHandler;
+import de.hems.utils.bot.adminabuse.RequestAdminAbuse;
+import de.hems.utils.bot.adminabuse.LegitimiseAdminAbuse;
+import de.hems.utils.bot.adminabuse.SetLoggingChannel;
 import de.hems.utils.bot.payingplayer.PayingPlayerCommand;
 import de.hems.utils.bot.tickets.TicketListener;
 import de.hems.utils.bot.tickets.SetTicketChannelListener;
@@ -23,7 +27,6 @@ import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.awt.*;
@@ -44,6 +47,7 @@ public class Main {
     //TODO: add a way to auto add ops
 
     public Main() throws Exception {
+        System.out.println(System.getProperty("os.name"));
         if (instance == null) {
             instance = this;
         } else {
@@ -56,13 +60,17 @@ public class Main {
             }
         }));
         configuration = new Configuration();
-        if (!configuration.getConfig().contains("paying-players")) configuration.getConfig().set("paying-players", List.of(UUIDFetcher.findUUIDByName("for_sale", true).toString()));
+        if (!configuration.getConfig().contains("paying-players"))
+            configuration.getConfig().set("paying-players", List.of(UUIDFetcher.findUUIDByName("for_sale", true).toString()));
         listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.HOST);
         new RespondDataEvent();
+        new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         new StartServerEvent();
         new RestartServerEvent();
         new StopServerEvent();
+        new RequestAdminAbuse();
+        new LegitimiseAdminAbuse();
         new RequestServerDataEvent();
         if (configuration.getConfig().contains("discord-token")) {
             jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
@@ -71,16 +79,20 @@ public class Main {
                             new SetTicketChannelListener(),
                             new TicketListener(),
                             new OnAccountVerifyCommand(),
-                            new PayingPlayerCommand())
+                            new PayingPlayerCommand(),
+                            new SetLoggingChannel())
                     .setActivity(Activity.playing("Playing on " + getIp()))
                     .build();
             jda.awaitReady();
             jda.updateCommands().addCommands(Commands.slash("payingplayer", "Schreibe auf, dass ein spieler für den Server zahlt!").addOption(OptionType.STRING, "minecraftname", "Den Minecraft name hier einfügen.", true))
-            .addCommands(
-                    Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
-                    ))
-            .addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true))
-            .queue();
+                    .addCommands(
+                            Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
+                            ))
+                    .addCommands(
+                            Commands.slash("setloggingchannel", "Set the channel for admin abuse logging").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
+                            ))
+                    .addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true))
+                    .queue();
         } else {
             configuration.getConfig().set("discord-token", "<<add token here>>");
             configuration.getConfig().setComments("discord-token", List.of("The discord token to use for the bot!"));
@@ -89,7 +101,7 @@ public class Main {
         }
         //serverHandler.startNewInstance(
         //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
-        serverHandler.startNewInstance(ListenerAdapter.ServerName.LOBBY, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
+        //serverHandler.startNewInstance(ListenerAdapter.ServerName.LOBBY, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
         serverHandler.startNewInstance(ListenerAdapter.ServerName.SURVIVAL, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);//TODO: change bevore prod -> 26 
         if (jda != null) Tickets.updateTicketChannel();
         new WebServer();
@@ -148,7 +160,7 @@ public class Main {
                 return InetAddress.getLocalHost().getHostAddress();
             }
             case PUBLIC -> {
-                if(config.contains("server-ip")) {
+                if (config.contains("server-ip")) {
                     return config.get("server-ip").toString();
                 }
 

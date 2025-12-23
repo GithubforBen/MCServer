@@ -16,7 +16,7 @@
         <groupId>com.github.GithubforBen</groupId>
         <artifactId>MCServer</artifactId>
         <version>1.0</version>
-        <relativePath/> <!-- prevents weird parent resolution -->
+        <relativePath>../pom.xml</relativePath> <!-- prevents weird parent resolution -->
     </parent>
 
     <properties>
@@ -76,11 +76,6 @@
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>com.github.GithubforBen</groupId>
-            <artifactId>CommonCode</artifactId>
-            <version>1.0</version>
-        </dependency>
 
         <dependency>
             <groupId>net.dv8tion</groupId>
@@ -91,6 +86,12 @@
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
             <version>1.21.10-R0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.GithubforBen</groupId>
+            <artifactId>CommonCode</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

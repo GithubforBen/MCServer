@@ -1,6 +1,7 @@
-package de.hems.utils.bot.tickets;
+package de.hems.utils.bot.adminabuse;
 
 import de.hems.Main;
+import de.hems.utils.bot.tickets.Tickets;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -8,10 +9,10 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class SetTicketChannelListener extends ListenerAdapter {
+public class SetLoggingChannel extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        if (!event.getName().equals("setticketchannel")) {
+        if (!event.getName().equals("setloggingchannel")) {
             return;
         }
         if (!event.getMember().hasPermission(Permission.ADMINISTRATOR)) {
@@ -20,9 +21,8 @@ public class SetTicketChannelListener extends ListenerAdapter {
         }
         YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
         MessageChannelUnion channel = event.getChannel();
-        config.set("ticket-channel", channel.getId());
+        config.set("logging-channel", channel.getId());
         Main.getInstance().getConfiguration().save();
-        event.reply("Ticket channel set to " + channel.getAsMention()).complete();
-        Tickets.updateTicketChannel();
+        event.reply("Logging channel set to " + channel.getAsMention()).complete();
     }
 }
