@@ -70,6 +70,24 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                 TeamManager teamManager = new TeamManager(teamName);
                 return teamManager.createTeam(teamName, teamTag, player);
             }
+            case "atm": {
+                if (!(sender instanceof Player)) {
+                    sendUsage(sender);
+                    return false;
+                }
+                Player player = (Player) sender;
+                Team playerTeam = player.getScoreboard().getPlayerTeam(player);
+                if(playerTeam == null) {
+                    player.sendMessage(ChatColor.RED + "❌ Du bist derzeit in keinem Team, was du verlassen könntest.");
+                    return false;
+                }
+                try {
+                    player.openInventory(Inventorys.ATM_INVENTORY(playerTeam.getName()).getInventory());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+                return true;
+            }
             case "leave": {
                 if (!(sender instanceof Player)) {
                     sendUsage(sender);
@@ -254,6 +272,6 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
             }
             return List.of();
         }
-        return List.of("create", "leave", "invite", "chunks", "claim");
+        return List.of("create", "leave", "invite", "chunks", "claim", "atm");
     }
 }

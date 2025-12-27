@@ -45,6 +45,7 @@ public class MoneyHandler {
         return 0;
     }
     public static synchronized void addMoney(int amount, Team team){
+        System.out.println("team add");
         YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
         if (config.contains(team.getName() + ".money")) {
             config.set(team.getName() + ".money", config.getInt(team.getName() + ".money") + amount);
@@ -56,6 +57,7 @@ public class MoneyHandler {
     }
 
     public static synchronized boolean removeMoney(int amount, Team team){
+        System.out.println("team remove");
         YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
         if (config.contains(team.getName() + ".money")) {
             if (config.getInt(team.getName() + ".money") < amount) return false;
