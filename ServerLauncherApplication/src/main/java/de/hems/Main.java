@@ -6,10 +6,7 @@ import de.hems.events.*;
 import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
 import de.hems.utils.Configuration;
-import de.hems.utils.bot.adminabuse.AdminAbuseHandler;
-import de.hems.utils.bot.adminabuse.RequestAdminAbuse;
-import de.hems.utils.bot.adminabuse.LegitimiseAdminAbuse;
-import de.hems.utils.bot.adminabuse.SetLoggingChannel;
+import de.hems.utils.bot.adminabuse.*;
 import de.hems.utils.bot.payingplayer.PayingPlayerCommand;
 import de.hems.utils.bot.tickets.TicketListener;
 import de.hems.utils.bot.tickets.SetTicketChannelListener;
@@ -72,6 +69,7 @@ public class Main {
         new RequestAdminAbuse();
         new LegitimiseAdminAbuse();
         new RequestServerDataEvent();
+        new RequestToLegitimise();
         if (configuration.getConfig().contains("discord-token")) {
             jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)

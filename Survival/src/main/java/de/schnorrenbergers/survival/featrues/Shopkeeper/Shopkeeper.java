@@ -83,14 +83,13 @@ public class Shopkeeper {
                 villager.damage(1000000000);
                 e.remove();
             });
-
-            this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
-            villager.setAdult();
-            villager.customName(Component.text(name));
-            villager.setAI(false);
-            villager.setInvulnerable(true);
-            villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
-
+            Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
+                this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
+                villager.setAdult();
+                villager.customName(Component.text(name));
+                villager.setAI(false);
+                villager.setInvulnerable(true);
+                villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());}, 1000L);
         }, 1000L);
     }
 

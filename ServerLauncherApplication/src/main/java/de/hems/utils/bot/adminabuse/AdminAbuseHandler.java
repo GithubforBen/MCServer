@@ -16,11 +16,14 @@ public class AdminAbuseHandler {
             new Thread(() -> {
                 while (true) {
                     try {
-                        Thread.sleep(1000L *10);
-                        adminAbuses.forEach(adminAbuse -> {
-                            adminAbuse.sendIfNecessary();
-                            if (adminAbuse.isHasBeenSent()) adminAbuses.remove(adminAbuse);
-                        });
+                        Thread.sleep(1000L * 10);
+                        for (AdminAbuse adminAbus : adminAbuses) {
+                            adminAbus.sendIfNecessary();
+                            if (adminAbus.isHasBeenSent()) {
+                                adminAbuses.remove(adminAbus);
+                                break;
+                            }
+                        }
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }

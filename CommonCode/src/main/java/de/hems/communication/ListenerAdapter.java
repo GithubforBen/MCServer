@@ -62,6 +62,7 @@ public class ListenerAdapter implements Receiver {
         while (respondDataEvents.isEmpty()) {
             Thread.sleep(100);
         }
+        System.out.println("Size: " + respondDataEvents.size());
         RespondDataEvent event = respondDataEvents.stream().filter(e -> e.getRequestId().equals(requestId)).findFirst().orElse(null);
         if (event == null) {
             return waitForEvent(requestId);

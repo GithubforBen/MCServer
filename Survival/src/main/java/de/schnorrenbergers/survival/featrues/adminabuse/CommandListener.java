@@ -25,6 +25,7 @@ public class CommandListener implements Listener {
         for (String flag : flags()) {
             if (event.getMessage().startsWith("/"+flag)) {
                 ListenerAdapter.sendListeners(new RequestAdminAbuseEvent(ListenerAdapter.ServerName.HOST, event.getMessage(), event.getPlayer().getName()));
+                event.getPlayer().sendMessage("Authenticate this command with /legitamise");
             }
         }
     }

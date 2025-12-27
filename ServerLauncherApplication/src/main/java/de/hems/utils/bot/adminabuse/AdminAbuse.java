@@ -8,6 +8,9 @@ import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 import java.awt.*;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.UUID;
 
 public class AdminAbuse {
@@ -49,7 +52,7 @@ public class AdminAbuse {
     }
 
     public boolean isOverdue() {
-        return !hasBeenSent && time > (System.currentTimeMillis() - 1000L*60*30);
+        return !hasBeenSent && time < (System.currentTimeMillis() - Duration.ofMinutes(30L).get(ChronoUnit.MILLIS));
     }
 
     public UUID getUuid() {

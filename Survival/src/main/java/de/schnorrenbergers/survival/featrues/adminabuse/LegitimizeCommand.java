@@ -43,13 +43,17 @@ public class LegitimizeCommand implements TabCompleter, CommandExecutor {
             try {
                 ListenerAdapter.sendListeners(requestToLegitimizeEvent);
                 RespondToLegitimizeEvent respondToLegitimizeEvent = (RespondToLegitimizeEvent) ListenerAdapter.waitForEvent(requestToLegitimizeEvent.getEventId());
+                List<Runnable> runnables = new ArrayList<>();
                 respondToLegitimizeEvent.getToLegitimize().forEach((x, y) -> {
-                    try {
-                        ListenerAdapter.sendListeners(new LegitamiseAdminAbuseEvent(ListenerAdapter.ServerName.HOST, x, split[1]));
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                        runnables.add(() -> {
+                            try {
+                                ListenerAdapter.sendListeners(new LegitamiseAdminAbuseEvent(ListenerAdapter.ServerName.HOST, x, split[1]));
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
                 });
+                runnables.forEach(Runnable::run);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -59,6 +63,10 @@ public class LegitimizeCommand implements TabCompleter, CommandExecutor {
         try {
             uuid = UUID.fromString(args[0]);
         } catch (Exception e) {
+            sender.sendMessage(usage());
+            return false;
+        }
+        if (split.length != 3) {
             sender.sendMessage(usage());
             return false;
         }
@@ -84,9 +92,7 @@ public class LegitimizeCommand implements TabCompleter, CommandExecutor {
             try {
                 ListenerAdapter.sendListeners(requestToLegitimizeEvent);
                 RespondToLegitimizeEvent respondToLegitimizeEvent = (RespondToLegitimizeEvent) ListenerAdapter.waitForEvent(requestToLegitimizeEvent.getEventId());
-                respondToLegitimizeEvent.getToLegitimize().forEach((x, y) -> {
-                    list.add(x.toString());
-                });
+                list.addAll(respondToLegitimizeEvent.getToLegitimize().keySet().stream().map(UUID::toString).toList());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

@@ -16,15 +16,17 @@ public class RequestToLegitimise implements EventHandler<RequestToLegitimizeEven
     }
     @Override
     public void onEvent(Event event) throws Exception {
-        if (!(event instanceof RequestToLegitimise)) {
+        if (!(event instanceof RequestToLegitimizeEvent request)) {
             return;
         }
-        RequestToLegitimizeEvent request = (RequestToLegitimizeEvent) event;
+        System.out.println(2);
         Map<UUID, String> commands = new HashMap<UUID, String>();
         for (AdminAbuse adminAbus : AdminAbuseHandler.adminAbuses) {
             if (adminAbus.getReason() != null) continue;
             commands.put(adminAbus.getUuid(), adminAbus.getCommand());
         }
+        System.out.println(1);
         ListenerAdapter.sendListeners(new RespondToLegitimizeEvent(request.getSender(), request.getEventId(), commands));
+        System.out.println(4);
     }
 }
