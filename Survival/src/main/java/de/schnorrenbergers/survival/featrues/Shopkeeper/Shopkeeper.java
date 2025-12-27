@@ -57,10 +57,13 @@ public class Shopkeeper {
         this.shop = config.getLocation(path + ".location.shop");
         this.chest = config.getLocation(path + ".location.chest");
         this.ownerTeam = config.getString(path + ".ownerTeam");
-        this.items = getItemList(path + ".items");/*
+        this.items = getItemList(path + ".items");
+        if (!shop.getChunk().isLoaded()) {
+            shop.getChunk().load();
+        }
         Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
-            System.out.println(shop.getWorld().getEntitiesByClasses(Villager.class).size());
-            shop.getWorld().getEntitiesByClasses(Villager.class).stream().filter(entity -> entity instanceof Villager).filter((v) -> {
+            System.out.println(shop.getChunk().getEntities().length);
+            Arrays.stream(shop.getChunk().getEntities()).filter(entity -> entity instanceof Villager).filter((v) -> {
                 System.out.println("Found Villager:");
                 String s = v.getPersistentDataContainer().get(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING);
                 System.out.println("Found Villager:");
@@ -80,16 +83,14 @@ public class Shopkeeper {
                 villager.damage(1000000000);
                 e.remove();
             });
-
-            this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
-            villager.setAdult();
-            villager.customName(Component.text(name));
-            villager.setAI(false);
-            villager.setInvulnerable(true);
-            villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
-
+            Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
+                this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
+                villager.setAdult();
+                villager.customName(Component.text(name));
+                villager.setAI(false);
+                villager.setInvulnerable(true);
+                villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());}, 1000L);
         }, 1000L);
-        */
     }
 
     public void buyItem(Player player, ItemForSale item) {

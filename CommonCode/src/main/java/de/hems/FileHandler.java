@@ -103,7 +103,9 @@ public class FileHandler {
 
     private void build() throws IOException, InterruptedException {
         new File("./builds/").deleteOnExit();
-        ProcessBuilder pb = new ProcessBuilder("./mvnw", "clean", "install").directory(new File("./"));
+        String file = "./mvnw";
+        if (System.getProperty("os.name").equals("Windows 11")) file=file+".cmd";
+        ProcessBuilder pb = new ProcessBuilder(file, "clean", "install").directory(new File("./"));
         pb.redirectErrorStream(true);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         pb.start().waitFor();

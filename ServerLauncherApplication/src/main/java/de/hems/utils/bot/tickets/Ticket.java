@@ -10,7 +10,9 @@ public class Ticket {
     enum TicketType {
         BUG,
         REGELN,
-        SUGGESTION
+        SUGGESTION,
+        NACHFRAGE,
+        OTHER;
     }
     enum Status {
         OPEN,
