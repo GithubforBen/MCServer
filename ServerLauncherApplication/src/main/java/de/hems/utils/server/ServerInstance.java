@@ -46,10 +46,20 @@ public class ServerInstance {
         }
     }
 
+    private void exec(String command) throws IOException {
+        ProcessBuilder pb = new ProcessBuilder(command.split(" ")).directory(directory);
+        pb.redirectErrorStream(true);
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        pb.start();
+    }
+
     public void start() throws IOException {
         System.out.println("Starting server " + name);
-        ProcessBuilder pb = new ProcessBuilder("java", "-jar", "-Xmx" + allocatedMemoryMB + "m", FileType.SERVER.getFileName(jarFile)).directory(directory);
+        exec("tmux new-session -d -s server-" + name.toString());
+        ProcessBuilder pb = new ProcessBuilder("tmux", "send-keys", "-t","server-"+name.toString() ,  "java -jar -Xmx" + allocatedMemoryMB + "m " + FileType.SERVER.getFileName(jarFile), "C-m").directory(directory);
+        System.out.println(pb.command());
         pb.redirectErrorStream(true);
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         process = pb.start();
         new Thread(() -> {
             while (process.isAlive()) {

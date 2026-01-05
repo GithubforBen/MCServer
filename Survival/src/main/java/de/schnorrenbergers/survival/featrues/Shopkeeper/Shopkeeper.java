@@ -194,8 +194,11 @@ public class Shopkeeper {
             config.set(path + ".items.[" + i + "].price", itemForSale.getPrice());
         }
         config.set(path + ".items.size", getItems().size());
-        villager.setInvulnerable(false);
-        villager.damage(1000000000);
+        try {
+            villager.setInvulnerable(false);
+            villager.damage(1000000000);
+
+        } catch (Exception ignored) {}
     }
 
     public UUID getUuid() {
