@@ -59,29 +59,6 @@ public class ServerHandler {
                 throw new RuntimeException(e);
             }
         });
-        new Thread(() -> {
-            try {
-                Thread.sleep(Duration.ofSeconds(10L));
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            first.ifPresent(ServerInstance -> {
-                if (!ServerInstance.isAlive()) {
-                    instances.remove(ServerInstance);
-                }
-            });
-            try {
-                Thread.sleep(Duration.ofSeconds(10L));
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            first.ifPresent(ServerInstance -> {
-                if (ServerInstance.isAlive()) {
-                    ServerInstance.kill();
-                    instances.remove(ServerInstance);
-                }
-            });
-        }).start();
         return first.get();
     }
 
@@ -105,6 +82,8 @@ public class ServerHandler {
     }
 
     public void updateInstances() {
+        //TODO: fix
+        if(1==1) return;
         instances.removeIf(instance -> !instance.isAlive());
     }
 

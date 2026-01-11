@@ -57,6 +57,7 @@ public class Main {
             }
         }));
         configuration = new Configuration();
+        System.out.println(getIp());
         if (!configuration.getConfig().contains("paying-players"))
             configuration.getConfig().set("paying-players", List.of(UUIDFetcher.findUUIDByName("for_sale", true).toString()));
         listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.HOST);
@@ -100,9 +101,9 @@ public class Main {
         //serverHandler.startNewInstance(
         //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
         //serverHandler.startNewInstance(ListenerAdapter.ServerName.LOBBY, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
-        serverHandler.startNewInstance(ListenerAdapter.ServerName.SURVIVAL, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);//TODO: change bevore prod -> 26 
+        serverHandler.startNewInstance(ListenerAdapter.ServerName.SURVIVAL, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);//TODO: change bevore prod -> 26
+        //new WebServer();
         if (jda != null) Tickets.updateTicketChannel();
-        new WebServer();
     }
 
     public static void main(String[] args) throws Exception {
@@ -120,6 +121,7 @@ public class Main {
     }
 
     public void onShutdown() throws IOException {
+        System.out.println("Shutting down...");
         configuration.save(); //neccessary
         serverHandler.shutdownNetwork();
         configuration.save();

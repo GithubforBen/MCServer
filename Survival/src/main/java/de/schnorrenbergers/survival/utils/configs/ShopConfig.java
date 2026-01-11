@@ -1,5 +1,6 @@
 package de.schnorrenbergers.survival.utils.configs;
 
+import de.schnorrenbergers.survival.Survival;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -27,6 +28,7 @@ public class ShopConfig {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        Survival.getInstance().getLogger().info("ShopConfig saved!");
     }
 
     public YamlConfiguration getConfig() {

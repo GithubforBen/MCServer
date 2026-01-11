@@ -1,5 +1,6 @@
 package de.schnorrenbergers.survival.utils.configs;
 
+import de.schnorrenbergers.survival.Survival;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
@@ -28,6 +29,7 @@ public class TeamConfig {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        Survival.getInstance().getLogger().info("TeamConfig saved!");
     }
 
     public YamlConfiguration getConfig() {
