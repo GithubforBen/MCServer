@@ -121,6 +121,7 @@ public class Main {
     }
 
     public void onShutdown() throws IOException {
+        System.out.println("Shutting down...");
         configuration.save(); //neccessary
         serverHandler.shutdownNetwork();
         configuration.save();
