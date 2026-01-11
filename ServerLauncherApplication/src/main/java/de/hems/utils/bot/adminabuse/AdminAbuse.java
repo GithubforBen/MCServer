@@ -52,7 +52,7 @@ public class AdminAbuse {
     }
 
     public boolean isOverdue() {
-        return !hasBeenSent && time < (System.currentTimeMillis() - Duration.ofMinutes(30L).get(ChronoUnit.MILLIS));
+        return !hasBeenSent && time < (System.currentTimeMillis() - Duration.ofMinutes(1L).get(ChronoUnit.MILLIS));
     }
 
     public UUID getUuid() {

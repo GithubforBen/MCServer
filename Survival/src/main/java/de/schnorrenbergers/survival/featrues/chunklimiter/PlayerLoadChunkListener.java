@@ -48,7 +48,7 @@ public class PlayerLoadChunkListener implements Listener {
                     p.setSimulationDistance(12);
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                //throw new RuntimeException(e);
             }
         });
     }

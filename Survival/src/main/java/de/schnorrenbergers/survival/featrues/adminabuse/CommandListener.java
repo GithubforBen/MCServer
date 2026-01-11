@@ -23,11 +23,17 @@ public class CommandListener implements Listener {
             return;
         }
         for (String flag : flags()) {
-            if (event.getMessage().startsWith("/"+flag)) {
+            if (event.getMessage().startsWith("/" + flag)) {
                 ListenerAdapter.sendListeners(new RequestAdminAbuseEvent(ListenerAdapter.ServerName.HOST, event.getMessage(), event.getPlayer().getName()));
                 event.getPlayer().sendMessage("Authenticate this command with /legitamise");
             }
         }
+    }
+
+    @EventHandler
+    public void onCommand(org.bukkit.event.player.PlayerGameModeChangeEvent event) throws Exception {
+        ListenerAdapter.sendListeners(new RequestAdminAbuseEvent(ListenerAdapter.ServerName.HOST, "Game mode change to " + event.getNewGameMode().toString(), event.getPlayer().getName()));
+        event.getPlayer().sendMessage("Authenticate this command with /legitamise");
     }
 
     //returns a List with all Admin abuse commands
