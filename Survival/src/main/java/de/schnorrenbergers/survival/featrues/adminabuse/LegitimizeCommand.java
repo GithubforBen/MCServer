@@ -29,7 +29,7 @@ The Reason should be surrounded by '"'
 public class LegitimizeCommand implements TabCompleter, CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length > 2) {
+        if (args.length < 2) {
             sender.sendMessage(usage());
             return false;
         }

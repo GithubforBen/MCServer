@@ -28,9 +28,9 @@ public class AtmHandler {
     public static boolean payout(Player target, String name, int amount) {
         boolean removedMoney = false;
         if (target.getScoreboard().getTeam(name) != null) {
-            MoneyHandler.removeMoney(amount * 100, target.getScoreboard().getTeam(name));
+            removedMoney = MoneyHandler.removeMoney(amount * 100, target.getScoreboard().getTeam(name));
         } else {
-            removedMoney = MoneyHandler.removeMoney(amount * 100, UUID.fromString(name));
+            return false;
         }
         if(removedMoney) {
             ItemStack itemStack = new ItemApi(MoneyHandler.MONEY_ITEM, amount).build();
