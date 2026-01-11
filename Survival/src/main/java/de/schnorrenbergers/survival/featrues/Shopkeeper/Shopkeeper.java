@@ -84,12 +84,14 @@ public class Shopkeeper {
                 e.remove();
             });
             Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
-                this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
-                villager.setAdult();
-                villager.customName(Component.text(name));
-                villager.setAI(false);
-                villager.setInvulnerable(true);
-                villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());}, 1000L);
+                        this.villager = (Villager) shop.getWorld().spawnEntity(shop, org.bukkit.entity.EntityType.VILLAGER);
+                        villager.setAdult();
+                        villager.customName(Component.text(name));
+                        villager.setAI(false);
+                        villager.setInvulnerable(true);
+                        villager.getPersistentDataContainer().set(new NamespacedKey("shopkeeper", "shopid"), PersistentDataType.STRING, uuid.toString());
+                System.out.println("Spawned Villager " + getName());
+                }, 1000L);
         }, 1000L);
     }
 
