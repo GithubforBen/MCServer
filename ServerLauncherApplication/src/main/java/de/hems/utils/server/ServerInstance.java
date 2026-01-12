@@ -6,7 +6,11 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.types.FileType;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import javax.net.SocketFactory;
 import java.io.*;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -107,8 +111,16 @@ public class ServerInstance {
         return name;
     }
 
-    public boolean isAlive() {
-        return process.isAlive();
+    public boolean isAlive() throws IOException {
+        Socket socket = SocketFactory.getDefault().createSocket();
+        try {
+            socket.setSoTimeout(5000);
+            socket.connect(new InetSocketAddress("127.0.0.1", name.getPort()));
+            socket.close();
+        } catch (ConnectException e) {
+            return false;
+        }
+        return true;
     }
 
     public File getDirectory() {

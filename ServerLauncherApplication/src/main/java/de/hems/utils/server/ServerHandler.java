@@ -59,6 +59,7 @@ public class ServerHandler {
                 throw new RuntimeException(e);
             }
         });
+        updateInstances();
         return first.get();
     }
 
@@ -82,9 +83,13 @@ public class ServerHandler {
     }
 
     public void updateInstances() {
-        //TODO: fix
-        if(1==1) return;
-        instances.removeIf(instance -> !instance.isAlive());
+        instances.removeIf(instance -> {
+            try {
+                return !instance.isAlive();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public Server[] collectToServer() {
