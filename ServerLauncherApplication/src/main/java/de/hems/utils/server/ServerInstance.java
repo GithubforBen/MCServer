@@ -117,7 +117,7 @@ public class ServerInstance {
             socket.setSoTimeout(5000);
             socket.connect(new InetSocketAddress("127.0.0.1", name.getPort()));
             socket.close();
-        } catch (ConnectException e) {
+        } catch (Exception e) {
             return false;
         }
         return true;
