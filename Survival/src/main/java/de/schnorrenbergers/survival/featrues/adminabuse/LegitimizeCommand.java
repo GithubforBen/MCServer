@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,7 +45,7 @@ public class LegitimizeCommand implements TabCompleter, CommandExecutor {
                 ListenerAdapter.sendListeners(requestToLegitimizeEvent);
                 RespondToLegitimizeEvent respondToLegitimizeEvent = (RespondToLegitimizeEvent) ListenerAdapter.waitForEvent(requestToLegitimizeEvent.getEventId());
                 List<Runnable> runnables = new ArrayList<>();
-                respondToLegitimizeEvent.getToLegitimize().forEach((x, y) -> {
+                Collections.synchronizedMap(respondToLegitimizeEvent.getToLegitimize()).forEach((x, y) -> {
                         runnables.add(() -> {
                             try {
                                 ListenerAdapter.sendListeners(new LegitamiseAdminAbuseEvent(ListenerAdapter.ServerName.HOST, x, split[1]));
