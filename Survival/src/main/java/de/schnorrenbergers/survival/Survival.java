@@ -2,6 +2,8 @@ package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.commands.ServerManagerCommand;
+import de.schnorrenbergers.survival.antiEnd.AntiEndCommand;
+import de.schnorrenbergers.survival.antiEnd.AntiEndListener;
 import de.schnorrenbergers.survival.commands.*;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
@@ -55,6 +57,7 @@ public final class Survival extends JavaPlugin {
         registerCommand("shopkeeper", new ShopkeeperCommand());
         registerCommand("banane", new BanCommand());
         registerCommand("legitimize", new LegitimizeCommand());
+        registerCommand("end-allow", new AntiEndCommand());
         new Tablist();
         new CustomInventoryListener(this);
         new ShopkeeperManager();
@@ -64,6 +67,7 @@ public final class Survival extends JavaPlugin {
         new JoinListener();
         new FlightListener();
         new CommandListener();
+        new AntiEndListener();
     }
 
     private void registerCommand(String commandName, Object command) {
