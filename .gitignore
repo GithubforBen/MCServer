@@ -43,3 +43,5 @@ build/
 /servers/*
 /downloads/*
 main-config.yml
+## Maven shade plugin
+dependency-reduced-pom.xml

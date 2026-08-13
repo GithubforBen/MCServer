@@ -20,19 +20,30 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class CustomInventory {
-    private Inventory inventory;
+    private final Inventory inventory;
     private static final ItemStack placeholder = new ItemApi(Material.BLACK_STAINED_GLASS_PANE, " ").build();
-    private static HashMap<UUID, ItemAction> actions = new HashMap<>();
-    private static HashMap<Inventory, Consumer<InventoryCloseEvent>> closeActions = new HashMap<>();
+    private static final HashMap<UUID, ItemAction> actions = new HashMap<>();
+    private static final Map<Inventory, Consumer<InventoryCloseEvent>> closeActions = Collections.synchronizedMap(new WeakHashMap<>());
+    /**
+     * The actions of every inventory, kept per inventory instead of globally so that two inventories built
+     * from the same code - for two players, or for two different servers - do not overwrite each others
+     * behaviour. Weak, so the actions disappear together with the inventory they belong to.
+     */
+    private static final Map<Inventory, Map<UUID, ItemAction>> inventoryActions = Collections.synchronizedMap(new WeakHashMap<>());
+    private final Map<UUID, ItemAction> localActions;
 
     public CustomInventory(int size, String title, Consumer<InventoryCloseEvent> onClose) {
         inventory = Bukkit.createInventory(null, size, title);
+        localActions = new HashMap<>();
         closeActions.put(inventory, onClose);
+        inventoryActions.put(inventory, localActions);
     }
 
     public CustomInventory(InventoryType type, String title, Consumer<InventoryCloseEvent> onClose) {
         inventory = Bukkit.createInventory(null, type, title);
+        localActions = new HashMap<>();
         closeActions.put(inventory, onClose);
+        inventoryActions.put(inventory, localActions);
     }
 
     /**
@@ -47,7 +58,7 @@ public class CustomInventory {
         ItemMeta itemMeta = stack.getItemMeta();
         itemMeta.getPersistentDataContainer().set(new NamespacedKey("survival", "id"), PersistentDataType.STRING, action.getID().toString());
         stack.setItemMeta(itemMeta);
-        actions.put(action.getID(), action);
+        localActions.put(action.getID(), action);
         inventory.setItem(position, stack);
     }
 
@@ -99,15 +110,36 @@ public class CustomInventory {
     }
 
 
+    /**
+     * @return the globally registered actions
+     * @deprecated actions live on the inventory they were put into, use {@link #findAction(Inventory, UUID)}
+     */
+    @Deprecated
     public static HashMap<UUID, ItemAction> getActions() {
         return actions;
+    }
+
+    /**
+     * Resolves the action of a clicked item.
+     *
+     * @param inventory the inventory the item was clicked in
+     * @param id the id stored on the item
+     * @return the action to run, or {@code null} if the item does not belong to a custom inventory
+     */
+    public static ItemAction findAction(Inventory inventory, UUID id) {
+        Map<UUID, ItemAction> local = inventoryActions.get(inventory);
+        if (local != null) {
+            ItemAction action = local.get(id);
+            if (action != null) return action;
+        }
+        return actions.get(id);
     }
 
     public Inventory getInventory() {
         return inventory;
     }
 
-    public static HashMap<Inventory, Consumer<InventoryCloseEvent>> getCloseActions() {
+    public static Map<Inventory, Consumer<InventoryCloseEvent>> getCloseActions() {
         return closeActions;
     }
 

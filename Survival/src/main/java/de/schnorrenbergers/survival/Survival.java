@@ -55,12 +55,14 @@ public final class Survival extends JavaPlugin {
         registerCommand("cteam", new TeamCommand());
         getCommand("rs").setExecutor(new RestartCommand());
         registerCommand("servermanger", new ServerManagerCommand());
+        registerCommand("warp", new de.hems.paper.commands.WarpCommand());
         registerCommand("shopkeeper", new ShopkeeperCommand());
         registerCommand("banane", new BanCommand());
         registerCommand("legitimize", new LegitimizeCommand());
         registerCommand("end-allow", new AntiEndCommand());
         new Tablist();
         new CustomInventoryListener(this);
+        de.hems.paper.warp.ServerConnector.register(this);
         new ShopkeeperManager();
         new ShopkeeperListener();
         new ATMListener();

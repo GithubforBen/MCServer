@@ -8,13 +8,12 @@ import de.hems.api.UUIDFetcher;
 import de.hems.communication.ListenerAdapter;
 import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
-import de.hems.types.SecureTokenGenerator;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,11 +37,14 @@ public class PaperConfigurator extends ServerConfigurator {
     }
 
     public void configure() throws Exception {
-        File jar = new File(this.directory + "/" + FileType.SERVER.getFileName(FileType.SERVER.PAPER));
+        String jarName = FileType.SERVER.getFileName(FileType.SERVER.PAPER);
+        File jar = new File(this.directory + "/" + jarName);
         File jarFile = new FileHandler().provideFile(FileType.SERVER.PAPER);
         Files.copy(jarFile.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        File file = new File(this.directory + "/plugins/");
-        if (file.exists()) file.delete();
+        removeStaleServerJars(jarName);
+
+        new File(this.directory + "/plugins/").mkdirs();
+        removeStalePlugins(Arrays.asList(plugins));
         for (FileType.PLUGIN plugin : plugins) {
             File pluginF = new File(this.directory + "/plugins/" + FileType.PLUGIN.getFileName(plugin));
             pluginF.getParentFile().mkdirs();
@@ -50,15 +52,17 @@ public class PaperConfigurator extends ServerConfigurator {
             Files.copy(pluginFile.toPath(), pluginF.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
         overwriteToFile("eula.txt", "eula=true", true);
-        writeToFile("server.properties", "server-ip=" + "localhost", false);
-        writeToFile("server.properties", "server-port=" + port, false);
+        // written every time so that a server keeps working after it was given another port
+        setProperty("server.properties", "server-ip", "localhost");
+        setProperty("server.properties", "server-port", port);
+        setProperty("server.properties", "motd", name.toString());
         if (isProxyed) {
-            writeToFile("server.properties", "online-mode=false", false);
-            writeToYmlConfiguration("config/paper-global.yml", "proxies.velocity.enabled", true, false);
-            writeToYmlConfiguration("config/paper-global.yml", "proxies.velocity.online-mode", true, false);
+            setProperty("server.properties", "online-mode", false);
+            writeToYmlConfiguration("config/paper-global.yml", "proxies.velocity.enabled", true, true);
+            writeToYmlConfiguration("config/paper-global.yml", "proxies.velocity.online-mode", true, true);
 
             if (Main.getInstance().getConfiguration().getConfig().contains("serversecret")) {
-                writeToYmlConfiguration("config/paper-global.yml","proxies.velocity.secret",  Main.getInstance().getConfiguration().getConfig().getString("serversecret"), false);
+                writeToYmlConfiguration("config/paper-global.yml","proxies.velocity.secret",  Main.getInstance().getConfiguration().getConfig().getString("serversecret"), true);
             } else {
                 throw new MissingConfigurationException("serversecret is missing in config.yml. You need to start the velocity server first!");
             }
@@ -72,16 +76,16 @@ public class PaperConfigurator extends ServerConfigurator {
             jsonObject.addProperty("bypassesPlayerLimit", true);
             jsonArray.add(jsonObject);
         }
-        System.out.println(ops.size() + ":" + jsonArray.toString());
+        System.out.println(ops.size() + ":" + jsonArray);
         overwriteToFile("ops.json", jsonArray.toString(), true);
         jsonArray = new JsonArray();
-        for (String whitelist : whitelist) {
+        for (String whitelisted : whitelist) {
             JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("uuid", UUIDFetcher.findUUIDByName(whitelist, true).toString());
-            jsonObject.addProperty("name", whitelist);
+            jsonObject.addProperty("uuid", UUIDFetcher.findUUIDByName(whitelisted, true).toString());
+            jsonObject.addProperty("name", whitelisted);
             jsonArray.add(jsonObject);
         }
         overwriteToFile("whitelist.json", jsonArray.toString(), false);
-        System.out.println("Configured server " + name.toString());
+        System.out.println("Configured server " + name + " on port " + port);
     }
 }
