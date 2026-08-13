@@ -1,5 +1,6 @@
 package de.hems.paper.customInventory;
 
+import de.hems.paper.PaperContext;
 import de.hems.paper.customInventory.types.ItemAction;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -17,6 +18,7 @@ public class CustomInventoryListener implements org.bukkit.event.Listener {
     private static boolean registered = false;
 
     public CustomInventoryListener(Plugin plugin) {
+        PaperContext.setPlugin(plugin);
         if (registered) {
             return;
         }
@@ -43,22 +45,33 @@ public class CustomInventoryListener implements org.bukkit.event.Listener {
             return;
         }
         String id = event.getCurrentItem().getItemMeta().getPersistentDataContainer().get(new NamespacedKey("survival", "id"), PersistentDataType.STRING);
+        if (id == null) {
+            return;
+        }
+        ItemAction itemAction;
         try {
-            UUID uuid = UUID.fromString(id);
-            ItemAction itemAction = CustomInventory.getActions().get(uuid);
+            itemAction = CustomInventory.findAction(event.getInventory(), UUID.fromString(id));
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        if (itemAction == null) {
+            return;
+        }
+        if (!itemAction.isMovable()) {
+            event.setCancelled(true);
+        }
+        try {
             if (itemAction.fireEvent()) {
                 itemAction.onClick(event);
             }
-            if (!itemAction.isMovable()) {
-                event.setCancelled(true);
-            }
-            if (itemAction.loadInventoryOnClick() != null) {
+            CustomInventory next = itemAction.loadInventoryOnClick();
+            if (next != null) {
                 event.getWhoClicked().closeInventory();
-                event.getWhoClicked().openInventory(itemAction.loadInventoryOnClick().getInventory());
+                event.getWhoClicked().openInventory(next.getInventory());
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
     }
 
     @EventHandler

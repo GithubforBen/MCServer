@@ -1,6 +1,10 @@
 name: LobbyPlugin
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.lobby.LobbyPlugin
-api-version: '1.21'
+api-version: '26.2'
 commands:
   servermanger:
+    description: Server verwalten und neue Server erstellen
+  warp:
+    description: Auf einen anderen Server springen
+    usage: /warp [server]

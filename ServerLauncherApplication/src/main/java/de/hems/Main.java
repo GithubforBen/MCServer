@@ -5,6 +5,7 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.events.*;
 import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
+import de.hems.types.ServerTemplate;
 import de.hems.utils.Configuration;
 import de.hems.utils.bot.adminabuse.*;
 import de.hems.utils.bot.payingplayer.PayingPlayerCommand;
@@ -98,12 +99,39 @@ public class Main {
             configuration.save();
             throw new MissingConfigurationException("discord-token is missing in config.yml.");
         }
-        //serverHandler.startNewInstance(
-        //        ListenerAdapter.ServerName.LOBBY.toString(), 4000, FileType.SERVER.PAPER, 25555, false, new FileType.PLUGIN[]{FileType.PLUGIN.WORLDEDIT});
-        //serverHandler.startNewInstance(ListenerAdapter.ServerName.LOBBY, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);
-        serverHandler.startNewInstance(ListenerAdapter.ServerName.SURVIVAL, 2 * 1024, FileType.SERVER.PAPER, new FileType.PLUGIN[0]);//TODO: change bevore prod -> 26
+        startConfiguredServers();
         //new WebServer();
         if (jda != null) Tickets.updateTicketChannel();
+    }
+
+    /**
+     * Starts the servers that should come up with the network. Which ones those are is configurable, so a
+     * network can boot with any number of servers - everything else is started later through the in-game
+     * manager or {@link de.hems.api.ServerApi}.
+     */
+    private void startConfiguredServers() throws Exception {
+        YamlConfiguration config = configuration.getConfig();
+        if (!config.contains("whitelist")) {
+            config.set("whitelist", List.of("for_Sale", "SA_MI"));
+            config.setComments("whitelist", List.of("Players that are put onto the whitelist of every server."));
+        }
+        if (!config.contains("autostart")) {
+            config.set("autostart", List.of(
+                    ListenerAdapter.ServerName.LOBBY.toString(),
+                    ListenerAdapter.ServerName.SURVIVAL.toString()));
+            config.setComments("autostart", List.of("Servers that are started together with the network."));
+        }
+        configuration.save();
+        for (String name : config.getStringList("autostart")) {
+            ListenerAdapter.ServerName serverName = ListenerAdapter.ServerName.valueOf(name);
+            ServerTemplate template = ServerTemplate.forServerName(serverName.toString());
+            int memory = config.getInt("servers." + serverName + ".memory", template.getDefaultMemoryMB());
+            try {
+                serverHandler.startNewInstance(serverName, template, memory, new FileType.PLUGIN[0]);
+            } catch (Exception e) {
+                System.out.println("Could not start " + serverName + ": " + e.getMessage());
+            }
+        }
     }
 
     public static void main(String[] args) throws Exception {

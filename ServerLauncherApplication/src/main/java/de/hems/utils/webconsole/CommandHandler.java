@@ -37,7 +37,13 @@ public class CommandHandler extends CustomHandler implements HttpHandler {
             respond(exchange, "wrong secret");
             return;
         }
-        Main.getInstance().getServerHandler().getInstance(ListenerAdapter.ServerName.valueOf(json.getString("server"))).executeCommand(json.getString("command"));
+        var instance = Main.getInstance().getServerHandler()
+                .getInstance(ListenerAdapter.ServerName.valueOf(json.getString("server")));
+        if (instance == null) {
+            respondDataNotFound(exchange, "the server '" + json.getString("server") + "' is not running");
+            return;
+        }
+        instance.executeCommand(json.getString("command"));
         respond(exchange, "successfully executed command");
     }
 }

@@ -11,8 +11,15 @@
 
   <name>velocityplugin</name>
 
+  <parent>
+    <groupId>com.github.GithubforBen</groupId>
+    <artifactId>MCServer</artifactId>
+    <version>1.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
   <properties>
-    <java.version>17</java.version>
+    <java.version>25</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -96,6 +103,51 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
+          <compilerArgs>
+            <!-- velocity generates velocity-plugin.json from @Plugin, and since java 23 annotation
+                 processors are only run when they are asked for explicitly -->
+            <arg>-proc:full</arg>
+          </compilerArgs>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.velocitypowered</groupId>
+              <artifactId>velocity-api</artifactId>
+              <version>3.5.1</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <!-- the plugin talks to the launcher, so the network code has to be inside the jar -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.3</version>
+        <configuration>
+          <!-- velocity already ships these, bundling them again only causes conflicts -->
+          <artifactSet>
+            <excludes>
+              <exclude>com.google.guava:*</exclude>
+              <exclude>com.google.code.gson:*</exclude>
+              <exclude>org.slf4j:*</exclude>
+              <exclude>org.apache.maven.resolver:*</exclude>
+            </excludes>
+          </artifactSet>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.3.1</version>
+        <configuration>
+          <outputDirectory>../builds/VELOCITY</outputDirectory>
         </configuration>
       </plugin>
       <plugin>
@@ -165,8 +217,14 @@
     <dependency>
       <groupId>com.velocitypowered</groupId>
       <artifactId>velocity-api</artifactId>
-      <version>3.4.0-SNAPSHOT</version>
+      <version>3.5.1</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.GithubforBen</groupId>
+      <artifactId>CommonCode</artifactId>
+      <version>1.0</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>

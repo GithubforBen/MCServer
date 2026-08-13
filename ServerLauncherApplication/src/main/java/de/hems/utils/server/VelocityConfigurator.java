@@ -30,9 +30,13 @@ public class VelocityConfigurator extends ServerConfigurator {
     }
 
     public void configure() throws Exception {
-        File jar = new File(this.directory + "/" + FileType.SERVER.getFileName(FileType.SERVER.VELOCITY));
+        String jarName = FileType.SERVER.getFileName(FileType.SERVER.VELOCITY);
+        File jar = new File(this.directory + "/" + jarName);
         File jarFile = new FileHandler().provideFile(FileType.SERVER.VELOCITY);
         Files.copy(jarFile.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        removeStaleServerJars(jarName);
+        new File(this.directory + "/plugins/").mkdirs();
+        removeStalePlugins(Arrays.asList(plugins));
         for (FileType.PLUGIN plugin : plugins) {
             File pluginF = new File(this.directory + "/plugins/" + FileType.PLUGIN.getFileName(plugin));
             pluginF.getParentFile().mkdirs();
@@ -44,7 +48,7 @@ public class VelocityConfigurator extends ServerConfigurator {
         if (toml.exists()) {toml.delete();}
         writeToFile("velocity.toml", "bind = \"" + Main.getInstance().getIp() + ":" + port + "\"", false);
         writeToFile("velocity.toml", "player-info-forwarding-mode = \"modern\"", false);
-        writeToFile("velocity.toml", "config-version = \"2.7\"", false);
+        writeToFile("velocity.toml", "config-version = \"2.8\"", false);
         if (Main.getInstance().getConfiguration().getConfig().contains("serversecret")) {
             overwriteToFile("forwarding.secret", Main.getInstance().getConfiguration().getConfig().getString("serversecret"), false);
             writeToFile("velocity.toml", "forwarding-secret-file = \"forwarding.secret\"", false);
@@ -102,10 +106,11 @@ public class VelocityConfigurator extends ServerConfigurator {
                 "\n" +
                 "# If not enabled (default is true) player IP addresses will be replaced by <ip address withheld> in logs\n" +
                 "enable-player-address-logging = true",false);
+        // every server that is known when the proxy boots. Servers that are created later are registered at
+        // runtime by the velocity plugin, so warping works without touching this file again.
         writeToFile("velocity.toml", "[servers]",false);
-        for (ListenerAdapter.ServerName value : ListenerAdapter.ServerName.values()) {
-            if (value.getPort() == -1) continue;
-            writeToFile("velocity.toml", value.toString() + " = \"" + "localhost" + ":" + value.getPort() + "\"".replaceAll("\t",""),false);
+        for (ListenerAdapter.ServerName value : ListenerAdapter.ServerName.servers()) {
+            writeToFile("velocity.toml", value + " = \"localhost:" + value.getPort() + "\"", false);
         }
         writeToFile("velocity.toml", "try = [\n" +
                 "    \""+ ListenerAdapter.ServerName.LOBBY +"\",\n" +

@@ -1,7 +1,7 @@
 name: Survival
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.survival.Survival
-api-version: '1.21'
+api-version: '26.2'
 commands:
   debug:
   admin:
@@ -12,3 +12,6 @@ commands:
   legitimize:
   banane:
   end-allow:
+  warp:
+    description: Auf einen anderen Server springen
+    usage: /warp [server]
