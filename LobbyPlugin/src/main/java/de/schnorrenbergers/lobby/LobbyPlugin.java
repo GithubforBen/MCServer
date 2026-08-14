@@ -1,6 +1,9 @@
 package de.schnorrenbergers.lobby;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.communication.ServerIdentity;
+import de.hems.event.EventCalendar;
+import de.hems.paper.commands.EventCalendarCommand;
 import de.hems.paper.commands.ServerManagerCommand;
 import de.hems.paper.commands.WarpCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
@@ -23,15 +26,17 @@ public final class LobbyPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
-            new ListenerAdapter(ListenerAdapter.ServerName.LOBBY);
+            new ListenerAdapter(ServerIdentity.resolve(ListenerAdapter.ServerName.LOBBY));
             new CustomInventoryListener(this);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }//TODO: parkour
         ServerConnector.register(this);
+        EventCalendar.init();
         new CheckpointListener();
         registerCommand("servermanger", new ServerManagerCommand());
         registerCommand("warp", new WarpCommand());
+        registerCommand("kalender", new EventCalendarCommand());
     }
 
 

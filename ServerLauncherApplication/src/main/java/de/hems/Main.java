@@ -41,6 +41,7 @@ public class Main {
     private Configuration configuration;
     private ListenerAdapter listenerAdapter;
     private ServerHandler serverHandler;
+    private EventCalendarHandler eventCalendarHandler;
     private JDA jda;
     //TODO: add a way to auto add ops
 
@@ -72,6 +73,7 @@ public class Main {
         new LegitimiseAdminAbuse();
         new RequestServerDataEvent();
         new RequestToLegitimise();
+        eventCalendarHandler = new EventCalendarHandler();
         if (configuration.getConfig().contains("discord-token")) {
             jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
@@ -166,6 +168,10 @@ public class Main {
 
     public ServerHandler getServerHandler() {
         return serverHandler;
+    }
+
+    public EventCalendarHandler getEventCalendarHandler() {
+        return eventCalendarHandler;
     }
 
     public String getIp() throws IOException {

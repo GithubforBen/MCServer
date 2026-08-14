@@ -83,13 +83,108 @@ Main-Thread - dafür gibt es `listServersAsync()` bzw. `PaperContext.async(...)`
 Vorlagen (`de.hems.types.ServerTemplate`) legen Software, Standard-RAM und die Pflichtplugins fest;
 `ServerTemplate.resolvePlugins(...)` mischt sie mit der freien Auswahl.
 
+## Event Kalender
+
+`/kalender` (auch `/calendar`, `/events`) öffnet auf **jedem** Server denselben Kalender. Er zeigt die
+nächsten **27 Tage** als Raster: jeder Tag ist ein Item mit den Events des Tages, heute ist gold markiert.
+Der Host besitzt den Kalender (`events.yml`), jede Änderung wird an alle Server gemeldet - dadurch sind alle
+Server sofort synchron, ohne dass jemand etwas neu laden muss.
+
+| Wer | Was |
+|-----|-----|
+| Alle | Tag anklicken → Events des Tages → Event anklicken → Teams, Rangliste, zum Event Server warpen |
+| Alle | Team anklicken → beitreten oder verlassen |
+| Admins | "Neues Event" → Art wählen → Name, Teams, Wertung, RAM, Plugins → "Tage" → Tage anklicken → speichern |
+| Admins | Event bearbeiten, absagen oder den Event Server sofort starten |
+
+Das Planen läuft genau so wie gewünscht über Klicks: im Planungsmodus schaltet ein Klick auf einen Tag das
+Event für diesen Tag an oder aus, beliebig viele Tage sind möglich. Ist "Server automatisch starten" an,
+startet der Host den Event Server am Event Tag von selbst - mit dem Plugin des Events drauf.
+
+Ohne Menü geht es auch:
+
+```
+/kalender heute
+/kalender liste
+/kalender create BEDWARS "Sommer Cup" 2026-09-05,2026-09-06
+```
+
+## Event System
+
+Ein Event besteht aus zwei Teilen: der **Definition** (`EventDefinition`, das Verhalten) und dem
+**geplanten Event** (`ScheduledEvent`, die Daten). Nur die Daten wandern durchs Netzwerk, das Verhalten
+löst jeder Server selbst auf - deshalb zeigt auch ein Server das Event an, auf dem dessen Plugin gar nicht
+installiert ist.
+
+Jedes Event hat Teams, und wie diese Teams verglichen werden, entscheidet eine `RankingStrategy`:
+
+| Wertung | Bedeutung |
+|---------|-----------|
+| `HIGHEST_SCORE` | Meiste Punkte gewinnen |
+| `LOWEST_SCORE` | Wenigste Punkte gewinnen |
+| `FASTEST_TIME` | Kürzeste Zeit gewinnt |
+| `NONE` | Teams ohne Rangliste |
+
+Gleichstände teilen sich einen Platz. Mitgeliefert sind die Event Arten `BEDWARS`, `TURNIER`, `SPEEDRUN`
+und `COMMUNITY`.
+
+### Eine neue Event Art
+
+Eine neue Art Event ist eine Klasse plus eine Zeile - Kalender, UI und API kennen sie danach automatisch:
+
+```java
+public class SchatzsucheDefinition extends EventDefinition {
+    public String getId()            { return "SCHATZSUCHE"; }
+    public String getDisplayName()   { return "Schatzsuche"; }
+    public String getDescription()   { return "Wer findet den Schatz zuerst"; }
+    public FileType.PLUGIN getPlugin() { return FileType.PLUGIN.SCHATZSUCHE; } // das eigene Plugin
+    public String getIconMaterial()  { return "CHEST"; }
+    public int getMaxTeamSize()      { return 2; }
+    public RankingStrategy getDefaultRanking() { return RankingStrategies.FASTEST_TIME; }
+}
+
+// im onEnable des Plugins
+EventRegistry.register(new SchatzsucheDefinition());
+```
+
+Eine eigene Wertung geht genauso über `RankingStrategies.register(...)`. Überschreibbar sind unter anderem
+`createTeams(...)`, `getServerTemplate()`, `getAdditionalPlugins()`, `getMaxTeamSize()`,
+`allowsPlayerSignup()` sowie die Haken `onEventStart(...)` und `onEventEnd(...)`.
+
+### API
+
+```java
+// Event planen
+ScheduledEvent event = EventApi.create("BEDWARS", "Sommer Cup");
+event.setDays(List.of(LocalDate.now().plusDays(3)));
+event.setTeamCount(4);
+EventApi.schedule(event);
+
+// oder in einem Aufruf
+EventApi.createAndSchedule("TURNIER", "Herbst Cup", LocalDate.now().plusDays(7));
+
+// aus dem Event Plugin heraus werten
+EventApi.addScore(event.getId(), team.getId(), 5);
+EventApi.setScore(event.getId(), team.getId(), 62);   // z.B. Zeit in Sekunden
+Ranking ranking = EventApi.getRanking(event.getId());
+
+// lesen und starten
+EventApi.getEventsToday();
+EventApi.getEventsOn(LocalDate.now().plusDays(1));
+EventApi.startServer(event);   // Event Server mit dem Event Plugin hochfahren
+EventApi.cancel(event.getId());
+```
+
+`EventApi.refresh()` holt den Kalender frisch vom Host und blockiert dabei - im Main-Thread stattdessen
+`refreshAsync()` oder `PaperContext.async(...)` nutzen.
+
 ## Module
 
 | Modul | Inhalt |
 |-------|--------|
-| `ServerLauncherApplication` | Startet und konfiguriert die Server, Discord Bot, Web Konsole |
-| `CommonCode` | Netzwerk-Events, `ServerApi`, Server Manager UI, Warp System |
+| `ServerLauncherApplication` | Startet und konfiguriert die Server, Event Kalender, Discord Bot, Web Konsole |
+| `CommonCode` | Netzwerk-Events, `ServerApi`, `EventApi`, Server Manager UI, Kalender UI, Warp System |
 | `LobbyPlugin` | Lobby, Parkour, Server Manager |
 | `Survival` | Survival Spielmodus |
-| `Bedwars` | Bedwars Minispiel |
+| `Bedwars` | Bedwars Minispiel und Event Art `BEDWARS` |
 | `VelocityPlugin` | Meldet neue Server am laufenden Proxy an |

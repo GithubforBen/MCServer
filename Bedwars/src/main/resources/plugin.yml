@@ -5,3 +5,9 @@ api-version: '26.2'
 commands:
   gameSettings:
     permission: gameManager
+  kalender:
+    description: Den Event Kalender öffnen
+    aliases: [calendar, events]
+  warp:
+    description: Auf einen anderen Server springen
+    usage: /warp [server]

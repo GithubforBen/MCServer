@@ -3,6 +3,7 @@ package de.hems.utils.server;
 import de.hems.Main;
 import de.hems.api.UUIDFetcher;
 import de.hems.communication.ListenerAdapter;
+import de.hems.communication.ServerIdentity;
 import de.hems.types.FileType;
 import de.hems.types.Server;
 import de.hems.types.ServerTemplate;
@@ -77,7 +78,10 @@ public class ServerInstance {
         System.out.println("Starting server " + name + (name.isJoinable() ? " on port " + name.getPort() : ""));
         startedAt = System.currentTimeMillis();
         exec("tmux new-session -d -s server-" + name.toString());
-        ProcessBuilder pb = new ProcessBuilder("tmux", "send-keys", "-t","server-"+name.toString() ,  "java -jar -Xmx" + allocatedMemoryMB + "m " + FileType.SERVER.getFileName(jarFile), "C-m").directory(directory);
+        // the name is handed to the server so its plugins know which server they are on
+        ProcessBuilder pb = new ProcessBuilder("tmux", "send-keys", "-t", "server-" + name,
+                "java -jar -Xmx" + allocatedMemoryMB + "m -D" + ServerIdentity.PROPERTY + "=" + name + " "
+                        + FileType.SERVER.getFileName(jarFile), "C-m").directory(directory);
         System.out.println(pb.command());
         pb.redirectErrorStream(true);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);

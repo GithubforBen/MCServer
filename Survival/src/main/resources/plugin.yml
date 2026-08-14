@@ -15,3 +15,6 @@ commands:
   warp:
     description: Auf einen anderen Server springen
     usage: /warp [server]
+  kalender:
+    description: Den Event Kalender öffnen
+    aliases: [calendar, events]

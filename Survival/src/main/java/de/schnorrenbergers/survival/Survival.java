@@ -45,7 +45,8 @@ public final class Survival extends JavaPlugin {
         teamConfig = new TeamConfig();
         shopConfig = new ShopConfig();
         try {
-            listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.SURVIVAL);
+            listenerAdapter = new ListenerAdapter(
+                    de.hems.communication.ServerIdentity.resolve(ListenerAdapter.ServerName.SURVIVAL));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -56,6 +57,7 @@ public final class Survival extends JavaPlugin {
         getCommand("rs").setExecutor(new RestartCommand());
         registerCommand("servermanger", new ServerManagerCommand());
         registerCommand("warp", new de.hems.paper.commands.WarpCommand());
+        registerCommand("kalender", new de.hems.paper.commands.EventCalendarCommand());
         registerCommand("shopkeeper", new ShopkeeperCommand());
         registerCommand("banane", new BanCommand());
         registerCommand("legitimize", new LegitimizeCommand());
@@ -63,6 +65,7 @@ public final class Survival extends JavaPlugin {
         new Tablist();
         new CustomInventoryListener(this);
         de.hems.paper.warp.ServerConnector.register(this);
+        de.hems.event.EventCalendar.init();
         new ShopkeeperManager();
         new ShopkeeperListener();
         new ATMListener();
