@@ -83,11 +83,131 @@ Main-Thread - dafür gibt es `listServersAsync()` bzw. `PaperContext.async(...)`
 Vorlagen (`de.hems.types.ServerTemplate`) legen Software, Standard-RAM und die Pflichtplugins fest;
 `ServerTemplate.resolvePlugins(...)` mischt sie mit der freien Auswahl.
 
+## Admin Website
+
+Der Launcher bringt eine Weboberfläche mit, standardmäßig auf `http://<host>:8080/`. Beim ersten Start
+legt er einen Account an und schreibt Benutzername, Passwort und den Google-Authenticator-Schlüssel
+(inklusive `otpauth://` Link zum Scannen) einmalig in die Konsole.
+
+### Login
+
+Der Login braucht **Passwort und Google Authenticator Code zusammen**. Die Reihenfolge ist festgelegt:
+
+1. Ohne Code wird der Request abgelehnt - das Passwort wird gar nicht erst angefasst.
+2. Der Code wird geprüft. Stimmt er nicht, endet der Login hier, wieder ohne Passwortprüfung.
+3. Erst danach wird das Passwort geprüft.
+
+Jeder Versuch wird zusätzlich frühestens nach der **Grace Period von 3 Sekunden** beantwortet, und die
+Grace Period beginnt mit dieser Antwort von vorne. Zwischen zwei Versuchen liegen also immer mindestens
+3 Sekunden, egal ob sie nacheinander oder gleichzeitig kommen. Alle Fehlerfälle brauchen exakt gleich
+lange, damit sich aus der Antwortzeit nichts ablesen lässt. Ein einmal benutzter Code gilt nicht noch
+einmal.
+
+Passwörter liegen als PBKDF2-Hash in der `main-config.yml`, nie im Klartext. Die Session hängt an einem
+`HttpOnly`-Cookie, ändernde Requests brauchen zusätzlich den CSRF-Token aus der Session.
+
+### Panels
+
+| Panel | Was es kann |
+|-------|-------------|
+| Server | Zeigt welche Server an sind, und schaltet sie an, aus oder neu |
+| Paying Player | Trägt zahlende Spieler per Minecraft-Name oder UUID ein und aus |
+| Konsole | Schickt einen Befehl an einen laufenden Server |
+
+### Erweitern
+
+Ein neues Panel ist eine Klasse, die `WebModule` implementiert, plus eine Zeile in
+`WebServer.loadModules()`:
+
+```java
+public class MeinModul implements WebModule {
+    public String getId()    { return "mein-modul"; }
+    public String getTitle() { return "Mein Modul"; }
+
+    public void register(WebServer server) {
+        server.route("/api/mein-modul", new MeinHandler(server));
+    }
+}
+```
+
+Die Navigation der Seite wird aus der Modulliste gebaut, die der Server ausliefert - das Modul taucht
+also von selbst im Browser auf. Ohne eigene Ansicht bekommt es eine generische Darstellung seiner
+API-Antwort; eine eigene Ansicht registriert man in `app.js` mit
+`McAdmin.registerPanel("mein-modul", fn)`.
+
+### Einstellungen (`main-config.yml`)
+
+```yaml
+web:
+  enabled: true
+  port: 8080
+  bind: 0.0.0.0
+  grace-period-seconds: 3
+  session-timeout-minutes: 60
+  secure-cookie: false      # auf true, sobald die Seite hinter HTTPS läuft
+  totp:
+    issuer: MCServer
+    digits: 6
+    period-seconds: 30
+    window: 1               # wie viele 30s-Schritte Uhrenabweichung erlaubt sind
+```
+
+Der alte `/command` Endpoint gibt es weiterhin, er akzeptiert aber nicht mehr das fest eingebaute Secret
+`67`, sondern das aus `web.command-secret`, das beim ersten Start erzeugt wird.
+
+## Chunk Limiter
+
+Damit ein ruckelnder Server spielbar bleibt, senkt der Survival-Server bei Lag die Sichtweite - aber nur
+bei Spielern, die **nicht** für den Server zahlen. Wer zahlt, behält seine volle Sichtweite.
+
+Gemessen wird nicht der Ein-Minuten-Durchschnitt von Bukkit, sondern wie lange die Ticks seit der letzten
+Prüfung wirklich gebraucht haben; das reagiert deutlich schneller. Über mehrere Messungen wird gemittelt,
+damit ein einzelner Ruckler nicht sofort allen die Sichtweite zusammenstreicht.
+
+Runter geht es sofort, hoch nur vorsichtig: die TPS müssen erst deutlich über die Schwelle steigen
+(`raise-hysteresis-tps`) und das mehrere Prüfungen lang halten (`raise-delay-checks`), und dann wird
+immer nur eine Stufe zurückgenommen. So pendelt die Sichtweite nicht um eine Schwelle herum.
+
+Wer zahlt, steht in der `main-config.yml` unter `paying-players` und wird über die Admin-Website oder den
+Discord-Befehl `/payingplayer` gepflegt. Der Survival-Server holt die Liste im Hintergrund und arbeitet mit
+der zuletzt erfolgreich geholten Fassung weiter, wenn eine Anfrage mal keine Antwort bekommt - eine
+langsame Antwort darf keinen zahlenden Spieler herunterstufen. Solange die Liste noch nie angekommen ist,
+wird niemand begrenzt.
+
+Eingestellt wird das in `configs/chunklimiter.yml` auf dem Survival-Server:
+
+```yaml
+enabled: true
+check-interval-ticks: 40      # wie oft gemessen und angepasst wird
+smoothing-samples: 5          # über wie viele Messungen gemittelt wird
+raise-delay-checks: 3         # so viele gute Messungen, bevor es wieder hochgeht
+raise-hysteresis-tps: 1.5     # so weit über die Schwelle, bevor eine Stufe fällt
+paying:
+  max-view-distance: 12
+  min-view-distance: 8
+  penalty-factor: 0.0         # 0 = zahlende Spieler werden nie begrenzt
+free:
+  max-view-distance: 10
+  min-view-distance: 4
+  penalty-factor: 1.0
+tiers:                        # ab welchen TPS wie viele Chunks abgezogen werden
+- tps: 18.0
+  penalty: 0
+- tps: 15.0
+  penalty: 2
+- tps: 10.0
+  penalty: 4
+- tps: 5.0
+  penalty: 6
+- tps: 3.0
+  penalty: 8
+```
+
 ## Module
 
 | Modul | Inhalt |
 |-------|--------|
-| `ServerLauncherApplication` | Startet und konfiguriert die Server, Discord Bot, Web Konsole |
+| `ServerLauncherApplication` | Startet und konfiguriert die Server, Discord Bot, Admin Website |
 | `CommonCode` | Netzwerk-Events, `ServerApi`, Server Manager UI, Warp System |
 | `LobbyPlugin` | Lobby, Parkour, Server Manager |
 | `Survival` | Survival Spielmodus |

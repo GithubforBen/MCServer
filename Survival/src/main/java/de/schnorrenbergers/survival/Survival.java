@@ -10,7 +10,9 @@ import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.adminabuse.CommandListener;
 import de.schnorrenbergers.survival.featrues.adminabuse.LegitimizeCommand;
-import de.schnorrenbergers.survival.featrues.chunklimiter.PlayerLoadChunkListener;
+import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiter;
+import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiterListener;
+import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiterSettings;
 import de.schnorrenbergers.survival.featrues.endfight.EndListener;
 import de.schnorrenbergers.survival.featrues.flight.FlightListener;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
@@ -33,6 +35,7 @@ public final class Survival extends JavaPlugin {
     private ListenerAdapter listenerAdapter;
     private TeamConfig teamConfig;
     private ShopConfig shopConfig;
+    private ChunkLimiter chunkLimiter;
 
     @Override
     public void onLoad() {
@@ -66,7 +69,9 @@ public final class Survival extends JavaPlugin {
         new ShopkeeperManager();
         new ShopkeeperListener();
         new ATMListener();
-        new PlayerLoadChunkListener();
+        chunkLimiter = new ChunkLimiter(new ChunkLimiterSettings());
+        chunkLimiter.start();
+        new ChunkLimiterListener();
         new JoinListener();
         new FlightListener();
         new CommandListener();
@@ -81,6 +86,7 @@ public final class Survival extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (chunkLimiter != null) chunkLimiter.stop();
         ShopkeeperManager.save();
         moneyConfig.save();
         teamConfig.save();
@@ -105,5 +111,9 @@ public final class Survival extends JavaPlugin {
 
     public ShopConfig getShopConfig() {
         return shopConfig;
+    }
+
+    public ChunkLimiter getChunkLimiter() {
+        return chunkLimiter;
     }
 }

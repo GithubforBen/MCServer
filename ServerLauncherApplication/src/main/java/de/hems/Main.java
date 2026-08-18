@@ -35,6 +35,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 public class Main {
     private static Main instance;
@@ -42,6 +43,7 @@ public class Main {
     private ListenerAdapter listenerAdapter;
     private ServerHandler serverHandler;
     private JDA jda;
+    private WebServer webServer;
     //TODO: add a way to auto add ops
 
     public Main() throws Exception {
@@ -59,8 +61,12 @@ public class Main {
         }));
         configuration = new Configuration();
         System.out.println(getIp());
-        if (!configuration.getConfig().contains("paying-players"))
-            configuration.getConfig().set("paying-players", List.of(UUIDFetcher.findUUIDByName("for_sale", true).toString()));
+        if (!configuration.getConfig().contains("paying-players")) {
+            UUID owner = UUIDFetcher.findUUIDByName("for_sale", true);
+            // mojang may be unreachable - an empty list is better than not starting at all
+            configuration.getConfig().set("paying-players",
+                    owner == null ? List.of() : List.of(owner.toString()));
+        }
         listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.HOST);
         new RespondDataEvent();
         new AdminAbuseHandler();
@@ -100,8 +106,24 @@ public class Main {
             throw new MissingConfigurationException("discord-token is missing in config.yml.");
         }
         startConfiguredServers();
-        //new WebServer();
+        startWebServer();
         if (jda != null) Tickets.updateTicketChannel();
+    }
+
+    /**
+     * Starts the admin website unless it is switched off in the config. A website that fails to come up
+     * must not take the whole network with it, so problems are logged instead of thrown.
+     */
+    private void startWebServer() {
+        if (!configuration.getConfig().getBoolean("web.enabled", true)) {
+            System.out.println("The admin website is disabled (web.enabled).");
+            return;
+        }
+        try {
+            webServer = new WebServer();
+        } catch (IOException e) {
+            System.out.println("Could not start the admin website: " + e.getMessage());
+        }
     }
 
     /**
@@ -151,6 +173,7 @@ public class Main {
     public void onShutdown() throws IOException {
         System.out.println("Shutting down...");
         configuration.save(); //neccessary
+        if (webServer != null) webServer.stop();
         serverHandler.shutdownNetwork();
         configuration.save();
         if (jda != null) jda.shutdownNow();
@@ -198,6 +221,10 @@ public class Main {
             }
         }
         throw new IllegalStateException("Unknown running mode");
+    }
+
+    public WebServer getWebServer() {
+        return webServer;
     }
 
     public JDA getJda() {

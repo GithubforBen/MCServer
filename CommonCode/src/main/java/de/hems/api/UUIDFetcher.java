@@ -66,12 +66,19 @@ public class UUIDFetcher {
         return findNameByUUID(uuid.toString());
     }
 
+    /**
+     * @param name            the minecraft name to look up
+     * @param returnFormatted kept for the callers that already pass it
+     * @return the uuid, or {@code null} if mojang does not know the name or can not be reached
+     */
     public static UUID findUUIDByName(String name, boolean returnFormatted) {
         try {
             String apiEndPoint = "https://api.mojang.com/users/profiles/minecraft/" + name;
-            String uuid = formatUUID(Objects.requireNonNull(getApiReponse(apiEndPoint, "id")));
-            return UUID.fromString(uuid);
-        } catch (JSONException e) {
+            String raw = getApiReponse(apiEndPoint, "id");
+            // an unknown name and an unreachable api both end up here - neither is worth an exception
+            if (raw == null) return null;
+            return UUID.fromString(formatUUID(raw));
+        } catch (JSONException | IllegalArgumentException e) {
             e.printStackTrace();
             return null;
         }
