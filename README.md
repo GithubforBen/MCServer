@@ -112,7 +112,23 @@ Passwörter liegen als PBKDF2-Hash in der `main-config.yml`, nie im Klartext. Di
 |-------|-------------|
 | Server | Zeigt welche Server an sind, und schaltet sie an, aus oder neu |
 | Paying Player | Trägt zahlende Spieler per Minecraft-Name oder UUID ein und aus |
-| Konsole | Schickt einen Befehl an einen laufenden Server |
+| Konsole | Zeigt die Ausgabe eines Servers live an und schickt Befehle an ihn |
+
+### Live-Konsole
+
+Das Konsolen-Panel hängt an einem WebSocket (`/api/console/stream?server=<NAME>`) und zeigt die Ausgabe
+eines Servers, während sie entsteht. Beim Verbinden kommen erst die letzten 300 Zeilen, danach jede neue
+einzeln. Reißt die Verbindung ab, verbindet die Seite sich nach 3 Sekunden neu.
+
+Die Server laufen in tmux, ihre Ausgabe kommt also nie durch den Launcher. `tmux pipe-pane` schreibt sie
+deshalb in `servers/<NAME>/console.log`, und der `ConsoleTailer` folgt dieser Datei, entfernt die
+Terminal-Steuerzeichen und legt die Zeilen in einen `ConsoleBuffer` pro Server. Der Buffer hält die
+Historie und die offenen WebSockets - Abonnieren und Anhängen laufen unter demselben Lock, damit ein
+Zuschauer weder eine Zeile verpasst noch eine doppelt sieht.
+
+Der WebSocket ist genauso geschützt wie der Rest: die Anmeldung wird schon beim Upgrade geprüft, und der
+`Origin` muss stimmen, weil ein WebSocket-Handshake nicht unter die Same-Origin-Policy fällt und das
+Session-Cookie sonst von jeder fremden Seite mitgeschickt würde.
 
 ### Erweitern
 
@@ -135,6 +151,19 @@ also von selbst im Browser auf. Ohne eigene Ansicht bekommt es eine generische D
 API-Antwort; eine eigene Ansicht registriert man in `app.js` mit
 `McAdmin.registerPanel("mein-modul", fn)`.
 
+Module lassen sich auch von außen dazustecken, ohne `WebServer` anzufassen:
+`new WebServer(configuration, new MeinModul())`.
+
+Ein Modul kann neben `get`/`post`/`delete` auch einen WebSocket anmelden, der die Anmeldung schon beim
+Upgrade prüft:
+
+```java
+server.authenticatedWs("/api/mein-modul/stream", ws -> {
+    ws.onConnect(ctx -> ctx.send("hallo"));
+    ws.onClose(ctx -> ...);
+});
+```
+
 ### Einstellungen (`main-config.yml`)
 
 ```yaml
@@ -154,6 +183,17 @@ web:
 
 Der alte `/command` Endpoint gibt es weiterhin, er akzeptiert aber nicht mehr das fest eingebaute Secret
 `67`, sondern das aus `web.command-secret`, das beim ersten Start erzeugt wird.
+
+### Technik
+
+Die Seite läuft auf [Javalin](https://javalin.io) (Jetty), weil der eingebaute `com.sun.net.httpserver`
+keine WebSockets kann. Die Auth-Schicht (`Totp`, `Passwords`, `AuthService`, `Session`) ist davon
+unabhängig und würde einen weiteren Wechsel unverändert überstehen.
+
+Wichtig fürs Packaging: das Fat Jar wird über `src/assembly/jar-with-dependencies.xml` gebaut statt über
+den eingebauten `descriptorRef`. Jetty findet Teile von sich per `ServiceLoader`, und der eingebaute
+Descriptor überschreibt gleichnamige `META-INF/services`-Dateien, statt sie zusammenzuführen - ohne den
+`metaInf-services`-Handler fehlen 17 der 38 Service-Provider im fertigen Jar.
 
 ## Chunk Limiter
 

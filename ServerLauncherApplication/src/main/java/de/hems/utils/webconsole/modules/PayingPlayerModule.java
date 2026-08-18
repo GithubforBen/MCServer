@@ -2,15 +2,13 @@ package de.hems.utils.webconsole.modules;
 
 import de.hems.Main;
 import de.hems.api.UUIDFetcher;
-import de.hems.utils.webconsole.ApiHandler;
-import de.hems.utils.webconsole.ApiRequest;
+import de.hems.utils.webconsole.ApiContext;
 import de.hems.utils.webconsole.WebModule;
 import de.hems.utils.webconsole.WebServer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,134 +47,115 @@ public class PayingPlayerModule implements WebModule {
 
     @Override
     public void register(WebServer server) {
-        server.route("/api/paying-players", new PayingPlayerRoute(server));
+        server.get("/api/paying-players", this::list);
+        server.post("/api/paying-players", this::add);
+        server.delete("/api/paying-players/{uuid}", this::remove);
     }
 
-    private static class PayingPlayerRoute extends ApiHandler {
+    private void list(ApiContext ctx) {
+        JSONArray array = new JSONArray();
+        for (UUID uuid : read()) {
+            array.put(new JSONObject().put("uuid", uuid.toString()).put("name", nameOf(uuid)));
+        }
+        ctx.ok("players", array);
+    }
 
-        PayingPlayerRoute(WebServer server) {
-            super(server, "/api/paying-players", true);
+    /**
+     * Adds a player, either by minecraft name or by uuid.
+     *
+     * @param ctx the request being answered
+     */
+    private void add(ApiContext ctx) {
+        String uuidInput = ctx.string("uuid", "");
+        String nameInput = ctx.string("name", "");
+        if (uuidInput.isEmpty() && nameInput.isEmpty()) {
+            ctx.error(400, "Es fehlt ein Minecraft-Name oder eine UUID.");
+            return;
         }
 
-        @Override
-        protected void handleRequest(ApiRequest request) throws IOException {
-            switch (request.getMethod()) {
-                case "GET" -> list(request);
-                case "POST" -> add(request);
-                case "DELETE" -> remove(request);
-                default -> wrongMethod(request);
-            }
-        }
-
-        private void list(ApiRequest request) throws IOException {
-            JSONArray array = new JSONArray();
-            for (UUID uuid : read()) {
-                array.put(new JSONObject()
-                        .put("uuid", uuid.toString())
-                        .put("name", nameOf(uuid)));
-            }
-            ok(request, "players", array);
-        }
-
-        /**
-         * Adds a player, either by minecraft name or by uuid.
-         *
-         * @param request the request being answered
-         */
-        private void add(ApiRequest request) throws IOException {
-            String uuidInput = request.getString("uuid", "");
-            String nameInput = request.getString("name", "");
-            if (uuidInput.isEmpty() && nameInput.isEmpty()) {
-                error(request, BAD_REQUEST, "Es fehlt ein Minecraft-Name oder eine UUID.");
-                return;
-            }
-
-            UUID uuid;
-            if (!uuidInput.isEmpty()) {
-                try {
-                    uuid = UUID.fromString(uuidInput);
-                } catch (IllegalArgumentException e) {
-                    error(request, BAD_REQUEST, "'" + uuidInput + "' ist keine gültige UUID.");
-                    return;
-                }
-            } else {
-                uuid = UUIDFetcher.findUUIDByName(nameInput, true);
-                if (uuid == null) {
-                    error(request, NOT_FOUND, "Es gibt keinen Spieler namens '" + nameInput + "'.");
-                    return;
-                }
-                NAME_CACHE.put(uuid, nameInput);
-            }
-
-            Set<UUID> players = read();
-            if (!players.add(uuid)) {
-                error(request, CONFLICT, nameOf(uuid) + " zahlt bereits.");
-                return;
-            }
-            write(players);
-            ok(request, new JSONObject()
-                    .put("ok", true)
-                    .put("message", nameOf(uuid) + " wurde hinzugefügt.")
-                    .put("uuid", uuid.toString())
-                    .put("name", nameOf(uuid)));
-        }
-
-        /**
-         * Removes a player, addressed as {@code /api/paying-players/<uuid>}.
-         *
-         * @param request the request being answered
-         */
-        private void remove(ApiRequest request) throws IOException {
-            String raw = request.pathAt(0);
-            if (raw == null) raw = request.getString("uuid", "");
-            UUID uuid;
+        UUID uuid;
+        if (!uuidInput.isEmpty()) {
             try {
-                uuid = UUID.fromString(raw);
+                uuid = UUID.fromString(uuidInput);
             } catch (IllegalArgumentException e) {
-                error(request, BAD_REQUEST, "Es fehlt die UUID des Spielers.");
+                ctx.error(400, "'" + uuidInput + "' ist keine gültige UUID.");
                 return;
             }
-            Set<UUID> players = read();
-            if (!players.remove(uuid)) {
-                error(request, NOT_FOUND, "Dieser Spieler steht nicht auf der Liste.");
+        } else {
+            uuid = UUIDFetcher.findUUIDByName(nameInput, true);
+            if (uuid == null) {
+                ctx.error(404, "Es gibt keinen Spieler namens '" + nameInput + "'.");
                 return;
             }
-            write(players);
-            ok(request, nameOf(uuid) + " wurde entfernt.");
+            NAME_CACHE.put(uuid, nameInput);
         }
 
-        /**
-         * @return the players that currently pay, ignoring entries that are not uuids
-         */
-        private static Set<UUID> read() {
-            YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
-            Set<UUID> players = new LinkedHashSet<>();
-            for (String entry : config.getStringList(CONFIG_KEY)) {
-                try {
-                    players.add(UUID.fromString(entry.trim()));
-                } catch (IllegalArgumentException ignored) {
-                    // an entry that is not a uuid would break the survival plugin - drop it silently
-                }
+        Set<UUID> players = read();
+        if (!players.add(uuid)) {
+            ctx.error(409, nameOf(uuid) + " zahlt bereits.");
+            return;
+        }
+        write(players);
+        ctx.ok(new JSONObject()
+                .put("ok", true)
+                .put("message", nameOf(uuid) + " wurde hinzugefügt.")
+                .put("uuid", uuid.toString())
+                .put("name", nameOf(uuid)));
+    }
+
+    /**
+     * Removes a player, addressed as {@code /api/paying-players/<uuid>}.
+     *
+     * @param ctx the request being answered
+     */
+    private void remove(ApiContext ctx) {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(ctx.pathParam("uuid"));
+        } catch (IllegalArgumentException e) {
+            ctx.error(400, "Das ist keine gültige UUID.");
+            return;
+        }
+        Set<UUID> players = read();
+        if (!players.remove(uuid)) {
+            ctx.error(404, "Dieser Spieler steht nicht auf der Liste.");
+            return;
+        }
+        write(players);
+        ctx.ok(nameOf(uuid) + " wurde entfernt.");
+    }
+
+    /**
+     * @return the players that currently pay, ignoring entries that are not uuids
+     */
+    private static Set<UUID> read() {
+        YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
+        Set<UUID> players = new LinkedHashSet<>();
+        for (String entry : config.getStringList(CONFIG_KEY)) {
+            try {
+                players.add(UUID.fromString(entry.trim()));
+            } catch (IllegalArgumentException ignored) {
+                // an entry that is not a uuid would be useless to the survival plugin - drop it
             }
-            return players;
         }
+        return players;
+    }
 
-        private static void write(Set<UUID> players) {
-            List<String> stored = new ArrayList<>(players.size());
-            for (UUID uuid : players) stored.add(uuid.toString());
-            Main.getInstance().getConfiguration().getConfig().set(CONFIG_KEY, stored);
-            Main.getInstance().getConfiguration().save();
-        }
+    private static void write(Set<UUID> players) {
+        List<String> stored = new ArrayList<>(players.size());
+        for (UUID uuid : players) stored.add(uuid.toString());
+        Main.getInstance().getConfiguration().getConfig().set(CONFIG_KEY, stored);
+        Main.getInstance().getConfiguration().save();
+    }
 
-        /**
-         * @param uuid the player to name
-         * @return the minecraft name, or the uuid if mojang does not know it
-         */
-        private static String nameOf(UUID uuid) {
-            return NAME_CACHE.computeIfAbsent(uuid, key -> {
-                String name = UUIDFetcher.findNameByUUID(key);
-                return name == null ? key.toString() : name;
-            });
-        }
+    /**
+     * @param uuid the player to name
+     * @return the minecraft name, or the uuid if mojang does not know it
+     */
+    private static String nameOf(UUID uuid) {
+        return NAME_CACHE.computeIfAbsent(uuid, key -> {
+            String name = UUIDFetcher.findNameByUUID(key);
+            return name == null ? key.toString() : name;
+        });
     }
 }

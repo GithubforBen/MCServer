@@ -15,7 +15,8 @@
         graceSeconds: 3,
         modules: [],
         activeModule: null,
-        refreshTimer: null
+        refreshTimer: null,
+        onLeavePanel: null
     };
 
     var panels = {};
@@ -107,6 +108,10 @@
 
     function showLogin(message) {
         stopRefresh();
+        if (state.onLeavePanel) {
+            state.onLeavePanel();
+            state.onLeavePanel = null;
+        }
         state.csrf = null;
         state.username = null;
         $('app-view').classList.add('hidden');
@@ -235,6 +240,10 @@
 
     function selectModule(id) {
         if (!id) return;
+        if (state.onLeavePanel) {
+            state.onLeavePanel();
+            state.onLeavePanel = null;
+        }
         state.activeModule = id;
         renderNav();
         stopRefresh();
@@ -504,6 +513,110 @@
         var serverSelect = el('select');
         var commandInput = el('input', {type: 'text', placeholder: 'z.B. say Hallo'});
         var sendButton = el('button', {text: 'Senden', type: 'button'});
+        var output = el('div', {className: 'console-output'});
+        var statusDot = el('span', {className: 'dot down'});
+        var statusText = el('span', {text: 'nicht verbunden'});
+        var followBox = el('input', {type: 'checkbox'});
+        followBox.checked = true;
+
+        var socket = null;
+        var reconnectTimer = null;
+        var closedByUs = false;
+
+        /* Keeps the view pinned to the newest line unless the user scrolled up to read something. */
+        function atBottom() {
+            return output.scrollHeight - output.scrollTop - output.clientHeight < 40;
+        }
+
+        function appendLine(text, kind) {
+            var follow = followBox.checked && atBottom();
+            output.appendChild(el('div', {className: 'line ' + (kind || ''), text: text}));
+            // a long running server produces a lot of output - keep the dom from growing without bound
+            while (output.childElementCount > 2000) output.removeChild(output.firstChild);
+            if (follow) output.scrollTop = output.scrollHeight;
+        }
+
+        /* Colours the obvious severities without pretending to parse every log format. */
+        function kindOf(line) {
+            if (/\b(ERROR|SEVERE|FATAL|Exception)\b/.test(line)) return 'error';
+            if (/\bWARN(ING)?\b/.test(line)) return 'warn';
+            return '';
+        }
+
+        function setStatus(text, live) {
+            statusText.textContent = text;
+            statusDot.className = 'dot ' + (live ? 'live' : 'down');
+        }
+
+        function disconnect() {
+            closedByUs = true;
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+            setStatus('nicht verbunden', false);
+        }
+
+        function connect(server) {
+            disconnect();
+            closedByUs = false;
+            clear(output);
+            if (!server) {
+                setStatus('kein Server ausgewählt', false);
+                return;
+            }
+            setStatus('verbinde ...', false);
+            var scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+            var url = scheme + window.location.host + '/api/console/stream?server=' + encodeURIComponent(server);
+            var current;
+            try {
+                current = new WebSocket(url);
+            } catch (error) {
+                setStatus('Verbindung nicht möglich', false);
+                return;
+            }
+            socket = current;
+
+            current.onopen = function () {
+                setStatus('live', true);
+            };
+            current.onmessage = function (event) {
+                var message;
+                try {
+                    message = JSON.parse(event.data);
+                } catch (error) {
+                    return;
+                }
+                if (message.type === 'history') {
+                    clear(output);
+                    (message.lines || []).forEach(function (line) {
+                        appendLine(line, kindOf(line));
+                    });
+                    output.scrollTop = output.scrollHeight;
+                } else if (message.type === 'line') {
+                    appendLine(message.line, kindOf(message.line));
+                } else if (message.type === 'error') {
+                    appendLine('[' + message.message + ']', 'system');
+                }
+            };
+            current.onclose = function () {
+                if (socket !== current) return;
+                socket = null;
+                if (closedByUs) return;
+                setStatus('Verbindung verloren - neuer Versuch in 3s', false);
+                appendLine('[Verbindung zum Server verloren]', 'system');
+                reconnectTimer = setTimeout(function () {
+                    if (state.activeModule === 'console') connect(serverSelect.value);
+                }, 3000);
+            };
+            current.onerror = function () {
+                setStatus('Verbindungsfehler', false);
+            };
+        }
 
         function send() {
             var command = commandInput.value.trim();
@@ -513,8 +626,7 @@
             }
             sendButton.disabled = true;
             api('/api/console', {method: 'POST', body: {server: serverSelect.value, command: command}})
-                .then(function (data) {
-                    toast(data.message, 'ok');
+                .then(function () {
                     commandInput.value = '';
                 }).catch(function (error) {
                     toast(error.message, 'error');
@@ -527,28 +639,55 @@
         commandInput.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') send();
         });
+        serverSelect.addEventListener('change', function () {
+            connect(serverSelect.value);
+        });
 
         panel.appendChild(el('section', {className: 'card'}, [
             el('h2', {text: module.title}),
             el('p', {className: 'muted', text: module.description}),
-            el('div', {className: 'inline-form'}, [
+            el('div', {className: 'console-toolbar'}, [
                 el('div', {className: 'field'}, [el('label', {text: 'Server'}), serverSelect]),
+                el('span', {className: 'console-status'}, [statusDot, statusText]),
+                el('label', {className: 'checkbox'}, [followBox, el('span', {text: 'automatisch scrollen'})]),
+                el('button', {
+                    text: 'Leeren', type: 'button', className: 'secondary small',
+                    onClick: function () {
+                        clear(output);
+                    }
+                })
+            ]),
+            output
+        ]));
+
+        panel.appendChild(el('section', {className: 'card'}, [
+            el('h3', {text: 'Befehl senden'}),
+            el('div', {className: 'inline-form'}, [
                 el('div', {className: 'field'}, [el('label', {text: 'Befehl'}), commandInput]),
                 sendButton
             ])
         ]));
 
         api('/api/servers').then(function (data) {
-            (data.servers || []).filter(function (server) {
+            var running = (data.servers || []).filter(function (server) {
                 return server.online || server.starting;
-            }).forEach(function (server) {
+            });
+            running.forEach(function (server) {
                 var option = el('option', {text: server.name});
                 option.value = server.name;
                 serverSelect.appendChild(option);
             });
+            if (running.length) {
+                connect(running[0].name);
+            } else {
+                setStatus('kein Server läuft', false);
+            }
         }).catch(function (error) {
             toast(error.message, 'error');
         });
+
+        // leaving the panel has to close the socket, or every visit would open another one
+        state.onLeavePanel = disconnect;
     };
 
     /* ------------------------------------------------------------------ start */

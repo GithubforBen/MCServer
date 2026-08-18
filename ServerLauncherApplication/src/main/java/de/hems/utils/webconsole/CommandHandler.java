@@ -1,14 +1,11 @@
 package de.hems.utils.webconsole;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import de.hems.Main;
 import de.hems.communication.ListenerAdapter;
 import de.hems.utils.webconsole.auth.Passwords;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
+import java.util.List;
 
 /**
  * The endpoint scripts use to run a command on a server, kept for {@code executeCommand.py} and anything
@@ -18,52 +15,40 @@ import java.io.IOException;
  * commands as the console. The secret now comes from {@code web.command-secret} in the launcher config and
  * is generated on first start.
  */
-public class CommandHandler extends CustomHandler implements HttpHandler {
+public class CommandHandler {
 
     /** Where the secret lives in the launcher config. */
     private static final String SECRET_PATH = "web.command-secret";
 
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        try {
-            if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-                methodNotAllowed(exchange);
+    /**
+     * @param ctx the request being answered
+     */
+    public void handle(ApiContext ctx) throws Exception {
+        JSONObject json = ctx.body();
+        for (String required : new String[]{"command", "server", "secret"}) {
+            if (!json.has(required)) {
+                ctx.error(400, required + " is missing");
                 return;
             }
-            JSONObject json;
-            try {
-                json = getJSON(exchange);
-            } catch (JSONException e) {
-                jsonError(exchange);
-                return;
-            }
-            for (String required : new String[]{"command", "server", "secret"}) {
-                if (!json.has(required)) {
-                    respondDataNotFound(exchange, required + " is missing");
-                    return;
-                }
-            }
-            if (!Passwords.tokensEqual(secret(), json.getString("secret"))) {
-                respond(exchange, "wrong secret", UNAUTHORIZED);
-                return;
-            }
-            ListenerAdapter.ServerName name;
-            try {
-                name = ListenerAdapter.ServerName.valueOf(json.getString("server"));
-            } catch (IllegalArgumentException e) {
-                respond(exchange, "'" + json.getString("server") + "' is not a usable server name", BAD_REQUEST);
-                return;
-            }
-            var instance = Main.getInstance().getServerHandler().getInstance(name);
-            if (instance == null) {
-                respondDataNotFound(exchange, "the server '" + name + "' is not running");
-                return;
-            }
-            instance.executeCommand(json.getString("command"));
-            respond(exchange, "successfully executed command");
-        } finally {
-            exchange.close();
         }
+        if (!Passwords.tokensEqual(secret(), json.getString("secret"))) {
+            ctx.error(401, "wrong secret");
+            return;
+        }
+        ListenerAdapter.ServerName name;
+        try {
+            name = ListenerAdapter.ServerName.valueOf(json.getString("server"));
+        } catch (IllegalArgumentException e) {
+            ctx.error(400, "'" + json.getString("server") + "' is not a usable server name");
+            return;
+        }
+        var instance = Main.getInstance().getServerHandler().getInstance(name);
+        if (instance == null) {
+            ctx.error(409, "the server '" + name + "' is not running");
+            return;
+        }
+        instance.executeCommand(json.getString("command"));
+        ctx.ok("successfully executed command");
     }
 
     /**
@@ -76,7 +61,7 @@ public class CommandHandler extends CustomHandler implements HttpHandler {
         String generated = Passwords.randomToken();
         configuration.getConfig().set(SECRET_PATH, generated);
         configuration.getConfig().setComments(SECRET_PATH,
-                java.util.List.of("The secret scripts have to send to POST /command."));
+                List.of("The secret scripts have to send to POST /command."));
         configuration.save();
         System.out.println("A secret for the /command endpoint was generated: " + generated);
         return generated;

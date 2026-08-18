@@ -6,8 +6,7 @@ import de.hems.types.FileType;
 import de.hems.types.ServerTemplate;
 import de.hems.utils.server.ServerHandler;
 import de.hems.utils.server.ServerInstance;
-import de.hems.utils.webconsole.ApiHandler;
-import de.hems.utils.webconsole.ApiRequest;
+import de.hems.utils.webconsole.ApiContext;
 import de.hems.utils.webconsole.WebModule;
 import de.hems.utils.webconsole.WebServer;
 import org.bukkit.configuration.ConfigurationSection;
@@ -48,291 +47,252 @@ public class ServerModule implements WebModule {
 
     @Override
     public void register(WebServer server) {
-        server.route("/api/servers", new ServerHandlerRoute(server));
+        server.get("/api/servers", ctx -> ctx.ok("servers", listServers()));
+        server.get("/api/servers/templates", ctx -> ctx.ok("templates", listTemplates()));
+        server.post("/api/servers", this::create);
+        server.post("/api/servers/{server}/start", this::start);
+        server.post("/api/servers/{server}/stop", this::stop);
+        server.post("/api/servers/{server}/restart", this::restart);
     }
 
-    private static class ServerHandlerRoute extends ApiHandler {
+    /**
+     * Every server the interface knows about: the ones that run right now and the ones that ran before and
+     * can be switched back on.
+     *
+     * @return the servers, sorted by name
+     */
+    private static JSONArray listServers() {
+        ServerHandler handler = Main.getInstance().getServerHandler();
+        handler.updateInstances();
+        Map<String, JSONObject> byName = new LinkedHashMap<>();
 
-        ServerHandlerRoute(WebServer server) {
-            super(server, "/api/servers", true);
+        // everything that was ever started is remembered in the config, so it can be switched on again
+        YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
+        ConfigurationSection section = config.getConfigurationSection(CONFIG_ROOT);
+        if (section != null) {
+            for (String name : section.getKeys(false)) {
+                byName.put(name, new JSONObject()
+                        .put("name", name)
+                        .put("port", section.getInt(name + ".port", ListenerAdapter.ServerName.NO_PORT))
+                        .put("memory", section.getInt(name + ".memory", 0))
+                        .put("template", section.getString(name + ".template", "EVENT"))
+                        .put("software", section.getString(name + ".software", "PAPER"))
+                        .put("online", false)
+                        .put("starting", false));
+            }
         }
 
-        @Override
-        protected void handleRequest(ApiRequest request) throws IOException {
-            String first = request.pathAt(0);
-            if (request.isMethod("GET")) {
-                if ("templates".equals(first)) {
-                    ok(request, "templates", listTemplates());
+        for (ServerInstance instance : handler.getInstances()) {
+            if (instance.getName().isReserved()) continue;
+            boolean online;
+            try {
+                online = instance.isAlive();
+            } catch (IOException e) {
+                online = false;
+            }
+            byName.put(instance.getName().toString(), new JSONObject()
+                    .put("name", instance.getName().toString())
+                    .put("port", instance.getName().getPort())
+                    .put("memory", instance.getAllocatedMemoryMB())
+                    .put("template", instance.getTemplate().name())
+                    .put("software", instance.getJarFile().name())
+                    .put("online", online)
+                    .put("starting", !online && instance.isStarting()));
+        }
+
+        List<String> names = new ArrayList<>(byName.keySet());
+        names.sort(String::compareTo);
+        JSONArray array = new JSONArray();
+        for (String name : names) array.put(byName.get(name));
+        return array;
+    }
+
+    /**
+     * @return the blueprints a new server can be created from
+     */
+    private static JSONArray listTemplates() {
+        JSONArray array = new JSONArray();
+        for (ServerTemplate template : ServerTemplate.values()) {
+            if (template == ServerTemplate.PROXY) continue;
+            array.put(new JSONObject()
+                    .put("name", template.name())
+                    .put("software", template.getSoftware().name())
+                    .put("defaultMemory", template.getDefaultMemoryMB()));
+        }
+        return array;
+    }
+
+    /**
+     * Switches a server on. A server that was created before comes back with the settings it had.
+     *
+     * @param ctx the request being answered
+     */
+    private void start(ApiContext ctx) {
+        ListenerAdapter.ServerName name = resolve(ctx.pathParam("server"));
+        if (name == null) {
+            ctx.error(400, "Das ist kein gültiger Servername.");
+            return;
+        }
+        ServerHandler handler = Main.getInstance().getServerHandler();
+        if (handler.doesInstanceExist(name)) {
+            ctx.error(409, name + " läuft bereits.");
+            return;
+        }
+        YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
+        ServerTemplate template = templateOf(config, name);
+        int memory = config.getInt(CONFIG_ROOT + "." + name + ".memory", template.getDefaultMemoryMB());
+        try {
+            handler.startNewInstance(name, template, memory, new FileType.PLUGIN[0]);
+        } catch (Exception e) {
+            ctx.error(500, "Konnte " + name + " nicht starten: " + e.getMessage());
+            return;
+        }
+        ctx.ok(name + " wird gestartet.");
+    }
+
+    /**
+     * Switches a server off.
+     *
+     * @param ctx the request being answered
+     */
+    private void stop(ApiContext ctx) {
+        ListenerAdapter.ServerName name = resolve(ctx.pathParam("server"));
+        if (name == null) {
+            ctx.error(400, "Das ist kein gültiger Servername.");
+            return;
+        }
+        ServerHandler handler = Main.getInstance().getServerHandler();
+        if (!handler.doesInstanceExist(name)) {
+            ctx.error(409, name + " läuft nicht.");
+            return;
+        }
+        try {
+            handler.stop(name);
+        } catch (RuntimeException e) {
+            ctx.error(500, "Konnte " + name + " nicht stoppen: " + e.getMessage());
+            return;
+        }
+        ctx.ok(name + " wird gestoppt.");
+    }
+
+    /**
+     * Stops a server and starts it again once its port is free. The waiting happens in the background, so
+     * the browser gets an answer right away.
+     *
+     * @param ctx the request being answered
+     */
+    private void restart(ApiContext ctx) {
+        ListenerAdapter.ServerName name = resolve(ctx.pathParam("server"));
+        if (name == null) {
+            ctx.error(400, "Das ist kein gültiger Servername.");
+            return;
+        }
+        ServerHandler handler = Main.getInstance().getServerHandler();
+        if (!handler.doesInstanceExist(name)) {
+            ctx.error(409, name + " läuft nicht.");
+            return;
+        }
+        ServerInstance stopped;
+        try {
+            stopped = handler.stop(name);
+        } catch (RuntimeException e) {
+            ctx.error(500, "Konnte " + name + " nicht stoppen: " + e.getMessage());
+            return;
+        }
+        Thread restarter = new Thread(() -> {
+            long deadline = System.currentTimeMillis() + SHUTDOWN_TIMEOUT_MS;
+            while (handler.doesInstanceExist(name)) {
+                if (System.currentTimeMillis() > deadline) {
+                    System.out.println(name + " did not stop in time - not restarting it.");
                     return;
                 }
-                ok(request, "servers", listServers());
-                return;
-            }
-            if (!request.isMethod("POST")) {
-                wrongMethod(request);
-                return;
-            }
-            if (first == null) {
-                create(request);
-                return;
-            }
-            String action = request.pathAt(1);
-            if (action == null) {
-                error(request, BAD_REQUEST, "Es fehlt die Aktion, z.B. /api/servers/" + first + "/start.");
-                return;
-            }
-            switch (action.toLowerCase()) {
-                case "start" -> start(request, first);
-                case "stop" -> stop(request, first);
-                case "restart" -> restart(request, first);
-                default -> error(request, BAD_REQUEST, "Unbekannte Aktion '" + action + "'.");
-            }
-        }
-
-        /**
-         * Every server the interface knows about: the ones that run right now and the ones that ran before
-         * and can be switched back on.
-         *
-         * @return the servers, sorted by name
-         */
-        private JSONArray listServers() {
-            ServerHandler handler = Main.getInstance().getServerHandler();
-            handler.updateInstances();
-            Map<String, JSONObject> byName = new LinkedHashMap<>();
-
-            // everything that was ever started is remembered in the config, so it can be switched on again
-            YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
-            ConfigurationSection section = config.getConfigurationSection(CONFIG_ROOT);
-            if (section != null) {
-                for (String name : section.getKeys(false)) {
-                    byName.put(name, new JSONObject()
-                            .put("name", name)
-                            .put("port", section.getInt(name + ".port", ListenerAdapter.ServerName.NO_PORT))
-                            .put("memory", section.getInt(name + ".memory", 0))
-                            .put("template", section.getString(name + ".template", "EVENT"))
-                            .put("software", section.getString(name + ".software", "PAPER"))
-                            .put("online", false)
-                            .put("starting", false)
-                            .put("known", true));
-                }
-            }
-
-            for (ServerInstance instance : handler.getInstances()) {
-                if (instance.getName().isReserved()) continue;
-                boolean online;
                 try {
-                    online = instance.isAlive();
-                } catch (IOException e) {
-                    online = false;
+                    Thread.sleep(1000L);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
                 }
-                byName.put(instance.getName().toString(), new JSONObject()
-                        .put("name", instance.getName().toString())
-                        .put("port", instance.getName().getPort())
-                        .put("memory", instance.getAllocatedMemoryMB())
-                        .put("template", instance.getTemplate().name())
-                        .put("software", instance.getJarFile().name())
-                        .put("online", online)
-                        .put("starting", !online && instance.isStarting())
-                        .put("known", true));
             }
-
-            List<String> names = new ArrayList<>(byName.keySet());
-            names.sort(String::compareTo);
-            JSONArray array = new JSONArray();
-            for (String name : names) array.put(byName.get(name));
-            return array;
-        }
-
-        /**
-         * @return the blueprints a new server can be created from
-         */
-        private JSONArray listTemplates() {
-            JSONArray array = new JSONArray();
-            for (ServerTemplate template : ServerTemplate.values()) {
-                if (template == ServerTemplate.PROXY) continue;
-                array.put(new JSONObject()
-                        .put("name", template.name())
-                        .put("software", template.getSoftware().name())
-                        .put("defaultMemory", template.getDefaultMemoryMB()));
-            }
-            return array;
-        }
-
-        /**
-         * Switches a server on. A server that was created before comes back with the settings it had.
-         *
-         * @param request the request being answered
-         * @param rawName the server to start
-         */
-        private void start(ApiRequest request, String rawName) throws IOException {
-            ListenerAdapter.ServerName name = resolve(rawName);
-            if (name == null) {
-                error(request, BAD_REQUEST, "'" + rawName + "' ist kein gültiger Servername.");
-                return;
-            }
-            ServerHandler handler = Main.getInstance().getServerHandler();
-            if (handler.doesInstanceExist(name)) {
-                error(request, CONFLICT, name + " läuft bereits.");
-                return;
-            }
-            YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
-            ServerTemplate template = templateOf(config, name);
-            int memory = config.getInt(CONFIG_ROOT + "." + name + ".memory", template.getDefaultMemoryMB());
             try {
-                handler.startNewInstance(name, template, memory, new FileType.PLUGIN[0]);
+                handler.startNewInstance(stopped.getName(), stopped.getAllocatedMemoryMB(),
+                        stopped.getJarFile(), stopped.getPlugins(), stopped.getTemplate());
             } catch (Exception e) {
-                error(request, SERVER_ERROR, "Konnte " + name + " nicht starten: " + e.getMessage());
-                return;
+                e.printStackTrace();
             }
-            ok(request, name + " wird gestartet.");
-        }
+        }, "restart-" + name);
+        restarter.setDaemon(true);
+        restarter.start();
+        ctx.ok(name + " wird neu gestartet.");
+    }
 
-        /**
-         * Switches a server off.
-         *
-         * @param request the request being answered
-         * @param rawName the server to stop
-         */
-        private void stop(ApiRequest request, String rawName) throws IOException {
-            ListenerAdapter.ServerName name = resolve(rawName);
-            if (name == null) {
-                error(request, BAD_REQUEST, "'" + rawName + "' ist kein gültiger Servername.");
-                return;
-            }
-            ServerHandler handler = Main.getInstance().getServerHandler();
-            if (!handler.doesInstanceExist(name)) {
-                error(request, CONFLICT, name + " läuft nicht.");
-                return;
-            }
-            try {
-                handler.stop(name);
-            } catch (RuntimeException e) {
-                error(request, SERVER_ERROR, "Konnte " + name + " nicht stoppen: " + e.getMessage());
-                return;
-            }
-            ok(request, name + " wird gestoppt.");
+    /**
+     * Creates a server that did not exist before.
+     *
+     * @param ctx the request being answered
+     */
+    private void create(ApiContext ctx) {
+        String rawName = ctx.string("name", "");
+        if (rawName.isEmpty()) {
+            ctx.error(400, "Es fehlt der Name des neuen Servers.");
+            return;
         }
-
-        /**
-         * Stops a server and starts it again once its port is free. The waiting happens in the background,
-         * so the browser gets an answer right away.
-         *
-         * @param request the request being answered
-         * @param rawName the server to restart
-         */
-        private void restart(ApiRequest request, String rawName) throws IOException {
-            ListenerAdapter.ServerName name = resolve(rawName);
-            if (name == null) {
-                error(request, BAD_REQUEST, "'" + rawName + "' ist kein gültiger Servername.");
-                return;
-            }
-            ServerHandler handler = Main.getInstance().getServerHandler();
-            if (!handler.doesInstanceExist(name)) {
-                error(request, CONFLICT, name + " läuft nicht.");
-                return;
-            }
-            ServerInstance stopped;
-            try {
-                stopped = handler.stop(name);
-            } catch (RuntimeException e) {
-                error(request, SERVER_ERROR, "Konnte " + name + " nicht stoppen: " + e.getMessage());
-                return;
-            }
-            Thread restarter = new Thread(() -> {
-                long deadline = System.currentTimeMillis() + SHUTDOWN_TIMEOUT_MS;
-                while (handler.doesInstanceExist(name)) {
-                    if (System.currentTimeMillis() > deadline) {
-                        System.out.println(name + " did not stop in time - not restarting it.");
-                        return;
-                    }
-                    try {
-                        Thread.sleep(1000L);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
-                }
-                try {
-                    handler.startNewInstance(stopped.getName(), stopped.getAllocatedMemoryMB(),
-                            stopped.getJarFile(), stopped.getPlugins(), stopped.getTemplate());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }, "restart-" + name);
-            restarter.setDaemon(true);
-            restarter.start();
-            ok(request, name + " wird neu gestartet.");
+        ListenerAdapter.ServerName name = resolve(rawName);
+        if (name == null) {
+            ctx.error(400, "'" + rawName + "' ist kein gültiger Servername.");
+            return;
         }
-
-        /**
-         * Creates a server that did not exist before.
-         *
-         * @param request the request being answered
-         */
-        private void create(ApiRequest request) throws IOException {
-            String rawName = request.getString("name", "");
-            if (rawName.isEmpty()) {
-                error(request, BAD_REQUEST, "Es fehlt der Name des neuen Servers.");
-                return;
-            }
-            ListenerAdapter.ServerName name = resolve(rawName);
-            if (name == null) {
-                error(request, BAD_REQUEST, "'" + rawName + "' ist kein gültiger Servername.");
-                return;
-            }
-            if (name.isReserved()) {
-                error(request, BAD_REQUEST, "'" + name + "' ist für das Netzwerk reserviert.");
-                return;
-            }
-            ServerHandler handler = Main.getInstance().getServerHandler();
-            if (handler.doesInstanceExist(name)) {
-                error(request, CONFLICT, name + " läuft bereits.");
-                return;
-            }
-            ServerTemplate template;
-            try {
-                template = ServerTemplate.valueOf(request.getString("template", "EVENT").toUpperCase());
-            } catch (IllegalArgumentException e) {
-                error(request, BAD_REQUEST, "Unbekanntes Template.");
-                return;
-            }
-            int memory = request.getBody().optInt("memory", template.getDefaultMemoryMB());
-            try {
-                handler.startNewInstance(name, template, memory, new FileType.PLUGIN[0]);
-            } catch (Exception e) {
-                error(request, SERVER_ERROR, "Konnte " + name + " nicht erstellen: " + e.getMessage());
-                return;
-            }
-            ok(request, name + " wurde erstellt und wird gestartet.");
+        if (name.isReserved()) {
+            ctx.error(400, "'" + name + "' ist für das Netzwerk reserviert.");
+            return;
         }
-
-        /**
-         * @param config the launcher config
-         * @param name   the server to look up
-         * @return the blueprint that server was created from
-         */
-        private static ServerTemplate templateOf(YamlConfiguration config, ListenerAdapter.ServerName name) {
-            String stored = config.getString(CONFIG_ROOT + "." + name + ".template");
-            if (stored != null) {
-                try {
-                    return ServerTemplate.valueOf(stored);
-                } catch (IllegalArgumentException ignored) {
-                    // the config holds a template that no longer exists - fall back to the name
-                }
-            }
-            return ServerTemplate.forServerName(name.toString());
+        ServerHandler handler = Main.getInstance().getServerHandler();
+        if (handler.doesInstanceExist(name)) {
+            ctx.error(409, name + " läuft bereits.");
+            return;
         }
+        ServerTemplate template;
+        try {
+            template = ServerTemplate.valueOf(ctx.string("template", "EVENT").toUpperCase());
+        } catch (IllegalArgumentException e) {
+            ctx.error(400, "Unbekanntes Template.");
+            return;
+        }
+        int memory = ctx.integer("memory", template.getDefaultMemoryMB());
+        try {
+            handler.startNewInstance(name, template, memory, new FileType.PLUGIN[0]);
+        } catch (Exception e) {
+            ctx.error(500, "Konnte " + name + " nicht erstellen: " + e.getMessage());
+            return;
+        }
+        ctx.ok(name + " wurde erstellt und wird gestartet.");
+    }
 
-        /**
-         * @param rawName the name as it arrived from the browser
-         * @return the canonical name, or {@code null} if it can not be used as a server name
-         */
-        private static ListenerAdapter.ServerName resolve(String rawName) {
+    /**
+     * @param config the launcher config
+     * @param name   the server to look up
+     * @return the blueprint that server was created from
+     */
+    private static ServerTemplate templateOf(YamlConfiguration config, ListenerAdapter.ServerName name) {
+        String stored = config.getString(CONFIG_ROOT + "." + name + ".template");
+        if (stored != null) {
             try {
-                return ListenerAdapter.ServerName.valueOf(rawName);
-            } catch (IllegalArgumentException e) {
-                return null;
+                return ServerTemplate.valueOf(stored);
+            } catch (IllegalArgumentException ignored) {
+                // the config holds a template that no longer exists - fall back to the name
             }
+        }
+        return ServerTemplate.forServerName(name.toString());
+    }
+
+    /**
+     * @param rawName the name as it arrived from the browser
+     * @return the canonical name, or {@code null} if it can not be used as a server name
+     */
+    private static ListenerAdapter.ServerName resolve(String rawName) {
+        try {
+            return ListenerAdapter.ServerName.valueOf(rawName);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 }

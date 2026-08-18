@@ -121,7 +121,7 @@ public class Main {
         }
         try {
             webServer = new WebServer();
-        } catch (IOException e) {
+        } catch (RuntimeException e) {
             System.out.println("Could not start the admin website: " + e.getMessage());
         }
     }

@@ -4,7 +4,7 @@ package de.hems.utils.webconsole;
  * One area of the admin website.
  * <p>
  * This is the extension point of the whole interface: a new panel is a new class implementing this, plus
- * one line in {@link WebServer} that registers it. The module says what it is called and which routes it
+ * one line in {@link WebServer#loadModules()}. The module says what it is called and which routes it
  * answers, and the frontend builds its navigation from the list of modules it gets from the server - so a
  * new module shows up in the browser without the page having to be touched.
  */
