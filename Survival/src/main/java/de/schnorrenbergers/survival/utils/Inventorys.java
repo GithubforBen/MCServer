@@ -302,7 +302,11 @@ public class Inventorys extends InventoryBase {
 
     public static CustomInventory ADD_ITEM_INVENTORY(Shopkeeper shopkeeper) throws MalformedURLException {
         CustomInventory customInventory = new CustomInventory(InventoryType.DROPPER, shopkeeper.getName() + ":Add Item", (event) -> {
-            event.getPlayer().getInventory().addItem(event.getInventory().getItem(4));
+            ItemStack pending = event.getInventory().getItem(4);
+            // addItem(null) throws, and closing with an empty slot is the normal case
+            if (pending != null && !pending.getType().isAir()) {
+                event.getPlayer().getInventory().addItem(pending);
+            }
         });
         customInventory.fillPlaceHolder();
         customInventory.removeItem(4);
@@ -318,7 +322,12 @@ public class Inventorys extends InventoryBase {
 
             @Override
             public void onClick(InventoryClickEvent event) {
-                shopkeeper.getItems().add(new ItemForSale(event.getInventory().getItem(4), 1));
+                ItemStack offered = event.getInventory().getItem(4);
+                if (offered == null || offered.getType().isAir()) {
+                    event.getWhoClicked().sendMessage("Leg erst einen Gegenstand in den Slot.");
+                    return;
+                }
+                shopkeeper.getItems().add(new ItemForSale(offered.clone(), 1));
                 event.getWhoClicked().closeInventory();
                 event.getWhoClicked().sendMessage("Added a new Item! Set the price!");
             }

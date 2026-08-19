@@ -74,6 +74,8 @@ public class ShopkeeperListener implements Listener {
             Shopkeeper shopkeeper = ShopkeeperManager.getShopkeeper(UUID.fromString(s));
             if (shopkeeper == null) return;
             shopkeeper.setChest(event.getClickedBlock().getLocation());
+            // binding the chest is a real change - it must not wait for the next autosave
+            ShopkeeperManager.saveAll();
             event.getPlayer().sendMessage("Set chest to location: (" + shopkeeper.getChest().getBlockX() + ", " + shopkeeper.getChest().getBlockY() + ", " + shopkeeper.getChest().getBlockZ() + ")");
             event.getPlayer().getPersistentDataContainer().remove(new NamespacedKey("shopkeeper", "chestlocation"));
             return;
