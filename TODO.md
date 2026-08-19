@@ -68,12 +68,14 @@ Preise und Abschluss (erledigt):
 - [x] Preise mit Geld warten auf einen Server mit Wirtschaft (also Survival),
       statt in der Lobby zu verfallen
 
+Lebenszyklus (erledigt):
+- [x] Nach einem Lauf werden alle nach 15 Sekunden zurück in die Lobby geschickt
+- [x] Bei der Abwicklung werden die Verzeichnisse der Run-Server gelöscht und ihre
+      Port-Reservierung freigegeben (30 s Karenz, damit der Prozess die Dateien loslässt)
+
 Offen:
-- [ ] Was passiert am Ende eines Laufs mit den Spielern? Sie bleiben als Zuschauer
-      auf dem Run-Server, es gibt keinen Rückwarp in die Lobby
 - [ ] Ein Lauf, den niemand je fortsetzt, bleibt bis zum Eventende PAUSED — erst dann
       räumt ihn die Abwicklung weg
-- [ ] Die Welten gestoppter Run-Server bleiben auf der Platte liegen
 - [ ] Ein abgesagtes Event wird sofort abgewickelt. Klickt man danach "Wieder
       aktivieren", ist es zwar wieder aktiv, aber seine Läufe sind weg
 - [ ] Spezialitems als Preise (pluginspezifisch) — bisher nur normale Materialien
@@ -87,14 +89,19 @@ Offen:
 - [x] Als `FileType.PLUGIN.RUN` registriert und im `EVENT`-Template installiert
 
 ### 1.5 Lobby
-- [ ] Eventsystem auch in der Lobby verfügbar
-- [ ] Lobby-Events mit Teilnehmerzahl und Preisen, kürzerer Zeitraum (ca. 1 Stunde)
-- [ ] Später: Events direkt aus der Lobby heraus erstellen
+- [x] Eventsystem in der Lobby verfügbar (`/events`, Kalender, Join-Hinweis)
+- [x] Events lassen sich direkt aus der Lobby heraus anlegen
+- [ ] Eigene Lobby-Minispiel-Events mit Teilnehmerzahl und Preisen über einen
+      kurzen Zeitraum (ca. 1 Stunde) — die Event-Typen dafür gibt es noch nicht
 
-### 1.6 Lobby-Welt
-- [ ] Es gibt nur eine Lobbywelt, die automatisch aus einer Datei geladen wird
-- [ ] Platzhalter bis dahin: die Welt, die gerade in der Lobby liegt
-- [ ] Richtige Welt wird noch geliefert und muss dann eingebunden werden
+### 1.6 Lobby-Welt — erledigt
+- [x] Genau eine Lobbywelt, beim Start aus einem Template-Verzeichnis geladen
+- [x] Platzhalter: liegt kein Template da, wird die vorhandene Welt benutzt —
+      ohne dass etwas konfiguriert werden muss
+- [x] Spieler landen beim Joinen immer am Spawn dieser Welt
+- [ ] **Deine Aufgabe**: die richtige Karte nach `./lobby-world` legen (Ordner mit
+      `level.dat` usw.). Sie wird dann bei jedem Start frisch hergestellt.
+      Einstellbar über `lobby.world`, `lobby.source`, `lobby.restore-on-start`
 
 ---
 

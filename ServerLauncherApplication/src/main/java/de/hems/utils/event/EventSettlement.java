@@ -10,12 +10,20 @@ import de.hems.types.event.EventState;
 import de.hems.types.event.PrizeData;
 import de.hems.types.event.RunData;
 
+import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Closes events that have run their course.
@@ -125,8 +133,15 @@ public class EventSettlement {
         }
     }
 
+    /** How long a run server is given to shut down before its directory is removed. */
+    private static final long SHUTDOWN_GRACE_MS = 30_000L;
+
     /**
-     * Switches off the servers the runs were played on. Their worlds are of no use once the event is over.
+     * Switches off the servers the runs were played on and throws their directories away.
+     * <p>
+     * A run server exists for one attempt at one event. Once that event is settled its world is of no use
+     * to anybody, and a five day event with dozens of attempts would otherwise leave dozens of full
+     * worlds sitting on the disk forever.
      *
      * @param board the runs of the event
      */
@@ -145,6 +160,62 @@ public class EventSettlement {
                 System.out.println("Could not stop the run server " + server + ": " + e.getMessage());
             }
         }
+        if (servers.isEmpty()) return;
+        // the process needs a moment to let go of its files, so the directories go after a grace period
+        new Timer("run-server-cleanup", true).schedule(new TimerTask() {
+            @Override
+            public void run() {
+                for (String server : servers) discardServer(server);
+            }
+        }, SHUTDOWN_GRACE_MS);
+    }
+
+    /**
+     * Removes what is left of a run server: its directory and the entry that remembers its port.
+     *
+     * @param server the server to discard
+     */
+    private void discardServer(String server) {
+        try {
+            ListenerAdapter.ServerName name = ListenerAdapter.ServerName.valueOf(server);
+            if (Main.getInstance().getServerHandler().doesInstanceExist(name)) {
+                System.out.println("Run server " + server + " is still up - leaving its files alone.");
+                return;
+            }
+            File directory = new File("./servers/" + server + "/");
+            if (directory.exists() && !delete(directory)) {
+                System.out.println("Could not remove the directory of " + server);
+                return;
+            }
+            // the port is free again, and a stale entry would keep it reserved for a server that is gone
+            YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
+            config.set("servers." + server, null);
+            Main.getInstance().getConfiguration().save();
+            System.out.println("Discarded run server " + server);
+        } catch (Exception e) {
+            System.out.println("Could not discard the run server " + server + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * @param folder the directory to remove, with everything in it
+     * @return whether it is gone
+     */
+    private static boolean delete(File folder) {
+        try (Stream<Path> paths = Files.walk(folder.toPath())) {
+            // deepest first, a directory can only go once it is empty
+            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    System.out.println("Could not delete " + path + ": " + e.getMessage());
+                }
+            });
+        } catch (IOException e) {
+            System.out.println("Could not walk " + folder + ": " + e.getMessage());
+            return false;
+        }
+        return !folder.exists();
     }
 
     /**

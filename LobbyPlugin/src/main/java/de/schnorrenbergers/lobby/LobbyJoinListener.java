@@ -33,6 +33,8 @@ public class LobbyJoinListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
+        // one lobby world, one spawn - anybody standing anywhere else got there by accident
+        LobbyWorld.place(event.getPlayer());
         // a tick later, so the message does not get lost above the server's own greeting
         Bukkit.getScheduler().runTaskLater(LobbyPlugin.getInstance(), () -> {
             EventAnnouncer.sendJoinMessage(event.getPlayer());

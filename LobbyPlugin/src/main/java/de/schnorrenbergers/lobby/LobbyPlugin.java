@@ -32,6 +32,7 @@ public final class LobbyPlugin extends JavaPlugin {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }//TODO: parkour
+        LobbyWorld.load(this);
         ServerConnector.register(this);
         new PlayerAdminHandler(this);
         new CheckpointListener();

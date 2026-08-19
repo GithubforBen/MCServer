@@ -4,6 +4,7 @@ import de.hems.api.ServerApi;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.event.EventService;
 import de.hems.paper.event.RunService;
+import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.EventData;
 import de.hems.types.event.RunData;
 import de.hems.types.event.UhcObjective;
@@ -38,6 +39,8 @@ public class RunTracker implements Listener {
     private static final long SYNC_TICKS = 20L * 5L;
     /** How long the server waits with nobody on it before it stops itself. */
     private static final long IDLE_SHUTDOWN_MS = 10L * 60L * 1000L;
+    /** How long a finished run is left standing before everyone is sent back to the lobby. */
+    private static final long RETURN_DELAY_TICKS = 20L * 15L;
 
     private final Plugin plugin;
 
@@ -199,6 +202,7 @@ public class RunTracker implements Listener {
             current.finish(RunData.State.FINISHED);
             broadcast(Component.text("Geschafft! Zeit: " + RunData.formatTicks(current.getElapsedTicks()),
                     NamedTextColor.GOLD));
+            returnToLobby();
         } else {
             StringBuilder left = new StringBuilder();
             for (UhcObjective open : current.getRemaining(required)) {
@@ -232,6 +236,23 @@ public class RunTracker implements Listener {
                 if (online != null) online.setGameMode(GameMode.SPECTATOR);
             }
         });
+        returnToLobby();
+    }
+
+    /**
+     * Sends everyone back to the lobby once the run is over.
+     * <p>
+     * Not straight away: the last thing that happened is worth a moment to look at, and the time needs to
+     * be readable before the screen changes. Without this players are simply left standing on a server
+     * that has nothing left for them.
+     */
+    private void returnToLobby() {
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                player.sendMessage(Component.text("Zurück in die Lobby ...", NamedTextColor.GRAY));
+                ServerConnector.connect(player, ListenerAdapter.ServerName.LOBBY);
+            }
+        }, RETURN_DELAY_TICKS);
     }
 
     /**
