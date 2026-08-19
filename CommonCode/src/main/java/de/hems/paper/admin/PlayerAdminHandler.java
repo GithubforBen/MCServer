@@ -83,7 +83,20 @@ public class PlayerAdminHandler {
             return collected;
         });
         ListenerAdapter.sendListeners(new RespondPlayersEvent(
-                request.getSender(), players == null ? new ArrayList<>() : players, request.getEventId()));
+                request.getSender(), players == null ? new ArrayList<>() : players,
+                currentTps(), request.getEventId()));
+    }
+
+    /**
+     * @return how well this server is keeping up, capped at the twenty ticks it can never beat
+     */
+    private static double currentTps() {
+        try {
+            double[] tps = Bukkit.getServer().getTPS();
+            return tps.length == 0 ? 20.0d : Math.min(20.0d, tps[0]);
+        } catch (RuntimeException e) {
+            return 20.0d;
+        }
     }
 
     /**

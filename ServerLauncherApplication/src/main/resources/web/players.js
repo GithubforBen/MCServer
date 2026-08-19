@@ -522,6 +522,17 @@
 
     /* ------------------------------------------------------------------ player panel */
 
+    /**
+     * Which state a player's row reports. Health is the one value on a player row that can actually demand
+     * attention, so it is what the stripe on the left edge shows.
+     */
+    function healthState(player) {
+        var share = player.maxHealth ? player.health / player.maxHealth : 1;
+        if (share <= 0.35) return 'alarm';
+        if (share <= 0.7) return 'caution';
+        return 'nominal';
+    }
+
     McAdmin.registerPanel('players', function (panel, module) {
         resetContainers();
         var listHost = el('div', {className: 'rows'});
@@ -576,25 +587,25 @@
                 if (player.op) badges.appendChild(el('span', {className: 'badge op', text: 'OP'}));
                 badges.appendChild(el('span', {className: 'badge', text: player.gameMode}));
 
-                var openButton = el('button', {text: 'Verwalten', type: 'button', className: 'small'});
-                openButton.addEventListener('click', function () {
-                    openPlayer(player);
-                });
-
-                listHost.appendChild(el('div', {className: 'row'}, [
-                    el('div', {className: 'grow'}, [
-                        el('div', {className: 'name', text: player.name}),
-                        el('div', {className: 'meta',
+                // the whole row opens the player - a button that says "manage" next to a row that does
+                // nothing else is one control too many. A real button keeps it reachable by keyboard.
+                var row = el('button', {type: 'button', className: 'row state-' + healthState(player)}, [
+                    el('span', {className: 'grow'}, [
+                        el('span', {className: 'name', text: player.name}),
+                        el('span', {className: 'meta',
                             text: player.server + ' · ' + player.world
                                 + ' · ' + player.x + '/' + player.y + '/' + player.z})
                     ]),
                     el('span', {className: 'status'}, [
                         el('span', {className: 'dot online'}),
-                        el('span', {text: Math.round(player.health) + '/' + Math.round(player.maxHealth) + ' HP'})
+                        el('span', {text: Math.round(player.health) + '/' + Math.round(player.maxHealth)})
                     ]),
-                    badges,
-                    el('div', {className: 'actions'}, [openButton])
-                ]));
+                    badges
+                ]);
+                row.addEventListener('click', function () {
+                    openPlayer(player);
+                });
+                listHost.appendChild(row);
             });
         }
 

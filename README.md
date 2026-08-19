@@ -284,6 +284,40 @@ announce-size: true        # sagt beim Öffnen, wie viele Unterstützer noch feh
 Das Plugin braucht ein Team-System und damit eine Netzwerkverbindung; es gehört zur Vorlage `SURVIVAL` und
 kann bei jedem anderen Paper-Server dazugewählt werden.
 
+## Aussehen der Website
+
+Die Oberfläche heißt intern „Kontrollraum“ und folgt einer einzigen Regel:
+**Farbe ist für Zustand reserviert.** Alle Bedienelemente — Buttons, Navigation, Auswahl — sind unbunt
+(Knochenweiß auf Graphit). Grün, Bernstein und Rot kommen nirgends sonst vor; wer auf der Seite Farbe
+sieht, sieht einen Zustand. Vorher war Blau reine Dekoration und hat mit den Statusfarben um
+Aufmerksamkeit konkurriert.
+
+Die Neutrals haben einen leichten Grünstich (`#0F1210` … `#2A322C`) — Gerätelack statt des Blaugraus, das
+jedes dunkle Interface erbt. Blöcke trennen sich durch Helligkeit, nicht durch Rahmen. Ein einziger
+Radius: 2px.
+
+**Schrift, mit einer Regel:** was ein Mensch formuliert hat, steht in Archivo; was eine Maschine gemessen
+hat, in IBM Plex Mono. Koordinaten, UUIDs, TPS und Logzeilen sind Messwerte und sehen auch so aus. Archivo
+ist ein Variable Font mit Breitenachse — aus einer Datei kommen die weit gesperrten Gerätebeschriftungen
+und die stark verdichteten großen Zahlen.
+
+Beide Schriften liegen als WOFF2 unter `web/fonts/` im Jar (~240 KB, SIL OFL, Lizenztexte daneben). Google
+Fonts scheiden aus: die CSP erlaubt nichts von außen, sie hat dafür jetzt `font-src 'self'`.
+
+Die Navigation ist eine linke Bank statt einer Kopfzeile — die Modulliste wächst mit jedem Modul, und
+waagerecht läuft sie irgendwann aus dem Bild. Darüber steht auf jeder Seite ein Statusstreifen mit
+Spielern, laufenden Servern und dem langsamsten Server. Die TPS kommen dabei echt vom jeweiligen
+Paper-Server, huckepack auf der Spielerabfrage.
+
+Der Name oben links ist konfigurierbar:
+
+```yaml
+web:
+  brand: MCServer     # steht in der Bank und auf der Login-Karte
+```
+
+Nur ein dunkler Modus, bewusst — ein Werkzeug, das man nachts neben dem Server offen hat.
+
 ## Admin-Ablage
 
 Im Spieler-Panel der Website lassen sich Items **per Drag & Drop** verschieben: innerhalb eines Inventars

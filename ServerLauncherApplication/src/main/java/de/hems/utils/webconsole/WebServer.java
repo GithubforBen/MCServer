@@ -254,7 +254,7 @@ public class WebServer {
         ctx.header("Referrer-Policy", "no-referrer");
         ctx.header("Content-Security-Policy",
                 "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "
-                        + "connect-src 'self'; frame-ancestors 'none'");
+                        + "font-src 'self'; connect-src 'self'; frame-ancestors 'none'");
         ctx.header("Cache-Control", "no-store");
     }
 

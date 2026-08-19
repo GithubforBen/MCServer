@@ -16,11 +16,22 @@ public class RespondPlayersEvent extends RespondDataEvent implements Event, Seri
 
     private static final long serialVersionUID = 3102L;
 
+    /** How well the answering server is keeping up, so the overview does not need a second request. */
+    private double tps;
+
     public RespondPlayersEvent(ListenerAdapter.ServerName receiver, ArrayList<PlayerSnapshot> players,
-                               UUID requestId) {
+                               double tps, UUID requestId) {
         super(receiver, players, requestId);
+        this.tps = tps;
     }
 
     public RespondPlayersEvent() {
+    }
+
+    /**
+     * @return the ticks per second of the answering server
+     */
+    public double getTps() {
+        return tps;
     }
 }

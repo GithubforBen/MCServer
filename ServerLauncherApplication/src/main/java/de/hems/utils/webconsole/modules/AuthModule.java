@@ -98,6 +98,7 @@ public class AuthModule implements WebModule {
         if (ctx.session() == null) {
             ctx.ok(new JSONObject()
                     .put("authenticated", false)
+                    .put("brand", brandOf(ctx.server()))
                     .put("graceSeconds", ctx.server().getAuthService().getGraceSeconds()));
             return;
         }
@@ -123,6 +124,17 @@ public class AuthModule implements WebModule {
     }
 
     /**
+     * The name shown at the head of the navigation. Configurable, because a network usually has a name of
+     * its own and a placeholder is the one thing on the page nobody else can fix.
+     *
+     * @param server the server holding the config
+     * @return the name to show
+     */
+    private static String brandOf(WebServer server) {
+        return server.getConfiguration().getConfig().getString("web.brand", "MCServer");
+    }
+
+    /**
      * @param session the session to describe
      * @param server  the server the session belongs to
      * @return what the frontend needs to know about a login
@@ -130,6 +142,7 @@ public class AuthModule implements WebModule {
     private static JSONObject describe(Session session, WebServer server) {
         return new JSONObject()
                 .put("authenticated", true)
+                .put("brand", brandOf(server))
                 .put("username", session.getUsername())
                 .put("csrfToken", session.getCsrfToken())
                 .put("expiresIn", (session.getExpiresAt() - System.currentTimeMillis()) / 1000L)

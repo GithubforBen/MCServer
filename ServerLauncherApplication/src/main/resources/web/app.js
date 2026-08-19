@@ -54,9 +54,20 @@
 
     var toastTimer = null;
 
+    /**
+     * Strips the leading marks the server puts on its messages. They exist because the same strings are
+     * shown in the game chat, where a tick or a cross is the only formatting there is; on a page that
+     * already colours a message by its outcome they are noise.
+     */
+    function plain(message) {
+        return String(message === undefined || message === null ? '' : message)
+            .replace(/^[\u2713\u2714\u274c\u2192\u26a0\ufe0f\s]+/, '')
+            .trim();
+    }
+
     function toast(message, kind) {
         var node = $('toast');
-        node.textContent = message;
+        node.textContent = plain(message);
         node.className = 'toast ' + (kind || '');
         if (toastTimer) clearTimeout(toastTimer);
         toastTimer = setTimeout(function () {
@@ -123,7 +134,7 @@
 
     function setLoginMessage(text, kind) {
         var node = $('login-message');
-        node.textContent = text;
+        node.textContent = plain(text);
         node.className = 'message ' + (kind || '');
         node.classList.toggle('hidden', !text);
     }
@@ -202,8 +213,23 @@
     function showApp() {
         $('login-view').classList.add('hidden');
         $('app-view').classList.remove('hidden');
-        $('current-user').textContent = state.username ? 'Angemeldet als ' + state.username : '';
+        $('current-user').textContent = state.username || '';
         loadModules();
+    }
+
+    /**
+     * Writes the network's own name into the head of the bank and onto the login card. It is configurable
+     * because a placeholder is the one thing on the page nobody but the operator can fix.
+     */
+    function applyBrand(name) {
+        if (!name) return;
+        state.brand = name;
+        var brand = $('brand');
+        clear(brand);
+        brand.appendChild(document.createTextNode(name + ' '));
+        brand.appendChild(el('em', {text: '/ Admin'}));
+        $('login-brand').textContent = name;
+        document.title = name + ' Administration';
     }
 
     function loadModules() {
@@ -249,9 +275,81 @@
         stopRefresh();
         var panel = $('panel');
         clear(panel);
+        panel.appendChild(buildStrip());
         var module = findModule(id) || {id: id, title: id, description: ''};
         var renderer = panels[id] || renderUnknown;
         renderer(panel, module);
+    }
+
+    /* ------------------------------------------------------------------ status strip */
+
+    /**
+     * The three readings that belong above every panel: who is playing, what is running and how well the
+     * worst server is keeping up.
+     *
+     * Each tally fills itself and survives its source being unreachable - a launcher that cannot answer
+     * leaves a dash rather than taking the whole page with it.
+     */
+    function buildStrip() {
+        var players = tally('Spieler online');
+        var servers = tally('Server laufen');
+        var tps = tally('Langsamster Server');
+        var strip = el('div', {className: 'strip'}, [players.node, servers.node, tps.node]);
+
+        api('/api/players').then(function (data) {
+            var list = data.players || [];
+            players.set(String(list.length), list.length ? 'nominal' : '');
+
+            var loads = data.servers || [];
+            if (!loads.length) {
+                tps.set('–', '');
+                return;
+            }
+            var worst = loads.reduce(function (a, b) {
+                return b.tps < a.tps ? b : a;
+            });
+            // twenty ticks is the ceiling; below eighteen a server is visibly behind
+            tps.set(worst.tps.toFixed(1), worst.tps >= 18 ? 'nominal' : (worst.tps >= 10 ? 'caution' : 'alarm'));
+            tps.label(worst.name.toLowerCase());
+        }).catch(function () {
+            players.set('–', '');
+            tps.set('–', '');
+        });
+
+        api('/api/servers').then(function (data) {
+            var all = (data.servers || []);
+            var up = all.filter(function (server) {
+                return server.online;
+            }).length;
+            servers.set(String(up), up === all.length ? 'nominal' : 'caution', ' / ' + all.length);
+        }).catch(function () {
+            servers.set('–', '');
+        });
+
+        return strip;
+    }
+
+    /**
+     * One reading of the status strip.
+     *
+     * @param labelText what it counts
+     */
+    function tally(labelText) {
+        var num = el('span', {className: 'tally-num', text: '–'});
+        var lab = el('span', {className: 'tally-lab', text: labelText});
+        var node = el('div', {className: 'tally'}, [num, lab]);
+        return {
+            node: node,
+            set: function (value, state, suffix) {
+                clear(num);
+                num.appendChild(document.createTextNode(value));
+                if (suffix) num.appendChild(el('small', {text: suffix}));
+                node.className = 'tally' + (state ? ' state-' + state : '');
+            },
+            label: function (text) {
+                lab.textContent = labelText + ' · ' + text;
+            }
+        };
     }
 
     /**
@@ -405,7 +503,8 @@
                 actions.appendChild(startButton);
             }
 
-            return el('div', {className: 'row'}, [
+            return el('div', {className: 'row state-' + (server.online ? 'nominal'
+                    : (server.starting ? 'caution' : 'alarm'))}, [
                 el('div', {className: 'grow'}, [
                     el('div', {className: 'name', text: server.name}),
                     el('div', {className: 'meta', text: meta.join(' · ')})
@@ -704,6 +803,7 @@
 
         api('/api/session', {allowUnauthorized: true}).then(function (data) {
             state.graceSeconds = data.graceSeconds || state.graceSeconds;
+            applyBrand(data.brand);
             if (data.authenticated) {
                 state.csrf = data.csrfToken;
                 state.username = data.username;

@@ -7,6 +7,7 @@ import de.hems.communication.events.admin.RequestInventoryEvent;
 import de.hems.communication.events.admin.RequestMaterialsEvent;
 import de.hems.communication.events.admin.RequestPlayerActionEvent;
 import de.hems.communication.events.admin.RequestPlayersEvent;
+import de.hems.communication.events.admin.RespondPlayersEvent;
 import de.hems.communication.events.admin.RespondActionEvent;
 import de.hems.communication.events.admin.RespondCoreProtectEvent;
 import de.hems.communication.events.types.RespondDataEvent;
@@ -17,6 +18,7 @@ import de.hems.types.admin.PlayerSnapshot;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,41 +52,72 @@ public final class AdminNetwork {
     }
 
     /**
+     * Asks every server who is on it and how well it is running.
+     * <p>
+     * One broadcast answers both questions, because the servers that report their players are exactly the
+     * ones whose load is worth showing - a server that is still booting or already gone simply does not
+     * answer and is correctly absent from the overview.
+     *
+     * @return the players of the whole network and the servers that reported them
+     */
+    public static Network network() throws Exception {
+        List<PlayerSnapshot> players = new ArrayList<>();
+        List<ServerLoad> servers = new ArrayList<>();
+        RequestPlayersEvent request = new RequestPlayersEvent();
+        ListenerAdapter.sendListeners(request);
+        for (RespondDataEvent response : ListenerAdapter.waitForEvents(request.getEventId(), COLLECT_WINDOW)) {
+            int count = 0;
+            if (response.getData() instanceof List<?> list) {
+                for (Object entry : list) {
+                    if (!(entry instanceof PlayerSnapshot snapshot)) continue;
+                    players.add(snapshot);
+                    count++;
+                }
+            }
+            double tps = response instanceof RespondPlayersEvent reported ? reported.getTps() : 20.0d;
+            servers.add(new ServerLoad(String.valueOf(response.getSender()), tps, count));
+        }
+        servers.sort(Comparator.comparing(ServerLoad::name));
+        return new Network(players, servers);
+    }
+
+    /**
      * Asks every server who is online there.
      *
      * @return the players of the whole network
      */
     public static List<PlayerSnapshot> players() throws Exception {
-        List<PlayerSnapshot> players = new ArrayList<>();
-        RequestPlayersEvent request = new RequestPlayersEvent();
-        ListenerAdapter.sendListeners(request);
-        for (RespondDataEvent response : ListenerAdapter.waitForEvents(request.getEventId(), COLLECT_WINDOW)) {
-            if (!(response.getData() instanceof List<?> list)) continue;
-            for (Object entry : list) {
-                if (entry instanceof PlayerSnapshot snapshot) players.add(snapshot);
-            }
-        }
-        return players;
+        return network().players();
     }
 
     /**
      * Which servers are actually on the bus right now.
-     * <p>
-     * Derived from who answers a player request rather than from the list of processes the launcher
-     * started, so a server that is still booting or has already died does not show up as available.
      *
      * @return the names of the servers that answered
      */
     public static List<String> respondingServers() throws Exception {
-        List<String> servers = new ArrayList<>();
-        RequestPlayersEvent request = new RequestPlayersEvent();
-        ListenerAdapter.sendListeners(request);
-        for (RespondDataEvent response : ListenerAdapter.waitForEvents(request.getEventId(), COLLECT_WINDOW)) {
-            String sender = String.valueOf(response.getSender());
-            if (!servers.contains(sender)) servers.add(sender);
-        }
-        java.util.Collections.sort(servers);
-        return servers;
+        List<String> names = new ArrayList<>();
+        for (ServerLoad server : network().servers()) names.add(server.name());
+        return names;
+    }
+
+    /**
+     * What one server reported about itself.
+     *
+     * @param name    the server
+     * @param tps     how well it is keeping up
+     * @param players how many players are on it
+     */
+    public record ServerLoad(String name, double tps, int players) {
+    }
+
+    /**
+     * The state of the whole network in one answer.
+     *
+     * @param players every player, across all servers
+     * @param servers the servers that answered
+     */
+    public record Network(List<PlayerSnapshot> players, List<ServerLoad> servers) {
     }
 
     /**

@@ -62,12 +62,21 @@ public class PlayerModule implements WebModule {
             return;
         }
         Set<UUID> paying = payingPlayers(ctx);
+        AdminNetwork.Network network = AdminNetwork.network();
         JSONArray array = new JSONArray();
-        for (PlayerSnapshot player : AdminNetwork.players()) {
+        for (PlayerSnapshot player : network.players()) {
             player.setPaying(player.getUuid() != null && paying.contains(player.getUuid()));
             array.put(toJson(player));
         }
-        ctx.ok("players", array);
+        // the load of every server rides along, so the overview needs no second round trip
+        JSONArray servers = new JSONArray();
+        for (AdminNetwork.ServerLoad server : network.servers()) {
+            servers.put(new JSONObject()
+                    .put("name", server.name())
+                    .put("tps", Math.round(server.tps() * 10.0d) / 10.0d)
+                    .put("players", server.players()));
+        }
+        ctx.ok(new JSONObject().put("players", array).put("servers", servers));
     }
 
     private void detail(ApiContext ctx) throws Exception {
