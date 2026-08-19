@@ -8,6 +8,10 @@ import de.hems.types.MissingConfigurationException;
 import de.hems.types.ServerTemplate;
 import de.hems.utils.Configuration;
 import de.hems.utils.admin.StashStore;
+import de.hems.utils.event.AwardStore;
+import de.hems.utils.event.EventSettlement;
+import de.hems.utils.event.EventStore;
+import de.hems.utils.event.RunStore;
 import de.hems.utils.team.BackpackStore;
 import de.hems.utils.team.TeamStore;
 import de.hems.utils.bot.adminabuse.*;
@@ -49,6 +53,9 @@ public class Main {
     private TeamStore teamStore;
     private BackpackStore backpackStore;
     private StashStore stashStore;
+    private EventStore eventStore;
+    private RunStore runStore;
+    private AwardStore awardStore;
     private JDA jda;
     private WebServer webServer;
     //TODO: add a way to auto add ops
@@ -81,6 +88,10 @@ public class Main {
         new TeamEvents(teamStore, backpackStore);
         stashStore = new StashStore();
         new StashEvents(stashStore);
+        eventStore = new EventStore();
+        runStore = new RunStore();
+        awardStore = new AwardStore();
+        new EventEvents(eventStore, runStore, awardStore, new EventSettlement(eventStore, runStore, awardStore));
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         new StartServerEvent();
@@ -209,6 +220,18 @@ public class Main {
 
     public BackpackStore getBackpackStore() {
         return backpackStore;
+    }
+
+    public EventStore getEventStore() {
+        return eventStore;
+    }
+
+    public RunStore getRunStore() {
+        return runStore;
+    }
+
+    public AwardStore getAwardStore() {
+        return awardStore;
     }
 
     public StashStore getStashStore() {
