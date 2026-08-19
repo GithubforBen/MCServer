@@ -1,15 +1,15 @@
 package de.schnorrenbergers.survival.commands;
 
+import de.hems.paper.admin.AdminStash;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,96 +17,122 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * {@code /admin} - the admin stash and the money tools.
+ * <p>
+ * Called on its own it opens the stash: the chest the web interface drops items into when an admin pulls
+ * something out of a player's inventory there.
+ */
 public class AdminCommand implements CommandExecutor, TabCompleter {
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        if (args.length == 0 || !sender.isOp()) {
-            sender.sendMessage(NamedTextColor.RED + "You are not allowed to use this command");
-            return false;
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
+                             @NotNull String label, @NotNull String @NotNull [] args) {
+        if (!sender.isOp()) {
+            sender.sendMessage(ChatColor.RED + "❌ Dieser Befehl ist nur für Admins.");
+            return true;
         }
-        switch (args[0]) {
-            case "money": {
-                if (args.length < 2) {
-                    sendUsage(sender);
-                    return false;
-                }
-                UUID uuid;
-                Player player = Bukkit.getPlayer(args[2]);
-                if (player == null) {
-                    OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
-                    if (offlinePlayer == null) {
-                        sender.sendMessage(NamedTextColor.RED + "Player not found");
-                    } else {
-                        uuid = offlinePlayer.getUniqueId();
-                    }
-                    return false;
-                } else {
-                    uuid = player.getUniqueId();
-                }
-                int amount = 0;
-                try {
-                    amount = Integer.parseInt(args[3]);
-                } catch (NumberFormatException e) {
-                    if (!args[1].toLowerCase().equals("query")) {
-                        sender.sendMessage(NamedTextColor.RED + "Amount must be a number");
-                        return false;
-                    }
-                }
-                switch (args[1].toLowerCase()) {
-                    case "add": {
-                        sender.sendMessage(NamedTextColor.GREEN + "Added " + amount + " to " + args[2]);
-                        MoneyHandler.addMoney(amount, uuid);
-                        break;
-                    }
-                    case "remove": {
-                        sender.sendMessage(NamedTextColor.GREEN + "Removed " + amount + " from " + args[2]);
-                        MoneyHandler.removeMoney(amount, uuid);
-                        break;
-                    }
-                    case "query": {
-                        sender.sendMessage(MoneyHandler.getMoney(uuid) + "$");
-                        break;
-                    }
-                    default: {
-                        sendUsage(sender);
-                        return false;
-                    }
-                }
+        if (args.length == 0 || args[0].equalsIgnoreCase("stash") || args[0].equalsIgnoreCase("ablage")) {
+            openStash(sender);
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("money")) {
+            money(sender, args);
+            return true;
+        }
+        sendUsage(sender);
+        return true;
+    }
+
+    /**
+     * Opens the shared admin stash.
+     *
+     * @param sender who asked
+     */
+    private void openStash(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Die Ablage kann nur ein Spieler öffnen.");
+            return;
+        }
+        AdminStash stash = AdminStash.getInstance();
+        if (stash == null) {
+            player.sendMessage(ChatColor.RED + "❌ Die Ablage ist auf diesem Server nicht eingerichtet.");
+            return;
+        }
+        stash.open(player);
+    }
+
+    /**
+     * Adds, removes or reads a player's money.
+     *
+     * @param sender who asked
+     * @param args   the whole command, starting at {@code money}
+     */
+    private void money(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sendUsage(sender);
+            return;
+        }
+        String operation = args[1].toLowerCase();
+        String targetName = args[2];
+
+        UUID uuid;
+        Player online = Bukkit.getPlayerExact(targetName);
+        if (online != null) {
+            uuid = online.getUniqueId();
+        } else {
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(targetName);
+            if (offline.getUniqueId() == null) {
+                sender.sendMessage(ChatColor.RED + "❌ Spieler nicht gefunden.");
+                return;
             }
-            default: {
-                sendUsage(sender);
-                return false;
+            uuid = offline.getUniqueId();
+        }
+
+        if (operation.equals("query")) {
+            sender.sendMessage(MoneyHandler.getMoney(uuid) + "$");
+            return;
+        }
+        if (args.length < 4) {
+            sendUsage(sender);
+            return;
+        }
+        int amount;
+        try {
+            amount = Integer.parseInt(args[3]);
+        } catch (NumberFormatException e) {
+            sender.sendMessage(ChatColor.RED + "❌ Der Betrag muss eine Zahl sein.");
+            return;
+        }
+        switch (operation) {
+            case "add" -> {
+                MoneyHandler.addMoney(amount, uuid);
+                sender.sendMessage(ChatColor.GREEN + "✓ " + amount + " zu " + targetName + " hinzugefügt.");
             }
+            case "remove" -> {
+                MoneyHandler.removeMoney(amount, uuid);
+                sender.sendMessage(ChatColor.GREEN + "✓ " + amount + " von " + targetName + " abgezogen.");
+            }
+            default -> sendUsage(sender);
         }
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("/admin money add <player> <amount>\n" +
-                "/admin money remove <player> <amount>\n" +
-                "/admin money query <player>");
+        sender.sendMessage(ChatColor.GOLD + "/admin" + ChatColor.GRAY + " öffnet die Admin-Ablage");
+        sender.sendMessage(ChatColor.GRAY + "/admin money add|remove <spieler> <betrag>");
+        sender.sendMessage(ChatColor.GRAY + "/admin money query <spieler>");
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        if (args.length == 0) {
-            return List.of("money");
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                                @NotNull String label, @NotNull String @NotNull [] args) {
+        if (!sender.isOp()) return List.of();
+        if (args.length <= 1) return List.of("stash", "money");
+        if (args.length == 2 && args[0].equalsIgnoreCase("money")) {
+            return List.of("add", "remove", "query");
         }
-        if (args.length == 1) {
-            switch (args[0].toLowerCase()) {
-                case "money":
-                    return List.of("add", "remove", "query");
-                default:
-                    return List.of();
-            }
-        }
-        if (args.length == 2) {
-            switch (args[0].toLowerCase()) {
-                case "money":
-                    return Arrays.stream(Bukkit.getOfflinePlayers()).map(OfflinePlayer::getName).toList();
-                default:
-                    return List.of();
-            }
+        if (args.length == 3 && args[0].equalsIgnoreCase("money")) {
+            return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         }
         return List.of();
     }

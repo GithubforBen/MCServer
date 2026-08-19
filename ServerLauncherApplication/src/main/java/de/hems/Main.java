@@ -7,6 +7,7 @@ import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
 import de.hems.types.ServerTemplate;
 import de.hems.utils.Configuration;
+import de.hems.utils.admin.StashStore;
 import de.hems.utils.team.BackpackStore;
 import de.hems.utils.team.TeamStore;
 import de.hems.utils.bot.adminabuse.*;
@@ -18,6 +19,7 @@ import de.hems.utils.bot.verification.OnAccountVerifyCommand;
 import de.hems.utils.server.ServerHandler;
 import de.hems.utils.types.RunningMode;
 import de.hems.utils.webconsole.WebServer;
+import de.hems.utils.webconsole.modules.StashModule;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -46,6 +48,7 @@ public class Main {
     private ServerHandler serverHandler;
     private TeamStore teamStore;
     private BackpackStore backpackStore;
+    private StashStore stashStore;
     private JDA jda;
     private WebServer webServer;
     //TODO: add a way to auto add ops
@@ -76,6 +79,8 @@ public class Main {
         teamStore = new TeamStore();
         backpackStore = new BackpackStore();
         new TeamEvents(teamStore, backpackStore);
+        stashStore = new StashStore();
+        new StashEvents(stashStore);
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         new StartServerEvent();
@@ -127,7 +132,7 @@ public class Main {
             return;
         }
         try {
-            webServer = new WebServer();
+            webServer = new WebServer(configuration, new StashModule(stashStore));
         } catch (RuntimeException e) {
             System.out.println("Could not start the admin website: " + e.getMessage());
         }
@@ -204,6 +209,10 @@ public class Main {
 
     public BackpackStore getBackpackStore() {
         return backpackStore;
+    }
+
+    public StashStore getStashStore() {
+        return stashStore;
     }
 
     public String getIp() throws IOException {

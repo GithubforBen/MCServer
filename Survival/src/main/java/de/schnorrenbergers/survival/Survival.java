@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.admin.AdminStash;
 import de.hems.paper.admin.PlayerAdminHandler;
 import de.hems.paper.commands.ServerManagerCommand;
 import de.hems.paper.team.TeamService;
@@ -60,6 +61,7 @@ public final class Survival extends JavaPlugin {
         }
         new RequestPlayerMoneyEventHandler();
         new PlayerAdminHandler(this);
+        AdminStash.init(this);
         TeamService.init(this);
         new TeamSyncListener();
         registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
@@ -96,6 +98,7 @@ public final class Survival extends JavaPlugin {
     @Override
     public void onDisable() {
         if (chunkLimiter != null) chunkLimiter.stop();
+        if (AdminStash.getInstance() != null) AdminStash.getInstance().saveOnShutdown();
         ShopkeeperManager.save();
         moneyConfig.save();
         teamConfig.save();

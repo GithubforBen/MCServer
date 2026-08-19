@@ -50,9 +50,10 @@
      * @param onClick what to do when it is clicked
      * @param label   an optional label for special slots like armour
      */
-    function renderSlot(item, slot, onClick, label) {
+    function renderSlot(item, slot, onClick, label, containerKey) {
         var node = el('button', {type: 'button', className: 'slot'});
         node.dataset.slot = String(slot);
+        if (containerKey) makeDraggable(node, containerKey, slot, item);
         if (!item) {
             node.classList.add('empty');
             if (label) node.appendChild(el('span', {className: 'slot-label', text: label}));
@@ -80,14 +81,172 @@
     /**
      * Builds a row of slots.
      */
-    function renderRow(items, from, count, onClick, labels) {
+    function renderRow(items, from, count, onClick, labels, containerKey) {
         var row = el('div', {className: 'slot-row'});
         for (var i = 0; i < count; i++) {
             var slot = from + i;
             row.appendChild(renderSlot(items[slot] || null, slot, onClick,
-                labels ? labels[i] : null));
+                labels ? labels[i] : null, containerKey));
         }
         return row;
+    }
+
+    /* ------------------------------------------------------------------ drag and drop */
+
+    /*
+     * Every open container registers itself here, which is what lets an item be dragged from a player's
+     * inventory into the admin stash: the drop only has to look the source container up by its key.
+     */
+    var containers = {};
+
+    function resetContainers() {
+        containers = {};
+    }
+
+    function registerContainer(container) {
+        containers[container.key] = container;
+    }
+
+    /** The payload of a drag, kept next to the DOM one because dataTransfer is unreadable during dragover. */
+    var dragging = null;
+
+    /**
+     * Makes a slot draggable when it holds something, and a drop target either way.
+     */
+    function makeDraggable(node, containerKey, slot, item) {
+        if (item) {
+            node.draggable = true;
+            node.addEventListener('dragstart', function (event) {
+                dragging = {key: containerKey, slot: slot};
+                event.dataTransfer.effectAllowed = 'move';
+                // firefox refuses to start a drag without any data set
+                event.dataTransfer.setData('text/plain', containerKey + ':' + slot);
+                node.classList.add('dragging');
+            });
+            node.addEventListener('dragend', function () {
+                dragging = null;
+                node.classList.remove('dragging');
+                document.querySelectorAll('.slot.drop-target').forEach(function (other) {
+                    other.classList.remove('drop-target');
+                });
+            });
+        }
+        node.addEventListener('dragover', function (event) {
+            if (!dragging) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            node.classList.add('drop-target');
+        });
+        node.addEventListener('dragleave', function () {
+            node.classList.remove('drop-target');
+        });
+        node.addEventListener('drop', function (event) {
+            event.preventDefault();
+            node.classList.remove('drop-target');
+            if (!dragging) return;
+            moveItem(dragging, {key: containerKey, slot: slot});
+            dragging = null;
+        });
+    }
+
+    /**
+     * Moves an item from one slot to another, swapping with whatever is already there. Both containers are
+     * only changed in the browser - nothing is written until the save bar is used.
+     */
+    function moveItem(from, to) {
+        var source = containers[from.key];
+        var target = containers[to.key];
+        if (!source || !target) return;
+        if (from.key === to.key && from.slot === to.slot) return;
+
+        var moved = source.items[from.slot];
+        if (!moved) return;
+        var displaced = target.items[to.slot] || null;
+
+        // a slot that does not exist in the target - armour into a chest, say - would silently vanish
+        if (to.slot >= target.size) {
+            toast('Dieser Slot gehört nicht zum Ziel.', 'error');
+            return;
+        }
+
+        target.items[to.slot] = Object.assign({}, moved, {slot: to.slot});
+        source.items[from.slot] = displaced ? Object.assign({}, displaced, {slot: from.slot}) : null;
+
+        source.dirty = true;
+        target.dirty = true;
+        source.redraw();
+        if (target !== source) target.redraw();
+        updateSaveBar();
+    }
+
+    /* ------------------------------------------------------------------ saving */
+
+    var saveBar = null;
+
+    function setSaveBar(node) {
+        saveBar = node;
+        updateSaveBar();
+    }
+
+    function dirtyContainers() {
+        return Object.keys(containers).map(function (key) {
+            return containers[key];
+        }).filter(function (container) {
+            return container.dirty;
+        });
+    }
+
+    function updateSaveBar() {
+        if (!saveBar) return;
+        var dirty = dirtyContainers();
+        saveBar.classList.toggle('hidden', dirty.length === 0);
+        var label = saveBar.querySelector('.save-label');
+        if (label) {
+            label.textContent = dirty.length === 0 ? '' : 'Ungespeichert: '
+                + dirty.map(function (container) { return container.title; }).join(', ');
+        }
+    }
+
+    /**
+     * Writes every changed container, one after another.
+     *
+     * There is no way to make this one operation: the player inventory lives inside a game server and the
+     * stash on the launcher, so they are two different writes. Player inventories go first - if one of them
+     * is refused nothing has been written anywhere yet and the browser still holds every change, so the
+     * admin can simply try again. Doing it the other way round could leave an item in the stash *and* on
+     * the player, which is the one outcome worth avoiding.
+     */
+    function saveAll(button) {
+        var pending = dirtyContainers().sort(function (a, b) {
+            return (a.kind === 'stash' ? 1 : 0) - (b.kind === 'stash' ? 1 : 0);
+        });
+        if (!pending.length) return;
+        button.disabled = true;
+
+        function step(index) {
+            if (index >= pending.length) {
+                button.disabled = false;
+                toast('Alles gespeichert.', 'ok');
+                updateSaveBar();
+                return;
+            }
+            var container = pending[index];
+            container.save().then(function (message) {
+                container.dirty = false;
+                container.redraw();
+                updateSaveBar();
+                toast(message, 'ok');
+                step(index + 1);
+            }).catch(function (error) {
+                button.disabled = false;
+                updateSaveBar();
+                var left = pending.slice(index).map(function (c) { return c.title; }).join(', ');
+                toast(container.title + ': ' + error.message
+                    + ' - noch offen: ' + left + '. Die Änderungen sind noch im Browser.', 'error');
+            });
+        }
+
+        step(0);
     }
 
     /* ------------------------------------------------------------------ item editor */
@@ -176,19 +335,33 @@
      * @param uuid      whose container it is
      */
     function renderContainer(host, inventory, uuid) {
-        var state = {items: [], dirty: false, size: inventory.size};
-        for (var i = 0; i < inventory.size; i++) state.items[i] = null;
+        var key = 'player:' + uuid + ':' + inventory.kind + ':' + (inventory.containerId || '');
+        var items = [];
+        for (var i = 0; i < inventory.size; i++) items[i] = null;
         inventory.items.forEach(function (item) {
-            if (item.slot >= 0 && item.slot < inventory.size) state.items[item.slot] = item;
+            if (item.slot >= 0 && item.slot < inventory.size) items[item.slot] = item;
         });
 
         var grid = el('div', {className: 'inventory'});
         var editorHost = el('div');
-        var saveButton = el('button', {text: 'Speichern', type: 'button'});
-        var status = el('span', {className: 'muted', text: ''});
 
-        function onSlotClick(slot, item) {
-            openSlotEditor(editorHost, slot, state.items[slot], state, redraw);
+        var container = {
+            key: key,
+            title: inventory.title + ' von ' + inventory.playerName,
+            kind: inventory.kind,
+            size: inventory.size,
+            items: items,
+            dirty: false,
+            redraw: redraw,
+            save: save
+        };
+        registerContainer(container);
+
+        function onSlotClick(slot) {
+            openSlotEditor(editorHost, slot, container.items[slot], container, function () {
+                redraw();
+                updateSaveBar();
+            });
         }
 
         function redraw() {
@@ -196,62 +369,161 @@
             if (inventory.kind === 'INVENTORY') {
                 // the layout minecraft itself uses: storage on top, hotbar below, gear to the side
                 grid.appendChild(el('p', {className: 'grid-caption', text: 'Inventar'}));
-                grid.appendChild(renderRow(state.items, 9, 9, onSlotClick));
-                grid.appendChild(renderRow(state.items, 18, 9, onSlotClick));
-                grid.appendChild(renderRow(state.items, 27, 9, onSlotClick));
+                grid.appendChild(renderRow(container.items, 9, 9, onSlotClick, null, key));
+                grid.appendChild(renderRow(container.items, 18, 9, onSlotClick, null, key));
+                grid.appendChild(renderRow(container.items, 27, 9, onSlotClick, null, key));
                 grid.appendChild(el('p', {className: 'grid-caption', text: 'Hotbar'}));
-                grid.appendChild(renderRow(state.items, 0, 9, onSlotClick));
+                grid.appendChild(renderRow(container.items, 0, 9, onSlotClick, null, key));
                 grid.appendChild(el('p', {className: 'grid-caption', text: 'Rüstung & Nebenhand'}));
-                grid.appendChild(renderRow(state.items, 36, 4, onSlotClick,
-                    ['Schuhe', 'Hose', 'Brust', 'Helm']));
-                grid.appendChild(renderRow(state.items, 40, 1, onSlotClick, ['Nebenhand']));
+                grid.appendChild(renderRow(container.items, 36, 4, onSlotClick,
+                    ['Schuhe', 'Hose', 'Brust', 'Helm'], key));
+                grid.appendChild(renderRow(container.items, 40, 1, onSlotClick, ['Nebenhand'], key));
             } else {
                 var rows = Math.ceil(inventory.size / 9);
                 for (var r = 0; r < rows; r++) {
-                    grid.appendChild(renderRow(state.items, r * 9,
-                        Math.min(9, inventory.size - r * 9), onSlotClick));
+                    grid.appendChild(renderRow(container.items, r * 9,
+                        Math.min(9, inventory.size - r * 9), onSlotClick, null, key));
                 }
             }
-            status.textContent = state.dirty ? 'Ungespeicherte Änderungen' : '';
-            saveButton.disabled = !state.dirty;
         }
 
-        saveButton.addEventListener('click', function () {
+        /**
+         * Sends this container back to the game server the player is on.
+         */
+        function save() {
             var payload = {
                 kind: inventory.kind,
                 containerId: inventory.containerId,
-                size: state.size,
-                items: state.items.filter(Boolean).map(function (item) {
+                size: container.size,
+                items: container.items.filter(Boolean).map(function (item, index) {
+                    return item;
+                }).map(function (item) {
                     return {slot: item.slot, material: item.material, amount: item.amount, raw: item.raw};
                 })
             };
-            saveButton.disabled = true;
-            api('/api/players/' + encodeURIComponent(uuid) + '/inventory',
-                {method: 'POST', body: payload}).then(function (data) {
-                toast(data.message, 'ok');
-                state.dirty = false;
-                redraw();
-            }).catch(function (error) {
-                toast(error.message, 'error');
-                saveButton.disabled = false;
+            // the slot each item sits in is the array index, not whatever it carried when it was read
+            payload.items = [];
+            container.items.forEach(function (item, slot) {
+                if (!item) return;
+                payload.items.push({slot: slot, material: item.material, amount: item.amount, raw: item.raw});
             });
-        });
+            return api('/api/players/' + encodeURIComponent(uuid) + '/inventory',
+                {method: 'POST', body: payload}).then(function (data) {
+                return data.message;
+            });
+        }
 
         clear(host);
         host.appendChild(el('div', {className: 'container-head'}, [
             el('h3', {text: inventory.title}),
             el('span', {className: 'spacer'}),
-            status,
-            saveButton
+            el('span', {className: 'muted hint-drag', text: 'Items lassen sich ziehen'})
         ]));
         host.appendChild(grid);
         host.appendChild(editorHost);
         redraw();
+        updateSaveBar();
+    }
+
+    /* ------------------------------------------------------------------ the admin stash */
+
+    /**
+     * Draws the admin stash: the container items are dragged into, and the same chest /admin opens in game.
+     *
+     * @param host  where to draw it
+     * @param onLoad called once it is there, so a caller can show a save bar
+     */
+    function renderStash(host, onLoad) {
+        clear(host);
+        host.appendChild(el('p', {className: 'muted', text: 'Ablage wird geladen ...'}));
+        api('/api/stash').then(function (stash) {
+            var items = [];
+            for (var i = 0; i < stash.size; i++) items[i] = null;
+            stash.items.forEach(function (item) {
+                if (item.slot >= 0 && item.slot < stash.size) items[item.slot] = item;
+            });
+
+            var grid = el('div', {className: 'inventory'});
+            var editorHost = el('div');
+            var container = {
+                key: 'stash',
+                title: 'Admin-Ablage',
+                kind: 'stash',
+                size: stash.size,
+                items: items,
+                revision: stash.revision,
+                dirty: false,
+                redraw: redraw,
+                save: save
+            };
+            registerContainer(container);
+
+            function onSlotClick(slot) {
+                openSlotEditor(editorHost, slot, container.items[slot], container, function () {
+                    redraw();
+                    updateSaveBar();
+                });
+            }
+
+            function redraw() {
+                clear(grid);
+                var rows = Math.ceil(container.size / 9);
+                for (var r = 0; r < rows; r++) {
+                    grid.appendChild(renderRow(container.items, r * 9,
+                        Math.min(9, container.size - r * 9), onSlotClick, null, 'stash'));
+                }
+            }
+
+            function save() {
+                var payload = {size: container.size, revision: container.revision, items: []};
+                container.items.forEach(function (item, slot) {
+                    if (!item) return;
+                    payload.items.push({slot: slot, material: item.material, amount: item.amount, raw: item.raw});
+                });
+                return api('/api/stash', {method: 'POST', body: payload}).then(function (data) {
+                    container.revision = data.revision;
+                    return data.message;
+                });
+            }
+
+            clear(host);
+            host.appendChild(el('div', {className: 'container-head'}, [
+                el('h3', {text: 'Admin-Ablage'}),
+                el('span', {className: 'spacer'}),
+                el('span', {className: 'muted hint-drag', text: 'Im Spiel mit /admin zu öffnen'})
+            ]));
+            host.appendChild(grid);
+            host.appendChild(editorHost);
+            redraw();
+            updateSaveBar();
+            if (onLoad) onLoad(container);
+        }).catch(function (error) {
+            clear(host);
+            host.appendChild(el('p', {className: 'message', text: error.message}));
+        });
+    }
+
+    /**
+     * The bar that appears as soon as anything was moved.
+     */
+    function buildSaveBar() {
+        var button = el('button', {text: 'Änderungen speichern', type: 'button'});
+        var bar = el('div', {className: 'save-bar hidden'}, [
+            el('span', {className: 'save-label'}),
+            el('span', {className: 'spacer'}),
+            button
+        ]);
+        button.addEventListener('click', function () {
+            saveAll(button);
+        });
+        setSaveBar(bar);
+        return bar;
     }
 
     /* ------------------------------------------------------------------ player panel */
 
     McAdmin.registerPanel('players', function (panel, module) {
+        resetContainers();
         var listHost = el('div', {className: 'rows'});
         var status = el('p', {className: 'muted', text: 'Lade ...'});
         var search = el('input', {type: 'search', placeholder: 'Nach Name suchen ...'});
@@ -350,6 +622,8 @@
          */
         function openPlayer(player) {
             selected = player;
+            // the previous player's containers must not stay droppable behind the new view
+            resetContainers();
             clear(detailHost);
 
             var actionResult = el('span', {className: 'muted'});
@@ -473,7 +747,11 @@
                     text: 'Keine Backpacks - es ist kein Backpack-System installiert.'}));
             }
 
+            var stashHost = el('div');
             detailHost.appendChild(el('section', {className: 'card'}, [tabs, containerHost]));
+            detailHost.appendChild(el('section', {className: 'card'}, [stashHost]));
+            detailHost.appendChild(buildSaveBar());
+            renderStash(stashHost);
             detailHost.scrollIntoView({behavior: 'smooth', block: 'start'});
         }
 
@@ -486,6 +764,23 @@
 
         refresh();
         McAdmin.autoRefresh(refresh, 10);
+    });
+
+    /* ------------------------------------------------------------------ stash panel */
+
+    McAdmin.registerPanel('stash', function (panel, module) {
+        resetContainers();
+        var stashHost = el('div');
+        panel.appendChild(el('section', {className: 'card'}, [
+            el('h2', {text: module.title}),
+            el('p', {className: 'muted', text: module.description}),
+            el('p', {className: 'hint',
+                text: 'Items aus einem Spielerinventar landen hier, wenn du sie im Spieler-Panel '
+                    + 'herüberziehst. Slots lassen sich auch hier per Drag & Drop umsortieren.'})
+        ]));
+        panel.appendChild(el('section', {className: 'card'}, [stashHost]));
+        panel.appendChild(buildSaveBar());
+        renderStash(stashHost);
     });
 
     /* ------------------------------------------------------------------ coreprotect panel */

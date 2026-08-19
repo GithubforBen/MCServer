@@ -284,6 +284,37 @@ announce-size: true        # sagt beim Öffnen, wie viele Unterstützer noch feh
 Das Plugin braucht ein Team-System und damit eine Netzwerkverbindung; es gehört zur Vorlage `SURVIVAL` und
 kann bei jedem anderen Paper-Server dazugewählt werden.
 
+## Admin-Ablage
+
+Im Spieler-Panel der Website lassen sich Items **per Drag & Drop** verschieben: innerhalb eines Inventars
+umsortieren, zwischen Inventar und Enderchest, und vor allem hinaus in die **Admin-Ablage**. Das ist die
+Kiste, die im Spiel mit `/admin` geöffnet wird - nur für Operatoren bzw. mit der Berechtigung
+`mcserver.adminstash`.
+
+Damit hat das Herausnehmen aus einem Spielerinventar endlich ein Ziel: Item im Browser rüberziehen,
+speichern, im Spiel `/admin` und rausnehmen.
+
+Die Ablage liegt beim Launcher (`stashes.yml`), ist also von jedem Server aus dieselbe. Sie wird slotweise
+gespeichert - Material, Anzahl und die Bytes, die Bukkit aus genau diesem Item gemacht hat. Der Launcher
+liest nur die ersten beiden Felder (er hat kein Bukkit), der Spielserver baut das Item aus dem dritten
+wieder auf, samt Verzauberungen und Namen.
+
+### Was beim Speichern passiert
+
+Ein Spielerinventar lebt in einem Paper-Server, die Ablage beim Launcher - das sind zwangsläufig **zwei
+Schreibvorgänge**, eine echte Transaktion gibt es nicht. Die Leiste speichert deshalb in fester
+Reihenfolge: **erst das Spielerinventar, dann die Ablage.** Wird das Inventar abgelehnt, wurde nirgends
+etwas geschrieben und der Browser hält noch alle Änderungen - einfach nochmal klicken. Andersherum könnte
+ein Item in der Ablage *und* beim Spieler landen, und Duplizieren ist das einzige Ergebnis, das wirklich
+weh tut.
+
+Schlägt der zweite Schritt fehl, sagt die Leiste genau, was noch offen ist, und behält den Zustand - nichts
+verschwindet still.
+
+Beides ist revisionsgesichert: wer die Ablage öffnet, bekommt ihre Revision mit. Hat inzwischen jemand
+anderes gespeichert - im Browser oder im Spiel - wird der Schreibvorgang mit 409 abgelehnt statt zu
+überschreiben.
+
 ## Chunk Limiter
 
 Damit ein ruckelnder Server spielbar bleibt, senkt der Survival-Server bei Lag die Sichtweite - aber nur
