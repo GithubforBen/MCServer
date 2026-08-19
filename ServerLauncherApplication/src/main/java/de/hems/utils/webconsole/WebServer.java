@@ -7,7 +7,9 @@ import de.hems.utils.webconsole.auth.Passwords;
 import de.hems.utils.webconsole.auth.Session;
 import de.hems.utils.webconsole.modules.AuthModule;
 import de.hems.utils.webconsole.modules.ConsoleModule;
+import de.hems.utils.webconsole.modules.CoreProtectModule;
 import de.hems.utils.webconsole.modules.PayingPlayerModule;
+import de.hems.utils.webconsole.modules.PlayerModule;
 import de.hems.utils.webconsole.modules.ServerModule;
 import io.javalin.Javalin;
 import io.javalin.config.RoutesConfig;
@@ -99,6 +101,8 @@ public class WebServer {
     private void loadModules() {
         add(new AuthModule());
         add(new ServerModule());
+        add(new PlayerModule());
+        add(new CoreProtectModule());
         add(new PayingPlayerModule());
         add(new ConsoleModule());
     }

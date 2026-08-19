@@ -723,7 +723,10 @@
         },
         api: api,
         el: el,
-        toast: toast
+        clear: clear,
+        toast: toast,
+        autoRefresh: autoRefresh,
+        stopRefresh: stopRefresh
     };
 
     document.addEventListener('DOMContentLoaded', boot);

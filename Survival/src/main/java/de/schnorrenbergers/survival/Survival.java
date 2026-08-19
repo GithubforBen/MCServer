@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.admin.PlayerAdminHandler;
 import de.hems.paper.commands.ServerManagerCommand;
 import de.schnorrenbergers.survival.antiEnd.AntiEndCommand;
 import de.schnorrenbergers.survival.antiEnd.AntiEndListener;
@@ -53,6 +54,7 @@ public final class Survival extends JavaPlugin {
             throw new RuntimeException(e);
         }
         new RequestPlayerMoneyEventHandler();
+        new PlayerAdminHandler(this);
         registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
         registerCommand("debug", new DebugCommand());
         registerCommand("cteam", new TeamCommand());
