@@ -98,11 +98,18 @@ public class FileHandler {
         String file = "./mvnw";
         if (System.getProperty("os.name").toLowerCase().contains("windows")) file = file + ".cmd";
         ProcessBuilder pb = new ProcessBuilder(file, "clean", "install", "-DskipTests").directory(new File("./"));
+        // Without JAVA_HOME the wrapper falls back to whatever "java" sits on the PATH, which is not
+        // necessarily the JDK running the launcher. The plugins target the same release as this
+        // application, so hand the build the exact JVM we are already running on.
+        String javaHome = System.getProperty("java.home");
+        pb.environment().put("JAVA_HOME", javaHome);
         pb.redirectErrorStream(true);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         int exitCode = pb.start().waitFor();
         if (exitCode != 0) {
-            throw new IOException("Building the plugins failed with exit code " + exitCode);
+            throw new IOException("Building the plugins failed with exit code " + exitCode
+                    + " (Java " + System.getProperty("java.version") + " at " + javaHome
+                    + ") - the cause is in the Maven output above");
         }
     }
 }

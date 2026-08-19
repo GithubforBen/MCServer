@@ -45,3 +45,15 @@ build/
 main-config.yml
 ## Maven shade plugin
 dependency-reduced-pom.xml
+
+# Runtime data of the launcher. These hold live player data and are written while the
+# network runs, so they belong on the server rather than in the repository.
+teams.yml
+backpacks.yml
+stashes.yml
+events.yml
+runs.yml
+awards.yml
+
+# Scratch files of the IDE database tool
+.idea/queries/
