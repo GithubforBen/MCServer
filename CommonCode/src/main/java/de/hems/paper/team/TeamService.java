@@ -178,9 +178,23 @@ public final class TeamService {
      * @param callback        what to do with the result, on the main thread
      */
     public static void saveAsync(TeamData team, boolean createIfMissing, Consumer<Result> callback) {
+        renameAsync(team, createIfMissing, null, callback);
+    }
+
+    /**
+     * Stores a team under a new name. The launcher moves the entry and the backpack over in one step, so
+     * the members never look like they belong to two teams at once.
+     *
+     * @param team            the team with its new name
+     * @param createIfMissing whether it may be created
+     * @param renameFrom      the name the team had before, or {@code null} for a normal write
+     * @param callback        what to do with the answer, on the main thread
+     */
+    public static void renameAsync(TeamData team, boolean createIfMissing, String renameFrom,
+                                   Consumer<Result> callback) {
         if (!PaperContext.hasPlugin()) return;
         PaperContext.async(() -> {
-            Result result = saveBlocking(team, createIfMissing);
+            Result result = saveBlocking(team, createIfMissing, renameFrom);
             if (callback == null) return;
             PaperContext.sync(() -> callback.accept(result));
         });
@@ -194,14 +208,28 @@ public final class TeamService {
      * @return what the launcher made of it
      */
     public static Result saveBlocking(TeamData team, boolean createIfMissing) {
+        return saveBlocking(team, createIfMissing, null);
+    }
+
+    /**
+     * Stores a team, optionally renaming it, and waits for the answer. Blocks, so it must not run on the
+     * main thread.
+     *
+     * @param team            the team to store
+     * @param createIfMissing whether it may be created
+     * @param renameFrom      the name the team had before, or {@code null}
+     * @return what the launcher made of it
+     */
+    public static Result saveBlocking(TeamData team, boolean createIfMissing, String renameFrom) {
         try {
-            SaveTeamEvent request = new SaveTeamEvent(team, createIfMissing);
+            SaveTeamEvent request = new SaveTeamEvent(team, createIfMissing, renameFrom);
             ListenerAdapter.sendListeners(request);
             RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
             if (!(response instanceof RespondTeamSaveEvent saved)) {
                 return new Result(false, "Der Hauptserver hat nicht geantwortet.", null);
             }
             if (saved.isSuccessful() && saved.getData() instanceof TeamData stored) {
+                if (renameFrom != null) teams.remove(key(renameFrom));
                 teams.put(key(stored.getName()), stored);
                 return new Result(true, saved.getMessage(), stored);
             }

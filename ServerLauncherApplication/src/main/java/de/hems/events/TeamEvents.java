@@ -46,10 +46,17 @@ public class TeamEvents {
     }
 
     private void onSaveTeam(SaveTeamEvent request) throws Exception {
-        TeamStore.Result result = teams.put(request.getTeam(), request.isCreateIfMissing());
+        String renameFrom = request.getRenameFrom();
+        TeamStore.Result result = teams.put(request.getTeam(), request.isCreateIfMissing(), renameFrom);
         ListenerAdapter.sendListeners(new RespondTeamSaveEvent(
                 request.getSender(), result.successful(), result.message(), result.team(), request.getEventId()));
-        if (result.successful()) announce(result.team().getName(), result.team());
+        if (!result.successful()) return;
+        // the backpack lives under the team name, so it has to follow the rename before anyone reopens it
+        if (renameFrom != null && !renameFrom.equalsIgnoreCase(result.team().getName())) {
+            backpacks.rename(renameFrom, result.team().getName());
+            announce(renameFrom, null);
+        }
+        announce(result.team().getName(), result.team());
     }
 
     private void onDeleteTeam(DeleteTeamEvent request) throws Exception {
