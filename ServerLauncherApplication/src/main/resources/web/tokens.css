@@ -1,0 +1,166 @@
+/*
+ * Kontrollraum - the design tokens of the admin interface.
+ *
+ * One rule carries the whole thing: colour is reserved for state. Every control - buttons, navigation,
+ * selection - is achromatic, so green, amber and red never appear as decoration. Whoever sees a hue on this
+ * page is looking at a status, which is what makes it readable at a glance while something is on fire.
+ *
+ * The interface commits to a single dark appearance rather than following the system, because it is a tool
+ * that sits open next to a running server. Every colour is therefore set explicitly - nothing is inherited
+ * from the browser.
+ */
+
+/* ---------------------------------------------------------------- fonts */
+
+/*
+ * Self hosted, because the content security policy of this server allows nothing from outside. Archivo is a
+ * variable font with a width axis, which is what lets one file act both as the wide, spaced lettering of a
+ * device label and as the condensed figures of a readout.
+ */
+@font-face {
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 400 700;
+    font-stretch: 62% 125%;
+    font-display: swap;
+    src: url('/fonts/archivo-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 400 700;
+    font-stretch: 62% 125%;
+    font-display: swap;
+    src: url('/fonts/archivo-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+        U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Plex Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/plexmono-400-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'Plex Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/plexmono-400-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+        U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+    font-family: 'Plex Mono';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/fonts/plexmono-500-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'Plex Mono';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/fonts/plexmono-500-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+        U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------------------------------------------------------------- tokens */
+
+:root {
+    /*
+     * Neutrals with a faint green bias - the colour of painted equipment racks. A blue leaning grey is what
+     * every dark interface inherits by default; this one was picked, and it carries the status hues better.
+     */
+    --ground:   #0F1210;
+    --panel:    #161A17;
+    --panel-hi: #1E241F;
+    --line:     #2A322C;
+    --bone:     #E9E7DE;
+    --dim:      #869089;
+    --dimmer:   #5C645E;
+
+    /* The only hues in the interface. Each one means a state and nothing else. */
+    --nominal: #5F9E6E;
+    --caution: #C9993C;
+    --alarm:   #C8564C;
+
+    /* Backgrounds for the same three states, for stripes and fills. */
+    --nominal-bg: rgba(95, 158, 110, 0.14);
+    --caution-bg: rgba(201, 153, 60, 0.14);
+    --alarm-bg:   rgba(200, 86, 76, 0.14);
+
+    /* One radius everywhere. */
+    --r: 2px;
+
+    /* Spacing steps. Everything is laid out with gap, never with per element margins. */
+    --s1: 4px;
+    --s2: 8px;
+    --s3: 12px;
+    --s4: 18px;
+    --s5: 26px;
+    --s6: 40px;
+
+    --rail-width: 190px;
+
+    --sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ---------------------------------------------------------------- type roles */
+
+/*
+ * The rule of the interface: what a person wrote is set in Archivo, what a machine measured is set in
+ * Plex Mono. Coordinates, uuids, tps and log lines are readings, and they look like it.
+ */
+
+.t-tally {
+    font-family: var(--sans);
+    font-variation-settings: 'wdth' 75, 'wght' 700;
+    font-size: 40px;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.t-label {
+    font-family: var(--sans);
+    font-variation-settings: 'wdth' 125, 'wght' 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+}
+
+.t-head {
+    font-family: var(--sans);
+    font-variation-settings: 'wdth' 100, 'wght' 700;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+
+.t-sub {
+    font-family: var(--sans);
+    font-variation-settings: 'wdth' 112, 'wght' 600;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+}
+
+.t-data {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}

@@ -27,7 +27,7 @@ public enum ServerTemplate implements Serializable {
 
     /** The main survival world. */
     SURVIVAL(FileType.SERVER.PAPER, 4096, true,
-            FileType.PLUGIN.SURVIVAL, FileType.PLUGIN.SIMPLE_VOICECHAT_PAPER),
+            FileType.PLUGIN.SURVIVAL, FileType.PLUGIN.BACKPACK, FileType.PLUGIN.SIMPLE_VOICECHAT_PAPER),
 
     /** A bedwars round. */
     BEDWARS(FileType.SERVER.PAPER, 2048, true,

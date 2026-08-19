@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>MCServer Administration</title>
+    <link rel="stylesheet" href="/tokens.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- The login. Password and authenticator code are always sent together, because the server refuses to
+     look at a password without a valid code. -->
+<main id="login-view" class="login-view hidden">
+    <form id="login-form" class="card login-card" autocomplete="off">
+        <h1 id="login-brand">MCServer</h1>
+        <p class="muted">Anmeldung mit Passwort und Google Authenticator.</p>
+
+        <label for="login-username">Benutzername</label>
+        <input id="login-username" name="username" type="text" autocomplete="username" required>
+
+        <label for="login-password">Passwort</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+
+        <label for="login-token">Google Authenticator Code</label>
+        <input id="login-token" name="token" type="text" inputmode="numeric" pattern="[0-9]*"
+               maxlength="8" autocomplete="one-time-code" required>
+        <p class="hint">Ohne diesen Code wird das Passwort gar nicht erst geprüft.</p>
+
+        <button id="login-submit" type="submit">Anmelden</button>
+        <p id="login-message" class="message hidden"></p>
+    </form>
+</main>
+
+<!-- The interface itself. The navigation is a vertical bank down the left: it is built from the modules the
+     server reports, and a list that grows with every new module has room to do so there. -->
+<div id="app-view" class="app hidden">
+    <nav class="topbar">
+        <span id="brand" class="brand">MCServer <em>/ Admin</em></span>
+        <div id="nav" class="nav"></div>
+        <span id="current-user" class="muted"></span>
+        <button id="logout" type="button" class="secondary small">Abmelden</button>
+    </nav>
+    <main id="panel" class="panel"></main>
+    <p id="toast" class="toast hidden"></p>
+</div>
+
+<script src="/app.js"></script>
+<!-- The player manager, the admin stash and the CoreProtect view, added through the public McAdmin hook. -->
+<script src="/players.js"></script>
+</body>
+</html>

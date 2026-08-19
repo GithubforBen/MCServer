@@ -83,13 +83,328 @@ Main-Thread - dafür gibt es `listServersAsync()` bzw. `PaperContext.async(...)`
 Vorlagen (`de.hems.types.ServerTemplate`) legen Software, Standard-RAM und die Pflichtplugins fest;
 `ServerTemplate.resolvePlugins(...)` mischt sie mit der freien Auswahl.
 
+## Admin Website
+
+Der Launcher bringt eine Weboberfläche mit, standardmäßig auf `http://<host>:8080/`. Beim ersten Start
+legt er einen Account an und schreibt Benutzername, Passwort und den Google-Authenticator-Schlüssel
+(inklusive `otpauth://` Link zum Scannen) einmalig in die Konsole.
+
+### Login
+
+Der Login braucht **Passwort und Google Authenticator Code zusammen**. Die Reihenfolge ist festgelegt:
+
+1. Ohne Code wird der Request abgelehnt - das Passwort wird gar nicht erst angefasst.
+2. Der Code wird geprüft. Stimmt er nicht, endet der Login hier, wieder ohne Passwortprüfung.
+3. Erst danach wird das Passwort geprüft.
+
+Jeder Versuch wird zusätzlich frühestens nach der **Grace Period von 3 Sekunden** beantwortet, und die
+Grace Period beginnt mit dieser Antwort von vorne. Zwischen zwei Versuchen liegen also immer mindestens
+3 Sekunden, egal ob sie nacheinander oder gleichzeitig kommen. Alle Fehlerfälle brauchen exakt gleich
+lange, damit sich aus der Antwortzeit nichts ablesen lässt. Ein einmal benutzter Code gilt nicht noch
+einmal.
+
+Passwörter liegen als PBKDF2-Hash in der `main-config.yml`, nie im Klartext. Die Session hängt an einem
+`HttpOnly`-Cookie, ändernde Requests brauchen zusätzlich den CSRF-Token aus der Session.
+
+### Panels
+
+| Panel | Was es kann |
+|-------|-------------|
+| Server | Zeigt welche Server an sind, und schaltet sie an, aus oder neu |
+| Paying Player | Trägt zahlende Spieler per Minecraft-Name oder UUID ein und aus |
+| Konsole | Zeigt die Ausgabe eines Servers live an und schickt Befehle an ihn |
+
+### Live-Konsole
+
+Das Konsolen-Panel hängt an einem WebSocket (`/api/console/stream?server=<NAME>`) und zeigt die Ausgabe
+eines Servers, während sie entsteht. Beim Verbinden kommen erst die letzten 300 Zeilen, danach jede neue
+einzeln. Reißt die Verbindung ab, verbindet die Seite sich nach 3 Sekunden neu.
+
+Die Server laufen in tmux, ihre Ausgabe kommt also nie durch den Launcher. `tmux pipe-pane` schreibt sie
+deshalb in `servers/<NAME>/console.log`, und der `ConsoleTailer` folgt dieser Datei, entfernt die
+Terminal-Steuerzeichen und legt die Zeilen in einen `ConsoleBuffer` pro Server. Der Buffer hält die
+Historie und die offenen WebSockets - Abonnieren und Anhängen laufen unter demselben Lock, damit ein
+Zuschauer weder eine Zeile verpasst noch eine doppelt sieht.
+
+Der WebSocket ist genauso geschützt wie der Rest: die Anmeldung wird schon beim Upgrade geprüft, und der
+`Origin` muss stimmen, weil ein WebSocket-Handshake nicht unter die Same-Origin-Policy fällt und das
+Session-Cookie sonst von jeder fremden Seite mitgeschickt würde.
+
+### Erweitern
+
+Ein neues Panel ist eine Klasse, die `WebModule` implementiert, plus eine Zeile in
+`WebServer.loadModules()`:
+
+```java
+public class MeinModul implements WebModule {
+    public String getId()    { return "mein-modul"; }
+    public String getTitle() { return "Mein Modul"; }
+
+    public void register(WebServer server) {
+        server.route("/api/mein-modul", new MeinHandler(server));
+    }
+}
+```
+
+Die Navigation der Seite wird aus der Modulliste gebaut, die der Server ausliefert - das Modul taucht
+also von selbst im Browser auf. Ohne eigene Ansicht bekommt es eine generische Darstellung seiner
+API-Antwort; eine eigene Ansicht registriert man in `app.js` mit
+`McAdmin.registerPanel("mein-modul", fn)`.
+
+Module lassen sich auch von außen dazustecken, ohne `WebServer` anzufassen:
+`new WebServer(configuration, new MeinModul())`.
+
+Ein Modul kann neben `get`/`post`/`delete` auch einen WebSocket anmelden, der die Anmeldung schon beim
+Upgrade prüft:
+
+```java
+server.authenticatedWs("/api/mein-modul/stream", ws -> {
+    ws.onConnect(ctx -> ctx.send("hallo"));
+    ws.onClose(ctx -> ...);
+});
+```
+
+### Einstellungen (`main-config.yml`)
+
+```yaml
+web:
+  enabled: true
+  port: 8080
+  bind: 0.0.0.0
+  grace-period-seconds: 3
+  session-timeout-minutes: 60
+  secure-cookie: false      # auf true, sobald die Seite hinter HTTPS läuft
+  totp:
+    issuer: MCServer
+    digits: 6
+    period-seconds: 30
+    window: 1               # wie viele 30s-Schritte Uhrenabweichung erlaubt sind
+```
+
+Der alte `/command` Endpoint gibt es weiterhin, er akzeptiert aber nicht mehr das fest eingebaute Secret
+`67`, sondern das aus `web.command-secret`, das beim ersten Start erzeugt wird.
+
+### Technik
+
+Die Seite läuft auf [Javalin](https://javalin.io) (Jetty), weil der eingebaute `com.sun.net.httpserver`
+keine WebSockets kann. Die Auth-Schicht (`Totp`, `Passwords`, `AuthService`, `Session`) ist davon
+unabhängig und würde einen weiteren Wechsel unverändert überstehen.
+
+Wichtig fürs Packaging: das Fat Jar wird über `src/assembly/jar-with-dependencies.xml` gebaut statt über
+den eingebauten `descriptorRef`. Jetty findet Teile von sich per `ServiceLoader`, und der eingebaute
+Descriptor überschreibt gleichnamige `META-INF/services`-Dateien, statt sie zusammenzuführen - ohne den
+`metaInf-services`-Handler fehlen 17 der 38 Service-Provider im fertigen Jar.
+
+## Teams
+
+Teams gehören dem **Launcher**, nicht mehr einem einzelnen Server. Früher lagen sie in einer
+`team-config.yml` neben dem Survival-Server - damit existierten sie nur dort und waren weg, sobald das
+Verzeichnis gelöscht wurde. Jetzt speichert der Launcher sie in `teams.yml`, jeder Server hält eine lokale
+Kopie, und der Launcher meldet jede Änderung ins Netzwerk. Ein Team, das auf einem Server erstellt wird,
+ist einen Moment später überall bekannt.
+
+Schreibzugriffe laufen immer über den Launcher und sind **optimistisch gesperrt**: jedes Team trägt die
+Revision, mit der es gelesen wurde. Ändert jemand anderes es zwischendurch, wird der Schreibvorgang
+abgelehnt statt eine Änderung stillschweigend zu überschreiben.
+
+Beim ersten Start werden vorhandene Teams automatisch übernommen: Anführer aus der alten Config,
+Mitglieder, Tag und Farbe aus Minecrafts eigenem Scoreboard, Claims aus dem alten `claims`-Abschnitt.
+Danach wird die alte Datei als migriert markiert (nicht gelöscht).
+
+### Befehle
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/cteam` | Öffnet den Team-Manager |
+| `/cteam create <name> <tag>` | Team gründen |
+| `/cteam invite <spieler>` · `invite accept\|reject` | Einladungen |
+| `/cteam join <team>` | Einem offenen Team beitreten |
+| `/cteam leave` · `kick <spieler>` · `transfer <spieler>` | Mitgliederverwaltung |
+| `/cteam rename <name>` · `tag <tag>` · `disband` | Team umbenennen, Tag ändern, auflösen |
+| `/cteam sethome` · `home` | Team-Home setzen und nutzen |
+| `/cteam info [team]` · `list` | Team-Infos, alle Teams im Netzwerk |
+| `/cteam claim` · `unclaim` · `chunks` | Chunks kaufen, freigeben, Karte anzeigen |
+
+### Einstellbar
+
+Was **das Team** selbst festlegt, steht im Manager unter *Einstellungen* und liegt beim Team:
+maximale Mitglieder, Friendly Fire, offener Beitritt, ob Mitglieder claimen oder einladen dürfen, ob der
+Rucksack aktiv ist und ob Mitglieder daraus entnehmen dürfen, Team-Home, Beitritts-Ankündigungen.
+
+Was **der Server** vorgibt, steht in `configs/team.yml` auf dem Survival-Server:
+
+```yaml
+members:
+  maximum: 8            # Obergrenze - ein Team darf sich darunter selbst begrenzen
+name:
+  minimum-length: 3
+  maximum-length: 16
+  maximum-tag-length: 5
+claims:
+  base-cost: 50         # was der erste Chunk kostet
+  growth: 1.1           # 10 % mehr pro weiterem Chunk
+  maximum-cost: 1000
+  maximum-per-team: 0   # 0 = unbegrenzt
+permissions:
+  allow-rename: true
+  allow-disband: true
+  allow-public-join: true
+home:
+  cooldown-seconds: 60
+  warmup-seconds: 3     # Bewegen bricht ab
+```
+
+Eine neue Einstellung ist ein Eintrag in `TeamSettings.Key` - der Manager baut seine Buttons aus dem Enum,
+Speicherung und Netzwerk-Übertragung ändern sich nicht.
+
+## Backpack
+
+Ein eigenes, auswählbares Plugin (`BackpackPlugin`). `/backpack` oder `/bp` öffnet den Rucksack, den sich
+ein **Team teilt**. Er liegt beim Launcher neben den Teams, ist also auf jedem Server derselbe.
+
+**Die Größe hängt davon ab, wer zahlt:** sobald die zahlenden Mitglieder eines Teams in der *Mehrheit*
+sind, wird aus der Kiste (27 Slots) eine Doppelkiste (54). Gleichstand zählt nicht als Mehrheit - ein
+Zweierteam braucht also beide. Das wird bei jedem Öffnen neu berechnet.
+
+Schauen mehrere Mitglieder gleichzeitig hinein, teilen sie sich auf demselben Server ein und dasselbe
+Inventar und sehen sich gegenseitig zu. Gespeichert wird, sobald der Letzte es schließt. Wurde der Rucksack
+in der Zwischenzeit auf einem anderen Server verändert, wird der Schreibvorgang abgelehnt und der Spieler
+darauf hingewiesen - statt die Änderungen des anderen kommentarlos zu überschreiben.
+
+Einstellbar in `configs/backpack.yml`:
+
+```yaml
+size:
+  default-rows: 3          # normales Team = Kiste
+  paying-majority-rows: 6  # zahlende Mehrheit = Doppelkiste
+title: '&6Team-Rucksack &7- &f%team%'
+announce-size: true        # sagt beim Öffnen, wie viele Unterstützer noch fehlen
+```
+
+Das Plugin braucht ein Team-System und damit eine Netzwerkverbindung; es gehört zur Vorlage `SURVIVAL` und
+kann bei jedem anderen Paper-Server dazugewählt werden.
+
+## Aussehen der Website
+
+Die Oberfläche heißt intern „Kontrollraum“ und folgt einer einzigen Regel:
+**Farbe ist für Zustand reserviert.** Alle Bedienelemente — Buttons, Navigation, Auswahl — sind unbunt
+(Knochenweiß auf Graphit). Grün, Bernstein und Rot kommen nirgends sonst vor; wer auf der Seite Farbe
+sieht, sieht einen Zustand. Vorher war Blau reine Dekoration und hat mit den Statusfarben um
+Aufmerksamkeit konkurriert.
+
+Die Neutrals haben einen leichten Grünstich (`#0F1210` … `#2A322C`) — Gerätelack statt des Blaugraus, das
+jedes dunkle Interface erbt. Blöcke trennen sich durch Helligkeit, nicht durch Rahmen. Ein einziger
+Radius: 2px.
+
+**Schrift, mit einer Regel:** was ein Mensch formuliert hat, steht in Archivo; was eine Maschine gemessen
+hat, in IBM Plex Mono. Koordinaten, UUIDs, TPS und Logzeilen sind Messwerte und sehen auch so aus. Archivo
+ist ein Variable Font mit Breitenachse — aus einer Datei kommen die weit gesperrten Gerätebeschriftungen
+und die stark verdichteten großen Zahlen.
+
+Beide Schriften liegen als WOFF2 unter `web/fonts/` im Jar (~240 KB, SIL OFL, Lizenztexte daneben). Google
+Fonts scheiden aus: die CSP erlaubt nichts von außen, sie hat dafür jetzt `font-src 'self'`.
+
+Die Navigation ist eine linke Bank statt einer Kopfzeile — die Modulliste wächst mit jedem Modul, und
+waagerecht läuft sie irgendwann aus dem Bild. Darüber steht auf jeder Seite ein Statusstreifen mit
+Spielern, laufenden Servern und dem langsamsten Server. Die TPS kommen dabei echt vom jeweiligen
+Paper-Server, huckepack auf der Spielerabfrage.
+
+Der Name oben links ist konfigurierbar:
+
+```yaml
+web:
+  brand: MCServer     # steht in der Bank und auf der Login-Karte
+```
+
+Nur ein dunkler Modus, bewusst — ein Werkzeug, das man nachts neben dem Server offen hat.
+
+## Admin-Ablage
+
+Im Spieler-Panel der Website lassen sich Items **per Drag & Drop** verschieben: innerhalb eines Inventars
+umsortieren, zwischen Inventar und Enderchest, und vor allem hinaus in die **Admin-Ablage**. Das ist die
+Kiste, die im Spiel mit `/admin` geöffnet wird - nur für Operatoren bzw. mit der Berechtigung
+`mcserver.adminstash`.
+
+Damit hat das Herausnehmen aus einem Spielerinventar endlich ein Ziel: Item im Browser rüberziehen,
+speichern, im Spiel `/admin` und rausnehmen.
+
+Die Ablage liegt beim Launcher (`stashes.yml`), ist also von jedem Server aus dieselbe. Sie wird slotweise
+gespeichert - Material, Anzahl und die Bytes, die Bukkit aus genau diesem Item gemacht hat. Der Launcher
+liest nur die ersten beiden Felder (er hat kein Bukkit), der Spielserver baut das Item aus dem dritten
+wieder auf, samt Verzauberungen und Namen.
+
+### Was beim Speichern passiert
+
+Ein Spielerinventar lebt in einem Paper-Server, die Ablage beim Launcher - das sind zwangsläufig **zwei
+Schreibvorgänge**, eine echte Transaktion gibt es nicht. Die Leiste speichert deshalb in fester
+Reihenfolge: **erst das Spielerinventar, dann die Ablage.** Wird das Inventar abgelehnt, wurde nirgends
+etwas geschrieben und der Browser hält noch alle Änderungen - einfach nochmal klicken. Andersherum könnte
+ein Item in der Ablage *und* beim Spieler landen, und Duplizieren ist das einzige Ergebnis, das wirklich
+weh tut.
+
+Schlägt der zweite Schritt fehl, sagt die Leiste genau, was noch offen ist, und behält den Zustand - nichts
+verschwindet still.
+
+Beides ist revisionsgesichert: wer die Ablage öffnet, bekommt ihre Revision mit. Hat inzwischen jemand
+anderes gespeichert - im Browser oder im Spiel - wird der Schreibvorgang mit 409 abgelehnt statt zu
+überschreiben.
+
+## Chunk Limiter
+
+Damit ein ruckelnder Server spielbar bleibt, senkt der Survival-Server bei Lag die Sichtweite - aber nur
+bei Spielern, die **nicht** für den Server zahlen. Wer zahlt, behält seine volle Sichtweite.
+
+Gemessen wird nicht der Ein-Minuten-Durchschnitt von Bukkit, sondern wie lange die Ticks seit der letzten
+Prüfung wirklich gebraucht haben; das reagiert deutlich schneller. Über mehrere Messungen wird gemittelt,
+damit ein einzelner Ruckler nicht sofort allen die Sichtweite zusammenstreicht.
+
+Runter geht es sofort, hoch nur vorsichtig: die TPS müssen erst deutlich über die Schwelle steigen
+(`raise-hysteresis-tps`) und das mehrere Prüfungen lang halten (`raise-delay-checks`), und dann wird
+immer nur eine Stufe zurückgenommen. So pendelt die Sichtweite nicht um eine Schwelle herum.
+
+Wer zahlt, steht in der `main-config.yml` unter `paying-players` und wird über die Admin-Website oder den
+Discord-Befehl `/payingplayer` gepflegt. Der Survival-Server holt die Liste im Hintergrund und arbeitet mit
+der zuletzt erfolgreich geholten Fassung weiter, wenn eine Anfrage mal keine Antwort bekommt - eine
+langsame Antwort darf keinen zahlenden Spieler herunterstufen. Solange die Liste noch nie angekommen ist,
+wird niemand begrenzt.
+
+Eingestellt wird das in `configs/chunklimiter.yml` auf dem Survival-Server:
+
+```yaml
+enabled: true
+check-interval-ticks: 40      # wie oft gemessen und angepasst wird
+smoothing-samples: 5          # über wie viele Messungen gemittelt wird
+raise-delay-checks: 3         # so viele gute Messungen, bevor es wieder hochgeht
+raise-hysteresis-tps: 1.5     # so weit über die Schwelle, bevor eine Stufe fällt
+paying:
+  max-view-distance: 12
+  min-view-distance: 8
+  penalty-factor: 0.0         # 0 = zahlende Spieler werden nie begrenzt
+free:
+  max-view-distance: 10
+  min-view-distance: 4
+  penalty-factor: 1.0
+tiers:                        # ab welchen TPS wie viele Chunks abgezogen werden
+- tps: 18.0
+  penalty: 0
+- tps: 15.0
+  penalty: 2
+- tps: 10.0
+  penalty: 4
+- tps: 5.0
+  penalty: 6
+- tps: 3.0
+  penalty: 8
+```
+
 ## Module
 
 | Modul | Inhalt |
 |-------|--------|
-| `ServerLauncherApplication` | Startet und konfiguriert die Server, Discord Bot, Web Konsole |
+| `ServerLauncherApplication` | Startet und konfiguriert die Server, Discord Bot, Admin Website |
 | `CommonCode` | Netzwerk-Events, `ServerApi`, Server Manager UI, Warp System |
 | `LobbyPlugin` | Lobby, Parkour, Server Manager |
 | `Survival` | Survival Spielmodus |
 | `Bedwars` | Bedwars Minispiel |
+| `BackpackPlugin` | Geteilter Team-Rucksack |
 | `VelocityPlugin` | Meldet neue Server am laufenden Proxy an |

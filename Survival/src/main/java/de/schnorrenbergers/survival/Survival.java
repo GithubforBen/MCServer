@@ -1,7 +1,10 @@
 package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.admin.AdminStash;
+import de.hems.paper.admin.PlayerAdminHandler;
 import de.hems.paper.commands.ServerManagerCommand;
+import de.hems.paper.team.TeamService;
 import de.schnorrenbergers.survival.antiEnd.AntiEndCommand;
 import de.schnorrenbergers.survival.antiEnd.AntiEndListener;
 import de.schnorrenbergers.survival.commands.*;
@@ -10,7 +13,11 @@ import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.adminabuse.CommandListener;
 import de.schnorrenbergers.survival.featrues.adminabuse.LegitimizeCommand;
-import de.schnorrenbergers.survival.featrues.chunklimiter.PlayerLoadChunkListener;
+import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiter;
+import de.schnorrenbergers.survival.featrues.team.TeamRules;
+import de.schnorrenbergers.survival.featrues.team.TeamSyncListener;
+import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiterListener;
+import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiterSettings;
 import de.schnorrenbergers.survival.featrues.endfight.EndListener;
 import de.schnorrenbergers.survival.featrues.flight.FlightListener;
 import de.schnorrenbergers.survival.featrues.tablist.Tablist;
@@ -33,6 +40,8 @@ public final class Survival extends JavaPlugin {
     private ListenerAdapter listenerAdapter;
     private TeamConfig teamConfig;
     private ShopConfig shopConfig;
+    private ChunkLimiter chunkLimiter;
+    private TeamRules teamRules;
 
     @Override
     public void onLoad() {
@@ -44,12 +53,17 @@ public final class Survival extends JavaPlugin {
         moneyConfig = new MoneyConfig();
         teamConfig = new TeamConfig();
         shopConfig = new ShopConfig();
+        teamRules = new TeamRules();
         try {
             listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.SURVIVAL);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         new RequestPlayerMoneyEventHandler();
+        new PlayerAdminHandler(this);
+        AdminStash.init(this);
+        TeamService.init(this);
+        new TeamSyncListener();
         registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
         registerCommand("debug", new DebugCommand());
         registerCommand("cteam", new TeamCommand());
@@ -66,7 +80,9 @@ public final class Survival extends JavaPlugin {
         new ShopkeeperManager();
         new ShopkeeperListener();
         new ATMListener();
-        new PlayerLoadChunkListener();
+        chunkLimiter = new ChunkLimiter(new ChunkLimiterSettings());
+        chunkLimiter.start();
+        new ChunkLimiterListener();
         new JoinListener();
         new FlightListener();
         new CommandListener();
@@ -81,6 +97,8 @@ public final class Survival extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (chunkLimiter != null) chunkLimiter.stop();
+        if (AdminStash.getInstance() != null) AdminStash.getInstance().saveOnShutdown();
         ShopkeeperManager.save();
         moneyConfig.save();
         teamConfig.save();
@@ -105,5 +123,13 @@ public final class Survival extends JavaPlugin {
 
     public ShopConfig getShopConfig() {
         return shopConfig;
+    }
+
+    public ChunkLimiter getChunkLimiter() {
+        return chunkLimiter;
+    }
+
+    public TeamRules getTeamRules() {
+        return teamRules;
     }
 }

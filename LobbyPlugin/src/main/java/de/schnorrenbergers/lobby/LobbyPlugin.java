@@ -1,6 +1,7 @@
 package de.schnorrenbergers.lobby;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.admin.PlayerAdminHandler;
 import de.hems.paper.commands.ServerManagerCommand;
 import de.hems.paper.commands.WarpCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
@@ -29,6 +30,7 @@ public final class LobbyPlugin extends JavaPlugin {
             throw new RuntimeException(e);
         }//TODO: parkour
         ServerConnector.register(this);
+        new PlayerAdminHandler(this);
         new CheckpointListener();
         registerCommand("servermanger", new ServerManagerCommand());
         registerCommand("warp", new WarpCommand());

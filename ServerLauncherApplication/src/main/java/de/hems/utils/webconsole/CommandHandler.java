@@ -1,49 +1,69 @@
 package de.hems.utils.webconsole;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import de.hems.Main;
 import de.hems.communication.ListenerAdapter;
+import de.hems.utils.webconsole.auth.Passwords;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.Arrays;
+import java.util.List;
 
-public class CommandHandler extends CustomHandler implements HttpHandler {
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-            methodNotAllowed(exchange);
+/**
+ * The endpoint scripts use to run a command on a server, kept for {@code executeCommand.py} and anything
+ * else that was built against it.
+ * <p>
+ * It used to accept the literal secret {@code "67"}, which meant anybody who could reach the port could run
+ * commands as the console. The secret now comes from {@code web.command-secret} in the launcher config and
+ * is generated on first start.
+ */
+public class CommandHandler {
+
+    /** Where the secret lives in the launcher config. */
+    private static final String SECRET_PATH = "web.command-secret";
+
+    /**
+     * @param ctx the request being answered
+     */
+    public void handle(ApiContext ctx) throws Exception {
+        JSONObject json = ctx.body();
+        for (String required : new String[]{"command", "server", "secret"}) {
+            if (!json.has(required)) {
+                ctx.error(400, required + " is missing");
+                return;
+            }
+        }
+        if (!Passwords.tokensEqual(secret(), json.getString("secret"))) {
+            ctx.error(401, "wrong secret");
             return;
         }
-        JSONObject json = getJSON(exchange);
-        if (json == null) {
-            jsonError(exchange);
+        ListenerAdapter.ServerName name;
+        try {
+            name = ListenerAdapter.ServerName.valueOf(json.getString("server"));
+        } catch (IllegalArgumentException e) {
+            ctx.error(400, "'" + json.getString("server") + "' is not a usable server name");
             return;
         }
-        if (!json.has("command")) {
-            respondDataNotFound(exchange, "command is missing");
-            return;
-        }
-        if (!json.has("server")) {
-            respondDataNotFound(exchange, "server is missing");
-            return;
-        }
-        if (!json.has("secret")) {
-            respondDataNotFound(exchange, "secret is missing");
-            return;
-        }
-        if (!json.getString("secret").equals("67")) {
-            respond(exchange, "wrong secret");
-            return;
-        }
-        var instance = Main.getInstance().getServerHandler()
-                .getInstance(ListenerAdapter.ServerName.valueOf(json.getString("server")));
+        var instance = Main.getInstance().getServerHandler().getInstance(name);
         if (instance == null) {
-            respondDataNotFound(exchange, "the server '" + json.getString("server") + "' is not running");
+            ctx.error(409, "the server '" + name + "' is not running");
             return;
         }
         instance.executeCommand(json.getString("command"));
-        respond(exchange, "successfully executed command");
+        ctx.ok("successfully executed command");
+    }
+
+    /**
+     * @return the secret callers have to send, generating and storing one if there is none yet
+     */
+    private static String secret() {
+        var configuration = Main.getInstance().getConfiguration();
+        String stored = configuration.getConfig().getString(SECRET_PATH);
+        if (stored != null && !stored.isBlank()) return stored;
+        String generated = Passwords.randomToken();
+        configuration.getConfig().set(SECRET_PATH, generated);
+        configuration.getConfig().setComments(SECRET_PATH,
+                List.of("The secret scripts have to send to POST /command."));
+        configuration.save();
+        System.out.println("A secret for the /command endpoint was generated: " + generated);
+        return generated;
     }
 }

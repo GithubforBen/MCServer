@@ -19,7 +19,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Iterator;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -102,6 +104,56 @@ public class ListenerAdapter implements Receiver {
             Thread.sleep(25);
         }
         return null;
+    }
+
+    /**
+     * Collects every response to a broadcast request.
+     * <p>
+     * {@link #waitForEvent(UUID)} returns the first answer, which is all a request to a single node needs.
+     * A request that went to the whole network gets one answer per node, and the caller usually wants them
+     * all - or wants to stop as soon as one of them is the useful one.
+     * <p>
+     * Blocks the calling thread, so it must never be called from the main server thread.
+     *
+     * @param requestId the id of the request the responses belong to
+     * @param window    how long to keep collecting
+     * @param stopEarly checked on every response as it arrives; when it holds, collecting ends right away
+     * @return the responses that arrived, in the order they came in
+     */
+    public static List<RespondDataEvent> waitForEvents(UUID requestId, Duration window,
+                                                       Predicate<RespondDataEvent> stopEarly)
+            throws InterruptedException {
+        List<RespondDataEvent> collected = new ArrayList<>();
+        long deadline = System.currentTimeMillis() + window.toMillis();
+        while (System.currentTimeMillis() < deadline) {
+            boolean done = false;
+            synchronized (respondDataEvents) {
+                Iterator<RespondDataEvent> iterator = respondDataEvents.iterator();
+                while (iterator.hasNext()) {
+                    RespondDataEvent event = iterator.next();
+                    if (!requestId.equals(event.getRequestId())) continue;
+                    iterator.remove();
+                    collected.add(event);
+                    if (stopEarly != null && stopEarly.test(event)) {
+                        done = true;
+                        break;
+                    }
+                }
+            }
+            if (done) return collected;
+            Thread.sleep(25);
+        }
+        return collected;
+    }
+
+    /**
+     * @param requestId the id of the request the responses belong to
+     * @param window    how long to keep collecting
+     * @return every response that arrived inside the window
+     */
+    public static List<RespondDataEvent> waitForEvents(UUID requestId, Duration window)
+            throws InterruptedException {
+        return waitForEvents(requestId, window, null);
     }
 
     public static ServerName getName() {
