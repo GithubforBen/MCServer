@@ -7,6 +7,8 @@ import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
 import de.hems.types.ServerTemplate;
 import de.hems.utils.Configuration;
+import de.hems.utils.team.BackpackStore;
+import de.hems.utils.team.TeamStore;
 import de.hems.utils.bot.adminabuse.*;
 import de.hems.utils.bot.payingplayer.PayingPlayerCommand;
 import de.hems.utils.bot.tickets.TicketListener;
@@ -42,6 +44,8 @@ public class Main {
     private Configuration configuration;
     private ListenerAdapter listenerAdapter;
     private ServerHandler serverHandler;
+    private TeamStore teamStore;
+    private BackpackStore backpackStore;
     private JDA jda;
     private WebServer webServer;
     //TODO: add a way to auto add ops
@@ -69,6 +73,9 @@ public class Main {
         }
         listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.HOST);
         new RespondDataEvent();
+        teamStore = new TeamStore();
+        backpackStore = new BackpackStore();
+        new TeamEvents(teamStore, backpackStore);
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         new StartServerEvent();
@@ -189,6 +196,14 @@ public class Main {
 
     public ServerHandler getServerHandler() {
         return serverHandler;
+    }
+
+    public TeamStore getTeamStore() {
+        return teamStore;
+    }
+
+    public BackpackStore getBackpackStore() {
+        return backpackStore;
     }
 
     public String getIp() throws IOException {

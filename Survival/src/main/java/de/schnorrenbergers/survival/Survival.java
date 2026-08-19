@@ -3,6 +3,7 @@ package de.schnorrenbergers.survival;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.admin.PlayerAdminHandler;
 import de.hems.paper.commands.ServerManagerCommand;
+import de.hems.paper.team.TeamService;
 import de.schnorrenbergers.survival.antiEnd.AntiEndCommand;
 import de.schnorrenbergers.survival.antiEnd.AntiEndListener;
 import de.schnorrenbergers.survival.commands.*;
@@ -12,6 +13,8 @@ import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
 import de.schnorrenbergers.survival.featrues.adminabuse.CommandListener;
 import de.schnorrenbergers.survival.featrues.adminabuse.LegitimizeCommand;
 import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiter;
+import de.schnorrenbergers.survival.featrues.team.TeamRules;
+import de.schnorrenbergers.survival.featrues.team.TeamSyncListener;
 import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiterListener;
 import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiterSettings;
 import de.schnorrenbergers.survival.featrues.endfight.EndListener;
@@ -37,6 +40,7 @@ public final class Survival extends JavaPlugin {
     private TeamConfig teamConfig;
     private ShopConfig shopConfig;
     private ChunkLimiter chunkLimiter;
+    private TeamRules teamRules;
 
     @Override
     public void onLoad() {
@@ -48,6 +52,7 @@ public final class Survival extends JavaPlugin {
         moneyConfig = new MoneyConfig();
         teamConfig = new TeamConfig();
         shopConfig = new ShopConfig();
+        teamRules = new TeamRules();
         try {
             listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.SURVIVAL);
         } catch (Exception e) {
@@ -55,6 +60,8 @@ public final class Survival extends JavaPlugin {
         }
         new RequestPlayerMoneyEventHandler();
         new PlayerAdminHandler(this);
+        TeamService.init(this);
+        new TeamSyncListener();
         registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
         registerCommand("debug", new DebugCommand());
         registerCommand("cteam", new TeamCommand());
@@ -117,5 +124,9 @@ public final class Survival extends JavaPlugin {
 
     public ChunkLimiter getChunkLimiter() {
         return chunkLimiter;
+    }
+
+    public TeamRules getTeamRules() {
+        return teamRules;
     }
 }

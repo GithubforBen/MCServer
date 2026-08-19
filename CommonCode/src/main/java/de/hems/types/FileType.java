@@ -60,6 +60,7 @@ public class FileType implements Serializable {
         SURVIVAL,
         LOBBY,
         BEDWARS,
+        BACKPACK,
         VELOCITY,
         WORLDEDIT,
         CORE_PROTECT,
@@ -73,6 +74,7 @@ public class FileType implements Serializable {
                 case SURVIVAL -> "build:/survival-1.0.jar";
                 case LOBBY -> "build:/lobby-1.0.jar";
                 case BEDWARS -> "build:/bedwars-1.0.jar";
+                case BACKPACK -> "build:/backpack-1.0.jar";
                 case VELOCITY -> "build:/velocityplugin-1.0.jar";
                 case WORLDEDIT ->
                         "https://cdn.modrinth.com/data/1u6JkXh5/versions/F5ea2ov3/worldedit-bukkit-7.4.5.jar";
@@ -127,6 +129,7 @@ public class FileType implements Serializable {
                 case SURVIVAL -> "Survival";
                 case LOBBY -> "Lobby";
                 case BEDWARS -> "Bedwars";
+                case BACKPACK -> "Team-Rucksack";
                 case VELOCITY -> "Netzwerk Proxy Plugin";
                 case WORLDEDIT -> "WorldEdit";
                 case WORLD_GUARD -> "WorldGuard";
@@ -145,6 +148,7 @@ public class FileType implements Serializable {
                 case SURVIVAL -> "Das komplette Survival Spielsystem";
                 case LOBBY -> "Lobby Features, Parkour und Server Manager";
                 case BEDWARS -> "Bedwars Minispiel";
+                case BACKPACK -> "Geteilter Rucksack fuer jedes Team";
                 case VELOCITY -> "Verbindet den Proxy mit dem Netzwerk";
                 case WORLDEDIT -> "Welten schnell bearbeiten";
                 case WORLD_GUARD -> "Regionen schuetzen";

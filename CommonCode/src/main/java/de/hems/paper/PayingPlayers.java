@@ -1,9 +1,9 @@
-package de.schnorrenbergers.survival.featrues.chunklimiter;
+package de.hems.paper;
 
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.configs.RequestDataFromConfigEvent;
 import de.hems.communication.events.types.RespondDataEvent;
-import de.schnorrenbergers.survival.Survival;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.time.Duration;
@@ -17,14 +17,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Knows which players pay for the server.
  * <p>
- * The list lives in the config of the launcher, so it has to be fetched over the network. The old
- * implementation did that fetch straight out of {@code isPaying}, which meant the calling thread - the main
- * server thread - was blocked for up to ten seconds per call, and it treated every failed fetch as "this
- * player does not pay". That is where the sporadic misbehaviour came from: whenever a response was slow or
- * the launcher was busy, paying players were silently downgraded.
+ * The list lives in the config of the launcher, so it has to be fetched over the network. This class never
+ * blocks and never guesses: {@link #isPaying(UUID)} answers from a snapshot that a background task keeps up
+ * to date, and a failed refresh leaves the previous snapshot untouched. Treating a slow answer as "does not
+ * pay" is what used to downgrade paying players at random.
  * <p>
- * This version never blocks and never guesses. {@link #isPaying(Player)} answers from a snapshot that is
- * kept up to date by a background task, and a failed refresh leaves the previous snapshot untouched.
+ * It lives in the shared code rather than in one plugin because more than one feature depends on it - the
+ * chunk limiter and the size of a team's backpack both ask the same question.
  */
 public final class PayingPlayers {
 
@@ -39,13 +38,9 @@ public final class PayingPlayers {
     /** The config key the launcher stores the paying players under. */
     private static final String CONFIG_KEY = "paying-players";
 
-    /** The last snapshot that was received successfully. Immutable, so readers need no lock. */
     private static volatile Set<UUID> snapshot = Collections.emptySet();
-    /** Whether a snapshot was ever received. Until then nobody is limited. */
     private static volatile boolean loaded = false;
-    /** When the next refresh is due. */
     private static volatile long nextRefreshAt = 0L;
-    /** Guards against several refreshes running at the same time. */
     private static final AtomicBoolean refreshing = new AtomicBoolean(false);
 
     private PayingPlayers() {
@@ -71,8 +66,8 @@ public final class PayingPlayers {
     }
 
     /**
-     * Whether the list was received at least once. Callers use this to avoid punishing players while the
-     * answer is still on its way - guessing "does not pay" was the old bug.
+     * Whether the list was received at least once. Callers use this to avoid acting on an answer that has
+     * not arrived yet.
      *
      * @return whether a snapshot is available
      */
@@ -88,12 +83,34 @@ public final class PayingPlayers {
     }
 
     /**
-     * Brings the next refresh forward, so a change made in the meantime is picked up quickly. Used when
-     * something happened that likely changed the list, for example a player joining.
-     * <p>
-     * It does not drop the expiry outright: twenty players joining at once would otherwise become twenty
-     * requests. The refresh is pulled to at most {@value #MIN_REFRESH_INTERVAL_MS} ms from now, which
-     * collapses a burst into a single fetch.
+     * Counts how many of the given players pay.
+     *
+     * @param players the players to count
+     * @return how many of them are on the list
+     */
+    public static int countPaying(Iterable<UUID> players) {
+        int paying = 0;
+        for (UUID uuid : players) {
+            if (isPaying(uuid)) paying++;
+        }
+        return paying;
+    }
+
+    /**
+     * Whether more than half of the given players pay. Ties count as "not a majority", so a two player team
+     * needs both of them.
+     *
+     * @param players the players to weigh up
+     * @return whether the paying ones are in the majority
+     */
+    public static boolean isMajorityPaying(java.util.Collection<UUID> players) {
+        if (players == null || players.isEmpty()) return false;
+        return countPaying(players) * 2 > players.size();
+    }
+
+    /**
+     * Brings the next refresh forward, so a change made in the meantime is picked up quickly. It does not
+     * drop the expiry outright: twenty players joining at once would otherwise become twenty requests.
      */
     public static void invalidate() {
         long soon = System.currentTimeMillis() + MIN_REFRESH_INTERVAL_MS;
@@ -101,8 +118,7 @@ public final class PayingPlayers {
     }
 
     /**
-     * Fetches the list again if the snapshot has expired. Returns immediately - the fetch itself runs on an
-     * async task.
+     * Fetches the list again if the snapshot has expired. Returns immediately - the fetch runs async.
      */
     public static void refreshIfDue() {
         if (System.currentTimeMillis() < nextRefreshAt) return;
@@ -114,13 +130,12 @@ public final class PayingPlayers {
      */
     public static void refreshNow() {
         if (!refreshing.compareAndSet(false, true)) return;
-        Survival plugin = Survival.getInstance();
         try {
-            if (plugin == null || !plugin.isEnabled()) {
+            if (!PaperContext.hasPlugin() || !PaperContext.getPlugin().isEnabled()) {
                 refreshing.set(false);
                 return;
             }
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, PayingPlayers::fetch);
+            PaperContext.async(PayingPlayers::fetch);
         } catch (RuntimeException e) {
             // the plugin was disabled between the check and the call - the flag must not stay stuck
             refreshing.set(false);
@@ -141,7 +156,6 @@ public final class PayingPlayers {
             ListenerAdapter.sendListeners(request);
             RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), RESPONSE_TIMEOUT);
             if (response == null) {
-                // the launcher did not answer in time - keep what we have and try again shortly
                 nextRefreshAt = System.currentTimeMillis() + RETRY_INTERVAL_MS;
                 return;
             }
@@ -157,7 +171,7 @@ public final class PayingPlayers {
             Thread.currentThread().interrupt();
             nextRefreshAt = System.currentTimeMillis() + RETRY_INTERVAL_MS;
         } catch (Exception e) {
-            Survival.getInstance().getLogger().warning("Could not refresh the paying players: " + e.getMessage());
+            Bukkit.getLogger().warning("Could not refresh the paying players: " + e.getMessage());
             nextRefreshAt = System.currentTimeMillis() + RETRY_INTERVAL_MS;
         } finally {
             refreshing.set(false);
@@ -166,8 +180,7 @@ public final class PayingPlayers {
 
     /**
      * Turns whatever the launcher sent into a set of uuids. Entries that are not uuids are skipped rather
-     * than making the whole list unusable, which is what the old {@code getFirst() instanceof String} check
-     * did.
+     * than making the whole list unusable.
      *
      * @param data the payload of the response
      * @return the paying players, or {@code null} if the payload was not a list at all

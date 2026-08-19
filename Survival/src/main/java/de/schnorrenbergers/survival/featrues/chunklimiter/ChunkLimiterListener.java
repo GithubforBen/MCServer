@@ -1,5 +1,6 @@
 package de.schnorrenbergers.survival.featrues.chunklimiter;
 
+import de.hems.paper.PayingPlayers;
 import de.schnorrenbergers.survival.Survival;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;

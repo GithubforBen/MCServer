@@ -195,6 +195,95 @@ den eingebauten `descriptorRef`. Jetty findet Teile von sich per `ServiceLoader`
 Descriptor überschreibt gleichnamige `META-INF/services`-Dateien, statt sie zusammenzuführen - ohne den
 `metaInf-services`-Handler fehlen 17 der 38 Service-Provider im fertigen Jar.
 
+## Teams
+
+Teams gehören dem **Launcher**, nicht mehr einem einzelnen Server. Früher lagen sie in einer
+`team-config.yml` neben dem Survival-Server - damit existierten sie nur dort und waren weg, sobald das
+Verzeichnis gelöscht wurde. Jetzt speichert der Launcher sie in `teams.yml`, jeder Server hält eine lokale
+Kopie, und der Launcher meldet jede Änderung ins Netzwerk. Ein Team, das auf einem Server erstellt wird,
+ist einen Moment später überall bekannt.
+
+Schreibzugriffe laufen immer über den Launcher und sind **optimistisch gesperrt**: jedes Team trägt die
+Revision, mit der es gelesen wurde. Ändert jemand anderes es zwischendurch, wird der Schreibvorgang
+abgelehnt statt eine Änderung stillschweigend zu überschreiben.
+
+Beim ersten Start werden vorhandene Teams automatisch übernommen: Anführer aus der alten Config,
+Mitglieder, Tag und Farbe aus Minecrafts eigenem Scoreboard, Claims aus dem alten `claims`-Abschnitt.
+Danach wird die alte Datei als migriert markiert (nicht gelöscht).
+
+### Befehle
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/cteam` | Öffnet den Team-Manager |
+| `/cteam create <name> <tag>` | Team gründen |
+| `/cteam invite <spieler>` · `invite accept\|reject` | Einladungen |
+| `/cteam join <team>` | Einem offenen Team beitreten |
+| `/cteam leave` · `kick <spieler>` · `transfer <spieler>` | Mitgliederverwaltung |
+| `/cteam rename <name>` · `tag <tag>` · `disband` | Team umbenennen, Tag ändern, auflösen |
+| `/cteam sethome` · `home` | Team-Home setzen und nutzen |
+| `/cteam info [team]` · `list` | Team-Infos, alle Teams im Netzwerk |
+| `/cteam claim` · `unclaim` · `chunks` | Chunks kaufen, freigeben, Karte anzeigen |
+
+### Einstellbar
+
+Was **das Team** selbst festlegt, steht im Manager unter *Einstellungen* und liegt beim Team:
+maximale Mitglieder, Friendly Fire, offener Beitritt, ob Mitglieder claimen oder einladen dürfen, ob der
+Rucksack aktiv ist und ob Mitglieder daraus entnehmen dürfen, Team-Home, Beitritts-Ankündigungen.
+
+Was **der Server** vorgibt, steht in `configs/team.yml` auf dem Survival-Server:
+
+```yaml
+members:
+  maximum: 8            # Obergrenze - ein Team darf sich darunter selbst begrenzen
+name:
+  minimum-length: 3
+  maximum-length: 16
+  maximum-tag-length: 5
+claims:
+  base-cost: 50         # was der erste Chunk kostet
+  growth: 1.1           # 10 % mehr pro weiterem Chunk
+  maximum-cost: 1000
+  maximum-per-team: 0   # 0 = unbegrenzt
+permissions:
+  allow-rename: true
+  allow-disband: true
+  allow-public-join: true
+home:
+  cooldown-seconds: 60
+  warmup-seconds: 3     # Bewegen bricht ab
+```
+
+Eine neue Einstellung ist ein Eintrag in `TeamSettings.Key` - der Manager baut seine Buttons aus dem Enum,
+Speicherung und Netzwerk-Übertragung ändern sich nicht.
+
+## Backpack
+
+Ein eigenes, auswählbares Plugin (`BackpackPlugin`). `/backpack` oder `/bp` öffnet den Rucksack, den sich
+ein **Team teilt**. Er liegt beim Launcher neben den Teams, ist also auf jedem Server derselbe.
+
+**Die Größe hängt davon ab, wer zahlt:** sobald die zahlenden Mitglieder eines Teams in der *Mehrheit*
+sind, wird aus der Kiste (27 Slots) eine Doppelkiste (54). Gleichstand zählt nicht als Mehrheit - ein
+Zweierteam braucht also beide. Das wird bei jedem Öffnen neu berechnet.
+
+Schauen mehrere Mitglieder gleichzeitig hinein, teilen sie sich auf demselben Server ein und dasselbe
+Inventar und sehen sich gegenseitig zu. Gespeichert wird, sobald der Letzte es schließt. Wurde der Rucksack
+in der Zwischenzeit auf einem anderen Server verändert, wird der Schreibvorgang abgelehnt und der Spieler
+darauf hingewiesen - statt die Änderungen des anderen kommentarlos zu überschreiben.
+
+Einstellbar in `configs/backpack.yml`:
+
+```yaml
+size:
+  default-rows: 3          # normales Team = Kiste
+  paying-majority-rows: 6  # zahlende Mehrheit = Doppelkiste
+title: '&6Team-Rucksack &7- &f%team%'
+announce-size: true        # sagt beim Öffnen, wie viele Unterstützer noch fehlen
+```
+
+Das Plugin braucht ein Team-System und damit eine Netzwerkverbindung; es gehört zur Vorlage `SURVIVAL` und
+kann bei jedem anderen Paper-Server dazugewählt werden.
+
 ## Chunk Limiter
 
 Damit ein ruckelnder Server spielbar bleibt, senkt der Survival-Server bei Lag die Sichtweite - aber nur
@@ -252,4 +341,5 @@ tiers:                        # ab welchen TPS wie viele Chunks abgezogen werden
 | `LobbyPlugin` | Lobby, Parkour, Server Manager |
 | `Survival` | Survival Spielmodus |
 | `Bedwars` | Bedwars Minispiel |
+| `BackpackPlugin` | Geteilter Team-Rucksack |
 | `VelocityPlugin` | Meldet neue Server am laufenden Proxy an |
