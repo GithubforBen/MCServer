@@ -3,5 +3,11 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.bedwars.Bedwars
 api-version: '26.2'
 commands:
-  gameSettings:
-    permission: gameManager
+  bw:
+    description: Verwaltet die Bedwars Runde auf diesem Server
+    usage: /bw
+    aliases: [bedwars]
+permissions:
+  bedwars.admin:
+    description: Darf die Runde und die Addons verwalten
+    default: op
