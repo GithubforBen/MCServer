@@ -4,7 +4,11 @@ import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.addon.Addon;
 import de.schnorrenbergers.bedwars.addon.AddonRegistry;
 import de.schnorrenbergers.bedwars.game.Game;
+import de.schnorrenbergers.bedwars.api.BedwarsGameEndEvent;
 import de.schnorrenbergers.bedwars.game.TeamColor;
+import de.schnorrenbergers.bedwars.game.phase.IngamePhase;
+import de.schnorrenbergers.bedwars.generator.Generator;
+import de.schnorrenbergers.bedwars.generator.GeneratorManager;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.map.setup.SetupCommand;
 import de.schnorrenbergers.bedwars.util.Messages;
@@ -44,6 +48,9 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
             case "reload" -> reload(sender);
             case "addons" -> addons(sender);
             case "addon" -> addon(sender, args);
+            case "start" -> start(sender);
+            case "generators" -> generators(sender);
+            case "stop" -> stop(sender);
             case "setup" -> {
                 if (!denied(sender)) setup.handle(sender, tail(args));
             }
@@ -54,7 +61,7 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
 
     private void usage(CommandSender sender) {
         Messages.send(sender, "command.usage", "usage",
-                "status | setup | reload | addons | addon <id> on|off|default");
+                "status | setup | start | stop | generators | reload | addons | addon <id> on|off|default");
     }
 
     /**
@@ -90,6 +97,67 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
         } catch (Exception e) {
             Messages.send(sender, "reload.failed", "error", String.valueOf(e.getMessage()));
         }
+    }
+
+    /**
+     * Starts the round now, without waiting for the lobby to fill.
+     * <p>
+     * Exists for the two moments where waiting is wrong: testing a map you have just set up, and an event
+     * that decides the round begins.
+     */
+    private void start(CommandSender sender) {
+        if (denied(sender)) return;
+        Game game = Bedwars.getInstance().getGame();
+        if (!game.isWaiting()) {
+            Messages.send(sender, "command.start.running");
+            return;
+        }
+        if (!game.canStart()) {
+            Messages.send(sender, "command.start.impossible");
+            return;
+        }
+        game.setPhase(new IngamePhase(game));
+        Messages.send(sender, "command.start.done");
+    }
+
+    /**
+     * Lists every generator with its level and how long until it drops again.
+     * <p>
+     * The floating text says the same thing, but only to somebody standing in front of it - this answers
+     * "is that generator running at all" from the console, which is where you ask it while building a map.
+     */
+    private void generators(CommandSender sender) {
+        GeneratorManager manager = Bedwars.getInstance().getGame().getGenerators();
+        List<Generator> all = manager == null ? List.of() : manager.all();
+        if (all.isEmpty()) {
+            Messages.send(sender, "generator.none");
+            return;
+        }
+        Messages.send(sender, "generator.header", "count", String.valueOf(all.size()));
+        for (Generator generator : all) {
+            Messages.send(sender, "generator.entry",
+                    "owner", generator.getOwner() == null
+                            ? Messages.raw("generator.middle")
+                            : generator.getOwner().getColor().getDisplayName(),
+                    "where", (int) generator.getLocation().getX() + " "
+                            + (int) generator.getLocation().getY() + " "
+                            + (int) generator.getLocation().getZ());
+            sender.sendMessage(generator.describe());
+        }
+    }
+
+    /**
+     * Ends the round with nobody winning.
+     */
+    private void stop(CommandSender sender) {
+        if (denied(sender)) return;
+        Game game = Bedwars.getInstance().getGame();
+        if (!game.isRunning()) {
+            Messages.send(sender, "command.stop.not-running");
+            return;
+        }
+        game.end(null, BedwarsGameEndEvent.Reason.STOPPED);
+        Messages.send(sender, "command.stop.done");
     }
 
     /**
@@ -156,7 +224,7 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                 @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length <= 1) {
-            return filter(List.of("status", "setup", "reload", "addons", "addon"),
+            return filter(List.of("status", "setup", "start", "stop", "generators", "reload", "addons", "addon"),
                     args.length == 0 ? "" : args[0]);
         }
         if (args[0].equalsIgnoreCase("setup")) return completeSetup(args);

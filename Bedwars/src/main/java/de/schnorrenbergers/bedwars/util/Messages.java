@@ -110,6 +110,12 @@ public final class Messages {
         texts.put("command.usage", "<prefix><gray>Usage: <white>/bw <usage>");
         texts.put("command.players-only", "<prefix><red>Only a player can do that.");
 
+        texts.put("command.start.done", "<prefix><green>The round starts now.");
+        texts.put("command.start.running", "<prefix><red>The round is already under way.");
+        texts.put("command.start.impossible", "<prefix><red>No map is ready, or one is being set up.");
+        texts.put("command.stop.done", "<prefix><gray>The round was ended.");
+        texts.put("command.stop.not-running", "<prefix><red>No round is running.");
+
         texts.put("reload.done", "<prefix><green>Reloaded every config in <white><millis>ms</white>.");
         texts.put("reload.failed", "<prefix><red>Reload failed: <white><error>");
 
@@ -184,6 +190,47 @@ public final class Messages {
         texts.put("game.ended.winner", "<prefix><gold><team></gold> <yellow>wins the round!");
         texts.put("game.ended.nobody", "<prefix><gray>The round is over. Nobody won.");
         texts.put("team.eliminated", "<prefix><red><team></red> <gray>has been eliminated.");
+
+        texts.put("generator.hologram", "<aqua><type></aqua> <dark_gray>| <gray>Tier <white><tier></white> <dark_gray>| <yellow><seconds>s");
+
+        texts.put("generator.none", "<prefix><gray>No generator is running.");
+        texts.put("generator.header", "<prefix><gray><count> generator(s):");
+        texts.put("generator.entry", "<gray>- <white><owner></white> <dark_gray>at <gray><where>");
+        texts.put("generator.middle", "middle");
+
+        texts.put("build.too-high", "<prefix><red>You cannot build above <white><limit></white>.");
+        texts.put("build.protected", "<prefix><red>You cannot build here.");
+        texts.put("build.not-yours", "<prefix><red>You can only break what somebody built.");
+
+        texts.put("bed.own", "<prefix><red>That is your own bed.");
+        texts.put("bed.nobody", "the game");
+        texts.put("bed.destroyed", "<prefix><gray>The bed of <white><team></white> was destroyed by <white><player></white>!");
+        texts.put("bed.title", "<red>BED DESTROYED");
+        texts.put("bed.subtitle", "<gray>You will no longer respawn!");
+
+        texts.put("death.killed", "<white><player></white> <gray>was killed by <white><killer></white>.");
+        texts.put("death.killed.final", "<white><player></white> <gray>was killed by <white><killer></white>. <red>FINAL KILL!");
+        texts.put("death.alone", "<white><player></white> <gray>died.");
+        texts.put("death.alone.final", "<white><player></white> <gray>died. <red>FINAL KILL!");
+        texts.put("death.collected", "<prefix><gray>You took <white><what></white> off <white><player></white>.");
+
+        texts.put("respawn.title", "<red>You died");
+        texts.put("respawn.subtitle", "<gray>Back in <white><seconds></white>s");
+        texts.put("respawn.back", "<green>Go!");
+
+        texts.put("sidebar.title", "<bold><red>BED<white>WARS");
+        texts.put("sidebar.map", "<gray>Map: <white><map>");
+        texts.put("sidebar.team.bed", "<white><initial> <gray><team> <green>\u2714");
+        texts.put("sidebar.team.alive", "<white><initial> <gray><team> <yellow><players>");
+        texts.put("sidebar.team.out", "<dark_gray><initial> <team> <red>\u2716");
+        texts.put("sidebar.you", " <gray>(you)");
+        texts.put("sidebar.kills", "<gray>Kills: <white><kills>");
+        texts.put("sidebar.beds", "<gray>Beds: <white><beds>");
+        texts.put("sidebar.name-prefix", "<gray>[<initial><gray>] ");
+
+        texts.put("chat.global", "<gray>[<white>ALL<gray>] <white><player><gray>: <white><message>");
+        texts.put("chat.team", "<gray>[<aqua>TEAM<gray>] <white><player><gray>: <white><message>");
+        texts.put("chat.no-team", "no team");
 
         texts.put("phase.lobby", "Waiting");
         texts.put("phase.running", "Running");

@@ -7,7 +7,13 @@ import de.schnorrenbergers.bedwars.addon.AddonRegistry;
 import de.schnorrenbergers.bedwars.addon.AddonSettings;
 import de.schnorrenbergers.bedwars.commands.BedwarsCommand;
 import de.schnorrenbergers.bedwars.config.GameSettings;
+import de.schnorrenbergers.bedwars.config.GeneratorSettings;
 import de.schnorrenbergers.bedwars.config.ModeSettings;
+import de.schnorrenbergers.bedwars.generator.GeneratorManager;
+import de.schnorrenbergers.bedwars.listener.BedListener;
+import de.schnorrenbergers.bedwars.listener.BuildListener;
+import de.schnorrenbergers.bedwars.listener.ChatListener;
+import de.schnorrenbergers.bedwars.listener.CombatListener;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.lobby.LobbyListener;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
@@ -36,6 +42,7 @@ public final class Bedwars extends JavaPlugin {
 
     private ModeSettings modeSettings;
     private GameSettings gameSettings;
+    private GeneratorSettings generatorSettings;
     private AddonRegistry addons;
     private MapRepository maps;
     private MapLoader mapLoader;
@@ -60,11 +67,16 @@ public final class Bedwars extends JavaPlugin {
         mapLoader = new MapLoader(maps);
 
         game = new Game(modeSettings.get(gameSettings.getMode()), gameSettings);
+        game.setGenerators(new GeneratorManager(generatorSettings));
         loadArena();
         addons.apply(game);
         game.start(this);
 
         new LobbyListener(this);
+        new BedListener(this);
+        new BuildListener(this, game.getBlockTracker());
+        new CombatListener(this);
+        new ChatListener(this);
         register("bw", new BedwarsCommand());
         getLogger().info("Hosting " + game.getMode()
                 + (game.getArena() == null ? " with no map yet" : " on " + game.getArena().getName())
@@ -100,6 +112,11 @@ public final class Bedwars extends JavaPlugin {
             gameSettings = new GameSettings();
         } else {
             gameSettings.load();
+        }
+        if (generatorSettings == null) {
+            generatorSettings = new GeneratorSettings();
+        } else {
+            generatorSettings.load();
         }
     }
 
@@ -225,6 +242,10 @@ public final class Bedwars extends JavaPlugin {
 
     public ModeSettings getModeSettings() {
         return modeSettings;
+    }
+
+    public GeneratorSettings getGeneratorSettings() {
+        return generatorSettings;
     }
 
     /**

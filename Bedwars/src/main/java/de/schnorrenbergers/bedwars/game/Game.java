@@ -8,6 +8,7 @@ import de.schnorrenbergers.bedwars.game.phase.EndPhase;
 import de.schnorrenbergers.bedwars.game.phase.GamePhase;
 import de.schnorrenbergers.bedwars.game.phase.LobbyPhase;
 import de.schnorrenbergers.bedwars.game.phase.PhaseType;
+import de.schnorrenbergers.bedwars.generator.GeneratorManager;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -42,6 +43,8 @@ public class Game {
     private ArenaMap arena;
     private World world;
     private boolean setupMode;
+    private final BlockTracker blockTracker = new BlockTracker();
+    private GeneratorManager generators;
     private GameTeam winner;
     private boolean ended;
 
@@ -240,6 +243,21 @@ public class Game {
     public void setArena(@Nullable ArenaMap arena, @Nullable World world) {
         this.arena = arena;
         this.world = world;
+    }
+
+    /**
+     * @return every block players put there this round, which is what may be broken again
+     */
+    public BlockTracker getBlockTracker() {
+        return blockTracker;
+    }
+
+    public void setGenerators(GeneratorManager generators) {
+        this.generators = generators;
+    }
+
+    public @Nullable GeneratorManager getGenerators() {
+        return generators;
     }
 
     public @Nullable ArenaMap getArena() {

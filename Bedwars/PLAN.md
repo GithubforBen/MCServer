@@ -321,7 +321,13 @@ Countdown die Runde startet.
 4. **Bauen**: nur selbst gesetzte Blöcke abbaubar (Block-Tracking), Höhenlimit, Schutzradius um
    Spawns und Generatoren, keine Blöcke auf Händlern.
 5. **Ressourcen**: Generatoren mit Timings und Stufen, Item-Cap am Boden, schwebende Anzeige mit
-   Countdown, Split auf Teamspieler in der Basis, Ressourcen droppen beim Tod.
+   Countdown, Split auf Teamspieler in der Basis (reihum, nicht an den Nächststehenden - sonst
+   bekommt der, der auf dem Generator steht, alles). Ressourcen eines Getöteten gehen an den
+   **Killer** statt zu droppen: sonst lohnt es sich nicht, jemanden mit acht Diamanten zu jagen,
+   und Stillstehen wird zur sichersten Art, eine Ressource zu halten (`death.resources-to-killer`).
+7. **Werkzeuge**: `/bw start` und `/bw stop` starten und beenden eine Runde ohne Wartezeit,
+   `/bw generators` sagt für jeden Generator Stufe, Ort und Restzeit - beim Map-Bauen die Antwort
+   auf "läuft der überhaupt".
 6. **Anzeige**: Sidebar (Teams mit Bett-Status und Spieleranzahl, nächstes Ereignis mit
    Countdown), farbiger Tablist, Team-Chat mit `@` für global.
 

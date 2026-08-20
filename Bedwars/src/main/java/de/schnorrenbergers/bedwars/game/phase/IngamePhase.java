@@ -6,13 +6,19 @@ import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
 import de.schnorrenbergers.bedwars.game.TeamBalancer;
+import de.schnorrenbergers.bedwars.api.BedwarsPlayerRespawnEvent;
+import de.schnorrenbergers.bedwars.generator.GeneratorManager;
 import de.schnorrenbergers.bedwars.map.MapPoint;
+import de.schnorrenbergers.bedwars.scoreboard.Sidebar;
 import de.schnorrenbergers.bedwars.util.Messages;
+import net.kyori.adventure.title.Title;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -56,7 +62,75 @@ public class IngamePhase extends GamePhase {
                 start(participant, player);
             }
         }
+        GeneratorManager generators = game.getGenerators();
+        if (generators != null) generators.build(game);
         Messages.broadcast("game.started", "mode", game.getMode().getDisplayName());
+    }
+
+    @Override
+    public void onExit() {
+        GeneratorManager generators = game.getGenerators();
+        if (generators != null) generators.remove();
+    }
+
+    /**
+     * Counts the dead down and brings them back when their time is up.
+     * <p>
+     * Every tick rather than every second, because the countdown a dead player stares at should not jump.
+     */
+    private void tickRespawns() {
+        for (GamePlayer participant : game.getPlayers()) {
+            if (participant.getState() != GamePlayer.State.RESPAWNING) continue;
+            int left = participant.getRespawnTicks() - 1;
+            participant.setRespawnTicks(left);
+            Player player = participant.getPlayer();
+            if (player == null) continue;
+            if (left <= 0) {
+                respawn(participant, player);
+                continue;
+            }
+            if (left % 20 != 0) continue;
+            player.showTitle(Title.title(
+                    Messages.get("respawn.title", "seconds", String.valueOf(left / 20)),
+                    Messages.get("respawn.subtitle"),
+                    Title.Times.times(Duration.ZERO, Duration.ofMillis(1200), Duration.ZERO)));
+        }
+    }
+
+    /**
+     * Brings one player back at their base.
+     */
+    private void respawn(GamePlayer participant, Player player) {
+        GameTeam team = participant.getTeam();
+        if (team == null || !team.isAlive()) {
+            participant.setState(GamePlayer.State.SPECTATOR);
+            player.setGameMode(GameMode.SPECTATOR);
+            return;
+        }
+        Location spawn = spawnOf(team);
+        BedwarsPlayerRespawnEvent event = new BedwarsPlayerRespawnEvent(game, participant,
+                spawn == null ? player.getLocation() : spawn);
+        Bukkit.getPluginManager().callEvent(event);
+
+        participant.setState(GamePlayer.State.ALIVE);
+        player.setGameMode(GameMode.SURVIVAL);
+        Equipment.reset(player, event.getLocation());
+        Equipment.giveStartingKit(player, team);
+        protect(player);
+        player.showTitle(Title.title(Messages.get("respawn.back"), net.kyori.adventure.text.Component.empty(),
+                Title.Times.times(Duration.ZERO, Duration.ofMillis(800), Duration.ofMillis(200))));
+    }
+
+    /**
+     * Makes somebody who just appeared briefly untouchable, so a player camping the spawn cannot kill them
+     * before they can move.
+     */
+    private void protect(Player player) {
+        int seconds = game.getSettings().getRespawnProtectionSeconds();
+        if (seconds <= 0) return;
+        player.setInvulnerable(true);
+        Bukkit.getScheduler().runTaskLater(de.schnorrenbergers.bedwars.Bedwars.getInstance(),
+                () -> player.setInvulnerable(false), seconds * 20L);
     }
 
     /**
@@ -93,7 +167,12 @@ public class IngamePhase extends GamePhase {
 
     @Override
     public void tick(long ticks) {
+        GeneratorManager generators = game.getGenerators();
+        if (generators != null) generators.tick(game, ticks);
+        tickRespawns();
+
         if (ticks % 20L != 0L) return;
+        Sidebar.updateAll(game);
 
         for (GameTeam team : game.eliminateFinishedTeams()) {
             Messages.broadcast("team.eliminated", "team", team.getColor().getDisplayName());

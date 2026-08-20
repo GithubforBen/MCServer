@@ -31,6 +31,7 @@ public final class ModeSettings {
      * Reads the file, writing the four standard modes into it when they are missing.
      */
     public void load() {
+        file.reload();
         modes.clear();
         file.section("modes",
                 "Every block below is a mode: how many teams play and how many players fit into one.",

@@ -6,6 +6,7 @@ import de.schnorrenbergers.bedwars.game.Equipment;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.map.MapPoint;
+import de.schnorrenbergers.bedwars.scoreboard.Sidebar;
 import de.schnorrenbergers.bedwars.util.Messages;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.GameMode;
@@ -59,6 +60,7 @@ public class LobbyListener implements Listener {
         if (game == null || game.isSetupMode()) return;
 
         GamePlayer joined = game.join(player);
+        Sidebar.apply(player, game);
         if (game.isWaiting()) {
             prepareForLobby(player);
             Messages.broadcast("lobby.joined",

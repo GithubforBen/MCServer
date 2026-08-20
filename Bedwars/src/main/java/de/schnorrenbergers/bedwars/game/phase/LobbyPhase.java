@@ -1,6 +1,7 @@
 package de.schnorrenbergers.bedwars.game.phase;
 
 import de.schnorrenbergers.bedwars.game.Game;
+import de.schnorrenbergers.bedwars.scoreboard.Sidebar;
 import de.schnorrenbergers.bedwars.util.Messages;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.key.Key;
@@ -40,6 +41,7 @@ public class LobbyPhase extends GamePhase {
     @Override
     public void tick(long ticks) {
         if (ticks % 20L != 0L) return;
+        Sidebar.updateAll(game);
 
         // no map, or somebody is building one: there is nothing to count down to
         if (!game.canStart()) {
