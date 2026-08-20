@@ -120,6 +120,38 @@ public final class Messages {
         texts.put("status.map", "<gray>- Map: <white><map>");
         texts.put("status.map-missing", "<gray>- Map: <red>none set up yet");
 
+        texts.put("status.setup", "<gray>- <yellow>A map is being set up, the round is on hold.");
+
+        texts.put("setup.usage", "<prefix><gray>Usage: <white>/bw <usage>");
+        texts.put("setup.status", "<prefix><gray>Setting up <white><map></white> <gray>(<state><gray>)");
+        texts.put("setup.state.saved", "<green>saved");
+        texts.put("setup.state.unsaved", "<yellow>unsaved changes");
+        texts.put("setup.no-maps", "<prefix><red>No maps yet. <gray>Put a world folder into <white><folder></white>.");
+        texts.put("setup.list.header", "<prefix><gray><count> map(s) on this server:");
+        texts.put("setup.list.entry", "<gray>- <white><map>");
+        texts.put("setup.unknown-map", "<prefix><red>There is no map called <white><map></white> in <white><folder></white>.");
+        texts.put("setup.already", "<prefix><red>You are already setting up <white><map></white>. <gray>Leave it with /bw setup exit.");
+        texts.put("setup.not-active", "<prefix><red>No map is open. <gray>Open one with /bw setup <map>.");
+        texts.put("setup.started", "<prefix><green>Setting up <white><map></white>. <gray>The round is on hold.");
+        texts.put("setup.world-failed", "<prefix><red>The world of <white><map></white> could not be loaded.");
+        texts.put("setup.set", "<prefix><green><what></green> <gray>set to <white><where></white>.");
+        texts.put("setup.removed", "<prefix><yellow><what></yellow> <gray>removed.");
+        texts.put("setup.look-at-bed", "<prefix><red>Look at the bed you mean.");
+        texts.put("setup.not-a-number", "<prefix><red><input></red> <gray>is not a number.");
+        texts.put("setup.unknown-team", "<prefix><red>There is no team colour <white><input></white>.");
+        texts.put("setup.unknown-mode", "<prefix><red>There is no mode <white><input></white> in modes.yml.");
+        texts.put("setup.gen-none", "<prefix><red>No generator within <white><range></white> blocks.");
+        texts.put("setup.build-set", "<prefix><green>Build limit</green> <gray>set: up to <white><max></white>, void below <white><void></white>.");
+        texts.put("setup.mode-set", "<prefix><green><mode></green> <gray>plays with <white><teams></white>.");
+        texts.put("setup.mode-auto", "<prefix><gray><mode> uses the map's own teams again.");
+        texts.put("setup.check.ok", "<prefix><green>The map is ready for <white><mode></white>.");
+        texts.put("setup.check.header", "<prefix><yellow><count></yellow> <gray>thing(s) missing for <white><mode></white>:");
+        texts.put("setup.check.entry", "<gray>- <white><problem>");
+        texts.put("setup.saved", "<prefix><green>Saved <white><map></white>, world and all.");
+        texts.put("setup.save-failed", "<prefix><red>Could not save <white><map></white>. <gray>See the console.");
+        texts.put("setup.unsaved", "<prefix><yellow>You have unsaved changes. <gray>Type it again to leave anyway.");
+        texts.put("setup.exited", "<prefix><gray>Setup closed.");
+
         texts.put("addon.header", "<prefix><gray>Addons on this server:");
         texts.put("addon.entry.on", "<green>✔ <white><addon></white> <dark_gray>- <gray><description>");
         texts.put("addon.entry.off", "<red>✖ <gray><addon> <dark_gray>- <gray><description>");

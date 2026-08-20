@@ -233,8 +233,21 @@ Heruntergeladene Maps liegen als Weltordner unter `maps/<name>/`, daneben die `m
 - **Spielbetrieb:** beim Start wird der gewählte Ordner nach `arena_<name>` kopiert und geladen.
   Die Runde spielt in der Kopie, das Original bleibt unberührt. Da der Server danach weggeworfen
   wird, braucht es keinen Reset.
-- **Setup:** `/bw setup <map>` lädt den Ordner **direkt**, damit Bauänderungen erhalten bleiben,
-  und speichert die gesetzten Punkte in die `maps/<name>.yml`.
+- **Setup:** `/bw setup <map>` lädt dieselbe Kopie, `/bw setup save` schreibt die Punkte in die
+  `maps/<name>.yml` **und** die Welt zurück nach `maps/<name>/`. Die Map ändert sich also, wenn du
+  es sagst - nicht weil jemand ein Loch in die Arena gesprengt hat.
+
+**Wo eine Welt liegt, hat sich mit 26.2 geändert** (auf dem Server nachgemessen, nicht vermutet):
+eine Zusatzwelt ist keine Ordner mehr neben der Hauptwelt, sondern eine Dimension *in* ihr:
+
+```
+world/dimensions/minecraft/arena_<name>/region
+```
+
+Kopiert man eine Map im alten Layout hinein - und genau so sieht jede heruntergeladene Map aus -,
+importiert der Server sie und **verschiebt** sie dabei dorthin. Laden funktioniert deshalb weiter,
+aber nichts darf annehmen, die Welt später da wiederzufinden, wo es sie hingelegt hat.
+`World.getWorldFolder()` ist die einzige ehrliche Antwort, und daraus liest das Zurückschreiben.
 
 Die Map-Auswahl kommt in dieser Reihenfolge: `--map` beim Serverstart (später vom Event-System),
 sonst `map:` aus der `game.yml`, sonst per `/bw map <name>` in der Warte-Lobby, sonst zufällig
@@ -270,11 +283,15 @@ Phasenmaschine leer durchläuft.
 ## Phase 1 - Map und Setup
 
 1. `ArenaMap` + `MapRepository` (lesen/schreiben/auflisten).
-2. `/bw setup <map>` - Setup-Modus mit Zauberstab und Unterbefehlen:
-   `lobby`, `spectator`, `team <color> spawn|bed|shop|upgrade|generator|protection`,
-   `gen <DIAMOND|EMERALD> add|remove`, `bounds`, `mode <name> <teams...>`, `save`, `check`.
+2. `/bw setup <map>` - Setup-Modus mit Unterbefehlen:
+   `lobby`, `spectator`, `team <color> spawn|bed|shop|upgrade|generator|protection|remove`,
+   `gen add <typ>|remove`, `build <max-y> [void-y]`, `mode <name> <teams...>`, `name`,
+   `check`, `save`, `exit`.
+   **Kein Zauberstab**: jeder Punkt kommt aus deiner Position oder dem Block, den du ansiehst.
+   Das machst du beim Ablaufen der Map ohnehin, und ein Stab wäre ein Gegenstand mehr, den man
+   verliert, weiterreicht und hinterher wieder einsammelt.
 3. `MapValidator` mit klaren Meldungen, welche Punkte fehlen.
-4. `MapLoader`: kopieren, laden, entladen.
+4. `MapLoader`: kopieren, laden, zurückschreiben.
 
 **Fertig, wenn** du eine heruntergeladene Map einrichten und `/bw setup check` grün bekommen kannst.
 

@@ -4,6 +4,9 @@ import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.addon.Addon;
 import de.schnorrenbergers.bedwars.addon.AddonRegistry;
 import de.schnorrenbergers.bedwars.game.Game;
+import de.schnorrenbergers.bedwars.game.TeamColor;
+import de.schnorrenbergers.bedwars.map.ArenaMap;
+import de.schnorrenbergers.bedwars.map.setup.SetupCommand;
 import de.schnorrenbergers.bedwars.util.Messages;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,6 +30,8 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
 
     private static final String PERMISSION = "bedwars.admin";
 
+    private final SetupCommand setup = new SetupCommand();
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
                              @NotNull String @NotNull [] args) {
@@ -39,13 +44,17 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
             case "reload" -> reload(sender);
             case "addons" -> addons(sender);
             case "addon" -> addon(sender, args);
+            case "setup" -> {
+                if (!denied(sender)) setup.handle(sender, tail(args));
+            }
             default -> Messages.send(sender, "command.unknown", "input", args[0]);
         }
         return true;
     }
 
     private void usage(CommandSender sender) {
-        Messages.send(sender, "command.usage", "usage", "status | reload | addons | addon <id> on|off|default");
+        Messages.send(sender, "command.usage", "usage",
+                "status | setup | reload | addons | addon <id> on|off|default");
     }
 
     /**
@@ -62,12 +71,13 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
         Messages.send(sender, "status.players",
                 "online", String.valueOf(game.getOnlineCount()),
                 "maximum", String.valueOf(game.getMaximumPlayers()));
-        String map = game.getSettings().getMap();
-        if (map == null || map.isBlank()) {
+        ArenaMap arena = game.getArena();
+        if (arena == null) {
             Messages.send(sender, "status.map-missing");
         } else {
-            Messages.send(sender, "status.map", "map", map);
+            Messages.send(sender, "status.map", "map", arena.getName());
         }
+        if (game.isSetupMode()) Messages.send(sender, "status.setup");
     }
 
     private void reload(CommandSender sender) {
@@ -146,8 +156,10 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                 @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length <= 1) {
-            return filter(List.of("status", "reload", "addons", "addon"), args.length == 0 ? "" : args[0]);
+            return filter(List.of("status", "setup", "reload", "addons", "addon"),
+                    args.length == 0 ? "" : args[0]);
         }
+        if (args[0].equalsIgnoreCase("setup")) return completeSetup(args);
         if (args[0].equalsIgnoreCase("addon")) {
             if (args.length == 2) {
                 List<String> ids = new ArrayList<>();
@@ -157,6 +169,61 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
             if (args.length == 3) return filter(List.of("on", "off", "default"), args[2]);
         }
         return List.of();
+    }
+
+    /**
+     * Completes {@code /bw setup ...}, which is where most of the typing happens.
+     */
+    private List<String> completeSetup(String[] args) {
+        List<String> subcommands = new ArrayList<>(List.of(
+                "list", "lobby", "spectator", "team", "gen", "build", "mode", "name", "check", "save", "exit"));
+        if (args.length == 2) {
+            subcommands.addAll(Bedwars.getInstance().getMaps().list());
+            return filter(subcommands, args[1]);
+        }
+        if (args[1].equalsIgnoreCase("team")) {
+            if (args.length == 3) return filter(colors(), args[2]);
+            if (args.length == 4) {
+                return filter(List.of("spawn", "bed", "shop", "upgrade", "generator", "protection", "remove"),
+                        args[3]);
+            }
+        }
+        if (args[1].equalsIgnoreCase("gen")) {
+            if (args.length == 3) return filter(List.of("add", "remove"), args[2]);
+            if (args.length == 4 && args[2].equalsIgnoreCase("add")) {
+                return filter(List.of("DIAMOND", "EMERALD"), args[3]);
+            }
+        }
+        if (args[1].equalsIgnoreCase("mode")) {
+            if (args.length == 3) {
+                List<String> modes = new ArrayList<>();
+                Bedwars.getInstance().getModeSettings().all().forEach(mode -> modes.add(mode.getId()));
+                return filter(modes, args[2]);
+            }
+            List<String> options = new ArrayList<>(colors());
+            options.add("auto");
+            return filter(options, args[args.length - 1]);
+        }
+        return List.of();
+    }
+
+    /**
+     * @return every team colour, as it is typed
+     */
+    private static List<String> colors() {
+        List<String> names = new ArrayList<>();
+        for (TeamColor color : TeamColor.values()) names.add(color.name());
+        return names;
+    }
+
+    /**
+     * @param args the whole command
+     * @return everything after the subcommand
+     */
+    private static String[] tail(String[] args) {
+        String[] rest = new String[Math.max(0, args.length - 1)];
+        System.arraycopy(args, 1, rest, 0, rest.length);
+        return rest;
     }
 
     /**

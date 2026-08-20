@@ -8,7 +8,9 @@ import de.schnorrenbergers.bedwars.game.phase.EndPhase;
 import de.schnorrenbergers.bedwars.game.phase.GamePhase;
 import de.schnorrenbergers.bedwars.game.phase.LobbyPhase;
 import de.schnorrenbergers.bedwars.game.phase.PhaseType;
+import de.schnorrenbergers.bedwars.map.ArenaMap;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,9 @@ public class Game {
 
     private GamePhase phase;
     private GameLoop loop;
+    private ArenaMap arena;
+    private World world;
+    private boolean setupMode;
     private GameTeam winner;
     private boolean ended;
 
@@ -225,6 +230,46 @@ public class Game {
     }
 
     // ------------------------------------------------------------ settings
+
+    /**
+     * Gives the round the map it is played on.
+     *
+     * @param arena the map definition
+     * @param world the copy of it that was loaded
+     */
+    public void setArena(@Nullable ArenaMap arena, @Nullable World world) {
+        this.arena = arena;
+        this.world = world;
+    }
+
+    public @Nullable ArenaMap getArena() {
+        return arena;
+    }
+
+    public @Nullable World getWorld() {
+        return world;
+    }
+
+    /**
+     * Setup mode holds the round: somebody is building the map this server would play on, and a countdown
+     * running underneath them would start a game in a half finished arena.
+     *
+     * @param setupMode whether a map is being set up
+     */
+    public void setSetupMode(boolean setupMode) {
+        this.setupMode = setupMode;
+    }
+
+    public boolean isSetupMode() {
+        return setupMode;
+    }
+
+    /**
+     * @return whether a round could begin at all: there is a map, it is loaded, and nobody is building on it
+     */
+    public boolean canStart() {
+        return arena != null && world != null && !setupMode;
+    }
 
     public GameMode getMode() {
         return mode;

@@ -41,6 +41,13 @@ public class LobbyPhase extends GamePhase {
     public void tick(long ticks) {
         if (ticks % 20L != 0L) return;
 
+        // no map, or somebody is building one: there is nothing to count down to
+        if (!game.canStart()) {
+            counting = false;
+            remaining = game.getSettings().getLobbyCountdownSeconds();
+            return;
+        }
+
         int online = game.getOnlineCount();
         if (online < game.getSettings().getMinimumPlayers()) {
             if (counting) {
