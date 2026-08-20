@@ -11,3 +11,6 @@ commands:
   events:
     description: Den Eventkalender öffnen
     usage: /events
+  bwdebug:
+    description: Eine Bedwars Runde starten und hinspringen
+    usage: /bwdebug [list|stop <name>]

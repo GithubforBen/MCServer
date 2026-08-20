@@ -9,6 +9,7 @@ import de.schnorrenbergers.bedwars.commands.BedwarsCommand;
 import de.schnorrenbergers.bedwars.config.GameSettings;
 import de.schnorrenbergers.bedwars.config.ModeSettings;
 import de.schnorrenbergers.bedwars.game.Game;
+import de.schnorrenbergers.bedwars.lobby.LobbyListener;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.map.MapLoader;
 import de.schnorrenbergers.bedwars.map.MapRepository;
@@ -63,6 +64,7 @@ public final class Bedwars extends JavaPlugin {
         addons.apply(game);
         game.start(this);
 
+        new LobbyListener(this);
         register("bw", new BedwarsCommand());
         getLogger().info("Hosting " + game.getMode()
                 + (game.getArena() == null ? " with no map yet" : " on " + game.getArena().getName())

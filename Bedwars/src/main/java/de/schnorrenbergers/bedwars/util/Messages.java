@@ -167,6 +167,19 @@ public final class Messages {
         texts.put("lobby.full", "<prefix><gray>The lobby is full - starting in <white><seconds></white> seconds.");
         texts.put("lobby.cancelled", "<prefix><red>Not enough players any more. <gray>Waiting for <white><needed></white>.");
 
+        texts.put("lobby.joined", "<prefix><green><player></green> <gray>joined <dark_gray>(<white><online></white>/<white><maximum></white>)");
+        texts.put("lobby.left", "<prefix><red><player></red> <gray>left <dark_gray>(<white><online></white>/<white><maximum></white>)");
+        texts.put("lobby.no-map", "<prefix><red>This server has no map set up yet. <gray>An operator can fix that with /bw setup.");
+        texts.put("lobby.select.item", "<green>Choose your team <gray>(right click)");
+        texts.put("lobby.select.title", "<dark_gray>Choose your team");
+        texts.put("lobby.team.count", "<gray><size>/<maximum> players");
+        texts.put("lobby.team.member", "<dark_gray>- <white><player>");
+        texts.put("lobby.team.empty", "<dark_gray>nobody yet");
+        texts.put("lobby.team.chosen", "<prefix><gray>You are on <white><team></white> now.");
+        texts.put("lobby.team.already", "<prefix><gray>You are already on <white><team></white>.");
+        texts.put("lobby.team.full", "<prefix><red><team></red> <gray>is full.");
+
+        texts.put("game.your-team", "<prefix><gray>You play for <white><team></white>.");
         texts.put("game.started", "<prefix><green>The round begins! <gray>Mode: <white><mode>");
         texts.put("game.ended.winner", "<prefix><gold><team></gold> <yellow>wins the round!");
         texts.put("game.ended.nobody", "<prefix><gray>The round is over. Nobody won.");

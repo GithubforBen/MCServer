@@ -9,6 +9,7 @@ import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.event.EventService;
 import de.hems.paper.event.RunService;
 import de.hems.paper.warp.ServerConnector;
+import de.schnorrenbergers.lobby.bedwars.BedwarsDebugCommand;
 import de.schnorrenbergers.lobby.parkour.CheckpointListener;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
@@ -41,6 +42,7 @@ public final class LobbyPlugin extends JavaPlugin {
         EventService.init(this);
         RunService.init(this);
         registerCommand("events", new EventCommand());
+        registerCommand("bwdebug", new BedwarsDebugCommand());
         new LobbyJoinListener();
     }
 

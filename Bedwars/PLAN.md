@@ -299,9 +299,14 @@ Phasenmaschine leer durchläuft.
 
 1. `LobbyPhase`: Countdown (60/30/20/10/5…1), Start ab Mindestspielerzahl, Abbruch bei Unterschreitung.
 2. Teamwahl per Wolle-GUI, Auto-Balance beim Start, volle Teams gesperrt.
-3. Modus- und Map-Auswahl im Lobby-Menü (für Operatoren), inklusive Addon-Schalter.
-4. **Debug-Command im LobbyPlugin**: `/bwdebug [map] [modus]` erstellt über `ServerApi` einen
-   `BEDWARS_x`, wartet bis er läuft und warpt dich hin. `/bwdebug stop <name>` räumt auf.
+3. Addon-Schalter über `/bw addon <id> on|off|default`, gesperrt sobald die Runde läuft.
+   Ein Menü für Modus und Map gibt es bewusst **nicht**: beides steht fest, sobald der Server
+   seine Map geladen hat, und ein Knopf, der nichts mehr ändern kann, ist schlimmer als keiner.
+4. **Debug-Command im LobbyPlugin**: `/bwdebug` erstellt über `ServerApi` einen `BEDWARS_x`,
+   wartet bis er **Spieler annimmt** (nicht nur bis er läuft - dazwischen liegen Sekunden, in denen
+   ein Verbindungsversuch am Proxy scheitert) und warpt dich hin. Dazu `list` und `stop <name>`.
+   Map und Modus kann er nicht mitgeben: ein Startbefehl transportiert keine Parameter, das macht
+   später die `MatchData`.
 5. Spielstart: Teams bilden, teleportieren, Grundausstattung, Rüstung in Teamfarbe.
 
 **Fertig, wenn** du über `/bwdebug` auf einem frischen Server landest, ein Team wählst und der
