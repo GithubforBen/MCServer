@@ -189,6 +189,7 @@ Standardfassung aus dem Jar:
 | `generators.yml` | Standard-Timings, Stufen, Item-Caps, Hologramm-Texte |
 | `shop.yml` | Kategorien und Einträge mit Preis, Menge, Kaufregeln |
 | `upgrades.yml` | Team-Upgrades, Stufenpreise, Wirkung; Traps mit Preis-Eskalation |
+| `timeline.yml` | Wann die Runde was mit sich macht, die Drachen, die Punktwertung |
 | `addons.yml` | Jedes Addon an/aus plus seine eigenen Einstellungen |
 | `kits.yml` | Kits mit Startausrüstung und Perks |
 | `messages.yml` | Alle Texte, englisch, MiniMessage |
@@ -338,60 +339,163 @@ Countdown die Runde startet.
 1. Händler als bewegungsloser, unverwundbarer Villager mit Namensschild; Rechtsklick öffnet das Menü.
 2. `shop.yml` mit allen Hypixel-Kategorien und -Preisen; Sonderregeln: Rüstung dauerhaft,
    Werkzeuge behalten ihre Stufe (mit Downgrade beim Tod), Wolle in Teamfarbe, Schwert-Ersatz.
+   Alles, was einen Tod überlebt, steht im `Loadout` des Spielers und **nicht** im Inventar - sonst
+   ist es genau das, was der Tod löscht. Der Respawn spielt dieselbe Liste wieder ein.
 3. Upgrade-Händler: Sharpened Swords, Reinforced Armor I-IV, Maniac Miner I-II,
-   Iron Forge I-IV, Heal Pool, Dragon Buff.
+   Iron Forge I-IV, Heal Pool, Dragon Buff. Ein Upgrade ist eine Zahl am Team, also muss es nach
+   jedem Kauf und jedem Respawn neu auf die Items gelegt werden - dafür gibt es genau eine Stelle.
 4. Traps: Warteschlange mit drei Plätzen, Preis 1/2/4 Diamanten, It's a Trap, Counter-Offensive,
-   Alarm Trap, Miner Fatigue.
+   Alarm Trap, Miner Fatigue. Dazu eine Abklingzeit pro Team (`traps.cooldown-seconds`): ohne sie
+   räumt ein einziger Gegner, der in der Basis stehen bleibt, die ganze Warteschlange in einer
+   Sekunde leer. Magic Milk hebt die vanilla-Wirkung von Milch bewusst auf - wer für Trap-Immunität
+   bezahlt, soll dafür nicht seinen Speed-Trank verlieren.
+5. **Was ein Item tut, hängt am Material, nicht an der Id** aus der Config: wer "fireball" umbenennt
+   oder anders bepreist, verkauft immer noch eine Feuerkugel. Die Zahlen (Preis, Lebensdauer eines
+   beschworenen Mobs) kommen weiter aus dem Eintrag.
+   - TNT zündet **nach** den Bauregeln, nicht davor: TNT, das dort nicht gesetzt werden darf, darf
+     dort auch nicht hochgehen.
+   - Explosionen nehmen nur mit, was Spieler gesetzt haben, und **nie** ein Bett - sonst kostet das
+     eine Ding, um das die Runde geht, acht Gold.
+   - Bedbug und Dream Defender greifen ihr eigenes Team nicht an und verschwinden nach der
+     Lebensdauer aus ihrem Shop-Eintrag.
+   - Das **Brücken-Ei fällt hier heraus**: es braucht eigenes Verhalten und steht in Phase 6 als
+     Custom-Item. Ein Item zu verkaufen, das nichts tut, wäre schlimmer, als es später zu haben.
+6. Zwei Regeln, die vorher fehlten und ohne die der Shop keinen Sinn ergibt: **kein Schaden im
+   eigenen Team**, und ein TNT-Tod gehört dem, der es gesetzt hat (TNT ist kein Projektil, sonst
+   gehört der explosivste Kill des Spiels niemandem).
+7. **Werkzeuge**: `/bw shop` und `/bw upgrades` öffnen beide Menüs ohne Villager - für eine Map,
+   deren Händlerpunkte noch nicht gesetzt sind, und um eine Preisänderung zu sehen, ohne in eine
+   Basis zurückzulaufen.
 
 **Fertig, wenn** eine Runde mit Shop und Upgrades vollständig spielbar ist.
 
 ## Phase 5 - Endgame
 
-1. Timeline mit Ereignissen aus der Config: Diamond II (6:00), Emerald II (12:00), Diamond III,
-   Emerald III, **Bed Destruction**, **Sudden Death**, **Game End**.
-2. Bed Destruction: alle Betten fallen, Ansage.
-3. Sudden Death: ein Enderdrache pro lebendem Team (zwei mit Dragon Buff), an die Mitte gebunden.
-4. Hartes Zeitlimit: Entscheidung nach Punkten (Betten, Finals, Kills) mit sichtbarer Wertung.
-5. Endbildschirm: Sieger-Titel, Top 3 nach Kills, Finals und Betten, Feuerwerk, danach zurück in
-   die Lobby und Server-Stopp über `ServerApi`.
+1. `timeline.yml` mit den Hypixel-Zeiten: Diamond II (6:00), Emerald II (12:00), Diamond III,
+   Emerald III, **Bed Destruction** (30:00), **Sudden Death** (40:00), **Game End** (50:00).
+   Die Uhr läuft ab **Rundenstart**, nicht ab Serverstart - eine Lobby, die zehn Minuten auf Spieler
+   gewartet hat, würde die Runde sonst mit Bed Destruction eröffnen. Der Fahrplan wird bei jedem
+   Start neu gelesen, damit eine Änderung ein `/bw reload` braucht und keinen Neustart.
+2. Was ein Ereignis *tut*, ist eine von fünf bekannten Aktionen (`GENERATOR_TIER`,
+   `BED_DESTRUCTION`, `SUDDEN_DEATH`, `GAME_END`, `ANNOUNCE`) - aus demselben Grund wie bei den
+   Upgrades: freier Text bräuchte eine eigene Sprache. Frei ist, *wann* und wie es heißt.
+   `GENERATOR_TIER` fasst nur die Generatoren in der **Mitte** an; die in den Basen gehören dem
+   Iron Forge, und beides an derselben Zahl würde ein gekauftes Upgrade wieder überschreiben.
+3. Bed Destruction: alle Betten fallen, **beide Blockhälften** und ohne Drop - ein halbes Bett in
+   der Basis sieht aus wie ein Bett, und das ist das Einzige, worin sich niemand irren darf.
+4. Sudden Death: ein Enderdrache pro lebendem Team (einer mehr pro Dragon-Buff-Stufe). Zwei Zeilen
+   API machen den Unterschied zu einem beschworenen Drachen: ein **Podium** auf der Kartenmitte,
+   sonst fliegt er dorthin, wo in einer End-Welt sein Portal stünde, und eine **Zugehörigkeit**,
+   damit er das Team, das ihn bezahlt hat, weder angreift noch jagt. Weil Anflug, Feuerball und die
+   Wolke danach drei verschiedene Entities sind, werden alle drei auf ihren Drachen zurückgeführt.
+   Blöcke reißt er keine heraus - dieselbe Explosionsregel wie beim TNT aus Phase 4.
+5. Hartes Zeitlimit: Entscheidung nach Punkten (Betten, Finals, Kills, Gewichte in der Config) mit
+   sichtbarer Wertung. Ein **ausgeschiedenes** Team gewinnt nicht auf Punkte - es hat die Runde
+   verloren, als sein letzter Spieler fiel, und eine Tabelle, die ihm den Sieg zurückgibt, macht die
+   Betten sinnlos. Gleichstand an der Spitze heißt bewusst: niemand gewinnt.
+6. Endbildschirm: Sieger-Titel, Top 3 nach Kills, Finals und Betten (nach derselben Wertung, sonst
+   widerspricht die Tafel der Entscheidung, die gerade gefallen ist), Feuerwerk in Teamfarbe, danach
+   zurück in die Lobby und Server-Stopp über `ServerApi`. Ab hier ist niemand mehr verwundbar: eine
+   entschiedene Runde, in der der Sieger noch auf dem Siegerbildschirm stirbt, hat nichts mehr, was
+   dieser Tod bedeuten könnte.
+7. **Werkzeug**: `/bw timeline` zeigt den Fahrplan mit Restzeit, `/bw timeline skip` zieht das
+   nächste Ereignis sofort vor - und die späteren behalten ihren Abstand dazu. Ohne das ist ein
+   Endgame nicht testbar: eine halbe Stunde auf Bed Destruction zu warten ist kein Test, den jemand
+   zweimal macht.
 
 **Fertig, wenn** keine Runde mehr ewig laufen kann.
 
 ## Phase 6 - Addons
 
 Alle über `AddonRegistry`, jedes einzeln abschaltbar, jedes nur an den Events aus Phase 0.
+Registriert heißt nicht eingeschaltet: was läuft, entscheiden `addons.yml`, das Event und das
+Lobby-Menü - in dieser Reihenfolge. Jedes Addon liest seine eigenen Zahlen unter
+`addons.<id>.settings`, und `/bw reload` schaltet es kurz aus und wieder an, damit eine geänderte
+Zahl auch bei etwas ankommt, das schon läuft.
+
+**Was der Shop dafür gelernt hat** (beides generisch, nicht für ein einzelnes Addon):
+
+- Ein Preis ist eine **Liste**. Fast alles kostet eine Sorte, das Bett-Item muss in zwei Währungen
+  teuer sein - und bezahlt wird alles oder nichts, sonst sind die Diamanten weg und der Smaragd hat
+  gefehlt.
+- Ein Eintrag kann **`enemy-only`** sein: er taucht nur am Händler eines fremden Teams auf. Nicht
+  ausgegraut, sondern gar nicht - die halbe Idee ist, dass ihn im eigenen Base niemand sieht.
+- Addons können Seiten und Einträge **zur Laufzeit anmelden**. In `shop.yml` steht davon nichts, ein
+  ausgeschaltetes Addon hat also keinen Eintrag statt eines Eintrags, der sich nicht kaufen lässt.
 
 1. **Bed Token** (dein Bett-Respawn-Item)
-   - Kaufbar **ausschließlich am Händler eines fremden Teams**, sehr teuer
-     (Standard: 8 Diamanten + 16 Smaragde, alles in der Config).
-   - Erscheint im eigenen Shop gar nicht - man muss in eine fremde Basis.
-   - Beim Kauf sehen alle: *"RED bought a Bed Token!"* - der Rückweg ist die eigentliche Aufgabe.
-   - Wer es trägt, leuchtet; beim Tod fällt es zu Boden und ist aufsammelbar.
-   - Zu Hause auf der Bettstelle platzieren = Bett zurück, mit Ansage an alle.
-   - Nur solange das eigene Bett zerstört und das Team nicht eliminiert ist; einmal pro Team
-     (auch das eine Einstellung).
-2. **Kits/Perks**: Auswahl in der Warte-Lobby, `kits.yml`, Startausrüstung plus passiver Perk.
-3. **Custom-Items**: Enterhaken, Rettungsplattform, Brücken-Ei, Sprungfeder - im normalen Shop
-   in einer eigenen Kategorie.
-4. **Killstreaks & Kopfgeld**: Buffs ab X Kills, sichtbares Kopfgeld, Ressourcen für den Bezwinger.
-5. **Zufalls-Events**: alle paar Minuten ein globales Ereignis (Ressourcenregen, doppelte
-   Generatoren, Loot-Kiste in der Mitte) mit Vorwarnung.
+   - Kaufbar **ausschließlich am Händler eines fremden Teams**, Standard 8 Diamanten + 16 Smaragde.
+   - Beim Kauf sehen alle: *"RED bought a Bed Token!"* - angesagt wird aber erst einen Tick später,
+     wenn er wirklich im Inventar liegt. Wer ihn nicht bezahlen kann, löst sonst die Jagd auf sich
+     selbst aus.
+   - Wer ihn trägt, leuchtet; beim Tod nimmt das Addon ihn aus den Drops heraus und legt ihn selbst
+     auf den Boden, weil die Runde die Drops gleich danach wegräumt.
+   - Benutzt wird er mit **Rechtsklick an der eigenen Bettstelle**, nicht durch Platzieren: ein Bett,
+     das irgendwo anders steht, sieht aus wie das eine Ding, um das die Runde geht.
+   - Wie das Bett aussah, merkt sich das Addon **im Moment des Zerstörens** - Richtung und Farbe
+     kommen aus dem Block, nicht aus einer Annahme.
+   - Nur solange das eigene Bett zerstört und das Team nicht eliminiert ist; einmal pro Team, und
+     zwei Tokens gleichzeitig kauft niemand aus Versehen.
+2. **Kits/Perks**: Auswahl in der Warte-Lobby (`kits.yml`), Startausrüstung plus ein passiver Effekt.
+   Bewusst klein gehalten - ein Kit, das eine Runde entscheiden kann, macht die Wahl in der Lobby zum
+   ganzen Spiel. Das Kit wird bei **jedem Respawn** neu ausgegeben, sonst ist es für den, der zuerst
+   stirbt, nichts wert.
+3. **Custom-Items** auf einer eigenen Shop-Seite: Enterhaken (ein Wurf), Rettungsplattform (vergeht
+   wieder), Brücken-Ei (Wolle in Teamfarbe), Sprungfeder. Alles, was sie bauen, geht in den
+   Block-Tracker - eine Brücke, die niemand mehr abbauen kann, ist eine Wand. Die Sprungfeder ist
+   eine **Druckplatte**: draufsteigen feuert von selbst ein Event, das kostet nichts, solange
+   niemand draufsteht.
+4. **Killstreaks & Kopfgeld** sind ein Addon, nicht zwei: eine Serie, die nur dem hilft, der sie hat,
+   macht einen guten Spieler unaufhaltsam - das Kopfgeld ist das, was der Rest fürs Aufhalten bekommt.
+5. **Zufalls-Events** (Ressourcenregen, schnellere Generatoren, Loot-Kiste) mit **Vorwarnung**. Die
+   Vorwarnung ist keine Höflichkeit: ein Ereignis ohne sie belohnt Stehenbleiben in der Mitte.
+   Standardmäßig aus, weil es als einziges Addon den Rhythmus der Runde selbst verändert.
+6. **Lobby-Menü**: `/bw addons` öffnet für einen Spieler die Schalter (Konsole bekommt weiter die
+   Liste als Text). Umschalten geht nur, solange gewartet wird - ein Addon, das mitten in der Runde
+   dazukommt, ist eine Regeländerung im laufenden Spiel.
+7. Dazu ein neues Event: `BedwarsTimelineEvent` feuert für **jeden** Eintrag der `timeline.yml`, auch
+   für die reinen `ANNOUNCE`-Einträge. Damit kann ein Server ein Ereignis mit Namen und Uhrzeit
+   hinschreiben und ein Addon darauf reagieren, ohne dass eines vom anderen weiß.
+
+**Eine Ehrlichkeit zur Regel "Addons hören nur auf die eigenen Events":** für alles, was die Runde
+*weiß* - gekauft, getötet, Bett gefallen, Phase gewechselt, respawnt - gilt sie unverändert. Was ein
+Item *tut*, wenn jemand rechtsklickt, wirft oder auf etwas tritt, steht in keinem dieser Events und
+kommt aus den normalen Bukkit-Events. Kein Addon greift in die Spiellogik, und Abschalten bleibt
+`HandlerList.unregisterAll` plus das, was es angemeldet hat.
 
 **Fertig, wenn** jedes Addon in `addons.yml` aus- und im Lobby-Menü wieder eingeschaltet werden
 kann, ohne dass die Runde etwas davon merkt.
 
 ## Phase 7 - Feinschliff
 
-1. `StatsTracker` für die Runde, sauber getrennte `StatsRepository`-Schnittstelle; die
-   netzwerkweite Speicherung beim Launcher kommt als eigenes Netzwerk-Event dazu.
-2. Zuschauer richtig: unsichtbar, kein Aufsammeln, keine Interaktion, Teleport-Menü.
-3. Kanten: Feuer, TNT nur auf gesetzten Blöcken, Ender-Pearl-Cooldown, Void-Tode dem letzten
-   Angreifer zuschreiben, Abmeldung im Kampf, Wiederverbinden ins laufende Spiel.
-4. Performance: Item-Merging an den Generatoren, Hologramme als Display-Entities,
-   keine `getNearbyEntities`-Schleifen pro Tick.
-5. README-Abschnitt für Bedwars, wie ihn die anderen Module haben.
+1. **Statistik**: `RoundStats` ist eine Momentaufnahme, keine zweite Buchführung - gezählt wird
+   weiter dort, wo es passiert (am Spieler, am Team), weil eine zweite Stelle, die Kills zählt, eine
+   zweite Stelle ist, die sich irren kann. `StatsRepository` hat genau eine Methode; heute schreibt
+   sie eine Datei pro Runde, morgen ist der Launcher die zweite Implementierung und sonst ändert sich
+   nichts. `/bw stats` zeigt dieselbe Tabelle im laufenden Spiel.
+2. **Zuschauer**: das meiste macht der Spectator-Modus schon. Was er nicht abdeckt, ist der Zustand
+   *dazwischen* - wer gerade gestorben ist und zurückkommt, ist für Minecraft kein Zuschauer, für die
+   Runde aber schon. Die Regeln hängen deshalb an `GamePlayer.isAlive()` und nicht am Spielmodus.
+   Dazu `/bw watch`: die Liste aller, die noch stehen, weil ein Toter den, den er sehen will, sonst
+   erst suchen müsste.
+3. **Kanten**:
+   - **Feuer** breitet sich nicht aus und brennt nichts ab. Ein Feuerball über einer Holzbrücke würde
+     sich sonst durch eine Basis fressen, die niemand verteidigen kann.
+   - **Ender-Pearl-Cooldown** (`ender-pearl-cooldown-seconds`, Standard 5): gestoppt wird der *Wurf*,
+     nicht der Flug - eine abgebrochene Perle wäre weg und hätte nichts getan.
+   - **Void-Tode** gehören schon seit Phase 3 dem letzten Angreifer.
+   - **Abmelden im Kampf** zählt als Tod, mitsamt Kill für den, der gerade zugeschlagen hat. Was es
+     nicht ist, ist ein Ausstieg: solange das Bett steht, behält man seinen Platz und kommt beim
+     Wiederverbinden dort hinein, wo man war - der häufigste Grund dafür ist eine Leitung und keine
+     Entscheidung (`death.keep-place-when-offline`).
+4. **Performance**: Generatoren fragen die Welt nur noch **einmal** pro Drop nach ihren Entities
+   (Cap und Merge in einem Durchgang) und legen den Drop auf den Stapel, der schon da liegt.
+   Minecraft merged zwar von selbst, aber erst nachträglich - ein Generator, den zwei Minuten niemand
+   leert, verbringt diese zwei Minuten sonst als ein Dutzend Entities. Hologramme sind seit Phase 3
+   Display-Entities, und keine Schleife über `getNearbyEntities` läuft pro Tick.
+5. **README**: eigener Abschnitt wie bei den anderen Modulen - Configs, Befehle, Addons, Testen.
 
----
+**Fertig, wenn** eine Runde von außen aussieht wie ein fertiges Minispiel und nicht wie ein Prototyp.
 
 # Was danach offen bleibt
 

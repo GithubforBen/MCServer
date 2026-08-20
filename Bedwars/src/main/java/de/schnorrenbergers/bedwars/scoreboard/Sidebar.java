@@ -3,7 +3,10 @@ package de.schnorrenbergers.bedwars.scoreboard;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
+import de.schnorrenbergers.bedwars.game.timeline.Timeline;
+import de.schnorrenbergers.bedwars.game.timeline.TimelineEvent;
 import de.schnorrenbergers.bedwars.util.Messages;
+import de.schnorrenbergers.bedwars.util.Text;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -100,6 +103,22 @@ public final class Sidebar {
     }
 
     /**
+     * @param game the round
+     * @return the line that says what happens next and when, empty while nothing is left to happen
+     */
+    private static Component nextEvent(Game game) {
+        Timeline timeline = game.getTimeline();
+        // nothing in the waiting lobby: the clock has not started, so any countdown shown there would be
+        // a promise about a round that has not begun
+        if (timeline == null || !timeline.isStarted()) return Component.empty();
+        TimelineEvent next = timeline.getNext();
+        if (next == null) return Component.empty();
+        return Messages.get("sidebar.event",
+                "event", Text.plain(next.displayName()),
+                "time", Text.clock(timeline.getSecondsUntilNext()));
+    }
+
+    /**
      * Puts every online player into the scoreboard team of their colour, so their name is coloured in the
      * tab list and above their head.
      */
@@ -124,6 +143,7 @@ public final class Sidebar {
 
         lines.add(Messages.get("sidebar.map", "map",
                 game.getArena() == null ? "-" : game.getArena().getDisplayName()));
+        lines.add(nextEvent(game));
         lines.add(Component.empty());
 
         for (GameTeam team : game.getTeams()) {

@@ -1,5 +1,6 @@
 package de.schnorrenbergers.bedwars.game.phase;
 
+import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.api.BedwarsGameEndEvent;
 import de.schnorrenbergers.bedwars.game.Equipment;
 import de.schnorrenbergers.bedwars.game.Game;
@@ -64,6 +65,10 @@ public class IngamePhase extends GamePhase {
         }
         GeneratorManager generators = game.getGenerators();
         if (generators != null) generators.build(game);
+        if (game.getShopKeepers() != null) game.getShopKeepers().spawn(game);
+        // the clock starts here rather than with the server: a lobby that waited ten minutes for players
+        // would otherwise open the round with bed destruction
+        if (game.getTimeline() != null) game.getTimeline().start(loopTicks());
         Messages.broadcast("game.started", "mode", game.getMode().getDisplayName());
     }
 
@@ -71,6 +76,15 @@ public class IngamePhase extends GamePhase {
     public void onExit() {
         GeneratorManager generators = game.getGenerators();
         if (generators != null) generators.remove();
+        if (game.getShopKeepers() != null) game.getShopKeepers().remove();
+        if (game.getDragons() != null) game.getDragons().remove();
+    }
+
+    /**
+     * @return where the one loop of the plugin stands, 0 while there is none
+     */
+    private long loopTicks() {
+        return game.getLoop() == null ? 0L : game.getLoop().getTicks();
     }
 
     /**
@@ -116,6 +130,8 @@ public class IngamePhase extends GamePhase {
         player.setGameMode(GameMode.SURVIVAL);
         Equipment.reset(player, event.getLocation());
         Equipment.giveStartingKit(player, team);
+        // everything they bought that outlives a death, and the upgrades their team has since bought
+        Bedwars.getInstance().getShop().restore(game, participant);
         protect(player);
         player.showTitle(Title.title(Messages.get("respawn.back"), net.kyori.adventure.text.Component.empty(),
                 Title.Times.times(Duration.ZERO, Duration.ofMillis(800), Duration.ofMillis(200))));
@@ -129,7 +145,7 @@ public class IngamePhase extends GamePhase {
         int seconds = game.getSettings().getRespawnProtectionSeconds();
         if (seconds <= 0) return;
         player.setInvulnerable(true);
-        Bukkit.getScheduler().runTaskLater(de.schnorrenbergers.bedwars.Bedwars.getInstance(),
+        Bukkit.getScheduler().runTaskLater(Bedwars.getInstance(),
                 () -> player.setInvulnerable(false), seconds * 20L);
     }
 
@@ -169,7 +185,14 @@ public class IngamePhase extends GamePhase {
     public void tick(long ticks) {
         GeneratorManager generators = game.getGenerators();
         if (generators != null) generators.tick(game, ticks);
+        if (game.getUpgrades() != null) game.getUpgrades().tick(game, ticks);
+        if (game.getTraps() != null) game.getTraps().tick(game, ticks);
+        if (game.getDragons() != null) game.getDragons().tick(ticks);
         tickRespawns();
+        // last of the per tick work: an event that ends the round leaves this phase, and nothing below
+        // should still be running on a round that is over
+        if (game.getTimeline() != null) game.getTimeline().tick(game, ticks);
+        if (game.isEnded()) return;
 
         if (ticks % 20L != 0L) return;
         Sidebar.updateAll(game);

@@ -168,6 +168,58 @@ public final class Messages {
         texts.put("addon.state.on", "<green>on");
         texts.put("addon.state.off", "<red>off");
 
+        texts.put("addon.title", "<dark_gray>Addons");
+        texts.put("addon.none", "<prefix><gray>This server has no addons.");
+        texts.put("addon.entry.state.on", "<green>On");
+        texts.put("addon.entry.state.off", "<red>Off");
+        texts.put("addon.entry.click", "<gray>Click to switch it for this round");
+
+        texts.put("bed-token.name", "<gold>Bed Token");
+        texts.put("bed-token.lore", "<gray>Bring it home and use it where your bed stood.");
+        texts.put("bed-token.bought", "<prefix><gold><team></gold> <yellow>bought a Bed Token! <gray>(<player>)");
+        texts.put("bed-token.carrying", "<prefix><gray>Take it to your own bed spot and right click.");
+        texts.put("bed-token.picked-up", "<prefix><gray><player> <gray>picked the Bed Token up.");
+        texts.put("bed-token.dropped", "<prefix><yellow><player></yellow> <gray>dropped the Bed Token!");
+        texts.put("bed-token.restored", "<prefix><gold><team></gold> <yellow>have their bed back! <gray>(<player>)");
+        texts.put("bed-token.no-need", "<prefix><gray>Your bed is still standing.");
+        texts.put("bed-token.too-late", "<prefix><red>Your team is already out.");
+        texts.put("bed-token.used-up", "<prefix><red>Your team has already used its <maximum> token(s).");
+        texts.put("bed-token.already-out", "<prefix><red><player></red> <gray>is already carrying your team's token.");
+        texts.put("bed-token.wrong-place", "<prefix><red>Only where your own bed stood.");
+        texts.put("bed-token.no-room", "<prefix><red>There is something in the way of the bed.");
+
+        texts.put("kit.item", "<yellow>Pick a kit");
+        texts.put("kit.title", "<dark_gray>Kits");
+        texts.put("kit.perk", "<gray>Perk: <white><perk> <level>");
+        texts.put("kit.click", "<green>Click to pick this");
+        texts.put("kit.picked", "<green>You are playing this");
+        texts.put("kit.chosen", "<prefix><gray>You will play <white><kit></white>.");
+
+        texts.put("custom-item.category", "<light_purple>Specials");
+        texts.put("custom-item.grappling-hook.name", "<light_purple>Grappling Hook");
+        texts.put("custom-item.grappling-hook.lore", "<gray>Pulls you to wherever the hook lands. One throw.");
+        texts.put("custom-item.rescue-platform.name", "<light_purple>Rescue Platform");
+        texts.put("custom-item.rescue-platform.lore", "<gray>Builds a platform under you. It does not last.");
+        texts.put("custom-item.bridge-egg.name", "<light_purple>Bridge Egg");
+        texts.put("custom-item.bridge-egg.lore", "<gray>Lays a bridge in your colour wherever it flies.");
+        texts.put("custom-item.jump-pad.name", "<light_purple>Jump Pad");
+        texts.put("custom-item.jump-pad.lore", "<gray>Place it and step on it.");
+
+        texts.put("killstreak.reached", "<prefix><yellow><player></yellow> <gray>is on <white><streak></white> kills in a row.");
+        texts.put("killstreak.title", "<gold><streak> in a row");
+        texts.put("killstreak.subtitle", "<gray><effect> <level>");
+        texts.put("killstreak.bounty.set", "<prefix><red>There is a bounty of <white><amount> <currency></white> <red>on <white><player></white>.");
+        texts.put("killstreak.bounty.claimed", "<prefix><white><player></white> <gray>collected <white><amount> <currency></white> <gray>for <white><victim></white>.");
+
+        texts.put("random-event.title", "<gold>SOMETHING IS COMING");
+        texts.put("random-event.subtitle", "<gray><event>");
+        texts.put("random-event.warning", "<prefix><gold><event></gold> <gray>in <white><seconds></white>s - get to the middle.");
+        texts.put("random-event.now", "<prefix><gold><event></gold> <gray>is happening now!");
+        texts.put("random-event.resource-rain.name", "Resource Rain");
+        texts.put("random-event.double-generators.name", "Faster Generators");
+        texts.put("random-event.double-generators.over", "<prefix><gray>The middle generators are back to normal.");
+        texts.put("random-event.loot-chest.name", "Loot Chest");
+
         texts.put("lobby.counting", "<prefix><gray>Enough players - starting in <white><seconds></white> seconds.");
         texts.put("lobby.countdown", "<prefix><yellow><seconds></yellow> <gray>...");
         texts.put("lobby.full", "<prefix><gray>The lobby is full - starting in <white><seconds></white> seconds.");
@@ -191,6 +243,39 @@ public final class Messages {
         texts.put("game.ended.nobody", "<prefix><gray>The round is over. Nobody won.");
         texts.put("team.eliminated", "<prefix><red><team></red> <gray>has been eliminated.");
 
+        texts.put("timeline.event", "<prefix><yellow><event></yellow><gray>.");
+        texts.put("timeline.generator", "<prefix><yellow><event></yellow> <gray>- the middle generators got faster.");
+        texts.put("timeline.bed-destruction", "<prefix><red><event></red> <gray>- every bed has fallen.");
+        texts.put("timeline.bed-destruction.title", "<red>BED DESTRUCTION");
+        texts.put("timeline.bed-destruction.subtitle", "<gray>Every bed is gone - one life left");
+        texts.put("timeline.bed-destruction.yours", "<prefix><red>Your bed is gone. <gray>The next death is your last.");
+        texts.put("timeline.sudden-death", "<prefix><dark_red><event></dark_red> <gray>- the dragons are out.");
+        texts.put("timeline.sudden-death.title", "<dark_red>SUDDEN DEATH");
+        texts.put("timeline.sudden-death.subtitle", "<gray>A dragon for every team");
+        texts.put("timeline.header", "<prefix><gray>The round runs for <white><total></white> <gray>(<white><elapsed></white> so far):");
+        texts.put("timeline.entry.done", "<dark_gray>  <at> <strikethrough><event>");
+        texts.put("timeline.entry.next", "<yellow>  <at> <event> <gray>- in <white><time>");
+        texts.put("timeline.entry.waiting", "<gray>  <at> <white><event>");
+        texts.put("timeline.none", "<prefix><gray>This round has no timeline. <gray>timeline.yml has no events.");
+        texts.put("timeline.not-running", "<prefix><red>The round is not running.");
+        texts.put("timeline.skipped", "<prefix><gray>Set off <white><event></white> ahead of time.");
+        texts.put("timeline.skip.done", "<prefix><gray>Nothing is left on the timeline.");
+
+        texts.put("dragon.name", "<team> <dark_purple>Dragon");
+        texts.put("dragon.killed", "<prefix><gray>The dragon of <team> <gray>was brought down.");
+
+        texts.put("end.time-limit", "<prefix><gold>Time is up! <gray>The score decides this round.");
+        texts.put("end.score.header", "<prefix><gray>Final score:");
+        texts.put("end.score.entry", "<white>  <initial> <team> <dark_gray>- <white><points></white> <gray>(<white><beds></white> beds, <white><finals></white> finals, <white><kills></white> kills)");
+        texts.put("end.score.entry.out", "<dark_gray>  <initial> <team> - <points> (<beds> beds, <finals> finals, <kills> kills, out)");
+        texts.put("end.title.won", "<gold>VICTORY");
+        texts.put("end.title.lost", "<red>GAME OVER");
+        texts.put("end.title.nobody", "<gray>GAME OVER");
+        texts.put("end.subtitle", "<gray><team> <gray>won the round");
+        texts.put("end.subtitle.nobody", "<gray>Nobody won");
+        texts.put("end.top.header", "<prefix><gray>The round belonged to:");
+        texts.put("end.top.entry", "<gray>  <place>. <white><player></white> <dark_gray>(<team><dark_gray>) <gray>- <white><kills></white> kills, <white><finals></white> finals, <white><beds></white> beds");
+
         texts.put("generator.hologram", "<aqua><type></aqua> <dark_gray>| <gray>Tier <white><tier></white> <dark_gray>| <yellow><seconds>s");
 
         texts.put("generator.none", "<prefix><gray>No generator is running.");
@@ -213,6 +298,22 @@ public final class Messages {
         texts.put("death.alone", "<white><player></white> <gray>died.");
         texts.put("death.alone.final", "<white><player></white> <gray>died. <red>FINAL KILL!");
         texts.put("death.collected", "<prefix><gray>You took <white><what></white> off <white><player></white>.");
+        texts.put("death.left", "<prefix><white><player></white> <gray>left the round.");
+        texts.put("death.left.final", "<prefix><white><player></white> <gray>left the round for good.");
+        texts.put("item.pearl-cooldown", "<prefix><gray>Another pearl in <white><seconds></white>s.");
+
+        texts.put("watch.title", "<dark_gray>Watch");
+        texts.put("watch.nobody", "<prefix><gray>There is nobody left to watch.");
+        texts.put("watch.now", "<prefix><gray>Watching <white><player></white>.");
+        texts.put("watch.gone", "<prefix><gray><player> is not standing any more.");
+        texts.put("watch.team", "<gray>Team: <white><team>");
+        texts.put("watch.kills", "<gray><kills> kills, <beds> beds");
+        texts.put("watch.only-spectators", "<prefix><gray>Only somebody who is out can watch.");
+
+        texts.put("stats.header", "<prefix><gray>This round so far:");
+        texts.put("stats.entry", "<gray>  <place>. <white><player></white> <dark_gray>(<team><dark_gray>) <gray>- <white><kills></white> kills, <white><finals></white> finals, <white><beds></white> beds, <white><deaths></white> deaths");
+        texts.put("stats.empty", "<prefix><gray>Nothing has happened yet.");
+        texts.put("stats.footer", "<gray>  Running for <white><time></white>.");
 
         texts.put("respawn.title", "<red>You died");
         texts.put("respawn.subtitle", "<gray>Back in <white><seconds></white>s");
@@ -220,6 +321,7 @@ public final class Messages {
 
         texts.put("sidebar.title", "<bold><red>BED<white>WARS");
         texts.put("sidebar.map", "<gray>Map: <white><map>");
+        texts.put("sidebar.event", "<white><event> <gray>in <white><time>");
         texts.put("sidebar.team.bed", "<white><initial> <gray><team> <green>\u2714");
         texts.put("sidebar.team.alive", "<white><initial> <gray><team> <yellow><players>");
         texts.put("sidebar.team.out", "<dark_gray><initial> <team> <red>\u2716");
@@ -227,6 +329,41 @@ public final class Messages {
         texts.put("sidebar.kills", "<gray>Kills: <white><kills>");
         texts.put("sidebar.beds", "<gray>Beds: <white><beds>");
         texts.put("sidebar.name-prefix", "<gray>[<initial><gray>] ");
+
+        texts.put("shop.title", "<dark_gray>Shop <dark_gray>\u00bb <gray><category>");
+        texts.put("shop.category.open", "<green>You are looking at this page");
+        texts.put("shop.price", "<gray>Cost: <white><amount></white> <gray><currency>");
+        texts.put("shop.click-to-buy", "<green>Click to buy");
+        texts.put("shop.too-expensive", "<red>You cannot afford this");
+        texts.put("shop.owned", "<green>You already own this");
+        texts.put("shop.bought", "<prefix><green>Bought <white><amount>x <item></white>.");
+        texts.put("shop.already-owned", "<prefix><gray>You already own <white><item></white>.");
+        texts.put("shop.cannot-afford", "<prefix><red>You need <white><amount></white> more <white><currency></white>.");
+        texts.put("shop.empty", "<prefix><red>This server sells nothing. <gray>shop.yml has no entries.");
+        texts.put("shop.not-playing", "<prefix><gray>Only players in the round can shop.");
+        texts.put("shop.enemy-only", "<prefix><red>That is only sold at another team's shop keeper.");
+        texts.put("shop.keeper.items", "<white><team> <yellow>Item Shop");
+        texts.put("shop.keeper.upgrades", "<white><team> <aqua>Team Upgrades");
+
+        texts.put("upgrade.title", "<dark_gray>Team Upgrades");
+        texts.put("upgrade.level", "<gray>Level: <white><level></white><gray>/<white><maximum>");
+        texts.put("upgrade.maxed-lore", "<green>Fully upgraded");
+        texts.put("upgrade.maxed", "<prefix><gray><upgrade> is already at its highest level.");
+        texts.put("upgrade.bought", "<prefix><white><player></white> <gray>bought <white><upgrade> <level></white> <gray>for the team.");
+        texts.put("upgrade.no-team", "<prefix><red>Only a player with a team can buy upgrades.");
+
+        texts.put("trap.queue.empty", "<dark_gray>Trap slot <position> <gray>- empty");
+        texts.put("trap.queue.filled", "<white>Trap slot <position> <gray>- <yellow><trap>");
+        texts.put("trap.queue-full", "<prefix><red>Your trap queue is full <gray>(<maximum>).");
+        texts.put("trap.queue-full-lore", "<red>The trap queue is full (<maximum>)");
+        texts.put("trap.bought", "<prefix><white><player></white> <gray>queued <white><trap></white> <dark_gray>(#<position>)");
+        texts.put("trap.title", "<red>TRAP SET OFF");
+        texts.put("trap.subtitle", "<gray><trap>");
+        texts.put("trap.set-off", "<prefix><red><trap></red> <gray>went off at your base!");
+        texts.put("trap.set-off.alarm", "<prefix><red><trap></red> <gray>caught <white><player></white> <gray>of <white><team></white> <gray>at your base!");
+
+        texts.put("item.magic-milk", "<prefix><gray>Traps ignore you for <white><seconds></white>s.");
+        texts.put("item.minion-name", "<gray><team> <dark_gray>| <white><player>");
 
         texts.put("chat.global", "<gray>[<white>ALL<gray>] <white><player><gray>: <white><message>");
         texts.put("chat.team", "<gray>[<aqua>TEAM<gray>] <white><player><gray>: <white><message>");

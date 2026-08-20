@@ -90,6 +90,18 @@ public final class GeneratorManager {
     }
 
     /**
+     * Raises every generator a team owns, which is what the forge upgrade does.
+     *
+     * @param team whose generators
+     * @param tier the level they should run at
+     */
+    public void setOwnedTier(GameTeam team, int tier) {
+        for (Generator generator : generators) {
+            if (generator.getOwner() == team) generator.setTier(tier);
+        }
+    }
+
+    /**
      * Takes the floating text of every generator away.
      */
     public void remove() {

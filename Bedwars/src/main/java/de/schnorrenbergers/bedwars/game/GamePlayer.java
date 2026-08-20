@@ -31,6 +31,8 @@ public class GamePlayer {
 
     private GameTeam team;
     private State state = State.SPECTATOR;
+    /** What they bought and keep through a death. */
+    private final Loadout loadout = new Loadout();
 
     private int kills;
     private int finalKills;
@@ -104,6 +106,13 @@ public class GamePlayer {
 
     public void setRespawnTicks(int respawnTicks) {
         this.respawnTicks = Math.max(0, respawnTicks);
+    }
+
+    /**
+     * @return what they bought that outlives a death
+     */
+    public Loadout getLoadout() {
+        return loadout;
     }
 
     public int getKills() {

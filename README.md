@@ -397,6 +397,76 @@ tiers:                        # ab welchen TPS wie viele Chunks abgezogen werden
   penalty: 8
 ```
 
+## Bedwars
+
+Ein Bedwars-Server trägt **genau eine Runde** aus und wird danach weggeworfen. Deshalb gibt es keine
+Arena-Verwaltung, keinen Map-Reset und keine Zuordnung Spieler → Arena: es gibt genau ein `Game`, und
+wenn es vorbei ist, stoppt sich der Server über die `ServerApi` selbst.
+
+Die Runde läuft über eine Phasenmaschine (Warte-Lobby → Spiel → Ende) und **einen** wiederholenden
+Task. Alles, was passiert, wird zusätzlich als eigenes Bukkit-Event gefeuert
+(`de.schnorrenbergers.bedwars.api`) - das ist die einzige Stelle, an der Addons andocken.
+
+### Configs
+
+Alle unter `configs/bedwars/` auf dem jeweiligen Server. Jede Datei schreibt sich beim ersten Start
+selbst, mitsamt Kommentaren zu jedem Wert.
+
+| Datei | Inhalt |
+|-------|--------|
+| `game.yml` | Modus, Map, Countdowns, Respawn, Bauregeln, Zeitlimits, Statistik |
+| `modes.yml` | Solo/Doubles/3v3/4v4 und eigene: Teamzahl × Teamgröße |
+| `generators.yml` | Was die Generatoren droppen, wie schnell, mit welchen Stufen |
+| `shop.yml` | Kategorien und Einträge mit Preis, Menge und Kaufregeln |
+| `upgrades.yml` | Team-Upgrades und die Trap-Warteschlange |
+| `timeline.yml` | Wann die Runde was mit sich macht, die Drachen, die Punktwertung |
+| `addons.yml` | Jedes Addon an/aus plus seine eigenen Einstellungen |
+| `kits.yml` | Die Kits des Kit-Addons |
+| `messages.yml` | Alle Texte, englisch, MiniMessage |
+| `maps/<name>.yml` | Alles, was zu einer Map gehört |
+
+Maps liegen als Weltordner unter `maps/<name>/`. Beim Start wird eine Kopie geladen, gespielt wird in
+der Kopie. **Achtung bei 26.2:** eine Zusatzwelt liegt nicht mehr neben der Hauptwelt, sondern als
+Dimension darin (`world/dimensions/minecraft/arena_<name>`) - der Server verschiebt sie beim Import
+selbst dorthin.
+
+### Befehle
+
+Alles unter `/bw`, `bedwars.admin` für alles, was etwas verändert.
+
+| Befehl | Was er tut |
+|--------|------------|
+| `/bw status` | Modus, Phase, Spielerzahl, Map |
+| `/bw setup <map>` | Setup-Modus: Punkte setzen, prüfen, speichern (`/bw setup check\|save\|exit`) |
+| `/bw start` \| `/bw stop` | Runde sofort starten oder beenden |
+| `/bw generators` | Jeder Generator mit Stufe, Ort und Restzeit |
+| `/bw timeline [skip]` | Fahrplan der Runde - und das nächste Ereignis sofort auslösen |
+| `/bw shop` \| `/bw upgrades` | Die Menüs ohne Villager öffnen |
+| `/bw stats` | Wertung der laufenden Runde |
+| `/bw watch` | Zuschauer-Menü: zu einem lebenden Spieler springen |
+| `/bw addons` \| `/bw addon <id> on\|off\|default` | Addons schalten (nur in der Warte-Lobby) |
+| `/bw reload` | Alle Configs neu lesen |
+
+### Addons
+
+Einzeln schaltbar über `addons.yml`, das startende Event oder das Lobby-Menü - in dieser Reihenfolge,
+das Spezifischere gewinnt.
+
+| Addon | Was es tut | Standard |
+|-------|------------|----------|
+| `bed-token` | Sehr teures Item, nur am fremden Händler; bringt das eigene Bett zurück | an |
+| `kits` | Kleine Startausrüstung mit einem passiven Effekt, Wahl in der Lobby | an |
+| `custom-items` | Enterhaken, Rettungsplattform, Brücken-Ei, Sprungfeder | an |
+| `killstreaks` | Buffs für Serien, Kopfgeld auf den, der eine hat | an |
+| `random-events` | Alle paar Minuten ein Ereignis in der Mitte, mit Vorwarnung | aus |
+
+### Testen
+
+`/bwdebug` in der Lobby erstellt einen Bedwars-Server und warpt hin. Zum Testen des Endspiels ist
+`/bw timeline skip` der wichtigste Befehl - sonst dauert Bed Destruction eine halbe Stunde. Was von
+Hand geprüft werden sollte, steht in `Bedwars/TESTS.md`; der Umsetzungsplan mit allen Entscheidungen
+in `Bedwars/PLAN.md`.
+
 ## Module
 
 | Modul | Inhalt |

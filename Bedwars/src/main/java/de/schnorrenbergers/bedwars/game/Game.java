@@ -8,9 +8,18 @@ import de.schnorrenbergers.bedwars.game.phase.EndPhase;
 import de.schnorrenbergers.bedwars.game.phase.GamePhase;
 import de.schnorrenbergers.bedwars.game.phase.LobbyPhase;
 import de.schnorrenbergers.bedwars.game.phase.PhaseType;
+import de.schnorrenbergers.bedwars.game.timeline.Dragons;
+import de.schnorrenbergers.bedwars.game.timeline.Timeline;
 import de.schnorrenbergers.bedwars.generator.GeneratorManager;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
+import de.schnorrenbergers.bedwars.map.GeneratorSpot;
+import de.schnorrenbergers.bedwars.map.MapPoint;
+import de.schnorrenbergers.bedwars.map.TeamSpot;
+import de.schnorrenbergers.bedwars.shop.trap.TrapService;
+import de.schnorrenbergers.bedwars.shop.upgrade.UpgradeService;
+import de.schnorrenbergers.bedwars.shop.villager.ShopKeepers;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -45,6 +54,11 @@ public class Game {
     private boolean setupMode;
     private final BlockTracker blockTracker = new BlockTracker();
     private GeneratorManager generators;
+    private Timeline timeline;
+    private Dragons dragons;
+    private UpgradeService upgrades;
+    private TrapService traps;
+    private ShopKeepers shopKeepers;
     private GameTeam winner;
     private boolean ended;
 
@@ -260,12 +274,96 @@ public class Game {
         return generators;
     }
 
+    public void setTimeline(Timeline timeline) {
+        this.timeline = timeline;
+    }
+
+    /**
+     * @return the clock of the round, {@code null} before the plugin has wired it up
+     */
+    public @Nullable Timeline getTimeline() {
+        return timeline;
+    }
+
+    public void setDragons(Dragons dragons) {
+        this.dragons = dragons;
+    }
+
+    /**
+     * @return the dragons of the sudden death, {@code null} before the plugin has wired them up
+     */
+    public @Nullable Dragons getDragons() {
+        return dragons;
+    }
+
+    public void setUpgrades(UpgradeService upgrades) {
+        this.upgrades = upgrades;
+    }
+
+    /**
+     * @return what the teams have bought for themselves, {@code null} before the plugin has wired it up
+     */
+    public @Nullable UpgradeService getUpgrades() {
+        return upgrades;
+    }
+
+    public void setTraps(TrapService traps) {
+        this.traps = traps;
+    }
+
+    public @Nullable TrapService getTraps() {
+        return traps;
+    }
+
+    public void setShopKeepers(ShopKeepers shopKeepers) {
+        this.shopKeepers = shopKeepers;
+    }
+
+    /**
+     * @return the villagers standing in the bases, {@code null} before the plugin has wired them up
+     */
+    public @Nullable ShopKeepers getShopKeepers() {
+        return shopKeepers;
+    }
+
     public @Nullable ArenaMap getArena() {
         return arena;
     }
 
     public @Nullable World getWorld() {
         return world;
+    }
+
+    /**
+     * Works out where the middle of the map is.
+     * <p>
+     * The generators in the middle are the honest answer - they are what every map is built around. Only a
+     * map without any falls back to the average of the team spawns, which is the same spot on a symmetric
+     * map and close enough on any other. The dragons and the random events both need this, so the round
+     * answers it once rather than each of them guessing separately.
+     *
+     * @return the middle, or {@code null} when there is no map to find one in
+     */
+    public @Nullable Location getMiddle() {
+        if (arena == null || world == null) return null;
+        List<MapPoint> points = new ArrayList<>();
+        for (GeneratorSpot spot : arena.getGenerators()) points.add(spot.point());
+        if (points.isEmpty()) {
+            for (TeamSpot spot : arena.getTeams().values()) {
+                if (spot.getSpawn() != null) points.add(spot.getSpawn());
+            }
+        }
+        if (points.isEmpty()) return world.getSpawnLocation();
+
+        double x = 0.0d;
+        double y = 0.0d;
+        double z = 0.0d;
+        for (MapPoint point : points) {
+            x += point.x();
+            y += point.y();
+            z += point.z();
+        }
+        return new Location(world, x / points.size(), y / points.size(), z / points.size());
     }
 
     /**

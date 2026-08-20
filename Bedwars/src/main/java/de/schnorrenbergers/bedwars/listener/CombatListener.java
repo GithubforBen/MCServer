@@ -15,11 +15,13 @@ import org.bukkit.Material;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -70,11 +72,34 @@ public class CombatListener implements Listener {
     }
 
     /**
+     * Keeps team mates from hurting each other.
+     * <p>
+     * Runs before the bookkeeping above, so a hit that never happens is not remembered as one either -
+     * otherwise a team mate's arrow would take the kill off whoever actually did the work.
+     */
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onFriendlyFire(EntityDamageByEntityEvent event) {
+        Game game = game();
+        if (game == null || !game.isRunning()) return;
+        if (!(event.getEntity() instanceof Player victim)) return;
+        Player attacker = attackerOf(event);
+        if (attacker == null || attacker.equals(victim)) return;
+        GamePlayer hurt = game.get(victim);
+        GamePlayer hitting = game.get(attacker);
+        if (hurt == null || hitting == null || hurt.getTeam() == null) return;
+        if (hurt.getTeam().equals(hitting.getTeam())) event.setCancelled(true);
+    }
+
+    /**
      * @param event a hit
-     * @return the player behind it, whether they threw something or swung something
+     * @return the player behind it, whether they threw something, swung something or lit it
      */
     private static @Nullable Player attackerOf(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player player) return player;
+        // tnt is not a projectile, and without this the most explosive kill in the game belongs to nobody
+        if (event.getDamager() instanceof TNTPrimed tnt && tnt.getSource() instanceof Player source) {
+            return source;
+        }
         if (event.getDamager() instanceof Projectile projectile
                 && projectile.getShooter() instanceof Player shooter) {
             return shooter;
@@ -106,6 +131,8 @@ public class CombatListener implements Listener {
         boolean finalKill = victim.getTeam() != null && !victim.getTeam().isBedAlive();
 
         victim.addDeath();
+        // one level off every tool chain: a death has to cost something without starting the round over
+        victim.getLoadout().onDeath();
         if (killer != null) killer.addKill(finalKill);
         handOverResources(game, event, killer);
         event.getDrops().clear();
@@ -190,6 +217,47 @@ public class CombatListener implements Listener {
                 "team", team,
                 "killer", killer.getName(),
                 "killer-team", killer.getTeam() == null ? "" : killer.getTeam().getColor().getDisplayName());
+    }
+
+    /**
+     * Somebody left in the middle of a round.
+     * <p>
+     * Logging out is a way of not dying, so it is treated as dying: the death counts, and whoever was
+     * hitting them a moment ago gets the kill. What it is not is a way of leaving the round behind - as
+     * long as their bed stands they keep their place and walk back in where they left off, because the
+     * most common reason for this is a connection and not a decision.
+     */
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onQuit(PlayerQuitEvent event) {
+        Game game = game();
+        if (game == null || !game.isRunning()) return;
+        Player player = event.getPlayer();
+        GamePlayer participant = game.get(player);
+        if (participant == null || !participant.isAlive()) return;
+
+        GameTeam team = participant.getTeam();
+        boolean finalKill = team != null && !team.isBedAlive();
+        GamePlayer killer = findKiller(game, player);
+
+        participant.addDeath();
+        participant.getLoadout().onDeath();
+        if (killer != null) killer.addKill(finalKill);
+        Bukkit.getPluginManager().callEvent(
+                new BedwarsPlayerKillEvent(game, participant, killer, finalKill));
+
+        boolean keepsPlace = !finalKill && game.getSettings().isKeepPlayingWhenOffline();
+        if (keepsPlace) {
+            participant.setState(GamePlayer.State.RESPAWNING);
+            // no waiting time left: whenever they come back, the round puts them straight into it
+            participant.setRespawnTicks(0);
+        } else {
+            participant.setState(GamePlayer.State.SPECTATOR);
+        }
+        Messages.broadcast(finalKill ? "death.left.final" : "death.left",
+                "player", participant.getName(),
+                "team", team == null ? Messages.raw("chat.no-team") : team.getColor().getDisplayName(),
+                "killer", killer == null ? "" : killer.getName());
+        lastAttacker.remove(player.getUniqueId());
     }
 
     // ---------------------------------------------------------------- coming back

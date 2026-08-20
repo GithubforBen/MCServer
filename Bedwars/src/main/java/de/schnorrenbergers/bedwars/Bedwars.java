@@ -5,27 +5,48 @@ import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.warp.ServerConnector;
 import de.schnorrenbergers.bedwars.addon.AddonRegistry;
 import de.schnorrenbergers.bedwars.addon.AddonSettings;
+import de.schnorrenbergers.bedwars.addon.impl.BedTokenAddon;
+import de.schnorrenbergers.bedwars.addon.impl.CustomItemsAddon;
+import de.schnorrenbergers.bedwars.addon.impl.KillstreaksAddon;
+import de.schnorrenbergers.bedwars.addon.impl.KitsAddon;
+import de.schnorrenbergers.bedwars.addon.impl.RandomEventsAddon;
 import de.schnorrenbergers.bedwars.commands.BedwarsCommand;
 import de.schnorrenbergers.bedwars.config.GameSettings;
 import de.schnorrenbergers.bedwars.config.GeneratorSettings;
 import de.schnorrenbergers.bedwars.config.ModeSettings;
+import de.schnorrenbergers.bedwars.config.ShopSettings;
+import de.schnorrenbergers.bedwars.config.TimelineSettings;
+import de.schnorrenbergers.bedwars.config.UpgradeSettings;
 import de.schnorrenbergers.bedwars.generator.GeneratorManager;
 import de.schnorrenbergers.bedwars.listener.BedListener;
 import de.schnorrenbergers.bedwars.listener.BuildListener;
 import de.schnorrenbergers.bedwars.listener.ChatListener;
 import de.schnorrenbergers.bedwars.listener.CombatListener;
+import de.schnorrenbergers.bedwars.listener.DragonListener;
+import de.schnorrenbergers.bedwars.listener.ShopListener;
+import de.schnorrenbergers.bedwars.listener.SpecialItemListener;
 import de.schnorrenbergers.bedwars.game.Game;
+import de.schnorrenbergers.bedwars.game.timeline.Dragons;
+import de.schnorrenbergers.bedwars.game.timeline.Timeline;
 import de.schnorrenbergers.bedwars.lobby.LobbyListener;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.map.MapLoader;
 import de.schnorrenbergers.bedwars.map.MapRepository;
 import de.schnorrenbergers.bedwars.map.setup.SetupSession;
+import de.schnorrenbergers.bedwars.shop.ShopService;
+import de.schnorrenbergers.bedwars.shop.trap.TrapService;
+import de.schnorrenbergers.bedwars.shop.upgrade.UpgradeService;
+import de.schnorrenbergers.bedwars.shop.villager.ShopKeepers;
+import de.schnorrenbergers.bedwars.spectator.SpectatorListener;
+import de.schnorrenbergers.bedwars.stats.FileStatsRepository;
+import de.schnorrenbergers.bedwars.stats.StatsTracker;
 import de.schnorrenbergers.bedwars.util.Messages;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,11 +64,16 @@ public final class Bedwars extends JavaPlugin {
     private ModeSettings modeSettings;
     private GameSettings gameSettings;
     private GeneratorSettings generatorSettings;
+    private ShopSettings shopSettings;
+    private UpgradeSettings upgradeSettings;
+    private TimelineSettings timelineSettings;
+    private ShopService shop;
     private AddonRegistry addons;
     private MapRepository maps;
     private MapLoader mapLoader;
     private SetupSession setup;
     private Game game;
+    private StatsTracker stats;
     private boolean networked;
 
     @Override
@@ -68,6 +94,12 @@ public final class Bedwars extends JavaPlugin {
 
         game = new Game(modeSettings.get(gameSettings.getMode()), gameSettings);
         game.setGenerators(new GeneratorManager(generatorSettings));
+        shop = new ShopService(shopSettings);
+        game.setUpgrades(new UpgradeService(upgradeSettings));
+        game.setTraps(new TrapService(upgradeSettings));
+        game.setShopKeepers(new ShopKeepers());
+        game.setTimeline(new Timeline(timelineSettings));
+        game.setDragons(new Dragons(timelineSettings));
         loadArena();
         addons.apply(game);
         game.start(this);
@@ -77,6 +109,14 @@ public final class Bedwars extends JavaPlugin {
         new BuildListener(this, game.getBlockTracker());
         new CombatListener(this);
         new ChatListener(this);
+        new ShopListener(this);
+        new SpecialItemListener(this);
+        new DragonListener(this);
+        new SpectatorListener(this);
+        if (gameSettings.isStatsEnabled()) {
+            stats = new StatsTracker(this, new FileStatsRepository(
+                    new File(gameSettings.getStatsDirectory())));
+        }
         register("bw", new BedwarsCommand());
         getLogger().info("Hosting " + game.getMode()
                 + (game.getArena() == null ? " with no map yet" : " on " + game.getArena().getName())
@@ -85,6 +125,8 @@ public final class Bedwars extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (game != null && game.getShopKeepers() != null) game.getShopKeepers().remove();
+        if (game != null && game.getDragons() != null) game.getDragons().remove();
         if (addons != null && game != null) addons.disableAll(game);
         if (game != null) game.shutdown();
     }
@@ -98,6 +140,7 @@ public final class Bedwars extends JavaPlugin {
     public void reload() {
         loadConfigs();
         addons.getSettings().reload();
+        addons.reloadAll();
         addons.apply(game);
     }
 
@@ -117,6 +160,21 @@ public final class Bedwars extends JavaPlugin {
             generatorSettings = new GeneratorSettings();
         } else {
             generatorSettings.load();
+        }
+        if (shopSettings == null) {
+            shopSettings = new ShopSettings();
+        } else {
+            shopSettings.load();
+        }
+        if (upgradeSettings == null) {
+            upgradeSettings = new UpgradeSettings();
+        } else {
+            upgradeSettings.load();
+        }
+        if (timelineSettings == null) {
+            timelineSettings = new TimelineSettings();
+        } else {
+            timelineSettings.load();
         }
     }
 
@@ -144,10 +202,19 @@ public final class Bedwars extends JavaPlugin {
     }
 
     /**
-     * Registers every addon. Phase 6 fills this in; until then the registry is real but empty, which is
-     * what the rest of the plugin needs it to be.
+     * Registers every addon.
+     * <p>
+     * Registering is not enabling: what is actually switched on comes out of {@code addons.yml}, the event
+     * that started this server and the lobby menu, in that order. Being listed here only means the round
+     * knows that this addon exists.
      */
     private void registerAddons() {
+        AddonSettings settings = addons.getSettings();
+        addons.register(new BedTokenAddon(this, settings));
+        addons.register(new KitsAddon(this, settings));
+        addons.register(new CustomItemsAddon(this, settings));
+        addons.register(new KillstreaksAddon(this, settings));
+        addons.register(new RandomEventsAddon(this, settings));
     }
 
     /**
@@ -248,9 +315,49 @@ public final class Bedwars extends JavaPlugin {
         return generatorSettings;
     }
 
+    public ShopSettings getShopSettings() {
+        return shopSettings;
+    }
+
+    public UpgradeSettings getUpgradeSettings() {
+        return upgradeSettings;
+    }
+
+    public TimelineSettings getTimelineSettings() {
+        return timelineSettings;
+    }
+
+    /**
+     * @return the shop of this round, which is what sells and what hands purchases back after a death
+     */
+    public ShopService getShop() {
+        return shop;
+    }
+
+    /**
+     * @return the team upgrades of this round
+     */
+    public UpgradeService getUpgrades() {
+        return game == null ? null : game.getUpgrades();
+    }
+
+    /**
+     * @return the traps of this round
+     */
+    public TrapService getTraps() {
+        return game == null ? null : game.getTraps();
+    }
+
     /**
      * @return whether this server reached the rest of the network
      */
+    /**
+     * @return what this round has come to so far, {@code null} when nothing is being kept
+     */
+    public @Nullable StatsTracker getStats() {
+        return stats;
+    }
+
     public boolean isNetworked() {
         return networked;
     }
