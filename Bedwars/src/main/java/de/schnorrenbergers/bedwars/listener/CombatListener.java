@@ -21,6 +21,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -216,6 +217,47 @@ public class CombatListener implements Listener {
                 "team", team,
                 "killer", killer.getName(),
                 "killer-team", killer.getTeam() == null ? "" : killer.getTeam().getColor().getDisplayName());
+    }
+
+    /**
+     * Somebody left in the middle of a round.
+     * <p>
+     * Logging out is a way of not dying, so it is treated as dying: the death counts, and whoever was
+     * hitting them a moment ago gets the kill. What it is not is a way of leaving the round behind - as
+     * long as their bed stands they keep their place and walk back in where they left off, because the
+     * most common reason for this is a connection and not a decision.
+     */
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onQuit(PlayerQuitEvent event) {
+        Game game = game();
+        if (game == null || !game.isRunning()) return;
+        Player player = event.getPlayer();
+        GamePlayer participant = game.get(player);
+        if (participant == null || !participant.isAlive()) return;
+
+        GameTeam team = participant.getTeam();
+        boolean finalKill = team != null && !team.isBedAlive();
+        GamePlayer killer = findKiller(game, player);
+
+        participant.addDeath();
+        participant.getLoadout().onDeath();
+        if (killer != null) killer.addKill(finalKill);
+        Bukkit.getPluginManager().callEvent(
+                new BedwarsPlayerKillEvent(game, participant, killer, finalKill));
+
+        boolean keepsPlace = !finalKill && game.getSettings().isKeepPlayingWhenOffline();
+        if (keepsPlace) {
+            participant.setState(GamePlayer.State.RESPAWNING);
+            // no waiting time left: whenever they come back, the round puts them straight into it
+            participant.setRespawnTicks(0);
+        } else {
+            participant.setState(GamePlayer.State.SPECTATOR);
+        }
+        Messages.broadcast(finalKill ? "death.left.final" : "death.left",
+                "player", participant.getName(),
+                "team", team == null ? Messages.raw("chat.no-team") : team.getColor().getDisplayName(),
+                "killer", killer == null ? "" : killer.getName());
+        lastAttacker.remove(player.getUniqueId());
     }
 
     // ---------------------------------------------------------------- coming back

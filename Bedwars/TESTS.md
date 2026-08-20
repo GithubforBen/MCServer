@@ -1,6 +1,6 @@
 # Bedwars - was getestet werden sollte
 
-Stand: Phase 6 (Addons). Die Punkte davor sind aus den früheren Phasen und lohnen sich nur noch
+Stand: Phase 7 (Feinschliff) - damit ist der Plan durch. Die Punkte davor sind aus den früheren Phasen und lohnen sich nur noch
 als Gegenprobe, wenn etwas davon plötzlich kaputt aussieht.
 
 ## Vorbereitung
@@ -228,7 +228,28 @@ JAVA_HOME=~/.jdks/openjdk-25.0.1 ./mvnw -pl Bedwars package   # Jar landet in bu
 - [ ] Loot-Kiste steht in der Mitte, ist gefüllt und lässt sich abbauen.
 - [ ] Rundenende → keine Kiste bleibt stehen, keine Ereignisse mehr.
 
-## 18. Querschnitt
+## 18. Feinschliff
+
+- [ ] **Feuer**: Feuerball auf eine Holzbrücke → die Brücke brennt nicht ab, das Feuer springt nicht
+      weiter.
+- [ ] **Ender-Perle**: zweite Perle innerhalb von 5 Sekunden → Hinweis, und die Perle bleibt im
+      Inventar (sie darf nicht verbraucht werden).
+- [ ] **Abmelden im Kampf**: jemanden anschlagen, der sich sofort ausloggt → Tod wird gezählt und der
+      Kill dem Angreifer gutgeschrieben, Ansage im Chat.
+- [ ] **Wiederverbinden**: mit noch stehendem Bett ausloggen und neu verbinden → man steht wieder im
+      eigenen Team, mit Grundausstattung, Rüstung und Upgrades.
+- [ ] Ohne Bett ausloggen → man kommt als Zuschauer zurück, das Team kann eliminiert werden.
+- [ ] **Zuschauer**: kein Aufsammeln, kein Bauen, kein Schlagen, kein Geschlagenwerden - auch in den
+      5 Sekunden zwischen Tod und Respawn.
+- [ ] `/bw watch` zeigt alle, die noch stehen, mit Team und Kills; Klick teleportiert hin.
+- [ ] `/bw stats` zeigt die Tabelle der laufenden Runde.
+- [ ] Rundenende → eine Datei unter `./stats/round_<datum>.yml` mit Map, Modus, Dauer, Sieger und
+      allen Spielerzeilen.
+- [ ] `stats.enabled: false` → keine Datei, sonst unverändert.
+- [ ] **Generatoren**: den Eisengenerator eine Minute laufen lassen → dort liegt ein Stapel und nicht
+      ein Dutzend einzelner Items.
+
+## 19. Querschnitt
 
 - [ ] **Kein Schaden im eigenen Team** - Nahkampf, Pfeil, Fireball, TNT.
 - [ ] Alles, was im Spiel steht, kommt aus `messages.yml` (englisch, keine deutschen Reste).
@@ -239,10 +260,10 @@ JAVA_HOME=~/.jdks/openjdk-25.0.1 ./mvnw -pl Bedwars package   # Jar landet in bu
 
 - **Das Kopfgeld steht nicht über dem Kopf** - es wird angesagt und ausgezahlt, aber der Name im
   Tab und über dem Spieler bleibt, wie er ist.
-- **Zuschauer** sind noch nicht richtig aufgeräumt (unsichtbar, kein Aufsammeln, Teleport-Menü) -
-  das ist Phase 7.
-- **Rundenstatistik** wird gezählt und am Ende gezeigt, aber nirgends gespeichert; die Persistenz
-  beim Launcher ist ebenfalls Phase 7.
+- **Netzwerkweite Statistik**: die Runde schreibt eine Datei pro Server; sie beim Launcher
+  einzusammeln ist ein eigenes Netzwerk-Event und noch nicht gebaut.
+- **Rundenstart über das Event-System**: läuft weiter über `/bwdebug` und `/bw start`; die
+  `MatchData`, die Modus, Map und Addons mitbringt, kommt mit dem Event-System.
 - **Iron Forge IV** macht den Generator nur schneller; die Smaragde am eigenen Base, die Hypixel
   dort ausschüttet, gibt es noch nicht.
 - **Gold-Spitzhacke** hat Efficiency III, aber keine Eile II beim Halten.

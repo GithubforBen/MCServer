@@ -468,16 +468,34 @@ kann, ohne dass die Runde etwas davon merkt.
 
 ## Phase 7 - Feinschliff
 
-1. `StatsTracker` für die Runde, sauber getrennte `StatsRepository`-Schnittstelle; die
-   netzwerkweite Speicherung beim Launcher kommt als eigenes Netzwerk-Event dazu.
-2. Zuschauer richtig: unsichtbar, kein Aufsammeln, keine Interaktion, Teleport-Menü.
-3. Kanten: Feuer, TNT nur auf gesetzten Blöcken, Ender-Pearl-Cooldown, Void-Tode dem letzten
-   Angreifer zuschreiben, Abmeldung im Kampf, Wiederverbinden ins laufende Spiel.
-4. Performance: Item-Merging an den Generatoren, Hologramme als Display-Entities,
-   keine `getNearbyEntities`-Schleifen pro Tick.
-5. README-Abschnitt für Bedwars, wie ihn die anderen Module haben.
+1. **Statistik**: `RoundStats` ist eine Momentaufnahme, keine zweite Buchführung - gezählt wird
+   weiter dort, wo es passiert (am Spieler, am Team), weil eine zweite Stelle, die Kills zählt, eine
+   zweite Stelle ist, die sich irren kann. `StatsRepository` hat genau eine Methode; heute schreibt
+   sie eine Datei pro Runde, morgen ist der Launcher die zweite Implementierung und sonst ändert sich
+   nichts. `/bw stats` zeigt dieselbe Tabelle im laufenden Spiel.
+2. **Zuschauer**: das meiste macht der Spectator-Modus schon. Was er nicht abdeckt, ist der Zustand
+   *dazwischen* - wer gerade gestorben ist und zurückkommt, ist für Minecraft kein Zuschauer, für die
+   Runde aber schon. Die Regeln hängen deshalb an `GamePlayer.isAlive()` und nicht am Spielmodus.
+   Dazu `/bw watch`: die Liste aller, die noch stehen, weil ein Toter den, den er sehen will, sonst
+   erst suchen müsste.
+3. **Kanten**:
+   - **Feuer** breitet sich nicht aus und brennt nichts ab. Ein Feuerball über einer Holzbrücke würde
+     sich sonst durch eine Basis fressen, die niemand verteidigen kann.
+   - **Ender-Pearl-Cooldown** (`ender-pearl-cooldown-seconds`, Standard 5): gestoppt wird der *Wurf*,
+     nicht der Flug - eine abgebrochene Perle wäre weg und hätte nichts getan.
+   - **Void-Tode** gehören schon seit Phase 3 dem letzten Angreifer.
+   - **Abmelden im Kampf** zählt als Tod, mitsamt Kill für den, der gerade zugeschlagen hat. Was es
+     nicht ist, ist ein Ausstieg: solange das Bett steht, behält man seinen Platz und kommt beim
+     Wiederverbinden dort hinein, wo man war - der häufigste Grund dafür ist eine Leitung und keine
+     Entscheidung (`death.keep-place-when-offline`).
+4. **Performance**: Generatoren fragen die Welt nur noch **einmal** pro Drop nach ihren Entities
+   (Cap und Merge in einem Durchgang) und legen den Drop auf den Stapel, der schon da liegt.
+   Minecraft merged zwar von selbst, aber erst nachträglich - ein Generator, den zwei Minuten niemand
+   leert, verbringt diese zwei Minuten sonst als ein Dutzend Entities. Hologramme sind seit Phase 3
+   Display-Entities, und keine Schleife über `getNearbyEntities` läuft pro Tick.
+5. **README**: eigener Abschnitt wie bei den anderen Modulen - Configs, Befehle, Addons, Testen.
 
----
+**Fertig, wenn** eine Runde von außen aussieht wie ein fertiges Minispiel und nicht wie ein Prototyp.
 
 # Was danach offen bleibt
 

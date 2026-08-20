@@ -12,13 +12,17 @@ import de.schnorrenbergers.bedwars.map.TeamSpot;
 import de.schnorrenbergers.bedwars.util.Messages;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.plugin.Plugin;
 
@@ -90,6 +94,46 @@ public class BuildListener implements Listener {
         event.blockList().removeIf(block -> !tracker.wasPlaced(block)
                 || block.getType().name().endsWith("_BED"));
         event.blockList().forEach(tracker::forget);
+    }
+
+    /**
+     * Fire spreads nowhere and burns nothing.
+     * <p>
+     * A fireball or a bucket of lava over a wooden bridge would otherwise eat its way through a base
+     * nobody could defend, and half of it would be map rather than something a player put there. Fire is
+     * bought here to break through a defence at the moment it is used, not to keep working afterwards.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onSpread(BlockSpreadEvent event) {
+        Game game = game();
+        if (game == null || !game.isRunning() || game.isSetupMode()) return;
+        if (event.getSource().getType() == Material.FIRE) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBurn(BlockBurnEvent event) {
+        Game game = game();
+        if (game == null || !game.isRunning() || game.isSetupMode()) return;
+        event.setCancelled(true);
+    }
+
+    /**
+     * Fire may only be lit by somebody who is standing there doing it, and only where they may build.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onIgnite(BlockIgniteEvent event) {
+        Game game = game();
+        if (game == null || !game.isRunning() || game.isSetupMode()) return;
+        if (event.getCause() == BlockIgniteEvent.IgniteCause.FLINT_AND_STEEL
+                && event.getPlayer() != null
+                && event.getPlayer().getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
+        if (event.getCause() != BlockIgniteEvent.IgniteCause.SPREAD
+                && event.getCause() != BlockIgniteEvent.IgniteCause.LAVA) {
+            return;
+        }
+        event.setCancelled(true);
     }
 
     /**

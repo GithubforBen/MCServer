@@ -37,12 +37,16 @@ import de.schnorrenbergers.bedwars.shop.ShopService;
 import de.schnorrenbergers.bedwars.shop.trap.TrapService;
 import de.schnorrenbergers.bedwars.shop.upgrade.UpgradeService;
 import de.schnorrenbergers.bedwars.shop.villager.ShopKeepers;
+import de.schnorrenbergers.bedwars.spectator.SpectatorListener;
+import de.schnorrenbergers.bedwars.stats.FileStatsRepository;
+import de.schnorrenbergers.bedwars.stats.StatsTracker;
 import de.schnorrenbergers.bedwars.util.Messages;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +73,7 @@ public final class Bedwars extends JavaPlugin {
     private MapLoader mapLoader;
     private SetupSession setup;
     private Game game;
+    private StatsTracker stats;
     private boolean networked;
 
     @Override
@@ -107,6 +112,11 @@ public final class Bedwars extends JavaPlugin {
         new ShopListener(this);
         new SpecialItemListener(this);
         new DragonListener(this);
+        new SpectatorListener(this);
+        if (gameSettings.isStatsEnabled()) {
+            stats = new StatsTracker(this, new FileStatsRepository(
+                    new File(gameSettings.getStatsDirectory())));
+        }
         register("bw", new BedwarsCommand());
         getLogger().info("Hosting " + game.getMode()
                 + (game.getArena() == null ? " with no map yet" : " on " + game.getArena().getName())
@@ -341,6 +351,13 @@ public final class Bedwars extends JavaPlugin {
     /**
      * @return whether this server reached the rest of the network
      */
+    /**
+     * @return what this round has come to so far, {@code null} when nothing is being kept
+     */
+    public @Nullable StatsTracker getStats() {
+        return stats;
+    }
+
     public boolean isNetworked() {
         return networked;
     }

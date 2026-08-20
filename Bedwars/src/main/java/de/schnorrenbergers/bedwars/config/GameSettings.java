@@ -27,6 +27,10 @@ public final class GameSettings {
     private int shopRadius;
     private boolean resourcesToKiller;
     private int respawnProtectionSeconds;
+    private int enderPearlCooldownSeconds;
+    private boolean keepPlayingWhenOffline;
+    private boolean statsEnabled;
+    private String statsDirectory;
 
     public GameSettings() {
         file = new ConfigFile("game.yml");
@@ -74,6 +78,16 @@ public final class GameSettings {
         resourcesToKiller = file.get("death.resources-to-killer", true,
                 "Whether the resources somebody carried go to whoever killed them.",
                 "Off means they are lost, which makes hunting people down pointless.");
+        enderPearlCooldownSeconds = Math.max(0, file.get("ender-pearl-cooldown-seconds", 5,
+                "How long after an ender pearl the next one may be thrown.",
+                "0 turns it off. Without it a pearl is not an escape but a way of travelling."));
+        keepPlayingWhenOffline = file.get("death.keep-place-when-offline", true,
+                "Whether somebody who leaves while their bed still stands keeps their place in the round",
+                "and can come back into it. With no bed left, leaving is always final.");
+        statsEnabled = file.get("stats.enabled", true,
+                "Whether the numbers of the round are written down when it ends.");
+        statsDirectory = file.get("stats.directory", "./stats",
+                "Where that file goes. One file per round, which is all a server ever plays.");
         stopServerWhenDone = file.get("end.stop-server", true,
                 "Whether this server asks the launcher to stop it once the round is over.",
                 "Turn it off while developing, or the server disappears under you after every test.");
@@ -114,6 +128,28 @@ public final class GameSettings {
 
     public int getRespawnProtectionSeconds() {
         return respawnProtectionSeconds;
+    }
+
+    /**
+     * @return how long a player has to wait between two ender pearls, 0 when they never do
+     */
+    public int getEnderPearlCooldownSeconds() {
+        return enderPearlCooldownSeconds;
+    }
+
+    /**
+     * @return whether leaving with a bed still standing keeps somebody in the round
+     */
+    public boolean isKeepPlayingWhenOffline() {
+        return keepPlayingWhenOffline;
+    }
+
+    public boolean isStatsEnabled() {
+        return statsEnabled;
+    }
+
+    public String getStatsDirectory() {
+        return statsDirectory;
     }
 
     public int getEndReturnSeconds() {

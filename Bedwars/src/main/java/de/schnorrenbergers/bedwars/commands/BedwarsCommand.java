@@ -4,6 +4,7 @@ import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.addon.Addon;
 import de.schnorrenbergers.bedwars.addon.AddonRegistry;
 import de.schnorrenbergers.bedwars.game.Game;
+import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.api.BedwarsGameEndEvent;
 import de.schnorrenbergers.bedwars.game.TeamColor;
 import de.schnorrenbergers.bedwars.game.phase.IngamePhase;
@@ -14,6 +15,9 @@ import de.schnorrenbergers.bedwars.generator.GeneratorManager;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.lobby.AddonMenu;
 import de.schnorrenbergers.bedwars.map.setup.SetupCommand;
+import de.schnorrenbergers.bedwars.spectator.WatchMenu;
+import de.schnorrenbergers.bedwars.stats.RoundStats;
+import de.schnorrenbergers.bedwars.stats.StatsTracker;
 import de.schnorrenbergers.bedwars.shop.ShopMenu;
 import de.schnorrenbergers.bedwars.shop.upgrade.UpgradeMenu;
 import de.schnorrenbergers.bedwars.util.Messages;
@@ -58,6 +62,8 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
             case "start" -> start(sender);
             case "generators" -> generators(sender);
             case "timeline" -> timeline(sender, args);
+            case "stats" -> stats(sender);
+            case "watch" -> watch(sender);
             case "shop" -> shop(sender);
             case "upgrades" -> upgrades(sender);
             case "stop" -> stop(sender);
@@ -72,7 +78,7 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
     private void usage(CommandSender sender) {
         Messages.send(sender, "command.usage", "usage",
                 "status | setup | start | stop | generators | timeline [skip] | shop | upgrades"
-                        + " | reload | addons | addon <id> on|off|default");
+                        + " | stats | watch | reload | addons | addon <id> on|off|default");
     }
 
     /**
@@ -207,6 +213,60 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * Shows where the round stands, by the same scoring that decides it.
+     */
+    private void stats(CommandSender sender) {
+        Game game = Bedwars.getInstance().getGame();
+        StatsTracker tracker = Bedwars.getInstance().getStats();
+        RoundStats round = tracker == null
+                ? RoundStats.of(game, elapsed(game), Bedwars.getInstance().getTimelineSettings().getWeights())
+                : tracker.snapshot(game);
+        if (round.rows().isEmpty()) {
+            Messages.send(sender, "stats.empty");
+            return;
+        }
+        Messages.send(sender, "stats.header");
+        int place = 1;
+        for (RoundStats.Row row : round.rows()) {
+            Messages.send(sender, "stats.entry",
+                    "place", String.valueOf(place++),
+                    "player", row.name(),
+                    "team", row.team() == null ? Messages.raw("chat.no-team") : row.team().getDisplayName(),
+                    "kills", String.valueOf(row.kills()),
+                    "finals", String.valueOf(row.finals()),
+                    "beds", String.valueOf(row.beds()),
+                    "deaths", String.valueOf(row.deaths()));
+        }
+        Messages.send(sender, "stats.footer", "time", Text.clock(round.seconds()));
+    }
+
+    /**
+     * @param game the round
+     * @return how long it has been running
+     */
+    private static int elapsed(Game game) {
+        return game.getTimeline() == null ? 0 : game.getTimeline().getElapsedSeconds();
+    }
+
+    /**
+     * Opens the list of everybody still standing, for somebody who is out.
+     */
+    private void watch(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            Messages.send(sender, "command.players-only");
+            return;
+        }
+        Game game = Bedwars.getInstance().getGame();
+        GamePlayer participant = game.get(player);
+        // whoever is still in the round has somewhere else to be
+        if (participant != null && participant.isAlive() && !player.hasPermission(PERMISSION)) {
+            Messages.send(sender, "watch.only-spectators");
+            return;
+        }
+        WatchMenu.open(player);
+    }
+
+    /**
      * Opens the item shop without a villager.
      * <p>
      * For the two cases a villager cannot cover: a map whose shop spots are not set yet, and checking a
@@ -318,7 +378,7 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
                                                 @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length <= 1) {
             return filter(List.of("status", "setup", "start", "stop", "generators", "timeline", "shop",
-                            "upgrades", "reload", "addons", "addon"),
+                            "upgrades", "stats", "watch", "reload", "addons", "addon"),
                     args.length == 0 ? "" : args[0]);
         }
         if (args[0].equalsIgnoreCase("timeline") && args.length == 2) {

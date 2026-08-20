@@ -102,7 +102,9 @@ public class Generator {
     private void drop(Game game) {
         if (location.getWorld() == null) return;
         if (owner != null && !owner.isAlive()) return;
-        if (isGroundFull()) return;
+
+        Ground ground = scanGround();
+        if (type.groundCap() > 0 && ground.lying() >= type.groundCap()) return;
 
         ItemStack stack = new ItemStack(type.material(), type.amount());
         BedwarsResourceSpawnEvent event = new BedwarsResourceSpawnEvent(game, type.id(), location, stack);
@@ -110,25 +112,65 @@ public class Generator {
         if (event.isCancelled()) return;
 
         if (type.splitInBase() && owner != null && giveToTeam(event.getDrop())) return;
+        if (mergeInto(ground.stack(), event.getDrop())) return;
         Item dropped = location.getWorld().dropItem(location, event.getDrop());
         // straight down, so resources stay on the platform they belong to instead of rolling off it
         dropped.setVelocity(new Vector(0, 0, 0));
     }
 
     /**
-     * @return whether enough of this resource is already lying around the generator
+     * What is lying around the generator.
+     *
+     * @param lying how much of this resource is on the floor near it
+     * @param stack the pile on the generator itself that a new drop can go onto, or {@code null}
      */
-    private boolean isGroundFull() {
-        if (type.groundCap() <= 0) return false;
+    private record Ground(int lying, @Nullable Item stack) {
+    }
+
+    /**
+     * Looks at the floor once, for both questions that are asked about it.
+     * <p>
+     * One pass rather than two: this runs every time a generator drops, on every generator of the map, and
+     * asking the world for its entities is by far the most expensive thing a generator does.
+     */
+    private Ground scanGround() {
         double range = Math.max(4.0d, type.splitRadius());
         int lying = 0;
+        Item mergeInto = null;
         for (Entity entity : location.getWorld().getNearbyEntities(location, range, range, range)) {
             if (!(entity instanceof Item item)) continue;
-            if (item.getItemStack().getType() != type.material()) continue;
-            lying += item.getItemStack().getAmount();
-            if (lying >= type.groundCap()) return true;
+            ItemStack stack = item.getItemStack();
+            if (stack.getType() != type.material()) continue;
+            lying += stack.getAmount();
+            // the pile right on the generator, which is where an untouched drop lands
+            if (mergeInto == null && item.getLocation().distanceSquared(location) <= 1.0d
+                    && stack.getAmount() + type.amount() <= stack.getMaxStackSize()) {
+                mergeInto = item;
+            }
         }
-        return false;
+        return new Ground(lying, mergeInto);
+    }
+
+    /**
+     * Puts a drop onto the pile that is already there instead of next to it.
+     * <p>
+     * Minecraft merges nearby items on its own, but only every so often and only after both exist - a
+     * generator that nobody empties for two minutes spends those two minutes as a dozen entities.
+     *
+     * @param pile  what is lying on the generator, or {@code null}
+     * @param stack what was just made
+     * @return whether the pile took it
+     */
+    private boolean mergeInto(@Nullable Item pile, ItemStack stack) {
+        if (pile == null || !pile.isValid() || stack.getType() != type.material()) return false;
+        ItemStack lying = pile.getItemStack();
+        if (lying.getType() != stack.getType()
+                || lying.getAmount() + stack.getAmount() > lying.getMaxStackSize()) {
+            return false;
+        }
+        lying.setAmount(lying.getAmount() + stack.getAmount());
+        pile.setItemStack(lying);
+        return true;
     }
 
     /**

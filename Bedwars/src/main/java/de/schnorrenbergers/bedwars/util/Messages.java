@@ -298,6 +298,22 @@ public final class Messages {
         texts.put("death.alone", "<white><player></white> <gray>died.");
         texts.put("death.alone.final", "<white><player></white> <gray>died. <red>FINAL KILL!");
         texts.put("death.collected", "<prefix><gray>You took <white><what></white> off <white><player></white>.");
+        texts.put("death.left", "<prefix><white><player></white> <gray>left the round.");
+        texts.put("death.left.final", "<prefix><white><player></white> <gray>left the round for good.");
+        texts.put("item.pearl-cooldown", "<prefix><gray>Another pearl in <white><seconds></white>s.");
+
+        texts.put("watch.title", "<dark_gray>Watch");
+        texts.put("watch.nobody", "<prefix><gray>There is nobody left to watch.");
+        texts.put("watch.now", "<prefix><gray>Watching <white><player></white>.");
+        texts.put("watch.gone", "<prefix><gray><player> is not standing any more.");
+        texts.put("watch.team", "<gray>Team: <white><team>");
+        texts.put("watch.kills", "<gray><kills> kills, <beds> beds");
+        texts.put("watch.only-spectators", "<prefix><gray>Only somebody who is out can watch.");
+
+        texts.put("stats.header", "<prefix><gray>This round so far:");
+        texts.put("stats.entry", "<gray>  <place>. <white><player></white> <dark_gray>(<team><dark_gray>) <gray>- <white><kills></white> kills, <white><finals></white> finals, <white><beds></white> beds, <white><deaths></white> deaths");
+        texts.put("stats.empty", "<prefix><gray>Nothing has happened yet.");
+        texts.put("stats.footer", "<gray>  Running for <white><time></white>.");
 
         texts.put("respawn.title", "<red>You died");
         texts.put("respawn.subtitle", "<gray>Back in <white><seconds></white>s");

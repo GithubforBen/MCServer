@@ -58,6 +58,8 @@ public class SpecialItemListener implements Listener {
     private final Plugin plugin;
     /** Summoned mob to the team that paid for it. */
     private final Map<UUID, GameTeam> minions = new HashMap<>();
+    /** Who threw an ender pearl when, so that a pearl is an escape and not a way of travelling. */
+    private final Map<UUID, Long> lastPearl = new HashMap<>();
 
     public SpecialItemListener(Plugin plugin) {
         this.plugin = plugin;
@@ -104,6 +106,10 @@ public class SpecialItemListener implements Listener {
         GamePlayer user = game.get(event.getPlayer());
         if (user == null || !user.isAlive()) return;
 
+        if (held.getType() == Material.ENDER_PEARL && !mayPearl(event.getPlayer())) {
+            event.setCancelled(true);
+            return;
+        }
         if (held.getType() == Material.FIRE_CHARGE) {
             event.setCancelled(true);
             throwFireball(event.getPlayer());
@@ -116,6 +122,29 @@ public class SpecialItemListener implements Listener {
                 consume(event.getPlayer(), held);
             }
         }
+    }
+
+    /**
+     * Keeps a player from chaining ender pearls.
+     * <p>
+     * The throw is stopped rather than the pearl: cancelling the flight would take the pearl and give
+     * nothing back for it, which is a worse punishment than the cooldown itself.
+     *
+     * @param player who is trying to throw
+     * @return whether they may
+     */
+    private boolean mayPearl(Player player) {
+        int seconds = Bedwars.getInstance().getGameSettings().getEnderPearlCooldownSeconds();
+        if (seconds <= 0) return true;
+        long now = player.getWorld().getFullTime();
+        Long last = lastPearl.get(player.getUniqueId());
+        if (last != null && now - last < seconds * 20L) {
+            Messages.send(player, "item.pearl-cooldown",
+                    "seconds", String.valueOf(Math.max(1, (int) Math.ceil((seconds * 20L - (now - last)) / 20.0d))));
+            return false;
+        }
+        lastPearl.put(player.getUniqueId(), now);
+        return true;
     }
 
     /**
