@@ -68,13 +68,37 @@ public class ConfigFile {
      * @param comments what the value does, written above it
      * @return the configured value, or the fallback when the file holds something unusable
      */
-    @SuppressWarnings("unchecked")
     public <T> T get(String path, T fallback, String... comments) {
         if (!config.contains(path)) {
             config.set(path, fallback);
             if (comments.length > 0) config.setComments(path, List.of(comments));
             return fallback;
         }
+        return convert(path, fallback);
+    }
+
+    /**
+     * Looks a value up without writing anything.
+     * <p>
+     * For the optional keys of an entry - a flag that is off for all but three of forty shop items. Writing
+     * their defaults would be honest but would bury the twelve lines that matter under four hundred that
+     * say {@code false}.
+     *
+     * @param path     where the value lives
+     * @param fallback what to use when it is not there
+     * @return the configured value, or the fallback
+     */
+    public <T> T read(String path, T fallback) {
+        return config.contains(path) ? convert(path, fallback) : fallback;
+    }
+
+    /**
+     * @param path     a key that exists
+     * @param fallback what type it is expected to be, and what to use when it is not
+     * @return the value, read as the type of the fallback
+     */
+    @SuppressWarnings("unchecked")
+    private <T> T convert(String path, T fallback) {
         Object value = config.get(path);
         try {
             if (fallback instanceof Boolean) return (T) Boolean.valueOf(config.getBoolean(path));

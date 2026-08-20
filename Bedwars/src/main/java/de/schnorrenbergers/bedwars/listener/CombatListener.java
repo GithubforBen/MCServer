@@ -15,6 +15,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -70,11 +71,34 @@ public class CombatListener implements Listener {
     }
 
     /**
+     * Keeps team mates from hurting each other.
+     * <p>
+     * Runs before the bookkeeping above, so a hit that never happens is not remembered as one either -
+     * otherwise a team mate's arrow would take the kill off whoever actually did the work.
+     */
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onFriendlyFire(EntityDamageByEntityEvent event) {
+        Game game = game();
+        if (game == null || !game.isRunning()) return;
+        if (!(event.getEntity() instanceof Player victim)) return;
+        Player attacker = attackerOf(event);
+        if (attacker == null || attacker.equals(victim)) return;
+        GamePlayer hurt = game.get(victim);
+        GamePlayer hitting = game.get(attacker);
+        if (hurt == null || hitting == null || hurt.getTeam() == null) return;
+        if (hurt.getTeam().equals(hitting.getTeam())) event.setCancelled(true);
+    }
+
+    /**
      * @param event a hit
-     * @return the player behind it, whether they threw something or swung something
+     * @return the player behind it, whether they threw something, swung something or lit it
      */
     private static @Nullable Player attackerOf(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player player) return player;
+        // tnt is not a projectile, and without this the most explosive kill in the game belongs to nobody
+        if (event.getDamager() instanceof TNTPrimed tnt && tnt.getSource() instanceof Player source) {
+            return source;
+        }
         if (event.getDamager() instanceof Projectile projectile
                 && projectile.getShooter() instanceof Player shooter) {
             return shooter;
@@ -106,6 +130,8 @@ public class CombatListener implements Listener {
         boolean finalKill = victim.getTeam() != null && !victim.getTeam().isBedAlive();
 
         victim.addDeath();
+        // one level off every tool chain: a death has to cost something without starting the round over
+        victim.getLoadout().onDeath();
         if (killer != null) killer.addKill(finalKill);
         handOverResources(game, event, killer);
         event.getDrops().clear();

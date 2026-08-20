@@ -174,6 +174,20 @@ public final class AddonRegistry {
     }
 
     /**
+     * Lets every addon read its own settings again.
+     * <p>
+     * Deliberately without switching anything off and on: that would be the simple way to make new
+     * numbers stick, and it would also take back everything the addon has already handed out in a round
+     * that is being played. An addon that has something registered elsewhere renews it in its own
+     * {@link Addon#reload()}.
+     */
+    public void reloadAll() {
+        for (Addon addon : addons.values()) {
+            addon.reload();
+        }
+    }
+
+    /**
      * Switches every addon off, for a plugin that is shutting down.
      *
      * @param game the round

@@ -19,6 +19,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -74,6 +75,21 @@ public class BuildListener implements Listener {
             return;
         }
         tracker.forget(event.getBlock());
+    }
+
+    /**
+     * What an explosion is allowed to take with it: what players built, and nothing else.
+     * <p>
+     * Tnt and fireballs are bought to break a defence, not to blow a hole into the map - and a bed that
+     * could be blown up would turn the one thing a round is about into a matter of eight gold.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onExplode(EntityExplodeEvent event) {
+        Game game = game();
+        if (game == null || !game.isRunning()) return;
+        event.blockList().removeIf(block -> !tracker.wasPlaced(block)
+                || block.getType().name().endsWith("_BED"));
+        event.blockList().forEach(tracker::forget);
     }
 
     /**

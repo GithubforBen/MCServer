@@ -6,6 +6,7 @@ import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
 import de.schnorrenbergers.bedwars.util.Messages;
+import de.schnorrenbergers.bedwars.util.Text;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -79,7 +80,7 @@ public class Generator {
         if (hologram == null) return;
         hologram.text(Messages.get("generator.hologram",
                 "type", type.displayName(),
-                "tier", roman(tier),
+                "tier", Text.roman(tier),
                 "seconds", String.valueOf(Math.max(0, (int) Math.ceil(ticksLeft / 20.0d)))));
     }
 
@@ -194,27 +195,12 @@ public class Generator {
     }
 
     /**
-     * @param number a tier
-     * @return it as a roman numeral, the way every minecraft level is written
-     */
-    private static String roman(int number) {
-        return switch (number) {
-            case 1 -> "I";
-            case 2 -> "II";
-            case 3 -> "III";
-            case 4 -> "IV";
-            case 5 -> "V";
-            default -> String.valueOf(number);
-        };
-    }
-
-    /**
      * @return the text a hologram would show, for tests and debugging
      */
     public Component describe() {
         return Messages.get("generator.hologram",
                 "type", type.displayName(),
-                "tier", roman(tier),
+                "tier", Text.roman(tier),
                 "seconds", String.valueOf(Math.max(0, (int) Math.ceil(ticksLeft / 20.0d))));
     }
 }

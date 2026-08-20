@@ -30,6 +30,16 @@ public interface Addon {
     }
 
     /**
+     * Reads the addon's own settings again, for {@code /bw reload}.
+     * <p>
+     * Nothing is switched on or off by this - that is the registry's decision and is made right after.
+     * This is only about the numbers an addon works with, so that a price or an interval can be changed
+     * without restarting the server.
+     */
+    default void reload() {
+    }
+
+    /**
      * Starts listening.
      *
      * @param game the round it belongs to

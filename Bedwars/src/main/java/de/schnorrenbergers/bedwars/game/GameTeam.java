@@ -17,8 +17,10 @@ public class GameTeam {
 
     private final TeamColor color;
     private final List<GamePlayer> members = new ArrayList<>();
-    /** Upgrade id to the level this team has reached, filled from phase 4 on. */
+    /** Upgrade id to the level this team has reached. */
     private final Map<String, Integer> upgrades = new LinkedHashMap<>();
+    /** The traps that are waiting to go off, in the order they were bought. */
+    private final List<String> traps = new ArrayList<>();
 
     private boolean bedAlive = true;
     private boolean eliminated;
@@ -144,6 +146,34 @@ public class GameTeam {
 
     public Map<String, Integer> getUpgrades() {
         return Map.copyOf(upgrades);
+    }
+
+    /**
+     * @return the traps waiting to go off, the first one being the next
+     */
+    public List<String> getTraps() {
+        return List.copyOf(traps);
+    }
+
+    /**
+     * Puts a trap at the end of the queue.
+     *
+     * @param trapId  which trap
+     * @param maximum how long the queue may get
+     * @return whether there was room for it
+     */
+    public boolean addTrap(String trapId, int maximum) {
+        if (traps.size() >= maximum) return false;
+        return traps.add(trapId);
+    }
+
+    /**
+     * Takes the trap that is next in line out of the queue.
+     *
+     * @return which trap goes off, or {@code null} when the team has none waiting
+     */
+    public String pollTrap() {
+        return traps.isEmpty() ? null : traps.removeFirst();
     }
 
     @Override

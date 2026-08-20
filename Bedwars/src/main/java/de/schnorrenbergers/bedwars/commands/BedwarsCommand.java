@@ -7,15 +7,22 @@ import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.api.BedwarsGameEndEvent;
 import de.schnorrenbergers.bedwars.game.TeamColor;
 import de.schnorrenbergers.bedwars.game.phase.IngamePhase;
+import de.schnorrenbergers.bedwars.game.timeline.Timeline;
+import de.schnorrenbergers.bedwars.game.timeline.TimelineEvent;
 import de.schnorrenbergers.bedwars.generator.Generator;
 import de.schnorrenbergers.bedwars.generator.GeneratorManager;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
+import de.schnorrenbergers.bedwars.lobby.AddonMenu;
 import de.schnorrenbergers.bedwars.map.setup.SetupCommand;
+import de.schnorrenbergers.bedwars.shop.ShopMenu;
+import de.schnorrenbergers.bedwars.shop.upgrade.UpgradeMenu;
 import de.schnorrenbergers.bedwars.util.Messages;
+import de.schnorrenbergers.bedwars.util.Text;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +57,9 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
             case "addon" -> addon(sender, args);
             case "start" -> start(sender);
             case "generators" -> generators(sender);
+            case "timeline" -> timeline(sender, args);
+            case "shop" -> shop(sender);
+            case "upgrades" -> upgrades(sender);
             case "stop" -> stop(sender);
             case "setup" -> {
                 if (!denied(sender)) setup.handle(sender, tail(args));
@@ -61,7 +71,8 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
 
     private void usage(CommandSender sender) {
         Messages.send(sender, "command.usage", "usage",
-                "status | setup | start | stop | generators | reload | addons | addon <id> on|off|default");
+                "status | setup | start | stop | generators | timeline [skip] | shop | upgrades"
+                        + " | reload | addons | addon <id> on|off|default");
     }
 
     /**
@@ -147,6 +158,83 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * Lists what the round still has coming, and lets an operator pull the next one forward.
+     * <p>
+     * The second half is the only way to test an endgame at all: bed destruction is half an hour into a
+     * default round, and nobody finds out that way whether it works.
+     */
+    private void timeline(CommandSender sender, String[] args) {
+        Game game = Bedwars.getInstance().getGame();
+        Timeline timeline = game.getTimeline();
+        if (timeline == null || timeline.getEvents().isEmpty()) {
+            Messages.send(sender, "timeline.none");
+            return;
+        }
+        if (args.length > 1 && args[1].equalsIgnoreCase("skip")) {
+            skip(sender, game, timeline);
+            return;
+        }
+        List<TimelineEvent> events = timeline.getEvents();
+        Messages.send(sender, "timeline.header",
+                "total", Text.clock(events.getLast().seconds()),
+                "elapsed", Text.clock(timeline.getElapsedSeconds()));
+        TimelineEvent next = timeline.getNext();
+        for (TimelineEvent event : events) {
+            String key = timeline.hasHappened(event) ? "timeline.entry.done"
+                    : event.equals(next) ? "timeline.entry.next" : "timeline.entry.waiting";
+            Messages.send(sender, key,
+                    "at", Text.clock(event.seconds()),
+                    "event", Text.plain(event.displayName()),
+                    "time", Text.clock(timeline.getSecondsUntilNext()));
+        }
+    }
+
+    /**
+     * Sets the next timeline event off now.
+     */
+    private void skip(CommandSender sender, Game game, Timeline timeline) {
+        if (denied(sender)) return;
+        if (!game.isRunning()) {
+            Messages.send(sender, "timeline.not-running");
+            return;
+        }
+        TimelineEvent fired = timeline.skip(game);
+        if (fired == null) {
+            Messages.send(sender, "timeline.skip.done");
+            return;
+        }
+        Messages.send(sender, "timeline.skipped", "event", Text.plain(fired.displayName()));
+    }
+
+    /**
+     * Opens the item shop without a villager.
+     * <p>
+     * For the two cases a villager cannot cover: a map whose shop spots are not set yet, and checking a
+     * price change in {@code shop.yml} without walking back to a base.
+     */
+    private void shop(CommandSender sender) {
+        if (denied(sender)) return;
+        if (!(sender instanceof Player player)) {
+            Messages.send(sender, "command.players-only");
+            return;
+        }
+        ShopMenu.open(player, Bedwars.getInstance().getGame().get(player) == null
+                ? null : Bedwars.getInstance().getGame().get(player).getTeam());
+    }
+
+    /**
+     * Opens the team upgrades without a villager, for the same reason as {@link #shop(CommandSender)}.
+     */
+    private void upgrades(CommandSender sender) {
+        if (denied(sender)) return;
+        if (!(sender instanceof Player player)) {
+            Messages.send(sender, "command.players-only");
+            return;
+        }
+        UpgradeMenu.open(player);
+    }
+
+    /**
      * Ends the round with nobody winning.
      */
     private void stop(CommandSender sender) {
@@ -161,10 +249,15 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Lists every addon with its state and who decided it.
+     * Lists every addon with its state and who decided it - as a menu for somebody who is standing in the
+     * lobby, and as text for the console, which is the other place this question is asked from.
      */
     private void addons(CommandSender sender) {
         AddonRegistry registry = Bedwars.getInstance().getAddons();
+        if (sender instanceof Player player && (player.hasPermission(PERMISSION) || player.isOp())) {
+            AddonMenu.open(player);
+            return;
+        }
         Messages.send(sender, "addon.header");
         for (Addon addon : registry.all()) {
             boolean on = registry.isEnabled(addon.getId());
@@ -224,8 +317,12 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                 @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length <= 1) {
-            return filter(List.of("status", "setup", "start", "stop", "generators", "reload", "addons", "addon"),
+            return filter(List.of("status", "setup", "start", "stop", "generators", "timeline", "shop",
+                            "upgrades", "reload", "addons", "addon"),
                     args.length == 0 ? "" : args[0]);
+        }
+        if (args[0].equalsIgnoreCase("timeline") && args.length == 2) {
+            return filter(List.of("skip"), args[1]);
         }
         if (args[0].equalsIgnoreCase("setup")) return completeSetup(args);
         if (args[0].equalsIgnoreCase("addon")) {
