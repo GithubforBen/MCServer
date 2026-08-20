@@ -8,6 +8,7 @@ import de.hems.utils.webconsole.auth.Session;
 import de.hems.utils.webconsole.modules.AuthModule;
 import de.hems.utils.webconsole.modules.ConsoleModule;
 import de.hems.utils.webconsole.modules.CoreProtectModule;
+import de.hems.utils.webconsole.modules.EventModule;
 import de.hems.utils.webconsole.modules.PayingPlayerModule;
 import de.hems.utils.webconsole.modules.PlayerModule;
 import de.hems.utils.webconsole.modules.ServerModule;
@@ -101,6 +102,7 @@ public class WebServer {
     private void loadModules() {
         add(new AuthModule());
         add(new ServerModule());
+        add(new EventModule());
         add(new PlayerModule());
         add(new CoreProtectModule());
         add(new PayingPlayerModule());

@@ -1,5 +1,7 @@
 package de.schnorrenbergers.survival.listener;
 
+import de.hems.paper.event.AwardService;
+import de.hems.paper.event.EventAnnouncer;
 import de.schnorrenbergers.survival.Survival;
 import jdk.jfr.Label;
 import net.md_5.bungee.api.ChatColor;
@@ -31,6 +33,11 @@ public class JoinListener implements Listener {
             player.getPersistentDataContainer().set(NamespacedKey.fromString("spawn"), PersistentDataType.STRING, "true");
             System.out.println("Spawn teleported for " + player.getName());
         }
+        // a tick later, so the join message does not get lost above the server's own greeting
+        Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
+            EventAnnouncer.sendJoinMessage(player);
+            AwardService.deliverAsync(player);
+        }, 20L);
     }
 
     @EventHandler

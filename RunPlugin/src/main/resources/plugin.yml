@@ -1,0 +1,11 @@
+name: RunPlugin
+version: '1.0-SNAPSHOT'
+main: de.schnorrenbergers.run.RunPlugin
+api-version: '26.2'
+commands:
+  reset:
+    description: Setzt diesen Event-Server zurück
+    usage: /reset
+  events:
+    description: Den Eventkalender öffnen
+    usage: /events

@@ -9,9 +9,14 @@ commands:
   rs:
   servermanger:
   shopkeeper:
+  shop:
+    description: Marktplatz öffnen oder einen Shop erstellen
+    usage: /shop [create <name>]
   legitimize:
+  events:
+    description: Den Eventkalender öffnen
+    usage: /events
   banane:
-  end-allow:
   warp:
     description: Auf einen anderen Server springen
     usage: /warp [server]

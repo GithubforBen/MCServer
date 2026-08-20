@@ -186,17 +186,18 @@ public class TeamManager {
             source.sendMessage(ChatColor.RED + "❌ Diesen Teamnamen gibt es schon.");
             return;
         }
-        // the launcher stores teams by name, so a rename is a delete plus a create
+        // the launcher moves the entry and the backpack over in one step, keeping the revision it was read
+        // at - splitting this into a create and a delete would trip the "already in another team" check
         String oldName = data.getName();
         TeamData renamed = copyOf(data);
         renamed.setName(newName.trim());
-        renamed.setRevision(0L);
-        TeamService.saveAsync(renamed, true, result -> {
+        TeamService.renameAsync(renamed, true, oldName, result -> {
             if (!result.successful()) {
                 source.sendMessage(ChatColor.RED + "❌ " + result.message());
                 return;
             }
-            TeamService.deleteAsync(oldName);
+            // the ui keeps this manager around, so it has to follow the team to its new name
+            this.data = result.team();
             Team old = scoreboard().getTeam(oldName);
             if (old != null) old.unregister();
             syncScoreboard(result.team());

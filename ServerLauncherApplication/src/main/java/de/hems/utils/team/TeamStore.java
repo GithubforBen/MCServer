@@ -163,19 +163,51 @@ public class TeamStore {
      * @return what happened, for the answer sent back to the caller
      */
     public synchronized Result put(TeamData team, boolean createIfMissing) {
+        return put(team, createIfMissing, null);
+    }
+
+    /**
+     * Stores a team, optionally under a new name.
+     * <p>
+     * A rename has to happen in one step. Writing the team under its new name and deleting the old entry
+     * afterwards would look like a brand new team whose members all belong to another team already, so the
+     * write would be refused and no team could ever be renamed.
+     *
+     * @param team            the team to store
+     * @param createIfMissing whether it may be created
+     * @param renameFrom      the name the team had before, or {@code null} for a normal write
+     * @return what happened, for the answer sent back to the caller
+     */
+    public synchronized Result put(TeamData team, boolean createIfMissing, String renameFrom) {
         if (team == null || team.getName() == null || team.getName().isBlank()) {
             return Result.failed("Das Team hat keinen Namen.");
         }
         String key = team.getName().toLowerCase(Locale.ROOT);
-        TeamData existing = teams.get(key);
+        String oldKey = renameFrom == null ? null : renameFrom.toLowerCase(Locale.ROOT);
+        boolean renaming = oldKey != null && !oldKey.equals(key);
+        // a rename is checked against the entry of the old name, the new one does not exist yet
+        TeamData existing = teams.get(renaming ? oldKey : key);
         if (existing == null && !createIfMissing) {
             return Result.failed("Das Team '" + team.getName() + "' gibt es nicht.");
+        }
+        if (renaming) {
+            if (existing == null) {
+                return Result.failed("Das Team '" + renameFrom + "' gibt es nicht.");
+            }
+            if (teams.containsKey(key)) {
+                return Result.failed("Diesen Teamnamen gibt es schon.");
+            }
         }
         if (existing != null && team.getRevision() != existing.getRevision()) {
             return Result.failed("Das Team wurde inzwischen woanders geändert. Bitte nochmal öffnen.");
         }
+        // only a genuinely new team has to prove its members are free - a rename keeps the same people
         if (existing == null && !isMemberFree(team)) {
             return Result.failed("Mindestens ein Mitglied ist bereits in einem anderen Team.");
+        }
+        if (renaming) {
+            teams.remove(oldKey);
+            config.set("teams." + existing.getName(), null);
         }
         team.setRevision(team.getRevision() + 1);
         teams.put(key, team);

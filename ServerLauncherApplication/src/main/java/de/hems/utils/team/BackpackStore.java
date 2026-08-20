@@ -128,6 +128,27 @@ public class BackpackStore {
     }
 
     /**
+     * Moves a backpack along when its team is renamed, so the team keeps its items. Backpacks are stored
+     * under the team name, so without this the items would be orphaned by every rename.
+     *
+     * @param oldName the name the team had
+     * @param newName the name it has now
+     */
+    public synchronized void rename(String oldName, String newName) {
+        if (oldName == null || newName == null) return;
+        String oldKey = oldName.toLowerCase(Locale.ROOT);
+        String newKey = newName.toLowerCase(Locale.ROOT);
+        if (oldKey.equals(newKey)) return;
+        BackpackData backpack = backpacks.remove(oldKey);
+        if (backpack == null) return;
+        config.set("backpacks." + oldKey, null);
+        backpack.setTeamName(newName);
+        backpacks.put(newKey, backpack);
+        write(newKey, backpack);
+        save();
+    }
+
+    /**
      * @param teamName the team whose backpack to drop, used when a team is disbanded
      */
     public synchronized void delete(String teamName) {
