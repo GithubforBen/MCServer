@@ -11,7 +11,7 @@ zuschaltbar sind.
 |-------|--------------|
 | Modi | Solo, Doubles, 3v3v3v3, 4v4v4v4 **und** freie Kombinationen (Teamzahl × Teamgröße aus der Config) |
 | Arena | Genau **eine Arena pro Server**. Runde vorbei = Server wird weggeworfen, kein Map-Reset im Plugin |
-| Rundenstart | Später über das geplante Event-System. Bis dahin ein Debug-Command in der Lobby, der den Server erstellt und hinwarpt |
+| Rundenstart | Über das Event-System, das auf `feature/events-and-marketplace` bereits steht. Dazu ein Debug-Command in der Lobby, der denselben Weg ohne Event nimmt |
 | Maps | Mehrere heruntergeladene Maps liegen bereit, beim Start wird eine gewählt. Punkte (Betten, Spawns, Generatoren, Händler) werden per Command gesetzt |
 | Shop | 1:1 Hypixel-Sortiment und -Preise, aber vollständig aus der Config |
 | Upgrades | Sharpened Swords, Reinforced Armor, Maniac Miner, Iron Forge, Heal Pool, Dragon Buff, Traps - **und** die Custom-Addons werden hier gekauft |
@@ -50,6 +50,67 @@ Beides wird in Phase 0 ersetzt, nicht geflickt.
 | `de.hems.api.ServerApi` | Debug-Command: Runden-Server erstellen, Zustand abfragen, am Ende stoppen |
 | `de.hems.paper.warp` | Spieler auf den frisch erstellten Server bringen |
 | `de.hems.paper.util.ChatPrompt` | Texteingaben im Setup (Map-Name, Anzeigename) |
+| `de.hems.paper.event.*` (Event-Branch) | Kalender, Warteschlange, Preisvergabe - siehe nächster Abschnitt |
+
+## Anschluss an das Event-System
+
+Auf `feature/events-and-marketplace` steht das Event-System bereits fertig, inklusive der Teile,
+die Bedwars sonst selbst hätte bauen müssen. Der Plan baut darauf auf, statt daneben.
+
+**Was schon da ist:**
+
+| Vorhanden | Was es tut |
+|-----------|------------|
+| `EventType` | Aufzählung der Eventarten (`SIMPLE`, `OTHER_WORLD`, `END`, `UHC_BOSSES`, `UHC_DRAGON`) |
+| `EventData` | Ein Event im Netzwerk, mit freier `Map<String,String>` für eigene Einstellungen und Revision |
+| `UhcSettings` | Typisierter Zugriff auf genau diese Einstellungen - die Vorlage für Bedwars |
+| `RunQueue` | Warteschlange → Server über `ServerApi` erstellen → Spieler per `ServerConnector` verbinden |
+| `RunData` / `RunService` | Ein Durchlauf: Teilnehmer, Servername, Zustand, Ergebnis. Launcher besitzt sie, jeder Server hält eine Kopie |
+| `AwardService` | Preise (Geld und Items), die in `awards.yml` warten, bis der Gewinner joint |
+| `RunPlugin` | Wie ein Wegwerf-Server sich selbst findet und am Ende abschaltet |
+| `ServerTemplate.BEDWARS` / `FileType.PLUGIN.BEDWARS` | Vorlage und Jar sind schon registriert |
+
+**Die wichtigste Erkenntnis daraus:** `RequestServerStartEvent` transportiert *keine* Parameter.
+Ein frisch gestarteter Server weiß also nicht von allein, welchen Modus, welche Map und welche
+Addons er spielen soll. `RunPlugin` löst das so, und Bedwars macht es genauso:
+
+```java
+// der Server kennt seinen eigenen Namen aus dem Verzeichnis, in dem er läuft
+String self = ListenerAdapter.getName().toString();
+// und sucht sich damit seine eigene Partie aus der Kopie, die jeder Server hält
+MatchData mine = MatchService.getOpenMatchOf(self);
+```
+
+Damit steht die Antwort auf eine Frage, die im Plan vorher offen war: **die Runden-Konfiguration
+reist als `MatchData` über den Launcher, nicht als Startparameter.**
+
+**Was dazukommt** - jeweils als Zwilling zu dem, was für die UHC-Läufe schon existiert:
+
+| Neu | Zwilling | Inhalt |
+|-----|----------|--------|
+| `EventType.BEDWARS` | `UHC_DRAGON` | Neue Eventart. Braucht eine eigene Kennung neben `isTimed()`, weil eine Partie kein Rennen gegen die Uhr ist |
+| `BedwarsSettings` | `UhcSettings` | Modus, Map-Auswahl, Mindest-/Maximalspieler **und die Addon-Schalter**, gelesen aus den freien Einstellungen des Events |
+| `MatchData` / `MatchService` | `RunData` / `RunService` | Eine Partie: Teilnehmer, Servername, Modus, Map, Ergebnis (Sieger, Kills, Betten) |
+| `MatchQueue` | `RunQueue` | Warteschlange in der Lobby, startet bei voller Gruppe den Server und verbindet alle |
+| Preisvergabe | `AwardService` | Sieger bekommen Geld und Items über denselben Weg - ohne eine Zeile neuen Auslieferungscode |
+
+Das räumt zwei Punkte aus dem Plan ab, die vorher offen standen:
+
+- **Die drei Wege der Addon-Schalter** sind jetzt konkret: `addons.yml` als Standard,
+  `EventData.settings` über die `MatchData` als Override des Launchers, GUI in der Warte-Lobby
+  als letztes Wort. Genau die Rangfolge, die du wolltest, und der mittlere Weg existiert schon.
+- **Die Stats-Persistenz**, die ich nach hinten geschoben hatte, ist das Ergebnisfeld der
+  `MatchData` beim Launcher. Auch die Bestenliste gibt es in `RunService.getLeaderboard` schon
+  in der passenden Form.
+
+Nebenbei steht im `TODO.md` des Branches unter 1.5 offen: *"Eigene Lobby-Minispiel-Events mit
+Teilnehmerzahl und Preisen über einen kurzen Zeitraum - die Event-Typen dafür gibt es noch nicht."*
+Bedwars ist genau dieser fehlende Typ.
+
+**Eine Namenskollision vermeiden:** `de.hems.paper.event` sind die *Kalender*-Events des
+Netzwerks. Die Bukkit-Events des Bedwars-Plugins heißen deshalb `de.schnorrenbergers.bedwars.api`,
+nicht `...bedwars.event` - sonst steht in jeder Datei ein Import, der das Gegenteil von dem
+bedeutet, was er zu sagen scheint.
 
 ---
 
@@ -74,7 +135,7 @@ de.schnorrenbergers.bedwars
 │   │   ├── IngamePhase.java      die Runde selbst
 │   │   └── EndPhase.java         Siegerbildschirm, Aufräumen
 │   └── timeline/Timeline.java    geplante Ereignisse mit Countdown ("Diamond II in 4:12")
-├── event/                        eigene Bukkit-Events als einzige Andockstelle für Addons
+├── api/                          eigene Bukkit-Events als einzige Andockstelle für Addons
 ├── map/
 │   ├── ArenaMap.java             Map-Definition im Speicher
 │   ├── MapRepository.java        maps/<name>.yml lesen, schreiben, auflisten
@@ -91,6 +152,7 @@ de.schnorrenbergers.bedwars
 │   ├── Addon.java                id, Standard, enable(Game), disable(Game)
 │   ├── AddonRegistry.java        Config + Launcher-Override + GUI
 │   └── impl/                     BedToken, Kits, CustomItems, Killstreaks, RandomEvents
+├── match/                        MatchData dieses Servers finden, Ergebnis zurückmelden
 ├── scoreboard/                   Sidebar, Tablist, BossBar
 ├── stats/                        Rundenzahlen jetzt, Persistenz-Schnittstelle für später
 └── util/                         Configs, Messages, Cuboid, Hologramme, Countdown-Format
