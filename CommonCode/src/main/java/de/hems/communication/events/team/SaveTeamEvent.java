@@ -20,11 +20,23 @@ public class SaveTeamEvent extends EventFoundationData implements Event, Seriali
     private TeamData team;
     /** Whether the team may be created if it does not exist yet. */
     private boolean createIfMissing;
+    /** The name the team had before, when this write renames it, otherwise {@code null}. */
+    private String renameFrom;
 
     public SaveTeamEvent(TeamData team, boolean createIfMissing) {
+        this(team, createIfMissing, null);
+    }
+
+    /**
+     * @param team            the team to store
+     * @param createIfMissing whether it may be created
+     * @param renameFrom      the name the team had before, for a rename, or {@code null}
+     */
+    public SaveTeamEvent(TeamData team, boolean createIfMissing, String renameFrom) {
         super(ListenerAdapter.ServerName.HOST);
         this.team = team;
         this.createIfMissing = createIfMissing;
+        this.renameFrom = renameFrom;
     }
 
     public SaveTeamEvent() {
@@ -36,5 +48,9 @@ public class SaveTeamEvent extends EventFoundationData implements Event, Seriali
 
     public boolean isCreateIfMissing() {
         return createIfMissing;
+    }
+
+    public String getRenameFrom() {
+        return renameFrom;
     }
 }

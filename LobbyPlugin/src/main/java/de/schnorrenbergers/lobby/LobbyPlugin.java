@@ -2,9 +2,12 @@ package de.schnorrenbergers.lobby;
 
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.admin.PlayerAdminHandler;
+import de.hems.paper.commands.EventCommand;
 import de.hems.paper.commands.ServerManagerCommand;
 import de.hems.paper.commands.WarpCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
+import de.hems.paper.event.EventService;
+import de.hems.paper.event.RunService;
 import de.hems.paper.warp.ServerConnector;
 import de.schnorrenbergers.lobby.parkour.CheckpointListener;
 import org.bukkit.command.CommandExecutor;
@@ -29,11 +32,16 @@ public final class LobbyPlugin extends JavaPlugin {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }//TODO: parkour
+        LobbyWorld.load(this);
         ServerConnector.register(this);
         new PlayerAdminHandler(this);
         new CheckpointListener();
         registerCommand("servermanger", new ServerManagerCommand());
         registerCommand("warp", new WarpCommand());
+        EventService.init(this);
+        RunService.init(this);
+        registerCommand("events", new EventCommand());
+        new LobbyJoinListener();
     }
 
 

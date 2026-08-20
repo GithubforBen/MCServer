@@ -68,10 +68,6 @@ public class ServerInstance {
         }
     }
 
-    private void exec(String command) throws IOException {
-        exec(command.split(" "));
-    }
-
     /**
      * Runs a command without splitting it on spaces, for arguments that contain some.
      *
@@ -87,14 +83,75 @@ public class ServerInstance {
     public void start() throws IOException {
         System.out.println("Starting server " + name + (name.isJoinable() ? " on port " + name.getPort() : ""));
         startedAt = System.currentTimeMillis();
-        exec("tmux new-session -d -s server-" + name.toString());
-        ProcessBuilder pb = new ProcessBuilder("tmux", "send-keys", "-t","server-"+name.toString() ,  "java -jar -Xmx" + allocatedMemoryMB + "m " + FileType.SERVER.getFileName(jarFile), "C-m").directory(directory);
+        stopRequested = false;
+        createSession();
+        String command = quote(javaBinary()) + " -jar -Xmx" + allocatedMemoryMB + "m "
+                + quote(FileType.SERVER.getFileName(jarFile));
+        ProcessBuilder pb = new ProcessBuilder("tmux", "send-keys", "-t", session(), command, "C-m").directory(directory);
         System.out.println(pb.command());
         pb.redirectErrorStream(true);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         process = pb.start();
         startConsoleCapture();
         System.out.println("Server " + name + " started");
+    }
+
+    /**
+     * @return the name of the tmux session this server runs in
+     */
+    private String session() {
+        return "server-" + name;
+    }
+
+    /**
+     * The server is started from a shell inside tmux, and that shell resolves {@code java} from the PATH -
+     * which is not necessarily the JDK the launcher runs on. Paper refuses to boot on a release older than
+     * the one it was built for, so the server has to be started with this exact JVM.
+     *
+     * @return the absolute path of the java binary running the launcher
+     */
+    private static String javaBinary() {
+        File binary = new File(System.getProperty("java.home"), "bin/java");
+        return binary.isFile() ? binary.getAbsolutePath() : "java";
+    }
+
+    /**
+     * @param value a word of the command line that is typed into the shell
+     * @return the value quoted so a path containing spaces stays one argument
+     */
+    private static String quote(String value) {
+        return "'" + value.replace("'", "'\\''") + "'";
+    }
+
+    /**
+     * Creates the tmux session the server runs in, replacing one an earlier run left behind. A stale
+     * session still holds that run's shell - or a server that never died properly - and {@code send-keys}
+     * would type the start command into it instead of into a fresh prompt.
+     */
+    private void createSession() throws IOException {
+        // no session to replace on the first start, so a failure here is normal and ignored
+        runAndWait("tmux", "kill-session", "-t", session());
+        if (!runAndWait("tmux", "new-session", "-d", "-s", session())) {
+            throw new IOException("Could not create the tmux session " + session() + " for " + name);
+        }
+    }
+
+    /**
+     * Runs a command and waits for it, so the session exists before anything is sent to it.
+     *
+     * @param command the command and its arguments
+     * @return whether it finished successfully
+     */
+    private boolean runAndWait(String... command) throws IOException {
+        ProcessBuilder pb = new ProcessBuilder(command).directory(directory);
+        pb.redirectErrorStream(true);
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        try {
+            return pb.start().waitFor() == 0;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while running " + String.join(" ", command), e);
+        }
     }
 
     /**
@@ -112,7 +169,7 @@ public class ServerInstance {
             System.out.println("Could not clear the old console log of " + name);
         }
         console.clear();
-        exec("tmux", "pipe-pane", "-t", "server-" + name, "cat >> '" + log.getAbsolutePath() + "'");
+        exec("tmux", "pipe-pane", "-t", session(), "cat >> '" + log.getAbsolutePath() + "'");
         if (consoleTailer != null) consoleTailer.stop();
         consoleTailer = new ConsoleTailer(log, console);
         consoleTailer.start();
@@ -128,7 +185,7 @@ public class ServerInstance {
         }
         try {
             // pipe-pane without a command switches the pipe off again
-            exec("tmux", "pipe-pane", "-t", "server-" + name);
+            exec("tmux", "pipe-pane", "-t", session());
         } catch (IOException e) {
             System.out.println("Could not stop the console pipe of " + name + ": " + e.getMessage());
         }
@@ -150,9 +207,10 @@ public class ServerInstance {
 
 
     public void executeCommand(String command) throws IOException {
-        exec("tmux new-session -d -s server-" + name.toString());
         System.out.println(command);
-        ProcessBuilder pb = new ProcessBuilder("tmux", "send-keys", "-t","server-"+name.toString(), command, "C-m").directory(directory);
+        // no new-session here: the command belongs to the running server, and creating a session would
+        // only produce a fresh shell that swallows it
+        ProcessBuilder pb = new ProcessBuilder("tmux", "send-keys", "-t", session(), command, "C-m").directory(directory);
         System.out.println(pb.command());
         pb.redirectErrorStream(true);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);

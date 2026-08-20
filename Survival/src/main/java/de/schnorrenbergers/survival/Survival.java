@@ -4,8 +4,11 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.paper.admin.AdminStash;
 import de.hems.paper.admin.PlayerAdminHandler;
 import de.hems.paper.commands.ServerManagerCommand;
+import de.hems.paper.event.AwardService;
+import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
+import de.hems.paper.event.EventService;
+import de.hems.paper.event.RunService;
 import de.hems.paper.team.TeamService;
-import de.schnorrenbergers.survival.antiEnd.AntiEndCommand;
 import de.schnorrenbergers.survival.antiEnd.AntiEndListener;
 import de.schnorrenbergers.survival.commands.*;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
@@ -71,9 +74,9 @@ public final class Survival extends JavaPlugin {
         registerCommand("servermanger", new ServerManagerCommand());
         registerCommand("warp", new de.hems.paper.commands.WarpCommand());
         registerCommand("shopkeeper", new ShopkeeperCommand());
+        registerCommand("shop", new de.schnorrenbergers.survival.commands.ShopCommand());
         registerCommand("banane", new BanCommand());
         registerCommand("legitimize", new LegitimizeCommand());
-        registerCommand("end-allow", new AntiEndCommand());
         new Tablist();
         new CustomInventoryListener(this);
         de.hems.paper.warp.ServerConnector.register(this);
@@ -84,6 +87,12 @@ public final class Survival extends JavaPlugin {
         chunkLimiter.start();
         new ChunkLimiterListener();
         new JoinListener();
+        EventService.init(this);
+        RunService.init(this);
+        // this server owns the economy, so it is the one that can pay out the money side of a prize
+        AwardService.setMoneyGiver((player, amount) ->
+                MoneyHandler.addMoney(amount, player.getUniqueId()));
+        registerCommand("events", new de.hems.paper.commands.EventCommand());
         new FlightListener();
         new CommandListener();
         new AntiEndListener();
@@ -99,7 +108,7 @@ public final class Survival extends JavaPlugin {
     public void onDisable() {
         if (chunkLimiter != null) chunkLimiter.stop();
         if (AdminStash.getInstance() != null) AdminStash.getInstance().saveOnShutdown();
-        ShopkeeperManager.save();
+        ShopkeeperManager.shutdown();
         moneyConfig.save();
         teamConfig.save();
         shopConfig.save();

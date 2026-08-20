@@ -16,6 +16,7 @@
         <module>LobbyPlugin</module>
         <module>Bedwars</module>
         <module>BackpackPlugin</module>
+        <module>RunPlugin</module>
         <module>VelocityPlugin</module>
     </modules>
 

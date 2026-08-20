@@ -996,3 +996,33 @@ datalist {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* The event timeline. A bar per event, placed by percentage across the window the calendar covers, with a
+   hairline marking now - which is what makes "already running" and "still to come" readable at a glance. */
+.timeline {
+    position: relative;
+    height: 8px;
+    margin: 6px 0;
+    border-radius: var(--r);
+    background: var(--panel-hi);
+    overflow: hidden;
+}
+
+.timeline-bar {
+    height: 100%;
+    border-radius: var(--r);
+    background: var(--dim);
+}
+
+.timeline-bar.state-nominal { background: var(--nominal); }
+.timeline-bar.state-caution { background: var(--caution); }
+.timeline-bar.state-alarm   { background: var(--alarm); }
+
+.timeline-now {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--bone);
+    opacity: 0.7;
+}

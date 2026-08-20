@@ -6,8 +6,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.util.UUID;
@@ -71,6 +73,38 @@ public class CustomInventoryListener implements org.bukkit.event.Listener {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Stops a drag from painting items over the buttons of a custom inventory.
+     * <p>
+     * Only clicks were ever checked, and a drag is a separate event - so items dragged onto a button landed
+     * inside a menu that is thrown away when it closes, and were simply gone. Slots without a button are
+     * left alone on purpose: the menu for adding a shop offer uses one as a real input slot.
+     *
+     * @param event the drag being performed
+     */
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getInventory().getHolder() != null) {
+            return;
+        }
+        int topSize = event.getInventory().getSize();
+        for (int slot : event.getRawSlots()) {
+            // raw slots past the top inventory belong to the player and are none of our business
+            if (slot >= topSize) {
+                continue;
+            }
+            ItemStack current = event.getInventory().getItem(slot);
+            if (current == null || current.getItemMeta() == null) {
+                continue;
+            }
+            if (current.getItemMeta().getPersistentDataContainer()
+                    .has(new NamespacedKey("survival", "id"), PersistentDataType.STRING)) {
+                event.setCancelled(true);
+                return;
+            }
         }
     }
 

@@ -34,7 +34,8 @@ public enum ServerTemplate implements Serializable {
             FileType.PLUGIN.BEDWARS),
 
     /** A plain paper server without a game mode - the base for custom events. */
-    EVENT(FileType.SERVER.PAPER, 2048, true);
+    EVENT(FileType.SERVER.PAPER, 2048, true,
+            FileType.PLUGIN.RUN);
 
     /** Plugins that are installed on every paper server, no matter which template is used. */
     public static final List<FileType.PLUGIN> BASE_PAPER_PLUGINS = List.of(

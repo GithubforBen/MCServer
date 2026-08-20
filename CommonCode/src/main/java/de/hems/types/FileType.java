@@ -61,6 +61,7 @@ public class FileType implements Serializable {
         LOBBY,
         BEDWARS,
         BACKPACK,
+        RUN,
         VELOCITY,
         WORLDEDIT,
         CORE_PROTECT,
@@ -75,6 +76,7 @@ public class FileType implements Serializable {
                 case LOBBY -> "build:/lobby-1.0.jar";
                 case BEDWARS -> "build:/bedwars-1.0.jar";
                 case BACKPACK -> "build:/backpack-1.0.jar";
+                case RUN -> "build:/run-1.0.jar";
                 case VELOCITY -> "build:/velocityplugin-1.0.jar";
                 case WORLDEDIT ->
                         "https://cdn.modrinth.com/data/1u6JkXh5/versions/F5ea2ov3/worldedit-bukkit-7.4.5.jar";
@@ -130,6 +132,7 @@ public class FileType implements Serializable {
                 case LOBBY -> "Lobby";
                 case BEDWARS -> "Bedwars";
                 case BACKPACK -> "Team-Rucksack";
+                case RUN -> "Event-Läufe";
                 case VELOCITY -> "Netzwerk Proxy Plugin";
                 case WORLDEDIT -> "WorldEdit";
                 case WORLD_GUARD -> "WorldGuard";
@@ -149,6 +152,7 @@ public class FileType implements Serializable {
                 case LOBBY -> "Lobby Features, Parkour und Server Manager";
                 case BEDWARS -> "Bedwars Minispiel";
                 case BACKPACK -> "Geteilter Rucksack fuer jedes Team";
+                case RUN -> "Wertet Speedrun-Events aus und setzt den Server zurueck";
                 case VELOCITY -> "Verbindet den Proxy mit dem Netzwerk";
                 case WORLDEDIT -> "Welten schnell bearbeiten";
                 case WORLD_GUARD -> "Regionen schuetzen";
