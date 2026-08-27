@@ -21,7 +21,21 @@ public final class ServerConnector {
     /** The plugin messaging channel velocity listens on. */
     public static final String CHANNEL = "BungeeCord";
 
+    /**
+     * Whoever holds this - and every operator - may warp even when the host is not answering, so an admin
+     * is never stuck on a server whose network connection is the thing that is broken.
+     */
+    public static final String ALWAYS_ALLOWED_PERMISSION = "network.warp.always";
+
     private ServerConnector() {
+    }
+
+    /**
+     * @param player the player to check
+     * @return whether they may warp without the host confirming the destination first
+     */
+    public static boolean mayWarpUnchecked(Player player) {
+        return player.isOp() || player.hasPermission(ALWAYS_ALLOWED_PERMISSION);
     }
 
     /**

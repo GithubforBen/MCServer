@@ -3,6 +3,7 @@ package de.hems.paper.commands;
 import de.hems.api.ServerApi;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.PaperContext;
+import de.hems.paper.warp.ServerStartup;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.servermanager.ServerManagerUi;
 import de.hems.types.FileType;
@@ -118,6 +119,12 @@ public class ServerManagerCommand implements TabCompleter, CommandExecutor {
         }
         ServerTemplate finalTemplate = template;
         Integer finalMemory = memory;
+        if (sender instanceof Player player) {
+            // an admin who creates a server from the command line wants to look at it, so the same wait
+            // and the same progress the menu shows applies here
+            ServerStartup.createAndWarp(List.of(player), name, finalTemplate, finalMemory, plugins);
+            return;
+        }
         run(sender, () -> ServerApi.createServer(name, finalTemplate, finalMemory, plugins),
                 name + " wird erstellt.");
     }

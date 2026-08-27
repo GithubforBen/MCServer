@@ -358,6 +358,46 @@ public class Shopkeeper {
         this.shop = shop;
     }
 
+    /**
+     * Moves the shop to a new spot, villager and all.
+     * <p>
+     * The villager is teleported rather than replaced: it carries the id that ties it to this shopkeeper,
+     * and killing and respawning it is how a shop ends up with two villagers - or with none, when the
+     * target chunk has no entities loaded yet. A villager that is genuinely gone is spawned fresh.
+     *
+     * @param target where the shop should stand
+     */
+    public void moveTo(Location target) {
+        if (target == null || target.getWorld() == null) return;
+        this.shop = target;
+        if (villager != null && villager.isValid()) {
+            villager.teleport(target);
+            applyVillagerSettings();
+            return;
+        }
+        // the old villager is not loaded, so it cannot be moved - it is taken out where it stands and a
+        // new one is put down here, which keeps exactly one villager per shop either way
+        Villager stale = findOwnVillagerAt(target);
+        if (stale != null) stale.remove();
+        this.villager = null;
+        spawnOrAdoptVillager();
+    }
+
+    /**
+     * @param location the place to look at
+     * @return a villager of this shopkeeper standing in that chunk, or {@code null}
+     */
+    private Villager findOwnVillagerAt(Location location) {
+        if (location.getWorld() == null) return null;
+        if (!location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) return null;
+        for (Entity entity : location.getChunk().getEntities()) {
+            if (!(entity instanceof Villager candidate)) continue;
+            String id = candidate.getPersistentDataContainer().get(SHOP_ID, PersistentDataType.STRING);
+            if (uuid.toString().equals(id)) return candidate;
+        }
+        return null;
+    }
+
     public Location getChest() {
         return chest;
     }
@@ -396,7 +436,8 @@ public class Shopkeeper {
             ItemStack item = itemForSale.getItemClone();
             List<Component> lore = item.lore();
             if (lore == null) lore = new ArrayList<>();
-            lore.addFirst(Component.text("Price: " + itemForSale.getPrice() + " Bits"));
+            lore.addFirst(Component.text("Auf Lager: " + getStock(itemForSale) + "x"));
+            lore.addFirst(Component.text("Preis: " + itemForSale.getPrice() + " Bits"));
             item.lore(lore);
             customInventory.setItem(place, item, new ItemAction() {
                 @Override
@@ -407,8 +448,12 @@ public class Shopkeeper {
                 @Override
                 public void onClick(InventoryClickEvent event) {
                     event.setCancelled(true);
-                    buyItem((Player) event.getWhoClicked(), itemForSale);
-                    event.getWhoClicked().closeInventory();
+                    Player buyer = (Player) event.getWhoClicked();
+                    buyItem(buyer, itemForSale);
+                    // the shop stays open and redraws itself, so buying twice does not mean walking up to
+                    // the villager again. Next tick, because the chest has not changed yet inside the click
+                    Bukkit.getScheduler().runTask(Survival.getInstance(),
+                            () -> CustomInventory.show(buyer, getInventory(page)));
                 }
 
                 @Override

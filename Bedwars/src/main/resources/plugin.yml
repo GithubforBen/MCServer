@@ -5,9 +5,19 @@ api-version: '26.2'
 commands:
   bw:
     description: Verwaltet die Bedwars Runde auf diesem Server
-    usage: /bw
+    usage: /bw <status|start|stop|setup|reload|addons|addon|generators|timeline|shop|upgrades|stats|watch>
     aliases: [bedwars]
+  warp:
+    description: Auf einen anderen Server springen
+    usage: /warp [server]
+  lobby:
+    description: Zurück in die Lobby
+    usage: /lobby
+    aliases: [hub, leave]
 permissions:
   bedwars.admin:
     description: Darf die Runde und die Addons verwalten
+    default: op
+  network.warp.always:
+    description: Darf jeden Server jederzeit verlassen
     default: op

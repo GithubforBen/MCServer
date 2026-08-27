@@ -9,15 +9,20 @@ import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.paper.util.ChatPrompt;
 import de.hems.paper.warp.ServerConnector;
+import de.hems.paper.warp.ServerStartup;
 import de.hems.types.FileType;
 import de.hems.types.Server;
 import de.hems.types.ServerTemplate;
+import de.hems.types.admin.PlayerSnapshot;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The in-game server manager.
@@ -31,6 +36,8 @@ public final class ServerManagerUi {
 
     private static final int ROWS = 5;
     private static final int SIZE = ROWS * 9;
+    /** How many players are named in the lore of a server before it says "and n more". */
+    private static final int NAMES_IN_LORE = 5;
 
     private ServerManagerUi() {
     }
@@ -55,7 +62,9 @@ public final class ServerManagerUi {
             List<Server> joinable = new ArrayList<>();
             for (Server server : servers) if (server.isJoinable()) joinable.add(server);
             WarpCommand.refreshCompletions(joinable);
-            PaperContext.sync(() -> player.openInventory(serverListInventory(servers).getInventory()));
+            Map<String, List<PlayerSnapshot>> players = NetworkPlayers.byServer();
+            Server[] found = servers;
+            PaperContext.sync(() -> player.openInventory(serverListInventory(found, players).getInventory()));
         });
     }
 
@@ -66,48 +75,173 @@ public final class ServerManagerUi {
      * @return the inventory to show
      */
     public static CustomInventory serverOverview(Server[] servers) {
-        return serverListInventory(servers);
+        return serverListInventory(servers, Map.of());
     }
 
-    private static CustomInventory serverListInventory(Server[] servers) {
+    private static CustomInventory serverListInventory(Server[] servers, Map<String, List<PlayerSnapshot>> players) {
         CustomInventory inventory = new CustomInventory(SIZE, "Server (" + servers.length + ")", null);
+        int total = 0;
+        for (List<PlayerSnapshot> onServer : players.values()) total += onServer.size();
         for (int i = 0; i < servers.length && i < SIZE - 9; i++) {
             Server server = servers[i];
+            List<PlayerSnapshot> onServer = NetworkPlayers.of(players, server.name);
             List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "Status: " + (server.online ? ChatColor.GREEN + "läuft" : ChatColor.RED + "offline"));
+            lore.add(ChatColor.GRAY + "Status: " + statusOf(server));
             lore.add(ChatColor.GRAY + "RAM: " + ChatColor.WHITE + server.memory + " MB");
             lore.add(ChatColor.GRAY + "Port: " + ChatColor.WHITE + server.port);
             if (server.template != null) {
                 lore.add(ChatColor.GRAY + "Vorlage: " + ChatColor.WHITE + server.template.getDisplayName());
             }
+            lore.addAll(playerLore(server, players));
             lore.add(ChatColor.GRAY + "Plugins: " + ChatColor.WHITE + server.getPlugins().size());
             for (FileType.PLUGIN plugin : server.getPlugins()) {
                 lore.add(ChatColor.DARK_GRAY + " - " + plugin.getDisplayName());
             }
             lore.add(" ");
             lore.add(ChatColor.YELLOW + "Linksklick: " + ChatColor.GRAY + "Einstellungen");
-            if (server.isJoinable()) lore.add(ChatColor.YELLOW + "Rechtsklick: " + ChatColor.GRAY + "hin warpen");
-            Material material = server.online ? Material.LIME_WOOL : Material.RED_WOOL;
-            inventory.setItem(i, new ItemApi(material, ChatColor.AQUA + server.name, lore).build(),
-                    new SimpleItemAction((event) -> {
-                        Player clicker = (Player) event.getWhoClicked();
-                        if (event.isRightClick() && server.isJoinable()) {
-                            clicker.closeInventory();
-                            ServerConnector.connect(clicker, server.name);
-                            return;
-                        }
-                        openServerSettings(clicker, server);
-                    }));
+            if (server.isJoinable() || server.isStartingUp()) {
+                lore.add(ChatColor.YELLOW + "Rechtsklick: " + ChatColor.GRAY + "hin warpen");
+            }
+            Material material = server.isJoinable() ? Material.LIME_WOOL
+                    : (server.isStartingUp() ? Material.YELLOW_WOOL : Material.RED_WOOL);
+            ItemStack icon = new ItemApi(material, ChatColor.AQUA + server.name, lore).build();
+            // the stack size is the player count, so a busy server stands out without reading the lore
+            if (!onServer.isEmpty()) icon.setAmount(Math.min(64, onServer.size()));
+            inventory.setItem(i, icon, new SimpleItemAction((event) -> {
+                Player clicker = (Player) event.getWhoClicked();
+                if (event.isRightClick() && (server.isJoinable() || server.isStartingUp())) {
+                    clicker.closeInventory();
+                    warpTo(clicker, server);
+                    return;
+                }
+                openServerSettings(clicker, server);
+            }));
         }
         for (int i = SIZE - 9; i < SIZE; i++) inventory.setPlaceHolder(i);
         inventory.setItem(SIZE - 9, new ItemApi(Material.CLOCK, ChatColor.YELLOW + "Aktualisieren").build(),
                 new SimpleItemAction((event) -> openServerList((Player) event.getWhoClicked())));
+        inventory.setItem(SIZE - 7, new ItemApi(Material.PLAYER_HEAD,
+                        ChatColor.AQUA + "Spieler (" + total + ")",
+                        List.of(ChatColor.GRAY + "Wer gerade wo online ist")).build(),
+                new SimpleItemAction((event) -> openPlayerOverview((Player) event.getWhoClicked())));
         inventory.setItem(SIZE - 5, new ItemApi(Material.ENDER_PEARL, ChatColor.LIGHT_PURPLE + "Warp Menü",
                         List.of(ChatColor.GRAY + "Zu einem Server springen")).build(),
                 new SimpleItemAction((event) -> openWarpMenu((Player) event.getWhoClicked())));
         inventory.setItem(SIZE - 1, new ItemApi(Material.NETHER_STAR, ChatColor.GREEN + "Neuer Server",
                         List.of(ChatColor.GRAY + "Vorlage, RAM und Plugins auswählen")).build(),
                 new SimpleItemAction((event) -> openTemplateMenu((Player) event.getWhoClicked())));
+        return inventory;
+    }
+
+    /**
+     * @param server the server to describe
+     * @return what its state is, including how far a server that is still coming up has got
+     */
+    private static String statusOf(Server server) {
+        if (server.isJoinable()) return ChatColor.GREEN + "läuft";
+        if (server.isStartingUp()) return ChatColor.YELLOW + server.getPhaseDescription();
+        return ChatColor.RED + server.getPhase().getDescription();
+    }
+
+    /**
+     * The players of one server as lore lines.
+     * <p>
+     * A server that did not answer the broadcast is not empty, it is unknown - saying "0 Spieler" there
+     * would be a lie, and the difference matters when deciding whether a server is still needed.
+     *
+     * @param server  the server
+     * @param players what every server reported
+     * @return the lines to add to the lore
+     */
+    private static List<String> playerLore(Server server, Map<String, List<PlayerSnapshot>> players) {
+        List<String> lore = new ArrayList<>();
+        if (!NetworkPlayers.answered(players, server.name)) {
+            if (!players.isEmpty()) lore.add(ChatColor.GRAY + "Spieler: " + ChatColor.DARK_GRAY + "meldet sich nicht");
+            return lore;
+        }
+        List<PlayerSnapshot> onServer = NetworkPlayers.of(players, server.name);
+        lore.add(ChatColor.GRAY + "Spieler: " + ChatColor.WHITE + onServer.size());
+        for (int i = 0; i < onServer.size() && i < NAMES_IN_LORE; i++) {
+            lore.add(ChatColor.DARK_GRAY + " - " + ChatColor.WHITE + onServer.get(i).getName());
+        }
+        if (onServer.size() > NAMES_IN_LORE) {
+            lore.add(ChatColor.DARK_GRAY + " ... und " + (onServer.size() - NAMES_IN_LORE) + " weitere");
+        }
+        return lore;
+    }
+
+    /**
+     * Takes a player to a server, waiting for it when it is not up yet instead of throwing them at a proxy
+     * that will refuse them.
+     *
+     * @param player the player
+     * @param server where they want to go
+     */
+    private static void warpTo(Player player, Server server) {
+        if (server.isJoinable()) {
+            ServerConnector.connect(player, server.name);
+            return;
+        }
+        ServerStartup.warpWhenReady(player, server.name);
+    }
+
+    /* ----------------------------------------------------------------- player overview */
+
+    /**
+     * Shows who is online on which server.
+     *
+     * @param player the admin
+     */
+    public static void openPlayerOverview(Player player) {
+        player.sendMessage(ChatColor.GRAY + "Frage die Server nach ihren Spielern ...");
+        PaperContext.async(() -> {
+            Map<String, List<PlayerSnapshot>> players = NetworkPlayers.byServer();
+            PaperContext.sync(() -> player.openInventory(playerOverviewInventory(players).getInventory()));
+        });
+    }
+
+    private static CustomInventory playerOverviewInventory(Map<String, List<PlayerSnapshot>> players) {
+        Map<String, List<PlayerSnapshot>> sorted = new LinkedHashMap<>(players);
+        int total = 0;
+        for (List<PlayerSnapshot> onServer : sorted.values()) total += onServer.size();
+        int rows = Math.max(2, Math.min(6, ((total + 8) / 9) + 1));
+        CustomInventory inventory = new CustomInventory(rows * 9, "Spieler (" + total + ")", null);
+        int slot = 0;
+        for (Map.Entry<String, List<PlayerSnapshot>> entry : sorted.entrySet()) {
+            for (PlayerSnapshot snapshot : entry.getValue()) {
+                if (slot >= rows * 9 - 9) break;
+                List<String> lore = new ArrayList<>();
+                lore.add(ChatColor.GRAY + "Server: " + ChatColor.AQUA + entry.getKey());
+                lore.add(ChatColor.GRAY + "Welt: " + ChatColor.WHITE + snapshot.getWorld());
+                lore.add(ChatColor.GRAY + "Modus: " + ChatColor.WHITE + snapshot.getGameMode());
+                lore.add(ChatColor.GRAY + "Leben: " + ChatColor.WHITE
+                        + Math.round(snapshot.getHealth()) + "/" + Math.round(snapshot.getMaxHealth()));
+                if (snapshot.isOp()) lore.add(ChatColor.GOLD + "Operator");
+                lore.add(" ");
+                lore.add(ChatColor.YELLOW + "Klicken: " + ChatColor.GRAY + "auf diesen Server warpen");
+                String server = entry.getKey();
+                inventory.setItem(slot, new ItemApi(
+                                new ItemApi(snapshot.getName(), ChatColor.WHITE + snapshot.getName()).buildSkull(),
+                                lore).build(),
+                        new SimpleItemAction((event) -> {
+                            Player clicker = (Player) event.getWhoClicked();
+                            clicker.closeInventory();
+                            ServerConnector.connect(clicker, server);
+                        }));
+                slot++;
+            }
+        }
+        for (int i = rows * 9 - 9; i < rows * 9; i++) inventory.setPlaceHolder(i);
+        if (total == 0) {
+            inventory.setItem(4, new ItemApi(Material.BARRIER, ChatColor.RED + "Niemand online",
+                    List.of(ChatColor.GRAY + "Kein Server hat Spieler gemeldet")).build(),
+                    new SimpleItemAction((event) -> {
+                    }));
+        }
+        inventory.setItem(rows * 9 - 9, new ItemApi(Material.ARROW, ChatColor.GRAY + "Zurück").build(),
+                new SimpleItemAction((event) -> openServerList((Player) event.getWhoClicked())));
+        inventory.setItem(rows * 9 - 1, new ItemApi(Material.CLOCK, ChatColor.YELLOW + "Aktualisieren").build(),
+                new SimpleItemAction((event) -> openPlayerOverview((Player) event.getWhoClicked())));
         return inventory;
     }
 
@@ -122,6 +256,9 @@ public final class ServerManagerUi {
     public static void openServerSettings(Player player, Server server) {
         CustomInventory inventory = new CustomInventory(9, "Server: " + server.name, null);
         for (int i = 0; i < 9; i++) inventory.setPlaceHolder(i);
+        inventory.setItem(0, new ItemApi(Material.PLAYER_HEAD, ChatColor.AQUA + "Spieler",
+                        List.of(ChatColor.GRAY + "Wer auf " + server.name + " ist")).build(),
+                new SimpleItemAction((event) -> openPlayerOverview((Player) event.getWhoClicked())));
         inventory.setItem(1, new ItemApi(Material.RED_WOOL, ChatColor.RED + "Stoppen",
                         List.of(ChatColor.GRAY + server.name + " herunterfahren")).build(),
                 new SimpleItemAction((event) -> {
@@ -139,11 +276,12 @@ public final class ServerManagerUi {
                             ChatColor.YELLOW + server.name + " wird neu gestartet.");
                 }));
         inventory.setItem(5, new ItemApi(Material.ENDER_PEARL, ChatColor.LIGHT_PURPLE + "Hin warpen",
-                        List.of(ChatColor.GRAY + "Zu " + server.name + " springen")).build(),
+                        List.of(ChatColor.GRAY + "Zu " + server.name + " springen",
+                                ChatColor.GRAY + "Status: " + statusOf(server))).build(),
                 new SimpleItemAction((event) -> {
                     Player clicker = (Player) event.getWhoClicked();
                     clicker.closeInventory();
-                    ServerConnector.connect(clicker, server.name);
+                    warpTo(clicker, server);
                 }));
         inventory.setItem(7, new ItemApi(Material.ARROW, ChatColor.GRAY + "Zurück").build(),
                 new SimpleItemAction((event) -> openServerList((Player) event.getWhoClicked())));
@@ -341,16 +479,8 @@ public final class ServerManagerUi {
         List<FileType.PLUGIN> extras = new ArrayList<>(draft.getExtraPlugins());
         ServerDraft.clear(player);
         player.sendMessage(ChatColor.GRAY + "Starte " + ChatColor.AQUA + name + ChatColor.GRAY + "...");
-        PaperContext.async(() -> {
-            try {
-                ServerApi.createServer(name, template, memory, extras);
-            } catch (Exception e) {
-                PaperContext.sync(() -> player.sendMessage(ChatColor.RED + "Konnte " + name + " nicht starten: " + e.getMessage()));
-                return;
-            }
-            PaperContext.sync(() -> player.sendMessage(ChatColor.GREEN + name
-                    + " wird gestartet. Sobald er läuft kannst du mit /warp " + name + " hin."));
-        });
+        // the warp is part of starting: it waits for the server to be ready and says how far it is
+        ServerStartup.createAndWarp(List.of(player), name, template, memory, extras);
     }
 
     /* ------------------------------------------------------------------------ warping */
@@ -363,14 +493,20 @@ public final class ServerManagerUi {
     public static void openWarpMenu(Player player) {
         player.sendMessage(ChatColor.GRAY + "Lade Server...");
         PaperContext.async(() -> {
-            List<Server> servers;
+            List<Server> servers = new ArrayList<>();
             try {
-                servers = ServerApi.listJoinableServers();
+                for (Server server : ServerApi.listServers()) {
+                    // a server that is still building its terrain is a valid destination, it just has to
+                    // be waited for - leaving it out would only make players think it is gone
+                    if (server.isJoinable() || server.isStartingUp()) servers.add(server);
+                }
             } catch (Exception e) {
                 PaperContext.sync(() -> player.sendMessage(ChatColor.RED + "Der Host antwortet gerade nicht."));
                 return;
             }
-            WarpCommand.refreshCompletions(servers);
+            List<Server> joinable = new ArrayList<>();
+            for (Server server : servers) if (server.isJoinable()) joinable.add(server);
+            WarpCommand.refreshCompletions(joinable);
             PaperContext.sync(() -> player.openInventory(warpInventory(servers).getInventory()));
         });
     }
@@ -386,12 +522,17 @@ public final class ServerManagerUi {
             if (server.template != null) {
                 lore.add(ChatColor.GRAY + "Vorlage: " + ChatColor.WHITE + server.template.getDisplayName());
             }
-            lore.add(here ? ChatColor.YELLOW + "Du bist hier" : ChatColor.GREEN + "Klicken zum Warpen");
-            inventory.setItem(i, new ItemApi(here ? Material.COMPASS : Material.ENDER_PEARL,
+            lore.add(ChatColor.GRAY + "Status: " + statusOf(server));
+            lore.add(here ? ChatColor.YELLOW + "Du bist hier"
+                    : (server.isJoinable() ? ChatColor.GREEN + "Klicken zum Warpen"
+                    : ChatColor.YELLOW + "Klicken und warten bis er bereit ist"));
+            Material material = here ? Material.COMPASS
+                    : (server.isJoinable() ? Material.ENDER_PEARL : Material.CLOCK);
+            inventory.setItem(i, new ItemApi(material,
                     ChatColor.AQUA + server.name, lore).build(), new SimpleItemAction((event) -> {
                 Player clicker = (Player) event.getWhoClicked();
                 clicker.closeInventory();
-                ServerConnector.connect(clicker, server.name);
+                warpTo(clicker, server);
             }));
         }
         return inventory;

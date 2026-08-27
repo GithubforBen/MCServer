@@ -20,6 +20,7 @@ import de.hems.utils.bot.tickets.TicketListener;
 import de.hems.utils.bot.tickets.SetTicketChannelListener;
 import de.hems.utils.bot.tickets.Tickets;
 import de.hems.utils.bot.verification.OnAccountVerifyCommand;
+import de.hems.utils.server.IdleServerWatchdog;
 import de.hems.utils.server.ServerHandler;
 import de.hems.utils.types.RunningMode;
 import de.hems.utils.webconsole.WebServer;
@@ -58,6 +59,7 @@ public class Main {
     private AwardStore awardStore;
     private JDA jda;
     private WebServer webServer;
+    private IdleServerWatchdog idleServerWatchdog;
     //TODO: add a way to auto add ops
 
     public Main() throws Exception {
@@ -129,6 +131,8 @@ public class Main {
             throw new MissingConfigurationException("discord-token is missing in config.yml.");
         }
         startConfiguredServers();
+        // servers created for an event are nobody's job to clean up, so the launcher does it
+        idleServerWatchdog = new IdleServerWatchdog(serverHandler);
         startWebServer();
         if (jda != null) Tickets.updateTicketChannel();
     }
@@ -196,6 +200,7 @@ public class Main {
     public void onShutdown() throws IOException {
         System.out.println("Shutting down...");
         configuration.save(); //neccessary
+        if (idleServerWatchdog != null) idleServerWatchdog.stop();
         if (webServer != null) webServer.stop();
         serverHandler.shutdownNetwork();
         configuration.save();

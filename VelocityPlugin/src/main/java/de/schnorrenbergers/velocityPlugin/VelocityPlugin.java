@@ -9,6 +9,8 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import de.hems.communication.ListenerAdapter;
+import de.hems.communication.events.server.RequestProxyPlayersEvent;
+import de.hems.communication.events.server.RespondProxyPlayersEvent;
 import de.hems.communication.events.server.ServerRegisteredEvent;
 import de.hems.communication.events.server.ServerUnregisteredEvent;
 import de.hems.communication.events.types.Event;
@@ -16,7 +18,12 @@ import de.hems.communication.events.types.EventHandler;
 import de.hems.types.Server;
 import org.slf4j.Logger;
 
+import com.velocitypowered.api.proxy.Player;
+
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -59,7 +66,38 @@ public class VelocityPlugin {
                 unregisterServer(unregistered.getServerName());
             }
         });
+        ListenerAdapter.register(RequestProxyPlayersEvent.class, new EventHandler<RequestProxyPlayersEvent>() {
+            @Override
+            public void onEvent(Event received) {
+                if (!(received instanceof RequestProxyPlayersEvent request)) return;
+                answerPlayers(request);
+            }
+        });
         logger.info("Connected to the MCServer network, servers are now registered automatically");
+    }
+
+    /**
+     * Reports who is on which server.
+     * <p>
+     * Listed for every registered server, including the empty ones: "nobody is on it" is the answer the
+     * launcher needs to switch a forgotten event server off, and leaving it out would be
+     * indistinguishable from the proxy not knowing about that server at all.
+     *
+     * @param request what to answer
+     */
+    private void answerPlayers(RequestProxyPlayersEvent request) {
+        HashMap<String, ArrayList<String>> perServer = new HashMap<>();
+        for (RegisteredServer server : proxy.getAllServers()) {
+            ArrayList<String> names = new ArrayList<>();
+            for (Player player : server.getPlayersConnected()) names.add(player.getUsername());
+            perServer.put(server.getServerInfo().getName().toUpperCase(Locale.ROOT), names);
+        }
+        try {
+            ListenerAdapter.sendListeners(new RespondProxyPlayersEvent(
+                    request.getSender(), perServer, request.getEventId()));
+        } catch (Exception e) {
+            logger.warn("Could not report the connected players", e);
+        }
     }
 
     /**

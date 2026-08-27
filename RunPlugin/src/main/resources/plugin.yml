@@ -9,3 +9,16 @@ commands:
   events:
     description: Den Eventkalender öffnen
     usage: /events
+  warp:
+    description: Auf einen anderen Server springen
+    usage: /warp [server]
+  lobby:
+    description: Zurück in die Lobby
+    usage: /lobby
+    aliases: [hub, leave]
+  servermanger:
+    description: Server verwalten und neue Server erstellen
+permissions:
+  network.warp.always:
+    description: Darf jeden Server jederzeit verlassen
+    default: op

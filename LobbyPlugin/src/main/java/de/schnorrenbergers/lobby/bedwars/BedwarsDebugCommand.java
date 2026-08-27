@@ -2,7 +2,7 @@ package de.schnorrenbergers.lobby.bedwars;
 
 import de.hems.api.ServerApi;
 import de.hems.paper.PaperContext;
-import de.hems.paper.warp.ServerConnector;
+import de.hems.paper.warp.ServerStartup;
 import de.hems.types.Server;
 import de.hems.types.ServerTemplate;
 import net.kyori.adventure.text.Component;
@@ -28,11 +28,6 @@ import java.util.Locale;
  * Bis dahin spielt er, was in seiner eigenen {@code game.yml} steht.
  */
 public class BedwarsDebugCommand implements CommandExecutor, TabCompleter {
-
-    /** Wie oft nachgesehen wird, ob der Server schon Spieler annimmt. */
-    private static final int ATTEMPTS = 40;
-    /** Wie lange zwischen zwei Versuchen gewartet wird. */
-    private static final long ATTEMPT_PAUSE_MS = 2000L;
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
@@ -64,53 +59,17 @@ public class BedwarsDebugCommand implements CommandExecutor, TabCompleter {
      * @param player wer spielen will
      */
     private void create(Player player) {
-        player.sendMessage(Component.text("Bedwars Server wird erstellt ...", NamedTextColor.GRAY));
         PaperContext.async(() -> {
             String name;
             try {
                 name = ServerApi.freeName("BEDWARS");
-                ServerApi.createServer(name, ServerTemplate.BEDWARS);
             } catch (Exception e) {
                 tell(player, "Der Server konnte nicht erstellt werden: " + e.getMessage(), NamedTextColor.RED);
                 return;
             }
-            tell(player, name + " startet - du wirst verbunden, sobald er bereit ist.", NamedTextColor.GRAY);
-            if (!waitUntilJoinable(name)) {
-                tell(player, name + " ist nicht rechtzeitig hochgekommen. Mit /warp " + name
-                        + " kannst du es später nochmal versuchen.", NamedTextColor.RED);
-                return;
-            }
-            PaperContext.sync(() -> {
-                if (!player.isOnline()) return;
-                ServerConnector.connect(player, name);
-            });
+            // ServerStartup meldet jeden Schritt und verbindet erst, wenn der Server wirklich bereit ist
+            ServerStartup.createAndWarp(player, name, ServerTemplate.BEDWARS);
         });
-    }
-
-    /**
-     * Wartet, bis der Server nicht nur läuft, sondern auch Spieler annimmt.
-     * <p>
-     * Auf "läuft" zu warten reicht nicht: der Launcher kennt den Server, sobald er ihn gestartet hat,
-     * und das ist Sekunden bevor Paper so weit ist. Wer dann verbindet, fliegt beim Proxy auf.
-     *
-     * @param name der Server
-     * @return ob er bereit ist
-     */
-    private boolean waitUntilJoinable(String name) {
-        for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
-            try {
-                Thread.sleep(ATTEMPT_PAUSE_MS);
-                for (Server server : ServerApi.listJoinableServers()) {
-                    if (server.getName().equalsIgnoreCase(name)) return true;
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return false;
-            } catch (Exception e) {
-                // eine Antwort, die mal ausbleibt, heißt nicht dass der Server nicht kommt
-            }
-        }
-        return false;
     }
 
     private void list(CommandSender sender) {

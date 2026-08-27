@@ -4,19 +4,39 @@ main: de.schnorrenbergers.survival.Survival
 api-version: '26.2'
 commands:
   debug:
+    description: Testbefehle für Entwickler, öffnet Inventare und startet Animationen
+    usage: /debug <animation|inv <name>>
   admin:
+    description: Öffnet den Admin-Stash und die Geld-Werkzeuge
+    usage: /admin
   cteam:
+    description: Öffnet den Team-Manager und verwaltet dein Team
+    usage: /cteam
   rs:
+    description: Startet einen Server des Netzwerks neu, ohne Angabe diesen hier
+    usage: /rs [server]
   servermanger:
+    description: Server verwalten und neue Server erstellen
+    usage: /servermanger [create|stop|restart|list]
   shopkeeper:
+    description: Legt einen Shopkeeper auf der Kiste an, auf der du stehst
+    usage: /shopkeeper <name>
   shop:
     description: Marktplatz öffnen oder einen Shop erstellen
     usage: /shop [create <name>]
   legitimize:
+    description: Begründet Admin-Aktionen nachträglich
+    usage: /legitimize <uuid|@all> "<grund>"
   events:
     description: Den Eventkalender öffnen
     usage: /events
   banane:
+    description: Sperrt einen Spieler für eine bestimmte Zeit
+    usage: /banane <spieler> <grund> time <m|h|d|w>
   warp:
     description: Auf einen anderen Server springen
     usage: /warp [server]
+permissions:
+  network.warp.always:
+    description: Darf jeden Server jederzeit verlassen
+    default: op

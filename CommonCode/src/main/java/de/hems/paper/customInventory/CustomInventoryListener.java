@@ -67,10 +67,9 @@ public class CustomInventoryListener implements org.bukkit.event.Listener {
                 itemAction.onClick(event);
             }
             CustomInventory next = itemAction.loadInventoryOnClick();
-            if (next != null) {
-                event.getWhoClicked().closeInventory();
-                event.getWhoClicked().openInventory(next.getInventory());
-            }
+            // updates the screen in place where it can, so a button that only changes a number does not
+            // shut the menu and open it again on every single click
+            if (next != null) CustomInventory.show(event.getWhoClicked(), next);
         } catch (Exception e) {
             e.printStackTrace();
         }

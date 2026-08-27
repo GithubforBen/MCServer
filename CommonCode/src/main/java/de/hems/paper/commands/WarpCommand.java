@@ -4,6 +4,7 @@ import de.hems.api.ServerApi;
 import de.hems.paper.PaperContext;
 import de.hems.paper.servermanager.ServerManagerUi;
 import de.hems.paper.warp.ServerConnector;
+import de.hems.paper.warp.ServerStartup;
 import de.hems.types.Server;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -39,26 +40,64 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
         }
         String target = args[0];
         PaperContext.async(() -> {
-            List<Server> servers;
+            List<Server> servers = new ArrayList<>();
             try {
-                servers = ServerApi.listJoinableServers();
+                for (Server server : ServerApi.listServers()) if (server != null) servers.add(server);
             } catch (Exception e) {
-                PaperContext.sync(() -> player.sendMessage(ChatColor.RED + "Die Serverliste ist nicht erreichbar."));
+                // the host being unreachable is exactly when an admin most needs to get off this server,
+                // and the proxy knows the destination whether or not our own list lookup worked
+                unreachable(player, target);
                 return;
             }
-            refreshCompletions(servers);
+            List<Server> joinable = new ArrayList<>();
+            for (Server server : servers) if (server.isJoinable()) joinable.add(server);
+            refreshCompletions(joinable);
             Server match = null;
             for (Server server : servers) {
                 if (server.name.equalsIgnoreCase(target)) match = server;
             }
             if (match == null) {
-                PaperContext.sync(() -> player.sendMessage(ChatColor.RED + "Der Server '" + target + "' läuft gerade nicht."));
+                unreachable(player, target);
                 return;
             }
-            String name = match.name;
-            PaperContext.sync(() -> ServerConnector.connect(player, name));
+            Server found = match;
+            if (found.isJoinable()) {
+                PaperContext.sync(() -> ServerConnector.connect(player, found.name));
+                return;
+            }
+            if (found.isStartingUp()) {
+                PaperContext.sync(() -> player.sendMessage(ChatColor.GRAY + found.name
+                        + " ist noch nicht bereit - du wirst verbunden, sobald er es ist."));
+                ServerStartup.warpWhenReady(player, found.name);
+                return;
+            }
+            PaperContext.sync(() -> player.sendMessage(ChatColor.RED + "Der Server '" + target + "' läuft gerade nicht."));
         });
         return true;
+    }
+
+    /**
+     * What to do when the host cannot confirm the destination.
+     * <p>
+     * For a normal player that is the end of it - sending them to a server that may not exist only gets
+     * them kicked by the proxy. An admin is a different case: they are usually asking precisely because
+     * something is broken, and being told "no" by a broken component is how somebody ends up stuck on a
+     * server they cannot leave. So the warp is sent anyway and the proxy decides.
+     *
+     * @param player who wants to warp
+     * @param target where to
+     */
+    private static void unreachable(Player player, String target) {
+        PaperContext.sync(() -> {
+            if (!ServerConnector.mayWarpUnchecked(player)) {
+                player.sendMessage(ChatColor.RED + "Der Server '" + target + "' läuft gerade nicht.");
+                player.sendMessage(ChatColor.GRAY + "Mit /lobby kommst du zurück in die Lobby.");
+                return;
+            }
+            player.sendMessage(ChatColor.YELLOW + "Der Host bestätigt '" + target
+                    + "' nicht - der Warp wird trotzdem versucht.");
+            ServerConnector.connect(player, target);
+        });
     }
 
     /**

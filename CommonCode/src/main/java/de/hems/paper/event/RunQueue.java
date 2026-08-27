@@ -3,7 +3,8 @@ package de.hems.paper.event;
 import de.hems.api.ServerApi;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.PaperContext;
-import de.hems.paper.warp.ServerConnector;
+import de.hems.paper.warp.ServerStartup;
+import de.hems.types.ServerTemplate;
 import de.hems.types.event.EventData;
 import de.hems.types.event.RunData;
 import de.hems.types.event.UhcSettings;
@@ -134,26 +135,26 @@ public final class RunQueue {
         PaperContext.async(() -> {
             String serverName;
             try {
-                serverName = ServerApi.freeName("RUN_" + shortId(event.getId()));
-                ListenerAdapter.ServerName created = ServerApi.createEventServer(serverName);
-                run.setServerName(created.toString());
+                serverName = ListenerAdapter.ServerName.valueOf(
+                        ServerApi.freeName("RUN_" + shortId(event.getId()))).toString();
             } catch (Exception e) {
-                Bukkit.getLogger().warning("Could not create a run server: " + e.getMessage());
+                Bukkit.getLogger().warning("Could not name a run server: " + e.getMessage());
                 PaperContext.sync(() -> tell(participants,
                         "Der Server für den Lauf konnte nicht gestartet werden.", NamedTextColor.RED));
                 return;
             }
+            run.setServerName(serverName);
             RunService.save(run);
             PaperContext.sync(() -> {
-                tell(participants, "Euer Lauf startet - ihr werdet verbunden.", NamedTextColor.GREEN);
+                tell(participants, "Euer Lauf startet - ihr werdet verbunden, sobald der Server bereit ist.",
+                        NamedTextColor.GREEN);
                 if (run.isUndermanned()) {
                     tell(participants, "Ihr startet zu " + participants.size() + " statt zu "
                             + settings.getTeamSize() + " - das wird schwerer.", NamedTextColor.YELLOW);
                 }
-                for (UUID member : participants) {
-                    Player online = Bukkit.getPlayer(member);
-                    if (online != null) ServerConnector.connect(online, run.getServerName());
-                }
+                // the warp is not sent now: a run server needs the better part of a minute to build its
+                // world, and everybody thrown at it before that is bounced straight back by the proxy
+                ServerStartup.createAndWarp(onlineOf(participants), serverName, ServerTemplate.EVENT, null, null);
             });
         });
         return "Der Lauf wird vorbereitet.";
@@ -179,27 +180,11 @@ public final class RunQueue {
             return "Zu diesem Lauf gehört kein Server mehr.";
         }
         Set<UUID> participants = new LinkedHashSet<>(run.getParticipants());
-        PaperContext.async(() -> {
-            try {
-                // the launcher remembers the server, so this reuses its port and its world rather than
-                // building a new one - starting an already running server is a no-op there
-                if (!ServerApi.isRunning(run.getServerName())) {
-                    ServerApi.createEventServer(run.getServerName());
-                }
-            } catch (Exception e) {
-                Bukkit.getLogger().warning("Could not resume the run server: " + e.getMessage());
-                PaperContext.sync(() -> tell(participants,
-                        "Der Server konnte nicht gestartet werden.", NamedTextColor.RED));
-                return;
-            }
-            PaperContext.sync(() -> {
-                tell(participants, "Euer Lauf geht weiter - ihr werdet verbunden.", NamedTextColor.GREEN);
-                for (UUID member : participants) {
-                    Player online = Bukkit.getPlayer(member);
-                    if (online != null) ServerConnector.connect(online, run.getServerName());
-                }
-            });
-        });
+        tell(participants, "Euer Lauf geht weiter - ihr werdet verbunden, sobald der Server bereit ist.",
+                NamedTextColor.GREEN);
+        // the launcher remembers the server, so this reuses its port and its world rather than building a
+        // new one - and a server that is already running is simply waited for and warped to
+        ServerStartup.ensureAndWarp(onlineOf(participants), run.getServerName(), ServerTemplate.EVENT);
         return "Der Server wird gestartet.";
     }
 
@@ -213,6 +198,19 @@ public final class RunQueue {
             entry.getValue().remove(player);
         }
         waiting.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+    }
+
+    /**
+     * @param players the participants of a run
+     * @return the ones that are online here right now
+     */
+    private static List<Player> onlineOf(Set<UUID> players) {
+        List<Player> online = new ArrayList<>();
+        for (UUID member : players) {
+            Player player = Bukkit.getPlayer(member);
+            if (player != null) online.add(player);
+        }
+        return online;
     }
 
     private static void tell(Set<UUID> players, String message, NamedTextColor color) {

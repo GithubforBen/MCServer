@@ -14,12 +14,11 @@ public class RequestServerDataEvent implements EventHandler<RequestServersEvent>
     }
     @Override
     public void onEvent(Event event) throws Exception {
-        System.out.println("EVENT");
-        if (!(event instanceof RequestServersEvent)) {
+        // asked once a second by everyone waiting for a server to come up, so this stays quiet
+        if (!(event instanceof RequestServersEvent request)) {
             return;
         }
-        event = (RequestServersEvent) event;
-        System.out.println("EVENT");
-        ListenerAdapter.sendListeners(new RespondServersEvent(((RequestServersEvent) event).getSender(), Main.getInstance().getServerHandler().collectToServer(), ((RequestServersEvent) event).getEventId()));
+        ListenerAdapter.sendListeners(new RespondServersEvent(request.getSender(),
+                Main.getInstance().getServerHandler().collectToServer(), request.getEventId()));
     }
 }

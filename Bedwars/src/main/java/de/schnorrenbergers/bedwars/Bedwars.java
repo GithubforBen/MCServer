@@ -1,6 +1,10 @@
 package de.schnorrenbergers.bedwars;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.ServerIdentity;
+import de.hems.paper.admin.PlayerAdminHandler;
+import de.hems.paper.commands.LobbyCommand;
+import de.hems.paper.commands.WarpCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.warp.ServerConnector;
 import de.schnorrenbergers.bedwars.addon.AddonRegistry;
@@ -225,30 +229,18 @@ public final class Bedwars extends JavaPlugin {
      */
     private void connectToNetwork() {
         new CustomInventoryListener(this);
+        ServerConnector.register(this);
+        // registered before the connection is attempted, so a round without a launcher still has a way out
+        register("warp", new WarpCommand());
+        register("lobby", new LobbyCommand());
         try {
-            new ListenerAdapter(ListenerAdapter.ServerName.valueOf(serverName()));
-            ServerConnector.register(this);
+            new ListenerAdapter(ServerIdentity.of(this, "BEDWARS"));
+            new PlayerAdminHandler(this);
             networked = true;
         } catch (Exception e) {
             getLogger().warning("No network connection (" + e.getMessage()
                     + "). The round runs, but it cannot be started by an event or send anybody home.");
         }
-    }
-
-    /**
-     * @return the name this server is known by, which the launcher passes in as the directory it runs in
-     */
-    private String serverName() {
-        File container = getServer().getWorldContainer();
-        try {
-            // canonical, not absolute: a world container of "." keeps its dot through getAbsoluteFile(),
-            // and this server would register itself under the name "." for the rest of its life
-            container = container.getCanonicalFile();
-        } catch (IOException e) {
-            container = container.getAbsoluteFile();
-        }
-        String directory = container.getName();
-        return directory == null || directory.isBlank() || ".".equals(directory) ? "BEDWARS" : directory;
     }
 
     private void register(String name, Object command) {
