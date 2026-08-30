@@ -143,10 +143,14 @@ public class ServerHandler {
         FileType.PLUGIN[] resolved = pluginList.toArray(new FileType.PLUGIN[0]);
         System.out.println(resolved.length + " plugins will be installed on " + name + ": " + Arrays.toString(resolved));
 
-        ServerInstance instance = new ServerInstance(name, allocatedMemoryMB, jarFile, resolved, template);
+        // the machine has the last word on the heap, so a small box does not start four servers that
+        // together promise more memory than it has
+        int memory = MemoryLimits.apply(name, allocatedMemoryMB);
+
+        ServerInstance instance = new ServerInstance(name, memory, jarFile, resolved, template);
         instances.add(instance);
         instance.start();
-        rememberServer(name, allocatedMemoryMB, jarFile, template, resolved);
+        rememberServer(name, memory, jarFile, template, resolved);
         announceRegistered(instance);
     }
 

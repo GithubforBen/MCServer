@@ -5,9 +5,11 @@ import de.hems.api.UUIDFetcher;
 import de.hems.communication.ListenerAdapter;
 import de.hems.types.FileType;
 import de.hems.types.Server;
+import de.hems.types.ServerPhase;
 import de.hems.types.ServerTemplate;
 import de.hems.utils.server.console.ConsoleBuffer;
 import de.hems.utils.server.console.ConsoleTailer;
+import de.hems.utils.server.console.StartupProgress;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import javax.net.SocketFactory;
@@ -37,6 +39,9 @@ public class ServerInstance {
     private boolean stopRequested;
     private final ConsoleBuffer console = new ConsoleBuffer();
     private ConsoleTailer consoleTailer;
+    private final StartupProgress progress = new StartupProgress();
+    /** Keeps the progress fed with console lines, closed when the console capture is torn down. */
+    private ConsoleBuffer.Subscription progressSubscription;
 
     public ServerInstance(ListenerAdapter.ServerName name, int allocatedMemoryMB, FileType.SERVER jarFile, FileType.PLUGIN[] plugins) throws Exception {
         this(name, allocatedMemoryMB, jarFile, plugins, ServerTemplate.forServerName(name.toString()));
@@ -59,7 +64,7 @@ public class ServerInstance {
                 List<String> ops = config.getStringList("ops");
                 List<String> whitelist = config.getStringList("whitelist");
                 new PaperConfigurator(name, true, ops.stream().map((x) -> UUIDFetcher.findUUIDByName(x, true)).toList(),
-                        whitelist.toArray(new String[0]), directory.getAbsolutePath(), plugins).configure();
+                        whitelist.toArray(new String[0]), directory.getAbsolutePath(), plugins, template).configure();
                 break;
             }
             case VELOCITY -> {
@@ -84,6 +89,7 @@ public class ServerInstance {
         System.out.println("Starting server " + name + (name.isJoinable() ? " on port " + name.getPort() : ""));
         startedAt = System.currentTimeMillis();
         stopRequested = false;
+        progress.reset();
         createSession();
         String command = quote(javaBinary()) + " -jar -Xmx" + allocatedMemoryMB + "m "
                 + quote(FileType.SERVER.getFileName(jarFile));
@@ -92,6 +98,8 @@ public class ServerInstance {
         pb.redirectErrorStream(true);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         process = pb.start();
+        // before the capture, so a line that arrives immediately is not overwritten by the launch itself
+        progress.onLaunched();
         startConsoleCapture();
         System.out.println("Server " + name + " started");
     }
@@ -170,6 +178,8 @@ public class ServerInstance {
         }
         console.clear();
         exec("tmux", "pipe-pane", "-t", session(), "cat >> '" + log.getAbsolutePath() + "'");
+        if (progressSubscription != null) progressSubscription.close();
+        progressSubscription = console.subscribe(progress::onLine);
         if (consoleTailer != null) consoleTailer.stop();
         consoleTailer = new ConsoleTailer(log, console);
         consoleTailer.start();
@@ -179,6 +189,10 @@ public class ServerInstance {
      * Stops collecting console output and tells tmux to stop piping.
      */
     private void stopConsoleCapture() {
+        if (progressSubscription != null) {
+            progressSubscription.close();
+            progressSubscription = null;
+        }
         if (consoleTailer != null) {
             consoleTailer.stop();
             consoleTailer = null;
@@ -201,6 +215,7 @@ public class ServerInstance {
     public void stop() throws IOException {
         System.out.println("Stopping server " + name);
         stopRequested = true;
+        progress.onStopping();
         executeCommand("stop");
         stopConsoleCapture();
     }
@@ -225,14 +240,23 @@ public class ServerInstance {
         int port = name.isJoinable() ? name.getPort() : PROXY_PORT;
         if (!name.isJoinable() && jarFile != FileType.SERVER.VELOCITY) return isStarting();
         Socket socket = SocketFactory.getDefault().createSocket();
+        boolean reachable = true;
         try {
             socket.setSoTimeout(5000);
             socket.connect(new InetSocketAddress("127.0.0.1", port), 2000);
             socket.close();
         } catch (Exception e) {
-            return false;
+            reachable = false;
         }
-        return true;
+        progress.onProbed(reachable);
+        return reachable;
+    }
+
+    /**
+     * @return how far the server is with starting up
+     */
+    public ServerPhase getPhase() {
+        return progress.getPhase();
     }
 
     /**
@@ -247,8 +271,10 @@ public class ServerInstance {
      * @return the snapshot that is sent to the rest of the network
      */
     public Server toServer(boolean online) {
+        ServerPhase phase = stopRequested ? ServerPhase.STOPPING
+                : (online || isStarting() ? progress.getPhase() : ServerPhase.OFFLINE);
         return new Server(name.toString(), name.getPort(), allocatedMemoryMB, template, jarFile, plugins,
-                online || isStarting());
+                online || isStarting(), phase, progress.getPercent());
     }
 
     public File getDirectory() {

@@ -13,6 +13,7 @@ public class Configuration {
     private YamlConfiguration config;
     public Configuration() {
         file = new File("./main-config.yml");
+        System.out.println(file.getAbsolutePath().toString());
         if(!file.exists()) {
             file.getParentFile().mkdirs();
             try {

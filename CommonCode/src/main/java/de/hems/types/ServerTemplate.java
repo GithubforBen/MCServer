@@ -29,8 +29,9 @@ public enum ServerTemplate implements Serializable {
     SURVIVAL(FileType.SERVER.PAPER, 4096, true,
             FileType.PLUGIN.SURVIVAL, FileType.PLUGIN.BACKPACK, FileType.PLUGIN.SIMPLE_VOICECHAT_PAPER),
 
-    /** A bedwars round. */
+    /** A bedwars round. Ships with the maps it can play, so a fresh round server has one right away. */
     BEDWARS(FileType.SERVER.PAPER, 2048, true,
+            List.of(FileType.ASSET.BEDWARS_SPEEDWAY),
             FileType.PLUGIN.BEDWARS),
 
     /** A plain paper server without a game mode - the base for custom events. */
@@ -48,12 +49,31 @@ public enum ServerTemplate implements Serializable {
     private final int defaultMemoryMB;
     private final boolean basePlugins;
     private final List<FileType.PLUGIN> templatePlugins;
+    private final List<FileType.ASSET> assets;
 
     ServerTemplate(FileType.SERVER software, int defaultMemoryMB, boolean basePlugins, FileType.PLUGIN... templatePlugins) {
+        this(software, defaultMemoryMB, basePlugins, List.of(), templatePlugins);
+    }
+
+    ServerTemplate(FileType.SERVER software, int defaultMemoryMB, boolean basePlugins,
+                   List<FileType.ASSET> assets, FileType.PLUGIN... templatePlugins) {
         this.software = software;
         this.defaultMemoryMB = defaultMemoryMB;
         this.basePlugins = basePlugins;
         this.templatePlugins = List.of(templatePlugins);
+        this.assets = List.copyOf(assets);
+    }
+
+    /**
+     * The worlds and configuration a server of this template is delivered with.
+     * <p>
+     * Unlike plugins these are not a selection an admin makes: a bedwars server without a map is not a
+     * bedwars server, so the content comes with the blueprint.
+     *
+     * @return the assets to unpack onto the server
+     */
+    public List<FileType.ASSET> getAssets() {
+        return assets;
     }
 
     public FileType.SERVER getSoftware() {

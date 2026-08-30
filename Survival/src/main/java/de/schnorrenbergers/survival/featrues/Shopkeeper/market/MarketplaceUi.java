@@ -45,7 +45,7 @@ public class MarketplaceUi {
      */
     public static void open(Player player) {
         MarketplaceUi ui = new MarketplaceUi(player);
-        player.openInventory(ui.build().getInventory());
+        CustomInventory.show(player, ui.build());
     }
 
     /**
@@ -191,10 +191,8 @@ public class MarketplaceUi {
      * @param supplier what to build once the click is done
      */
     void openLater(java.util.function.Supplier<CustomInventory> supplier) {
-        Bukkit.getScheduler().runTask(Survival.getInstance(), () -> {
-            player.closeInventory();
-            player.openInventory(supplier.get().getInventory());
-        });
+        Bukkit.getScheduler().runTask(Survival.getInstance(),
+                () -> CustomInventory.show(player, supplier.get()));
     }
 
     static ItemStack label(Material material, String title, NamedTextColor color, List<String> lore) {

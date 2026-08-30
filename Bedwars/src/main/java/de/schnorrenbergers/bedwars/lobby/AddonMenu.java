@@ -50,12 +50,9 @@ public final class AddonMenu {
         int slot = 0;
         for (Addon addon : addons) {
             menu.setItem(slot++, icon(registry, addon),
-                    new SimpleItemAction(event -> {
-                        event.getWhoClicked().closeInventory();
-                        toggle(player, game, registry, addon);
-                    }));
+                    new SimpleItemAction(event -> toggle(player, game, registry, addon)));
         }
-        player.openInventory(menu.getInventory());
+        CustomInventory.show(player, menu);
     }
 
     /**
@@ -74,9 +71,7 @@ public final class AddonMenu {
                 "state", Messages.raw(on ? "addon.state.on" : "addon.state.off"));
         player.playSound(player, on ? Sound.BLOCK_NOTE_BLOCK_PLING : Sound.BLOCK_NOTE_BLOCK_BASS,
                 1.0f, on ? 1.6f : 0.8f);
-        Bukkit.getScheduler().runTask(Bedwars.getInstance(), () -> {
-            if (player.isOnline()) open(player);
-        });
+        open(player);
     }
 
     /**

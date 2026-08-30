@@ -5,6 +5,7 @@ import de.schnorrenbergers.bedwars.game.GameTeam;
 import de.schnorrenbergers.bedwars.map.MapPoint;
 import de.schnorrenbergers.bedwars.map.TeamSpot;
 import de.schnorrenbergers.bedwars.util.Messages;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Villager;
@@ -52,6 +53,10 @@ public final class ShopKeepers {
             place(game, team, spot.getShop(), false);
             place(game, team, spot.getUpgrade(), true);
         }
+        // a base whose keeper is missing is a base that cannot buy anything, and the only way to notice
+        // that in a running round is to walk into it - so the count is said out loud once
+        Bukkit.getLogger().info("[Bedwars] " + spawned.size() + " shop keepers are standing in "
+                + game.getAliveTeams().size() + " bases.");
     }
 
     /**

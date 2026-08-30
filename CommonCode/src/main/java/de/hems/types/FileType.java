@@ -49,6 +49,68 @@ public class FileType implements Serializable {
     }
 
     /**
+     * Content a server needs next to its jars: worlds, and the configuration that belongs to them.
+     * <p>
+     * A plugin is code and is replaced on every start; an asset is content and must not be, because the
+     * whole point of shipping a map is that an admin can then edit it. So an asset is unpacked once, and
+     * again only when {@link #getVersion()} says a newer one is being shipped.
+     * <p>
+     * The zip is laid over the server directory as it is, which is what keeps this general: a bedwars map
+     * is {@code maps/<name>/} plus {@code maps/<name>.yml} in one archive, and a lobby world will be
+     * {@code world/} plus whatever configuration goes with it, with nothing here to change.
+     */
+    public enum ASSET {
+
+        /** The hypixel map "Speedway": eight bases, so it plays solo and doubles as 2v2 x8. */
+        BEDWARS_SPEEDWAY;
+
+        /**
+         * @param type the asset
+         * @return where it is fetched from - {@code asset:/} for a file shipped in this repository
+         */
+        public static String getFileURL(ASSET type) {
+            return switch (type) {
+                case BEDWARS_SPEEDWAY -> "asset:/bedwars-speedway.zip";
+            };
+        }
+
+        public static String getFileName(ASSET type) {
+            String url = getFileURL(type);
+            return url.split("/")[url.split("/").length - 1];
+        }
+
+        /**
+         * The version of the content, not of the file.
+         * <p>
+         * Unpacking again would throw away whatever an admin changed - a map they moved a generator in, a
+         * world they built on. So it only happens when this string changes, which is the one moment where
+         * shipping a corrected version is worth more than keeping local edits.
+         *
+         * @param type the asset
+         * @return the version to record on the server
+         */
+        public static String getVersion(ASSET type) {
+            return switch (type) {
+                case BEDWARS_SPEEDWAY -> "3";
+            };
+        }
+
+        /**
+         * @param type the asset
+         * @return whether it is shipped in this repository rather than downloaded
+         */
+        public static boolean isShipped(ASSET type) {
+            return getFileURL(type).startsWith("asset:");
+        }
+
+        public String getDisplayName() {
+            return switch (this) {
+                case BEDWARS_SPEEDWAY -> "Bedwars Map: Speedway";
+            };
+        }
+    }
+
+    /**
      * Where a plugin can be installed. Used to only offer plugins that actually fit the server software.
      */
     public enum PLATFORM {

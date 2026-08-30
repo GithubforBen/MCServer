@@ -146,7 +146,7 @@ public final class Timeline {
             takeBed(game, team);
             for (GamePlayer member : team.getPlayingMembers()) {
                 Player player = member.getPlayer();
-                if (player != null) Messages.send(player, "timeline.bed-destruction.yours");
+                if (player != null) Messages.send(player, "timeline.bed-destruction-yours");
             }
         }
     }
@@ -197,7 +197,7 @@ public final class Timeline {
         Messages.broadcast("end.time-limit");
         Messages.broadcast("end.score.header");
         for (Standings.TeamScore score : ranking) {
-            Messages.broadcast(score.team().isAlive() ? "end.score.entry" : "end.score.entry.out",
+            Messages.broadcast(score.team().isAlive() ? "end.score.entry" : "end.score.entry-out",
                     "team", score.team().getColor().getDisplayName(),
                     "initial", score.team().getColor().getInitial(),
                     "points", String.valueOf(score.points()),
@@ -216,10 +216,15 @@ public final class Timeline {
      */
     private void announce(TimelineEvent event, String key) {
         Messages.broadcast(key, "event", Text.plain(event.displayName()));
+        // and what it means, once, as it happens. Most players never type /bw timeline, and the sidebar
+        // only ever had room for the name and the countdown
+        if (event.hasDescription()) {
+            Messages.broadcast("timeline.explained", "description", event.description());
+        }
         if (!event.isMajor()) return;
         Bukkit.getServer().showTitle(Title.title(
-                Messages.get(key + ".title"),
-                Messages.get(key + ".subtitle"),
+                Messages.get(key + "-title"),
+                Messages.get(key + "-subtitle"),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(2), Duration.ofMillis(700))));
         Bukkit.getServer().playSound(MAJOR);
     }

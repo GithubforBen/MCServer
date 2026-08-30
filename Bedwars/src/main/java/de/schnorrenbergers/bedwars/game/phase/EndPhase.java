@@ -74,7 +74,7 @@ public class EndPhase extends GamePhase {
             player.showTitle(Title.title(
                     Messages.get(won ? "end.title.won" : winner == null
                             ? "end.title.nobody" : "end.title.lost"),
-                    Messages.get(winner == null ? "end.subtitle.nobody" : "end.subtitle",
+                    Messages.get(winner == null ? "end.subtitle-nobody" : "end.subtitle",
                             "team", winner == null ? "" : winner.getColor().getDisplayName()),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofSeconds(1))));
         }

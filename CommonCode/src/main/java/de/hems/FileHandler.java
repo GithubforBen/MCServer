@@ -36,6 +36,30 @@ public class FileHandler {
         return new File("./downloads/" + FileType.PLUGIN.getFileName(type));
     }
 
+    /**
+     * Provides a content archive - a world and the configuration that belongs to it.
+     * <p>
+     * A shipped asset lies in {@code ./assets/} and is used from there, because it is part of this
+     * repository rather than something that was fetched. Anything else is downloaded like a jar, so an
+     * asset too big to keep in git can be moved to a url without a single caller changing.
+     *
+     * @param type the asset
+     * @return the archive to unpack
+     */
+    public File provideFile(FileType.ASSET type) throws IOException {
+        String name = FileType.ASSET.getFileName(type);
+        if (FileType.ASSET.isShipped(type)) {
+            File shipped = new File("./assets/" + name);
+            if (!shipped.isFile()) {
+                throw new IOException("The asset " + type + " is missing - expected " + shipped.getPath());
+            }
+            return shipped;
+        }
+        File file = new File("./downloads/" + name);
+        if (!file.exists()) download(FileType.ASSET.getFileURL(type), file);
+        return file;
+    }
+
     public void downloadIfNeeded(FileType.SERVER type) {
         File file = new File("./downloads/" + FileType.SERVER.getFileName(type));
         if (file.exists()) {

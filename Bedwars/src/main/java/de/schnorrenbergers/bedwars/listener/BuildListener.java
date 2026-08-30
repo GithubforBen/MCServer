@@ -14,6 +14,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -91,9 +92,24 @@ public class BuildListener implements Listener {
     public void onExplode(EntityExplodeEvent event) {
         Game game = game();
         if (game == null || !game.isRunning()) return;
-        event.blockList().removeIf(block -> !tracker.wasPlaced(block)
-                || block.getType().name().endsWith("_BED"));
+        boolean fireball = event.getEntity() instanceof Fireball;
+        event.blockList().removeIf(block -> !destructible(game, block, fireball));
         event.blockList().forEach(tracker::forget);
+    }
+
+    /**
+     * @param game     the round
+     * @param block    a block the blast wants
+     * @param fireball whether it was a fireball rather than tnt
+     * @return whether the blast may have it
+     */
+    private boolean destructible(Game game, Block block, boolean fireball) {
+        // the map itself is never touched, whatever goes off next to it
+        if (!tracker.wasPlaced(block)) return false;
+        if (block.getType().name().endsWith("_BED")) return false;
+        // what the shop sells as blast proof has to be blast proof, or the twelve iron buy nothing
+        if (game.getSettings().isBlastProof(block.getType())) return false;
+        return !fireball || !game.getSettings().isFireballProof(block.getType());
     }
 
     /**
@@ -153,7 +169,11 @@ public class BuildListener implements Listener {
             if (spot == null) continue;
             if (within(at, spot.getShop(), shopRadius)) return true;
             if (within(at, spot.getUpgrade(), shopRadius)) return true;
-            // a team's own spawn stays open to them: only the enemy is kept from sealing it shut
+            // nobody walls a generator in, not even the team that owns it
+            if (within(at, spot.getGenerator(), generatorRadius)) return true;
+            // the rest of an enemy base is open on purpose. Building into somebody's base is how a bed is
+            // reached and how a defence is broken, so only the spawn itself is kept clear - a bubble over
+            // the whole island would make the game mode unplayable, and that is what the radius used to be
             if (team != own && within(at, spot.getSpawn(), spot.getProtection())) return true;
         }
         return false;

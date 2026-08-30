@@ -19,6 +19,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.EventHandler;
@@ -62,7 +63,12 @@ public final class RandomEventsAddon extends ListeningAddon {
 
     private BukkitTask clock;
     private final List<BukkitTask> running = new ArrayList<>();
+    /** How far up from the middle the chest looks for somewhere to stand, in blocks. */
+    private static final int SEARCH_HEIGHT = 24;
+
     private Block chest;
+    /** The beacon and its base under the chest, so the whole marker comes away with it. */
+    private final List<Block> marker = new ArrayList<>();
 
     private int intervalSeconds;
     private int warningSeconds;
@@ -258,29 +264,91 @@ public final class RandomEventsAddon extends ListeningAddon {
         World world = middle.getWorld();
         if (world == null) return;
         removeChest();
-        Block block = middle.clone().add(0.0d, 1.0d, 0.0d).getBlock();
-        if (!block.getType().isAir()) block = middle.clone().add(0.0d, 2.0d, 0.0d).getBlock();
-        if (!block.getType().isAir()) return;
+
+        Block block = standingRoom(middle);
+        if (block == null) {
+            Bukkit.getLogger().warning("[Bedwars] The loot chest found nowhere to stand in the middle.");
+            return;
+        }
         block.setType(Material.CHEST, false);
         game.getBlockTracker().remember(block);
         if (block.getState() instanceof Chest state) {
             for (String line : lootLines) {
                 ItemStack stack = loot(line);
+                // the live inventory of the placed block, and no update() afterwards: update() writes the
+                // snapshot the state was taken from back over it, which is how the chest ended up empty
                 if (stack != null) state.getInventory().addItem(stack);
             }
-            state.update();
         }
         chest = block;
+        markWithBeacon(game, block);
         world.playSound(block.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
     }
 
+    /**
+     * Finds somewhere in the middle that a chest can actually stand.
+     * <p>
+     * The middle of a map is worked out from its generators, and on a map with a lower level that average
+     * lands inside the scenery - which is why the chest used to appear in a wall or not at all. So the
+     * column over it is walked until there is a free block with something solid under it.
+     *
+     * @param middle where the map's middle is
+     * @return the block to put the chest in, or {@code null} when the whole column is solid
+     */
+    private static @Nullable Block standingRoom(Location middle) {
+        World world = middle.getWorld();
+        if (world == null) return null;
+        int bottom = middle.getBlockY();
+        for (int y = bottom; y <= Math.min(bottom + SEARCH_HEIGHT, world.getMaxHeight() - 2); y++) {
+            Block block = world.getBlockAt(middle.getBlockX(), y, middle.getBlockZ());
+            if (!block.isEmpty() || !block.getRelative(BlockFace.UP).isEmpty()) continue;
+            if (block.getRelative(BlockFace.DOWN).isEmpty()) continue;
+            return block;
+        }
+        return null;
+    }
+
+    /**
+     * Puts a beacon under the chest so that everybody can see where it went.
+     * <p>
+     * With its base, because a beacon without one is a block that glows a little and nothing else. The
+     * beam is the point: a chest in the middle that nobody finds is a chest that goes to whoever happened
+     * to be standing there.
+     */
+    private void markWithBeacon(Game game, Block chestBlock) {
+        Block beacon = chestBlock.getRelative(BlockFace.DOWN);
+        if (beacon.getType() == Material.BEACON) return;
+        place(game, beacon, Material.BEACON);
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                place(game, beacon.getRelative(x, -1, z), Material.IRON_BLOCK);
+            }
+        }
+    }
+
+    /**
+     * Sets one block of the marker, remembering what was there so it can be put back.
+     */
+    private void place(Game game, Block block, Material material) {
+        marker.add(block);
+        block.setType(material, false);
+        game.getBlockTracker().remember(block);
+    }
+
     private void removeChest() {
+        Game game = Bedwars.getInstance() == null ? null : Bedwars.getInstance().getGame();
+        for (Block block : marker) {
+            if (block.getType() == Material.BEACON || block.getType() == Material.IRON_BLOCK) {
+                block.setType(Material.AIR, false);
+            }
+            if (game != null) game.getBlockTracker().forget(block);
+        }
+        marker.clear();
         if (chest == null) return;
         if (chest.getType() == Material.CHEST) {
             if (chest.getState() instanceof Chest state) state.getInventory().clear();
             chest.setType(Material.AIR, false);
         }
-        Game game = Bedwars.getInstance() == null ? null : Bedwars.getInstance().getGame();
         if (game != null) game.getBlockTracker().forget(chest);
         chest = null;
     }

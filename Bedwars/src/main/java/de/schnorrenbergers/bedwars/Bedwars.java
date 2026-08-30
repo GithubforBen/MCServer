@@ -1,8 +1,17 @@
 package de.schnorrenbergers.bedwars;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.ServerIdentity;
+import de.hems.paper.admin.PlayerAdminHandler;
+import de.hems.paper.commands.LobbyCommand;
+import de.hems.paper.commands.WarpCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
+import de.hems.paper.hologram.Holograms;
+import de.hems.paper.event.EventService;
 import de.hems.paper.warp.ServerConnector;
+import de.hems.types.event.BedwarsEventSettings;
+import de.hems.types.event.EventData;
+import de.hems.types.event.EventType;
 import de.schnorrenbergers.bedwars.addon.AddonRegistry;
 import de.schnorrenbergers.bedwars.addon.AddonSettings;
 import de.schnorrenbergers.bedwars.addon.impl.BedTokenAddon;
@@ -11,6 +20,7 @@ import de.schnorrenbergers.bedwars.addon.impl.KillstreaksAddon;
 import de.schnorrenbergers.bedwars.addon.impl.KitsAddon;
 import de.schnorrenbergers.bedwars.addon.impl.RandomEventsAddon;
 import de.schnorrenbergers.bedwars.commands.BedwarsCommand;
+import de.schnorrenbergers.bedwars.config.FeatureSettings;
 import de.schnorrenbergers.bedwars.config.GameSettings;
 import de.schnorrenbergers.bedwars.config.GeneratorSettings;
 import de.schnorrenbergers.bedwars.config.ModeSettings;
@@ -23,9 +33,11 @@ import de.schnorrenbergers.bedwars.listener.BuildListener;
 import de.schnorrenbergers.bedwars.listener.ChatListener;
 import de.schnorrenbergers.bedwars.listener.CombatListener;
 import de.schnorrenbergers.bedwars.listener.DragonListener;
+import de.schnorrenbergers.bedwars.listener.RulesListener;
 import de.schnorrenbergers.bedwars.listener.ShopListener;
 import de.schnorrenbergers.bedwars.listener.SpecialItemListener;
 import de.schnorrenbergers.bedwars.game.Game;
+import de.schnorrenbergers.bedwars.game.Rules;
 import de.schnorrenbergers.bedwars.game.timeline.Dragons;
 import de.schnorrenbergers.bedwars.game.timeline.Timeline;
 import de.schnorrenbergers.bedwars.lobby.LobbyListener;
@@ -63,6 +75,7 @@ public final class Bedwars extends JavaPlugin {
 
     private ModeSettings modeSettings;
     private GameSettings gameSettings;
+    private FeatureSettings featureSettings;
     private GeneratorSettings generatorSettings;
     private ShopSettings shopSettings;
     private UpgradeSettings upgradeSettings;
@@ -75,6 +88,9 @@ public final class Bedwars extends JavaPlugin {
     private Game game;
     private StatsTracker stats;
     private boolean networked;
+    /** The event this round was ordered for, and when it begins. Both empty for a round nobody ordered. */
+    private String eventName;
+    private long eventStartsAt;
 
     @Override
     public void onLoad() {
@@ -92,7 +108,7 @@ public final class Bedwars extends JavaPlugin {
         maps = new MapRepository();
         mapLoader = new MapLoader(maps);
 
-        game = new Game(modeSettings.get(gameSettings.getMode()), gameSettings);
+        game = new Game(modeSettings.get(modeToPlay()), gameSettings);
         game.setGenerators(new GeneratorManager(generatorSettings));
         shop = new ShopService(shopSettings);
         game.setUpgrades(new UpgradeService(upgradeSettings));
@@ -113,6 +129,7 @@ public final class Bedwars extends JavaPlugin {
         new SpecialItemListener(this);
         new DragonListener(this);
         new SpectatorListener(this);
+        new RulesListener(this);
         if (gameSettings.isStatsEnabled()) {
             stats = new StatsTracker(this, new FileStatsRepository(
                     new File(gameSettings.getStatsDirectory())));
@@ -125,6 +142,10 @@ public final class Bedwars extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ListenerAdapter.disconnect();
+        // floating text is not persistent, so a clean stop loses it anyway - but a reload is not a stop,
+        // and text left behind by the old instance is text nothing owns any more
+        Holograms.removeAll();
         if (game != null && game.getShopKeepers() != null) game.getShopKeepers().remove();
         if (game != null && game.getDragons() != null) game.getDragons().remove();
         if (addons != null && game != null) addons.disableAll(game);
@@ -156,6 +177,11 @@ public final class Bedwars extends JavaPlugin {
         } else {
             gameSettings.load();
         }
+        if (featureSettings == null) {
+            featureSettings = new FeatureSettings();
+        } else {
+            featureSettings.load();
+        }
         if (generatorSettings == null) {
             generatorSettings = new GeneratorSettings();
         } else {
@@ -179,6 +205,39 @@ public final class Bedwars extends JavaPlugin {
     }
 
     /**
+     * Works out which mode this round is: what the event that ordered it asked for, or what
+     * {@code game.yml} says when nobody ordered it.
+     * <p>
+     * A server is created with a name and nothing else - no arguments, no config handed over - so the way
+     * a round finds out what it was started for is to look itself up. The event carries the name of the
+     * server it was started on, written before the server was even ordered, so exactly one event can be
+     * the one that means this round.
+     * <p>
+     * The lookup blocks. That is deliberate and it is safe here: this runs while the server is starting,
+     * the mode decides how many teams the round has, and a round that works that out a second later would
+     * have to tear its teams down and build them again underneath whoever had already joined.
+     *
+     * @return the id of the mode to play
+     */
+    private String modeToPlay() {
+        if (!networked) return gameSettings.getMode();
+        String self = ServerIdentity.of(this, "BEDWARS").toString();
+        EventService.refreshBlocking();
+        for (EventData event : EventService.getEvents()) {
+            if (event.getType() != EventType.BEDWARS) continue;
+            BedwarsEventSettings settings = new BedwarsEventSettings(event);
+            if (!self.equalsIgnoreCase(settings.getServer())) continue;
+            eventName = event.getName();
+            eventStartsAt = event.getStartsAt();
+            getLogger().info("This round belongs to the event '" + event.getName() + "': "
+                    + settings.getTeamSize() + " players per team, starting at "
+                    + new java.util.Date(eventStartsAt) + ".");
+            return settings.getMode();
+        }
+        return gameSettings.getMode();
+    }
+
+    /**
      * Picks the map this server plays and loads a copy of it.
      * <p>
      * A server without a usable map still starts. That is the state you are in right before setting one
@@ -197,6 +256,9 @@ public final class Bedwars extends JavaPlugin {
             return;
         }
         game.setArena(arena, world);
+        // before anybody is let in: the locator bar and the time of day are what a player sees in their
+        // first second on the server, and setting them afterwards is a flicker everybody notices
+        Rules.applyTo(world, arena, featureSettings);
         getLogger().info("Arena " + arena.getName() + " is loaded as '" + world.getName()
                 + "' in " + world.getWorldFolder().getPath());
     }
@@ -225,30 +287,19 @@ public final class Bedwars extends JavaPlugin {
      */
     private void connectToNetwork() {
         new CustomInventoryListener(this);
+        ServerConnector.register(this);
+        // registered before the connection is attempted, so a round without a launcher still has a way out
+        register("warp", new WarpCommand());
+        register("lobby", new LobbyCommand());
         try {
-            new ListenerAdapter(ListenerAdapter.ServerName.valueOf(serverName()));
-            ServerConnector.register(this);
+            new ListenerAdapter(ServerIdentity.of(this, "BEDWARS"));
+            new PlayerAdminHandler(this);
+            EventService.init(this);
             networked = true;
         } catch (Exception e) {
             getLogger().warning("No network connection (" + e.getMessage()
                     + "). The round runs, but it cannot be started by an event or send anybody home.");
         }
-    }
-
-    /**
-     * @return the name this server is known by, which the launcher passes in as the directory it runs in
-     */
-    private String serverName() {
-        File container = getServer().getWorldContainer();
-        try {
-            // canonical, not absolute: a world container of "." keeps its dot through getAbsoluteFile(),
-            // and this server would register itself under the name "." for the rest of its life
-            container = container.getCanonicalFile();
-        } catch (IOException e) {
-            container = container.getAbsoluteFile();
-        }
-        String directory = container.getName();
-        return directory == null || directory.isBlank() || ".".equals(directory) ? "BEDWARS" : directory;
     }
 
     private void register(String name, Object command) {
@@ -305,6 +356,35 @@ public final class Bedwars extends JavaPlugin {
 
     public GameSettings getGameSettings() {
         return gameSettings;
+    }
+
+    /**
+     * How long the round still has to wait for the event it belongs to.
+     * <p>
+     * A round server for an event is put up before the event starts, so that people can gather in its
+     * waiting lobby rather than in the hub. That is only worth anything if the round does not begin
+     * underneath them in the meantime.
+     *
+     * @return the seconds until the event begins, 0 for a round that is not waiting for one
+     */
+    public long getSecondsUntilEvent() {
+        if (eventStartsAt <= 0L) return 0L;
+        long left = eventStartsAt - System.currentTimeMillis();
+        return left <= 0L ? 0L : (left + 999L) / 1000L;
+    }
+
+    /**
+     * @return what the event is called, or an empty string for a round nobody ordered
+     */
+    public String getEventName() {
+        return eventName == null ? "" : eventName;
+    }
+
+    /**
+     * @return the switches an admin flips in {@code /bw admin}
+     */
+    public FeatureSettings getFeatureSettings() {
+        return featureSettings;
     }
 
     public ModeSettings getModeSettings() {

@@ -104,6 +104,9 @@ public class ShopService {
             wearArmor(player, item);
         } else if (item.isTool()) {
             loadout.setToolTier(item.toolGroup(), item.toolTier());
+            // the sword chain is a tool chain, so its steps come through here rather than below - and the
+            // wooden sword still has to go, or the buyer walks away carrying two
+            if (item.sword()) dropWoodenSword(player);
             replaceTool(player, item);
         } else {
             if (item.permanent()) loadout.addPermanent(item.id());
@@ -184,7 +187,11 @@ public class ShopService {
 
         for (Map.Entry<String, Integer> tool : loadout.getTools().entrySet()) {
             ShopItem step = settings.getTool(tool.getKey(), tool.getValue());
-            if (step != null) give(player, ShopItems.build(step, null));
+            if (step == null) continue;
+            // a chain that fell back to its first step has no entry there - the wooden sword and the bare
+            // hands are what a death costs, and the starting kit has already handed those out
+            if (step.sword()) dropWoodenSword(player);
+            give(player, ShopItems.build(step, null));
         }
         for (String id : loadout.getPermanent()) {
             ShopItem item = settings.get(id);

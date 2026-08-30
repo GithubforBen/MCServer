@@ -8,6 +8,7 @@ import de.hems.api.UUIDFetcher;
 import de.hems.communication.ListenerAdapter;
 import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
+import de.hems.types.ServerTemplate;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,8 +26,14 @@ public class PaperConfigurator extends ServerConfigurator {
     private final String[] whitelist;
     private final FileType.PLUGIN[] plugins;
     private final ListenerAdapter.ServerName name;
+    private final ServerTemplate template;
 
     public PaperConfigurator(ListenerAdapter.ServerName name, boolean isProxyed, List<UUID> ops, String[] whitelist, String directory, FileType.PLUGIN[] plugins) throws IOException {
+        this(name, isProxyed, ops, whitelist, directory, plugins, ServerTemplate.forServerName(name.toString()));
+    }
+
+    public PaperConfigurator(ListenerAdapter.ServerName name, boolean isProxyed, List<UUID> ops, String[] whitelist,
+                             String directory, FileType.PLUGIN[] plugins, ServerTemplate template) throws IOException {
         super(directory);
         this.port = name.getPort();
         this.isProxyed = isProxyed;
@@ -34,6 +41,7 @@ public class PaperConfigurator extends ServerConfigurator {
         this.whitelist = whitelist;
         this.plugins = plugins;
         this.name = name;
+        this.template = template == null ? ServerTemplate.forServerName(name.toString()) : template;
     }
 
     public void configure() throws Exception {
@@ -51,6 +59,9 @@ public class PaperConfigurator extends ServerConfigurator {
             File pluginFile = new FileHandler().provideFile(plugin);
             Files.copy(pluginFile.toPath(), pluginF.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
+        // the worlds and the configuration that belongs to them, written once and then left to the admins
+        new AssetInstaller(new File(this.directory)).install(template.getAssets());
+
         overwriteToFile("eula.txt", "eula=true", true);
         // written every time so that a server keeps working after it was given another port
         setProperty("server.properties", "server-ip", "localhost");

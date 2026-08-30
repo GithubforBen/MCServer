@@ -43,6 +43,8 @@ build/
 /servers/*
 /downloads/*
 main-config.yml
+# Settings of one machine (heap limits and the like), never of the network
+.env.local
 ## Maven shade plugin
 dependency-reduced-pom.xml
 

@@ -44,11 +44,10 @@ public final class TeamSelectMenu {
             GameTeam team = teams.get(i);
             menu.setItem(start + i, Equipment.teamWool(team, lore(game, team)),
                     new SimpleItemAction(event -> {
-                        event.getWhoClicked().closeInventory();
                         if (event.getWhoClicked() instanceof Player clicker) choose(clicker, team);
                     }));
         }
-        player.openInventory(menu.getInventory());
+        CustomInventory.show(player, menu);
     }
 
     /**
@@ -89,6 +88,8 @@ public final class TeamSelectMenu {
         }
         team.add(chooser);
         Messages.send(player, "lobby.team.chosen", "team", team.getColor().getDisplayName());
+        // the menu stays open, so it has to show who is in which team now
+        open(player);
     }
 
     private static String title() {

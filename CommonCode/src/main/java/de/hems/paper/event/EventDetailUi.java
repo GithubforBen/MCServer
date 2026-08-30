@@ -5,6 +5,7 @@ import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventState;
+import de.hems.types.event.EventType;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -39,6 +40,19 @@ public final class EventDetailUi {
                     List.of(ChatColor.GRAY + "Warteschlange, Regeln und Zeiten")).build(),
                     new SimpleItemAction(click ->
                             player.openInventory(UhcEventUi.build(player, event).getInventory())));
+        }
+
+        // the round of a bedwars event goes up minutes before the event does, and its own waiting lobby
+        // is a better place to stand around in than the hub
+        if (event.getType() == EventType.BEDWARS && BedwarsEventStarter.serverOf(event) != null
+                && (event.getState() == EventState.PLANNED || event.getState() == EventState.RUNNING)) {
+            ui.setItem(9, new ItemApi(Material.RED_BED, ChatColor.GREEN + "Zur Bedwars-Lobby",
+                    List.of(ChatColor.GRAY + "Die Runde wartet schon.",
+                            ChatColor.GRAY + "Gestartet wird sie zur Eventzeit.")).build(),
+                    new SimpleItemAction(click -> {
+                        player.closeInventory();
+                        player.sendMessage(ChatColor.AQUA + BedwarsEventStarter.join(player, event));
+                    }));
         }
 
         if (!event.getSettings().isEmpty()) {

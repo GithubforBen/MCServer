@@ -200,7 +200,11 @@ public final class CustomItemsAddon extends ListeningAddon {
     /**
      * Builds a platform under whoever is falling, and takes it away again a few seconds later.
      */
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    /**
+     * Runs early and without {@code ignoreCancelled}: this is an item somebody paid four gold for, and a
+     * right click another plugin has already marked as cancelled would swallow it without a word.
+     */
+    @EventHandler(priority = EventPriority.LOW)
     public void onUse(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
@@ -226,7 +230,12 @@ public final class CustomItemsAddon extends ListeningAddon {
                 placed.add(block);
             }
         }
-        if (placed.isEmpty()) return;
+        if (placed.isEmpty()) {
+            // standing on solid ground is the usual reason, and saying so is the difference between an
+            // item that does not work and an item that is not needed right now
+            Messages.send(player, "item.platform-no-room");
+            return;
+        }
         held.setAmount(held.getAmount() - 1);
         player.playSound(player, Sound.BLOCK_SLIME_BLOCK_PLACE, 1.0f, 1.0f);
         track(Bukkit.getScheduler().runTaskLater(getPlugin(),
@@ -353,9 +362,12 @@ public final class CustomItemsAddon extends ListeningAddon {
         if (!game.isRunning() || !game.getBlockTracker().wasPlaced(block)) return;
 
         Player player = event.getPlayer();
-        long now = player.getWorld().getFullTime();
+        // the wall clock, not the world's: with the daylight cycle off - which every map with a fixed
+        // time of day asks for - the world clock stands still, the difference below is always zero, and
+        // a pad works exactly once per player for the whole round
+        long now = System.currentTimeMillis();
         Long last = lastJump.get(player.getUniqueId());
-        if (last != null && now - last < padCooldown) return;
+        if (last != null && now - last < padCooldown * 50L) return;
         lastJump.put(player.getUniqueId(), now);
 
         Vector push = player.getLocation().getDirection().setY(0.0d);

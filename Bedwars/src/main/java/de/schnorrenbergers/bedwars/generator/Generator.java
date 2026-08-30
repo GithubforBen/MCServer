@@ -1,6 +1,7 @@
 package de.schnorrenbergers.bedwars.generator;
 
 import de.schnorrenbergers.bedwars.api.BedwarsResourceSpawnEvent;
+import de.hems.paper.hologram.Hologram;
 import de.schnorrenbergers.bedwars.config.GeneratorSettings;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
@@ -10,10 +11,8 @@ import de.schnorrenbergers.bedwars.util.Text;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,7 @@ public class Generator {
 
     private int tier = 1;
     private double ticksLeft;
-    private TextDisplay hologram;
+    private Hologram hologram;
     /** Whose turn it is to get the drop, for a generator that splits. */
     private int splitTurn;
 
@@ -75,23 +74,15 @@ public class Generator {
      * needs no more, and the display is a packet to everybody in sight.
      */
     public void updateHologram() {
-        if (!type.hologram()) return;
-        if (hologram == null || !hologram.isValid()) hologram = spawnHologram();
-        if (hologram == null) return;
-        hologram.text(Messages.get("generator.hologram",
+        if (!type.hologram() || location.getWorld() == null) return;
+        if (hologram == null) hologram = new Hologram(location).height(HOLOGRAM_HEIGHT);
+        hologram.setLines(Messages.get("generator.hologram",
                 "type", type.displayName(),
                 "tier", Text.roman(tier),
                 "seconds", String.valueOf(Math.max(0, (int) Math.ceil(ticksLeft / 20.0d)))));
-    }
-
-    private @Nullable TextDisplay spawnHologram() {
-        if (location.getWorld() == null) return null;
-        Location at = location.clone().add(0.0d, HOLOGRAM_HEIGHT, 0.0d);
-        return location.getWorld().spawn(at, TextDisplay.class, display -> {
-            display.setBillboard(Display.Billboard.CENTER);
-            display.setSeeThrough(false);
-            display.setPersistent(false);
-        });
+        // spawn rather than a check: it puts the text up the first time and quietly replaces one that
+        // was lost with its chunk, which is the whole reason this runs again every second
+        hologram.spawn();
     }
 
     /**
@@ -232,7 +223,7 @@ public class Generator {
      * Takes the floating text away. The generator itself is only a number and disappears with the round.
      */
     public void remove() {
-        if (hologram != null && hologram.isValid()) hologram.remove();
+        if (hologram != null) hologram.remove();
         hologram = null;
     }
 

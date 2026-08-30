@@ -138,7 +138,9 @@ public final class KillstreaksAddon extends ListeningAddon {
 
         int streak = streaks.merge(killer.getUuid(), 1, Integer::sum);
         reward(killer, streak);
-        if (streak == bountyFrom && bountyMaximum > 0) {
+        // every time it grows, not only the first time it appears: a bounty that is announced once at
+        // three kills and never again is a bounty nobody remembers is there by the time it is worth taking
+        if (bountyMaximum > 0 && bounty(streak) > bounty(streak - 1)) {
             Messages.broadcast("killstreak.bounty.set",
                     "player", killer.getName(),
                     "amount", String.valueOf(bounty(streak)),
@@ -189,6 +191,14 @@ public final class KillstreaksAddon extends ListeningAddon {
                 "victim", victim.getName(),
                 "amount", String.valueOf(amount),
                 "currency", bountyCurrency.getDisplayName());
+        // and on their own screen: a line in chat during a fight is a line nobody reads
+        player.showTitle(Title.title(
+                Messages.get("killstreak.bounty.title",
+                        "amount", String.valueOf(amount),
+                        "currency", bountyCurrency.getDisplayName()),
+                Messages.get("killstreak.bounty.subtitle", "victim", victim.getName()),
+                Title.Times.times(Duration.ZERO, Duration.ofMillis(1400), Duration.ofMillis(400))));
+        player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
     }
 
     /**

@@ -9,12 +9,15 @@ import de.schnorrenbergers.bedwars.shop.item.ShopItem;
 import de.schnorrenbergers.bedwars.shop.item.ShopItems;
 import de.schnorrenbergers.bedwars.util.Messages;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
+import org.bukkit.entity.IronGolem;
+import org.bukkit.entity.LargeFireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
@@ -31,6 +34,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.Vector;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,10 +54,14 @@ public class SpecialItemListener implements Listener {
 
     /** How long a placed block of tnt waits before it goes off. */
     private static final int TNT_FUSE_TICKS = 40;
-    /** How hard a fireball hits. */
-    private static final float FIREBALL_YIELD = 2.5f;
+    /** How fast a fireball leaves the hand, in blocks per tick. */
+    private static final double FIREBALL_SPEED = 1.4d;
+    /** How far in front of the eyes it appears, so it does not blow up in the thrower's face. */
+    private static final double FIREBALL_OFFSET = 1.2d;
     /** How far a summoned mob looks for somebody to attack. */
-    private static final double MINION_RANGE = 12.0d;
+    private static final double MINION_RANGE = 16.0d;
+    /** How often a summoned mob is pointed at the enemy again, in ticks. */
+    private static final long MINION_INTERVAL_TICKS = 5L;
 
     private final Plugin plugin;
     /** Summoned mob to the team that paid for it. */
@@ -88,13 +96,23 @@ public class SpecialItemListener implements Listener {
             Location at = block.getLocation().add(0.5d, 0.0d, 0.5d);
             TNTPrimed tnt = block.getWorld().spawn(at, TNTPrimed.class);
             tnt.setFuseTicks(TNT_FUSE_TICKS);
+            tnt.setYield(Bedwars.getInstance().getGameSettings().getTntPower());
             tnt.setSource(player);
         });
     }
 
     // ------------------------------------------------------------------ in hand
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    /**
+     * Runs before anything else and without {@code ignoreCancelled}.
+     * <p>
+     * These items are the whole reason somebody spent forty iron, and a right click that another plugin
+     * has already marked as cancelled - world guard on a claim, a protection plugin, the vanilla "you
+     * cannot light that" - would silently swallow the fireball together with the iron. What may not be
+     * built is decided by the build rules on the block that comes out of it, not by whether the click
+     * reached us.
+     */
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onUse(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
@@ -118,7 +136,7 @@ public class SpecialItemListener implements Listener {
         }
         if (held.getType().name().endsWith("_SPAWN_EGG") && ShopItems.idOf(held) != null) {
             event.setCancelled(true);
-            if (summon(user, event.getPlayer(), held, event.getClickedBlock())) {
+            if (summon(user, event.getPlayer(), held, event.getClickedBlock(), event.getBlockFace())) {
                 consume(event.getPlayer(), held);
             }
         }
@@ -136,11 +154,13 @@ public class SpecialItemListener implements Listener {
     private boolean mayPearl(Player player) {
         int seconds = Bedwars.getInstance().getGameSettings().getEnderPearlCooldownSeconds();
         if (seconds <= 0) return true;
-        long now = player.getWorld().getFullTime();
+        // the wall clock, not the world's: a world with a fixed time of day has a clock that never moves,
+        // and a cooldown measured against that never runs out
+        long now = System.currentTimeMillis();
         Long last = lastPearl.get(player.getUniqueId());
-        if (last != null && now - last < seconds * 20L) {
-            Messages.send(player, "item.pearl-cooldown",
-                    "seconds", String.valueOf(Math.max(1, (int) Math.ceil((seconds * 20L - (now - last)) / 20.0d))));
+        if (last != null && now - last < seconds * 1000L) {
+            Messages.send(player, "item.pearl-cooldown", "seconds",
+                    String.valueOf(Math.max(1, (int) Math.ceil((seconds * 1000L - (now - last)) / 1000.0d))));
             return false;
         }
         lastPearl.put(player.getUniqueId(), now);
@@ -149,13 +169,24 @@ public class SpecialItemListener implements Listener {
 
     /**
      * Throws a fireball the way hypixel's is thrown: straight, fast and without setting the map on fire.
+     * <p>
+     * Spawned rather than launched, and a {@link LargeFireball} rather than the {@link Fireball} interface:
+     * what {@code launchProjectile} makes of an interface is up to the server, and a ghast's fireball
+     * starts from a standstill and accelerates - which in a fight reads as a fireball that does not work.
+     * The speed is set as a velocity so it leaves the hand at once, and the direction on top of it so it
+     * keeps going straight instead of dropping.
      */
     private void throwFireball(Player player) {
-        Fireball fireball = player.launchProjectile(Fireball.class,
-                player.getEyeLocation().getDirection().multiply(0.6d));
-        fireball.setShooter(player);
-        fireball.setYield(FIREBALL_YIELD);
-        fireball.setIsIncendiary(false);
+        Vector direction = player.getEyeLocation().getDirection().normalize();
+        Location from = player.getEyeLocation().add(direction.clone().multiply(FIREBALL_OFFSET));
+        LargeFireball fireball = player.getWorld().spawn(from, LargeFireball.class, ball -> {
+            ball.setShooter(player);
+            ball.setYield(Bedwars.getInstance().getGameSettings().getFireballPower());
+            ball.setIsIncendiary(false);
+            ball.setDirection(direction);
+        });
+        fireball.setVelocity(direction.clone().multiply(FIREBALL_SPEED));
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GHAST_SHOOT, 1.0f, 1.2f);
     }
 
     /**
@@ -191,12 +222,17 @@ public class SpecialItemListener implements Listener {
      * @param clicked the block it was used on, or {@code null} when it was used in the air
      * @return whether something was summoned
      */
-    private boolean summon(GamePlayer user, Player player, ItemStack egg, @Nullable Block clicked) {
+    private boolean summon(GamePlayer user, Player player, ItemStack egg, @Nullable Block clicked,
+                           BlockFace face) {
         EntityType type = typeOf(egg.getType());
-        Location at = clicked == null
-                ? player.getLocation()
-                : clicked.getRelative(BlockFace.UP).getLocation().add(0.5d, 0.0d, 0.5d);
-        if (type == null || at.getWorld() == null) return false;
+        if (type == null) return false;
+        Location at = spawnSpot(player, clicked, face);
+        if (at == null || at.getWorld() == null) {
+            Messages.send(player, "item.no-room");
+            return false;
+        }
+        // facing away from whoever put it down, which is the direction they were looking
+        at.setYaw(player.getLocation().getYaw());
 
         Entity summoned = at.getWorld().spawnEntity(at, type);
         if (!(summoned instanceof Mob mob)) {
@@ -211,10 +247,45 @@ public class SpecialItemListener implements Listener {
             mob.setCustomNameVisible(true);
             minions.put(mob.getUniqueId(), team);
         }
+        // an iron golem that counts as player made will not raise a hand against a player, which is the
+        // one thing a dream defender is bought for
+        if (mob instanceof IronGolem golem) golem.setPlayerCreated(false);
         mob.setRemoveWhenFarAway(false);
         mob.setPersistent(false);
         watch(mob, team, lifetimeOf(egg));
         return true;
+    }
+
+    /**
+     * Works out where a summoned mob goes.
+     * <p>
+     * Against the face that was clicked rather than always on top of the block: a dream defender put
+     * against the side of a wall used to appear inside the block above it and suffocate. And it needs
+     * room - an iron golem is nearly three blocks tall, so a spot under a one block overhang is no spot.
+     *
+     * @param player  who used the egg
+     * @param clicked the block they used it on, or {@code null} for a click into thin air
+     * @param face    which side of it they clicked
+     * @return where to put it, or {@code null} when there is nowhere it fits
+     */
+    private static @Nullable Location spawnSpot(Player player, @Nullable Block clicked, BlockFace face) {
+        if (clicked == null) return player.getLocation();
+        Block target = clicked.getRelative(face == null ? BlockFace.UP : face);
+        if (!fits(target)) {
+            target = clicked.getRelative(BlockFace.UP);
+            if (!fits(target)) return null;
+        }
+        return target.getLocation().add(0.5d, 0.0d, 0.5d);
+    }
+
+    /**
+     * @param block where a mob would stand
+     * @return whether it and the two blocks over it are free
+     */
+    private static boolean fits(Block block) {
+        return block.isEmpty()
+                && block.getRelative(BlockFace.UP).isEmpty()
+                && block.getRelative(BlockFace.UP, 2).isEmpty();
     }
 
     /**
@@ -225,8 +296,9 @@ public class SpecialItemListener implements Listener {
      * @param lifetime how many seconds it stays, 0 for as long as it survives
      */
     private void watch(Mob mob, @Nullable GameTeam team, int lifetime) {
+        long lifetimeTicks = lifetime * 20L;
         new BukkitRunnable() {
-            private int lived;
+            private long lived;
 
             @Override
             public void run() {
@@ -235,16 +307,19 @@ public class SpecialItemListener implements Listener {
                     cancel();
                     return;
                 }
-                if (lifetime > 0 && ++lived >= lifetime) {
+                lived += MINION_INTERVAL_TICKS;
+                if (lifetimeTicks > 0L && lived >= lifetimeTicks) {
                     minions.remove(mob.getUniqueId());
                     mob.remove();
                     cancel();
                     return;
                 }
-                Player enemy = nearestEnemy(mob, team);
-                if (enemy != null) mob.setTarget(enemy);
+                // every few ticks rather than once a second, and unconditionally: a golem's own goals
+                // clear a target it did not pick itself, so one that is set once a second spends most of
+                // that second standing still
+                mob.setTarget(nearestEnemy(mob, team));
             }
-        }.runTaskTimer(plugin, 20L, 20L);
+        }.runTaskTimer(plugin, MINION_INTERVAL_TICKS, MINION_INTERVAL_TICKS);
     }
 
     /**

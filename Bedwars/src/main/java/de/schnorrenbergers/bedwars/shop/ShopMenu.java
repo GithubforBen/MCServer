@@ -8,24 +8,32 @@ import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
 import de.schnorrenbergers.bedwars.shop.item.ShopCategory;
+import de.schnorrenbergers.bedwars.shop.item.ShopChain;
 import de.schnorrenbergers.bedwars.shop.item.ShopItem;
 import de.schnorrenbergers.bedwars.shop.item.ShopItems;
 import de.schnorrenbergers.bedwars.util.Messages;
 import de.schnorrenbergers.bedwars.util.Text;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * The item shop.
  * <p>
- * One page per category, the tabs along the top, and the menu is rebuilt after every purchase - a shop
+ * One page per category, the tabs along the top, and the page is redrawn after every purchase - a shop
  * that keeps showing "you cannot afford this" on an item you just paid for is worse than no prices at all.
+ * <p>
+ * Redrawn, not reopened. Every click used to close the menu and open it again a tick later, which is what
+ * made the shop blink and jump back to the first page under the player's hand.
+ * <p>
+ * The armour levels and the tool chains are drawn as one button each, showing the step the player may buy
+ * next. Four pickaxes side by side read as four items rather than as one that is upgraded, and three of
+ * the four could never be bought anyway.
  */
 public final class ShopMenu {
 
@@ -57,7 +65,7 @@ public final class ShopMenu {
     }
 
     /**
-     * Opens one page of the shop.
+     * Draws one page of the shop onto the player's screen.
      *
      * @param player   who is shopping
      * @param seller   whose shop it is
@@ -75,19 +83,80 @@ public final class ShopMenu {
         drawTabs(menu, settings, player, seller, category);
 
         int next = 0;
+        for (Object entry : ShopChain.group(sellableOn(category, shopper, seller))) {
+            int slot = slotOf(entry) >= 0 ? slotOf(entry) : slotFor(next++);
+            if (slot < 0 || slot >= SIZE) continue;
+            if (entry instanceof ShopChain chain) {
+                drawStep(menu, slot, chain, player, shopper, seller, category);
+            } else {
+                drawItem(menu, slot, (ShopItem) entry, player, shopper, seller, category);
+            }
+        }
+        CustomInventory.show(player, menu);
+    }
+
+    /**
+     * @return the entries of a page this player may buy at this keeper
+     */
+    private static List<ShopItem> sellableOn(ShopCategory category, GamePlayer shopper,
+                                             @Nullable GameTeam seller) {
+        List<ShopItem> sellable = new ArrayList<>();
         for (ShopItem item : category.items()) {
             // an entry that belongs to another team's keeper is not greyed out here, it is not here at
             // all: half the point of it is that nobody sees it in their own base
-            if (!item.sellableBy(seller, shopper.getTeam())) continue;
-            int slot = item.slot() >= 0 ? item.slot() : slotFor(next++);
-            if (slot < 0 || slot >= SIZE) continue;
-            menu.setItem(slot, ShopItems.icon(item, player, shopper.getTeam(), owned(shopper, item)),
-                    new SimpleItemAction(event -> {
-                        event.getWhoClicked().closeInventory();
-                        buy(player, shopper, item, seller, category);
-                    }));
+            if (item.sellableBy(seller, shopper.getTeam())) sellable.add(item);
         }
-        player.openInventory(menu.getInventory());
+        return sellable;
+    }
+
+    /**
+     * Draws a plain entry.
+     */
+    private static void drawItem(CustomInventory menu, int slot, ShopItem item, Player player,
+                                 GamePlayer shopper, @Nullable GameTeam seller, ShopCategory category) {
+        Component owned = alreadyOwns(shopper, item) ? Messages.get("shop.owned") : null;
+        menu.setItem(slot, ShopItems.icon(item, player, shopper.getTeam(), owned, List.of()),
+                new SimpleItemAction(event -> buy(player, shopper, item, seller, category)));
+    }
+
+    /**
+     * @return whether this entry is one the player cannot buy again
+     */
+    private static boolean alreadyOwns(GamePlayer shopper, ShopItem item) {
+        // armour is not a chain and every level is bought on its own, so the shop has to say which levels
+        // are already behind the buyer - otherwise the chainmail sits there looking buyable for the whole
+        // round to somebody who is wearing diamond
+        if (item.isArmor()) return shopper.getLoadout().getArmorTier() >= item.armorTier();
+        return item.permanent() && shopper.getLoadout().getPermanent().contains(item.id());
+    }
+
+    /**
+     * Draws one rung of a chain: the step that is up next, or the top one once there is nothing left.
+     */
+    private static void drawStep(CustomInventory menu, int slot, ShopChain chain, Player player,
+                                 GamePlayer shopper, @Nullable GameTeam seller, ShopCategory category) {
+        ShopItem step = chain.offer(shopper.getLoadout());
+        boolean maxed = chain.isMaxed(shopper.getLoadout());
+        List<Component> extra = List.of(Messages.get("shop.step",
+                "level", String.valueOf(chain.level(shopper.getLoadout())),
+                "maximum", String.valueOf(chain.size())));
+        menu.setItem(slot, ShopItems.icon(step, player, shopper.getTeam(),
+                        maxed ? Messages.get("shop.maxed") : null, extra),
+                new SimpleItemAction(event -> {
+                    if (maxed) {
+                        Messages.send(player, "shop.already-owned", "item", Text.plain(step.displayName()));
+                        return;
+                    }
+                    buy(player, shopper, step, seller, category);
+                }));
+    }
+
+    /**
+     * @param entry a button of the page
+     * @return the slot it asks for, or -1 when it takes whatever is free
+     */
+    private static int slotOf(Object entry) {
+        return entry instanceof ShopChain chain ? chain.slot() : ((ShopItem) entry).slot();
     }
 
     /**
@@ -100,10 +169,7 @@ public final class ShopMenu {
             int slot = category.slot() >= 0 ? category.slot() : next++;
             if (slot < 0 || slot > 8) continue;
             menu.setItem(slot, tab(category, category.id().equals(open.id())),
-                    new SimpleItemAction(event -> {
-                        event.getWhoClicked().closeInventory();
-                        open(player, seller, category);
-                    }));
+                    new SimpleItemAction(event -> open(player, seller, category)));
         }
     }
 
@@ -124,32 +190,14 @@ public final class ShopMenu {
     }
 
     /**
-     * Buys an entry and shows the page again, so that the new prices and what is now owned are visible.
+     * Buys an entry and redraws the page, so that the new prices and what is now owned are visible.
      */
     private static void buy(Player player, GamePlayer shopper, ShopItem item, @Nullable GameTeam seller,
                             ShopCategory category) {
         Game game = Bedwars.getInstance().getGame();
         if (!game.isRunning() || !shopper.isAlive()) return;
         Bedwars.getInstance().getShop().buy(game, shopper, item, seller);
-        Bukkit.getScheduler().runTask(Bedwars.getInstance(), () -> {
-            if (player.isOnline()) open(player, seller, category);
-        });
-    }
-
-    /**
-     * @return the line that says the player already has this, or {@code null} when they do not
-     */
-    private static @Nullable Component owned(GamePlayer shopper, ShopItem item) {
-        if (item.isArmor() && shopper.getLoadout().getArmorTier() >= item.armorTier()) {
-            return Messages.get("shop.owned");
-        }
-        if (item.isTool() && shopper.getLoadout().getToolTier(item.toolGroup()) >= item.toolTier()) {
-            return Messages.get("shop.owned");
-        }
-        if (item.permanent() && shopper.getLoadout().getPermanent().contains(item.id())) {
-            return Messages.get("shop.owned");
-        }
-        return null;
+        open(player, seller, category);
     }
 
     /**

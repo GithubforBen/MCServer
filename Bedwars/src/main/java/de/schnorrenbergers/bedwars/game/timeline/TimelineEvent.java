@@ -10,13 +10,21 @@ package de.schnorrenbergers.bedwars.game.timeline;
  *
  * @param id          how it is referred to in the file
  * @param displayName what players are told it is called, MiniMessage
+ * @param description what it means in plain words, shown when a player hovers the entry
  * @param seconds     how many seconds into the round it happens
  * @param action      what happens
  * @param generator   which kind of generator {@link Action#GENERATOR_TIER} raises
  * @param tier        the level it is raised to
  */
-public record TimelineEvent(String id, String displayName, int seconds, TimelineEvent.Action action,
-                            String generator, int tier) {
+public record TimelineEvent(String id, String displayName, String description, int seconds,
+                            TimelineEvent.Action action, String generator, int tier) {
+
+    /**
+     * @return whether anybody wrote down what this event means
+     */
+    public boolean hasDescription() {
+        return description != null && !description.isBlank();
+    }
 
     /**
      * What an event does when its time comes.

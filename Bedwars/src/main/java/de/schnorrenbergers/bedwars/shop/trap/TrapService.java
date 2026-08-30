@@ -193,7 +193,7 @@ public class TrapService {
                     Messages.get("trap.title"),
                     Messages.get("trap.subtitle", "trap", Text.plain(trap.displayName())),
                     Title.Times.times(Duration.ZERO, Duration.ofMillis(1600), Duration.ofMillis(400))));
-            Messages.send(player, alarm ? "trap.set-off.alarm" : "trap.set-off",
+            Messages.send(player, alarm ? "trap.set-off-alarm" : "trap.set-off",
                     "trap", Text.plain(trap.displayName()),
                     "player", intruder.getName(),
                     "team", intruder.getTeam() == null

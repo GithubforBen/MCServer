@@ -32,6 +32,7 @@ public class ListenerAdapter implements Receiver {
     private static boolean isInitialized = false;
     private static ServerName name;
     private static JChannel jChannel;
+    private static Thread shutdownHook;
 
     public ListenerAdapter(ServerName name) throws Exception {
         if (isInitialized) return;
@@ -42,7 +43,39 @@ public class ListenerAdapter implements Receiver {
         jChannel.setReceiver(this);
         jChannel.connect("MCServer");
         System.out.println("[JGroups] Connected as '" + name + "' to cluster MCServer. View=" + jChannel.getView());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> jChannel.close()));
+        shutdownHook = new Thread(ListenerAdapter::disconnect, "jgroups-shutdown");
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+    }
+
+    /**
+     * Leaves the cluster.
+     * <p>
+     * Every plugin that opened a connection calls this while it is being disabled, and that is the point:
+     * closing the channel from a jvm shutdown hook is too late on a paper server. By then the plugin's
+     * class loader is closed, and jgroups - which loads a protocol class on the way out - dies with
+     * "The plugin classloader for X has thrown a zip file error" on a perfectly healthy shutdown. Doing it
+     * during onDisable happens while the jar is still open, and the hook that is left behind is only there
+     * for a jvm that goes down without one.
+     */
+    public static synchronized void disconnect() {
+        JChannel closing = jChannel;
+        if (closing == null) return;
+        jChannel = null;
+        isInitialized = false;
+        try {
+            closing.close();
+        } catch (Throwable ignored) {
+            // going down anyway: there is nobody left to tell
+        }
+        Thread hook = shutdownHook;
+        shutdownHook = null;
+        if (hook != null && hook != Thread.currentThread()) {
+            try {
+                Runtime.getRuntime().removeShutdownHook(hook);
+            } catch (IllegalStateException ignored) {
+                // the jvm is already on its way down, so the hook is running or gone
+            }
+        }
     }
 
     public static <T extends Event> void register(Class<T> eventType, EventHandler<T> listener) {

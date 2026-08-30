@@ -5,6 +5,7 @@ api-version: '26.2'
 commands:
   servermanger:
     description: Server verwalten und neue Server erstellen
+    usage: /servermanger [create|stop|restart|list]
   warp:
     description: Auf einen anderen Server springen
     usage: /warp [server]
@@ -14,3 +15,10 @@ commands:
   bwdebug:
     description: Eine Bedwars Runde starten und hinspringen
     usage: /bwdebug [list|stop <name>]
+  parkour:
+    description: Die Sprungstrecken der Lobby laufen und bauen
+    usage: /parkour [list|start <strecke>|leave|top <strecke>|setup <strecke> start|checkpoint|undo|finish|board|name|delete]
+permissions:
+  network.warp.always:
+    description: Darf jeden Server jederzeit verlassen
+    default: op

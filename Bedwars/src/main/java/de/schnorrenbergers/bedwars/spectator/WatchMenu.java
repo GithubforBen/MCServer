@@ -56,7 +56,7 @@ public final class WatchMenu {
                 watch(player, target);
             }));
         }
-        player.openInventory(menu.getInventory());
+        CustomInventory.show(player, menu);
     }
 
     /**

@@ -5,6 +5,8 @@ import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GameTeam;
 import de.schnorrenbergers.bedwars.shop.upgrade.Upgrade;
 import de.schnorrenbergers.bedwars.util.Messages;
+import net.kyori.adventure.bossbar.BossBar;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
@@ -31,10 +33,14 @@ public final class Dragons {
 
     /** How often the dragons are checked for having drifted off, in ticks. */
     private static final int CHECK_INTERVAL = 20;
+    /** How often their bars are redrawn, in ticks. A health bar that jumps once a second reads as broken. */
+    private static final int BAR_INTERVAL = 4;
 
     private final TimelineSettings settings;
     /** Dragon to the team it fights for. */
     private final Map<UUID, GameTeam> owners = new HashMap<>();
+    /** The bar over everybody's screen, per dragon. The vanilla one only exists in the End. */
+    private final Map<UUID, BossBar> bars = new HashMap<>();
     private final List<EnderDragon> spawned = new ArrayList<>();
 
     private Location centre;
@@ -98,6 +104,44 @@ public final class Dragons {
         if (maximum != null) dragon.setHealth(maximum.getValue());
         owners.put(dragon.getUniqueId(), team);
         spawned.add(dragon);
+        showBar(dragon, team);
+    }
+
+    /**
+     * Puts a bar for one dragon over everybody's screen.
+     * <p>
+     * A dragon carries its own bar in the End and nowhere else - the bar belongs to the End's dragon
+     * fight, not to the mob. In an arena there is no fight to hang it off, so the round draws its own,
+     * which is also the only way to say which team a dragon belongs to at a glance.
+     */
+    private void showBar(EnderDragon dragon, GameTeam team) {
+        BossBar bar = BossBar.bossBar(
+                Messages.get("dragon.bar", "team", team.getColor().getDisplayName()),
+                1.0f, BossBar.Color.PURPLE, BossBar.Overlay.NOTCHED_10);
+        bars.put(dragon.getUniqueId(), bar);
+        Bukkit.getServer().showBossBar(bar);
+    }
+
+    /**
+     * Redraws the bars from the health of the dragons they belong to.
+     */
+    private void updateBars() {
+        for (EnderDragon dragon : spawned) {
+            BossBar bar = bars.get(dragon.getUniqueId());
+            if (bar == null || !dragon.isValid()) continue;
+            AttributeInstance maximum = dragon.getAttribute(Attribute.MAX_HEALTH);
+            double top = maximum == null ? dragon.getHealth() : maximum.getValue();
+            if (top <= 0.0d) continue;
+            bar.progress((float) Math.max(0.0d, Math.min(1.0d, dragon.getHealth() / top)));
+        }
+    }
+
+    /**
+     * Takes one dragon's bar off every screen.
+     */
+    private void hideBar(UUID dragon) {
+        BossBar bar = bars.remove(dragon);
+        if (bar != null) Bukkit.getServer().hideBossBar(bar);
     }
 
     /**
@@ -106,13 +150,21 @@ public final class Dragons {
      * @param ticks where the loop stands
      */
     public void tick(long ticks) {
-        if (spawned.isEmpty() || ticks % CHECK_INTERVAL != 0L || centre == null) return;
+        if (spawned.isEmpty() || centre == null) return;
+        if (ticks % BAR_INTERVAL == 0L) updateBars();
+        if (ticks % CHECK_INTERVAL != 0L) return;
+
         double radius = settings.getDragonRadius();
         spawned.removeIf(dragon -> {
             if (!dragon.isValid()) {
                 owners.remove(dragon.getUniqueId());
+                hideBar(dragon.getUniqueId());
                 return true;
             }
+            // a dragon that is on its way to somebody is left alone. Pulling it back to the middle in the
+            // middle of a charge is what made them turn round and fly off every time they got close, and
+            // a dragon that never reaches anybody is not sudden death, it is scenery
+            if (hunting(dragon)) return false;
             keepFlying(dragon);
             Location at = dragon.getLocation();
             if (at.getWorld() != null && at.getWorld().equals(centre.getWorld())
@@ -123,6 +175,15 @@ public final class Dragons {
             dragon.setPhase(EnderDragon.Phase.CIRCLING);
             return false;
         });
+    }
+
+    /**
+     * @param dragon one of ours
+     * @return whether it is going for somebody rather than drifting
+     */
+    private static boolean hunting(EnderDragon dragon) {
+        return dragon.getPhase() == EnderDragon.Phase.CHARGE_PLAYER
+                || dragon.getPhase() == EnderDragon.Phase.STRAFING;
     }
 
     /**
@@ -162,6 +223,8 @@ public final class Dragons {
         for (EnderDragon dragon : spawned) {
             if (dragon.isValid()) dragon.remove();
         }
+        for (BossBar bar : bars.values()) Bukkit.getServer().hideBossBar(bar);
+        bars.clear();
         spawned.clear();
         owners.clear();
         centre = null;

@@ -20,7 +20,12 @@ public enum EventType implements Serializable {
     /** Ultra hardcore: kill every boss as fast as possible. */
     UHC_BOSSES("Alle Bosse (UHC)", false, true),
     /** Ultra hardcore: kill the dragon as fast as possible. */
-    UHC_DRAGON("Enderdrache (UHC)", false, true);
+    UHC_DRAGON("Enderdrache (UHC)", false, true),
+    /**
+     * A round of bedwars at a fixed time. The network puts a bedwars server up when it starts and takes
+     * everybody who is in the lobby along; how big the teams are is a setting of the event.
+     */
+    BEDWARS("Bedwars", false, false);
 
     private final String title;
     private final boolean onlyOnce;

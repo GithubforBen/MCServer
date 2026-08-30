@@ -1,6 +1,7 @@
 package de.hems.paper.customInventory;
 
 import de.hems.api.ItemApi;
+import de.hems.paper.PaperContext;
 import de.hems.paper.customInventory.types.ItemAction;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -9,6 +10,8 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -21,6 +24,9 @@ import java.util.function.Consumer;
 
 public class CustomInventory {
     private final Inventory inventory;
+    /** What the inventory was created with. Bukkit cannot change it afterwards, so a menu whose title
+     * differs has to be opened rather than updated. */
+    private final String title;
     private static final ItemStack placeholder = new ItemApi(Material.BLACK_STAINED_GLASS_PANE, " ").build();
     private static final HashMap<UUID, ItemAction> actions = new HashMap<>();
     private static final Map<Inventory, Consumer<InventoryCloseEvent>> closeActions = Collections.synchronizedMap(new WeakHashMap<>());
@@ -30,20 +36,32 @@ public class CustomInventory {
      * behaviour. Weak, so the actions disappear together with the inventory they belong to.
      */
     private static final Map<Inventory, Map<UUID, ItemAction>> inventoryActions = Collections.synchronizedMap(new WeakHashMap<>());
+    /** The menu behind an open inventory, so a click can update the screen the player is already looking at. */
+    private static final Map<Inventory, CustomInventory> openMenus = Collections.synchronizedMap(new WeakHashMap<>());
     private final Map<UUID, ItemAction> localActions;
 
     public CustomInventory(int size, String title, Consumer<InventoryCloseEvent> onClose) {
-        inventory = Bukkit.createInventory(null, size, title);
-        localActions = new HashMap<>();
-        closeActions.put(inventory, onClose);
-        inventoryActions.put(inventory, localActions);
+        this(Bukkit.createInventory(null, size, title), title, onClose);
     }
 
     public CustomInventory(InventoryType type, String title, Consumer<InventoryCloseEvent> onClose) {
-        inventory = Bukkit.createInventory(null, type, title);
-        localActions = new HashMap<>();
+        this(Bukkit.createInventory(null, type, title), title, onClose);
+    }
+
+    private CustomInventory(Inventory inventory, String title, Consumer<InventoryCloseEvent> onClose) {
+        this.inventory = inventory;
+        this.title = title;
+        this.localActions = new HashMap<>();
         closeActions.put(inventory, onClose);
         inventoryActions.put(inventory, localActions);
+        openMenus.put(inventory, this);
+    }
+
+    /**
+     * @return the title this menu was built with
+     */
+    public String getTitle() {
+        return title;
     }
 
     /**
@@ -88,8 +106,7 @@ public class CustomInventory {
 
             @Override
             public void onClick(InventoryClickEvent event) {
-                event.getWhoClicked().closeInventory();
-                event.getWhoClicked().openInventory(backInventory.getInventory());
+                show(event.getWhoClicked(), backInventory);
             }
 
             @Override
@@ -137,6 +154,80 @@ public class CustomInventory {
 
     public Inventory getInventory() {
         return inventory;
+    }
+
+    /* ------------------------------------------------------------------ showing menus */
+
+    /**
+     * Shows a freshly built menu to a viewer, updating the one they already have open where possible.
+     * <p>
+     * Closing and reopening for every click is what made menus flicker, and it is not just ugly: closing
+     * runs the close handler of a menu that is not actually being left, drops whatever the player was
+     * holding on their cursor back into the world, and leaves a frame in which they are standing in front
+     * of no inventory at all. Writing the new contents into the inventory they are already looking at has
+     * none of those problems. Only a menu of a different size or title has to be opened for real, because
+     * bukkit cannot change either after the fact.
+     *
+     * @param viewer who is looking
+     * @param fresh  the menu as it should look now
+     */
+    public static void show(HumanEntity viewer, CustomInventory fresh) {
+        CustomInventory open = openOf(viewer);
+        if (open != null && open != fresh && open.canBeReplacedBy(fresh)) {
+            open.replaceWith(fresh);
+            return;
+        }
+        if (open == fresh) {
+            // the caller rebuilt into the very inventory that is on screen, so it is already up to date
+            return;
+        }
+        viewer.openInventory(fresh.getInventory());
+    }
+
+    /**
+     * @param viewer who is looking
+     * @return the custom menu they have open, or {@code null} if it is not one of ours
+     */
+    public static CustomInventory openOf(HumanEntity viewer) {
+        return openMenus.get(viewer.getOpenInventory().getTopInventory());
+    }
+
+    /**
+     * @param fresh the menu that should be shown
+     * @return whether it can be drawn into this one instead of being opened
+     */
+    private boolean canBeReplacedBy(CustomInventory fresh) {
+        return inventory.getSize() == fresh.inventory.getSize()
+                && Objects.equals(title, fresh.title);
+    }
+
+    /**
+     * Takes over the contents, the actions and the close handler of a freshly built menu, so the open
+     * screen shows it without being reopened.
+     *
+     * @param fresh the menu to copy in
+     */
+    private void replaceWith(CustomInventory fresh) {
+        inventory.setContents(fresh.inventory.getContents());
+        localActions.clear();
+        localActions.putAll(fresh.localActions);
+        closeActions.put(inventory, closeActions.get(fresh.inventory));
+        resync();
+        // and again next tick: a redraw usually happens inside a click that is cancelled, and bukkit
+        // applies that cancellation after the handler has run by sending the client the items it had
+        // before. Without this second pass the screen would show the old numbers until the next click.
+        if (PaperContext.hasPlugin()) {
+            Bukkit.getScheduler().runTask(PaperContext.getPlugin(), this::resync);
+        }
+    }
+
+    /**
+     * Pushes the current contents to everyone looking at this inventory.
+     */
+    private void resync() {
+        for (HumanEntity viewer : List.copyOf(inventory.getViewers())) {
+            if (viewer instanceof Player player) player.updateInventory();
+        }
     }
 
     public static Map<Inventory, Consumer<InventoryCloseEvent>> getCloseActions() {

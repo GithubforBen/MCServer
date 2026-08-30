@@ -131,6 +131,21 @@ public final class ShopItems {
      */
     public static ItemStack icon(ShopItem item, Player player, @Nullable GameTeam team,
                                  @Nullable Component owned) {
+        return icon(item, player, team, owned, List.of());
+    }
+
+    /**
+     * Builds the button the shop menu shows, which is the item itself plus what it costs.
+     *
+     * @param item   the entry
+     * @param player who is looking at it
+     * @param team   their team
+     * @param owned  a line saying they already have it, or {@code null}
+     * @param extra  lines between the name and the price, for what step of a ladder this is
+     * @return the button
+     */
+    public static ItemStack icon(ShopItem item, Player player, @Nullable GameTeam team,
+                                 @Nullable Component owned, List<Component> extra) {
         ItemStack stack = build(item, team);
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) return stack;
@@ -138,6 +153,7 @@ public final class ShopItems {
         boolean affordable = Cost.shortfall(player, item.costs()) == null;
         List<Component> lore = new ArrayList<>();
         item.lore().forEach(line -> lore.add(Text.item(line)));
+        lore.addAll(extra);
         lore.add(Component.empty());
         // one line per part of the price: an item that costs two things has to say both, or the second
         // one is a surprise the player only meets when the purchase is refused

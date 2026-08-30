@@ -272,12 +272,9 @@ public final class KitsAddon extends ListeningAddon {
         int slot = 0;
         for (Kit kit : kits.values()) {
             menu.setItem(slot++, icon(kit, kit.id().equals(chosen.get(player.getUniqueId()))),
-                    new SimpleItemAction(event -> {
-                        event.getWhoClicked().closeInventory();
-                        choose(player, kit);
-                    }));
+                    new SimpleItemAction(event -> choose(player, kit)));
         }
-        player.openInventory(menu.getInventory());
+        CustomInventory.show(player, menu);
     }
 
     private ItemStack icon(Kit kit, boolean picked) {
@@ -302,6 +299,8 @@ public final class KitsAddon extends ListeningAddon {
         chosen.put(player.getUniqueId(), kit.id());
         Messages.send(player, "kit.chosen", "kit", Text.plain(kit.displayName()));
         player.playSound(player, Sound.UI_BUTTON_CLICK, 1.0f, 1.4f);
+        // the menu stays open, so the tick has to move to the kit that was just picked
+        openMenu(player);
     }
 
     // ------------------------------------------------------------------- handing out

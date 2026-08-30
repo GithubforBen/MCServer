@@ -62,22 +62,43 @@ public final class UpgradeSettings {
     private void writeUpgradeDefaults() {
         upgrade("sharpened-swords", "<aqua>Sharpened Swords", Material.IRON_SWORD, 19,
                 Upgrade.Effect.SHARPNESS, 1, List.of(4),
-                "<gray>Every sword and axe of your team is sharpened.");
+                "<gray>Every sword and axe your team carries gains",
+                "<gray>Sharpness I - the ones you have now and the",
+                "<gray>ones you buy later.",
+                "<gray>Bought once for everybody, so four players",
+                "<gray>get it for the price of one.");
         upgrade("reinforced-armor", "<aqua>Reinforced Armor", Material.IRON_CHESTPLATE, 20,
                 Upgrade.Effect.PROTECTION, 4, List.of(2, 4, 8, 16),
-                "<gray>Your team's armour gains protection.");
+                "<gray>Your team's armour gains Protection,",
+                "<gray>one level per step up to four.",
+                "<gray>Works with whatever armour you are wearing,",
+                "<gray>leather included - it is the cheapest way",
+                "<gray>to survive a rush you cannot outfight.");
         upgrade("maniac-miner", "<aqua>Maniac Miner", Material.GOLDEN_PICKAXE, 21,
                 Upgrade.Effect.HASTE, 2, List.of(2, 4),
-                "<gray>Your team digs faster.");
+                "<gray>Haste for the whole team, everywhere.",
+                "<gray>Faster through wool, faster through end",
+                "<gray>stone, and faster back out again.",
+                "<gray>The upgrade that decides who breaks a bed",
+                "<gray>first when two teams arrive at once.");
         upgrade("iron-forge", "<aqua>Iron Forge", Material.FURNACE, 22,
                 Upgrade.Effect.FORGE, 4, List.of(2, 4, 6, 8),
-                "<gray>Your base generator runs faster.");
+                "<gray>The iron and gold in your own base come",
+                "<gray>faster, one step per level.",
+                "<gray>Pays for itself over a long round and",
+                "<gray>does nothing at all in a short one.");
         upgrade("heal-pool", "<aqua>Heal Pool", Material.BEACON, 23,
                 Upgrade.Effect.HEAL_POOL, 1, List.of(1),
-                "<gray>Your team regenerates while at your base.");
+                "<gray>Everybody on your team heals while they",
+                "<gray>are standing in your base.",
+                "<gray>Turns the base into somewhere you retreat",
+                "<gray>to rather than somewhere you respawn.");
         upgrade("dragon-buff", "<aqua>Dragon Buff", Material.DRAGON_EGG, 24,
                 Upgrade.Effect.DRAGON_BUFF, 1, List.of(5),
-                "<gray>Your team gets a second dragon in sudden death.");
+                "<gray>One more dragon for your team when sudden",
+                "<gray>death starts.",
+                "<gray>Only worth buying if the round is going to",
+                "<gray>run that long - see the timeline on the right.");
     }
 
     private void writeTrapDefaults() {
@@ -99,16 +120,28 @@ public final class UpgradeSettings {
 
         trap("its-a-trap", "<red>It's a Trap!", Material.TRIPWIRE_HOOK, 37,
                 Trap.Effect.BLINDNESS, 8, 0,
-                "<gray>Blinds and slows the enemy who set it off.");
+                "<gray>Goes off when an enemy walks into your base.",
+                "<gray>Blinds and slows them for a few seconds -",
+                "<gray>long enough to get home and meet them.",
+                "<gray>Magic milk makes them immune to it.");
         trap("counter-offensive", "<red>Counter-Offensive Trap", Material.FEATHER, 38,
                 Trap.Effect.COUNTER_OFFENSIVE, 15, 1,
-                "<gray>Your team at home gets speed and jump boost.");
+                "<gray>Goes off when an enemy walks into your base.",
+                "<gray>Everybody of yours who is home gets speed",
+                "<gray>and jump boost, so the defender arrives",
+                "<gray>faster than the attacker expected.");
         trap("alarm-trap", "<red>Alarm Trap", Material.REDSTONE_TORCH, 39,
                 Trap.Effect.ALARM, 5, 0,
-                "<gray>Reveals invisible enemies and names them.");
+                "<gray>Goes off when an enemy walks into your base.",
+                "<gray>Strips invisibility off them and says in",
+                "<gray>chat who it was.",
+                "<gray>The answer to an invisible bed rush.");
         trap("miner-fatigue", "<red>Miner Fatigue Trap", Material.IRON_PICKAXE, 40,
                 Trap.Effect.MINING_FATIGUE, 10, 0,
-                "<gray>The enemy who set it off cannot mine.");
+                "<gray>Goes off when an enemy walks into your base.",
+                "<gray>They cannot break a block for the duration,",
+                "<gray>which means they cannot reach the bed",
+                "<gray>however good their pickaxe is.");
     }
 
     private void upgrade(String id, String displayName, Material icon, int slot, Upgrade.Effect effect,
