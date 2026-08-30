@@ -9,7 +9,9 @@ import de.schnorrenbergers.bedwars.game.GameTeam;
 import de.schnorrenbergers.bedwars.game.TeamBalancer;
 import de.schnorrenbergers.bedwars.api.BedwarsPlayerRespawnEvent;
 import de.schnorrenbergers.bedwars.generator.GeneratorManager;
+import de.schnorrenbergers.bedwars.listener.CombatListener;
 import de.schnorrenbergers.bedwars.map.MapPoint;
+import de.schnorrenbergers.bedwars.map.MapRegion;
 import de.schnorrenbergers.bedwars.scoreboard.Sidebar;
 import de.schnorrenbergers.bedwars.util.Messages;
 import net.kyori.adventure.title.Title;
@@ -63,6 +65,7 @@ public class IngamePhase extends GamePhase {
                 start(participant, player);
             }
         }
+        clearPlatform();
         GeneratorManager generators = game.getGenerators();
         if (generators != null) generators.build(game);
         if (game.getShopKeepers() != null) game.getShopKeepers().spawn(game);
@@ -78,6 +81,21 @@ public class IngamePhase extends GamePhase {
         if (generators != null) generators.remove();
         if (game.getShopKeepers() != null) game.getShopKeepers().remove();
         if (game.getDragons() != null) game.getDragons().remove();
+    }
+
+    /**
+     * Takes the waiting platform out of the world.
+     * <p>
+     * It hangs over the middle of the map and is where everybody stands while the lobby counts down. Left
+     * standing it roofs the arena for the whole round: it blocks the dragons, it catches anything thrown
+     * upwards, and anybody who can get back onto it is somewhere nobody can follow them to.
+     */
+    private void clearPlatform() {
+        if (game.getArena() == null || game.getWorld() == null) return;
+        MapRegion platform = game.getArena().getPlatform();
+        if (platform == null) return;
+        int removed = platform.clear(game.getWorld());
+        Bukkit.getLogger().info("[Bedwars] The waiting platform is gone (" + removed + " blocks).");
     }
 
     /**
@@ -104,10 +122,33 @@ public class IngamePhase extends GamePhase {
                 continue;
             }
             if (left % 20 != 0) continue;
+            // the count goes to both lines: it is written in the subtitle, and a title that is handed
+            // placeholders the other line needs is how "Back in <seconds>s" ended up on screen as
+            // "Back in seconds"
+            String seconds = String.valueOf(left / 20);
             player.showTitle(Title.title(
-                    Messages.get("respawn.title", "seconds", String.valueOf(left / 20)),
-                    Messages.get("respawn.subtitle"),
+                    Messages.get("respawn.title", "seconds", seconds),
+                    Messages.get("respawn.subtitle", "seconds", seconds),
                     Title.Times.times(Duration.ZERO, Duration.ofMillis(1200), Duration.ZERO)));
+        }
+    }
+
+    /**
+     * Kills whoever has fallen past the bottom of the map.
+     * <p>
+     * The map says where that is, and it is far above the point minecraft would start hurting somebody:
+     * a player who fell off a bridge is dead the moment they are under the arena, and watching them drop
+     * for another hundred blocks first only delays their five seconds.
+     */
+    private void tickVoid() {
+        if (game.getArena() == null) return;
+        double bottom = game.getArena().getVoidY();
+        for (GamePlayer participant : game.getPlayers()) {
+            if (!participant.isAlive()) continue;
+            Player player = participant.getPlayer();
+            if (player == null || player.getGameMode() == GameMode.SPECTATOR) continue;
+            if (player.getLocation().getY() >= bottom) continue;
+            CombatListener.kill(game, participant, player);
         }
     }
 
@@ -189,6 +230,7 @@ public class IngamePhase extends GamePhase {
         if (game.getTraps() != null) game.getTraps().tick(game, ticks);
         if (game.getDragons() != null) game.getDragons().tick(ticks);
         tickRespawns();
+        tickVoid();
         // last of the per tick work: an event that ends the round leaves this phase, and nothing below
         // should still be running on a round that is over
         if (game.getTimeline() != null) game.getTimeline().tick(game, ticks);

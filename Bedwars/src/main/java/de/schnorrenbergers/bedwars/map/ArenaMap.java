@@ -28,6 +28,9 @@ public class ArenaMap {
     private MapPoint spectator;
     private int buildMaxY = 256;
     private int voidY = 0;
+    private MapRegion platform;
+    private boolean daylightCycle = false;
+    private long fixedTime = 6000L;
 
     private final Map<TeamColor, TeamSpot> teams = new LinkedHashMap<>();
     private final List<GeneratorSpot> generators = new ArrayList<>();
@@ -53,6 +56,9 @@ public class ArenaMap {
         map.spectator = MapPoint.read(config, "spectator");
         map.buildMaxY = config.getInt("build.max-y", 256);
         map.voidY = config.getInt("build.void-y", 0);
+        map.platform = MapRegion.read(config, "platform");
+        map.daylightCycle = config.getBoolean("time.daylight-cycle", false);
+        map.fixedTime = config.getLong("time.fixed", 6000L);
 
         ConfigurationSection teams = config.getConfigurationSection("teams");
         if (teams != null) {
@@ -102,6 +108,19 @@ public class ArenaMap {
         config.set("build.max-y", buildMaxY);
         config.setComments("build", List.of("Nobody builds above max-y, and anything below void-y is the void."));
         config.set("build.void-y", voidY);
+
+        if (platform != null) {
+            platform.write(config, "platform");
+            config.setComments("platform", List.of(
+                    "The waiting lobby that hangs over the map, taken out of the world when the round",
+                    "starts. Without it the platform roofs the arena for the whole round."));
+        }
+
+        config.set("time.daylight-cycle", daylightCycle);
+        config.set("time.fixed", fixedTime);
+        config.setComments("time", List.of(
+                "Whether the sun moves on this map, and what time it stands still at when it does not.",
+                "A round is long enough to run into the night, and nobody asked to play half of it blind."));
 
         ConfigurationSection teamSection = config.createSection("teams");
         for (TeamSpot spot : teams.values()) {
@@ -282,5 +301,38 @@ public class ArenaMap {
 
     public void setVoidY(int voidY) {
         this.voidY = voidY;
+    }
+
+    /**
+     * @return the waiting platform hanging over the arena, {@code null} when the map has none to remove
+     */
+    public @Nullable MapRegion getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(@Nullable MapRegion platform) {
+        this.platform = platform;
+    }
+
+    /**
+     * @return whether the sun moves while a round is played on this map
+     */
+    public boolean isDaylightCycle() {
+        return daylightCycle;
+    }
+
+    public void setDaylightCycle(boolean daylightCycle) {
+        this.daylightCycle = daylightCycle;
+    }
+
+    /**
+     * @return the time of day the map stands still at while {@link #isDaylightCycle()} is off
+     */
+    public long getFixedTime() {
+        return fixedTime;
+    }
+
+    public void setFixedTime(long fixedTime) {
+        this.fixedTime = fixedTime;
     }
 }

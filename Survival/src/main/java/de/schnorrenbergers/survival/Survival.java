@@ -106,6 +106,7 @@ public final class Survival extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ListenerAdapter.disconnect();
         if (chunkLimiter != null) chunkLimiter.stop();
         if (AdminStash.getInstance() != null) AdminStash.getInstance().saveOnShutdown();
         ShopkeeperManager.shutdown();

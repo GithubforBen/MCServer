@@ -112,7 +112,11 @@ public final class Sidebar {
         // a promise about a round that has not begun
         if (timeline == null || !timeline.isStarted()) return Component.empty();
         TimelineEvent next = timeline.getNext();
-        if (next == null) return Component.empty();
+        // nothing left on the clock means the last event has happened, and the last event is sudden
+        // death - so the line says what the round is in rather than going blank at the loudest moment
+        if (next == null) {
+            return timeline.isSuddenDeath() ? Messages.get("sidebar.sudden-death") : Component.empty();
+        }
         return Messages.get("sidebar.event",
                 "event", Text.plain(next.displayName()),
                 "time", Text.clock(timeline.getSecondsUntilNext()));

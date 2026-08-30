@@ -16,8 +16,13 @@ import java.util.Map;
  */
 public final class ModeSettings {
 
-    /** The mode used when nothing else is asked for. */
-    public static final String DEFAULT_MODE = "quad";
+    /**
+     * The mode used when nothing else is asked for.
+     * <p>
+     * Doubles rather than quads, because the maps this server ships have eight bases: a quad round on an
+     * eight base map plays on half the map and leaves four bases standing empty.
+     */
+    public static final String DEFAULT_MODE = "doubles";
 
     private final ConfigFile file;
     private final Map<String, GameMode> modes = new LinkedHashMap<>();

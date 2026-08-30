@@ -56,6 +56,13 @@ public final class RunPlugin extends JavaPlugin {
         registerCommand("events", new EventCommand());
     }
 
+    @Override
+    public void onDisable() {
+        // while the jar is still open: closing the cluster connection from a jvm shutdown hook is too
+        // late, see ListenerAdapter.disconnect()
+        ListenerAdapter.disconnect();
+    }
+
     private void registerCommand(String commandName, Object command) {
         PluginCommand registered = getCommand(commandName);
         if (registered == null) {

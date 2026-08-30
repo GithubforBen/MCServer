@@ -1,6 +1,7 @@
 package de.schnorrenbergers.bedwars.listener;
 
 import de.schnorrenbergers.bedwars.Bedwars;
+import de.schnorrenbergers.bedwars.config.Feature;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.shop.ShopMenu;
@@ -42,6 +43,10 @@ public class ShopListener implements Listener {
         GamePlayer shopper = game.get(player);
         if (shopper == null || !shopper.isAlive()) {
             Messages.send(player, "shop.not-playing");
+            return;
+        }
+        if (!Bedwars.getInstance().getFeatureSettings().is(Feature.SHOP)) {
+            Messages.send(player, "shop.closed");
             return;
         }
         if (keeper.upgrades()) {

@@ -105,7 +105,16 @@ public class ConfigFile {
             if (fallback instanceof Integer) return (T) Integer.valueOf(config.getInt(path));
             if (fallback instanceof Long) return (T) Long.valueOf(config.getLong(path));
             if (fallback instanceof Double) return (T) Double.valueOf(config.getDouble(path));
-            if (fallback instanceof String) return (T) config.getString(path);
+            if (fallback instanceof String) {
+                // not getString: that hands a section back as its own toString(), and a text key which
+                // another key was nested underneath would then be sent to players as
+                // "MemorySection[path='...']" instead of the sentence it is supposed to be
+                if (!config.isString(path)) {
+                    warn("'" + path + "' in " + name + " is not a text, falling back to the default.");
+                    return fallback;
+                }
+                return (T) config.getString(path);
+            }
             return value == null ? fallback : (T) value;
         } catch (ClassCastException e) {
             warn("'" + path + "' in " + name + " is not usable, falling back to " + fallback + ".");

@@ -1,9 +1,10 @@
 # Netzwerk-Abnahme
 
-Testplan für die Änderungen aus drei Runden: Serverstart und Warp, Shop und ATM,
-die mitgelieferte Bedwars-Map und die Speichergrenzen.
+Testplan für die Änderungen aus fünf Runden: Serverstart und Warp, Shop und ATM,
+die mitgelieferte Bedwars-Map, die Speichergrenzen — und die Korrekturen an Map, Kampf,
+Werkzeugen und Nachrichten sowie der Parkour, die danach dazugekommen sind.
 
-Stand: 2026-08-27 · 65 Prüfungen in zwölf Phasen
+Stand: 2026-08-30 · 115 Prüfungen in neunzehn Phasen
 
 Die Phasen bauen aufeinander auf — ohne laufenden Launcher lässt sich über RunPlugin nichts
 sagen, und ohne aktives RunPlugin nichts über Warp und Fortschritt. Also von oben nach unten.
@@ -17,7 +18,7 @@ sagen, und ohne aktives RunPlugin nichts über Warp und Fortschritt. Also von ob
 | `NORMAL` | Detail am Rand |
 | `REGRESSION` | War vorher da und muss es bleiben |
 
-**Die 17 Blocker vorweg:** 1.1 · 2.1 · 2.2 · 3.1 · 3.3 · 4.1 · 6.1 · 6.2 · 7.2 · 8.4 · 10.3 · 10.4 · 10.5 · 11.1 · 11.3 · 11.4 · 11.7
+**Die 34 Blocker vorweg:** 1.1 · 2.1 · 2.2 · 3.1 · 3.3 · 4.1 · 6.1 · 6.2 · 7.2 · 8.4 · 10.3 · 10.4 · 10.5 · 11.1 · 11.3 · 11.4 · 11.7 · 13.1 · 13.2 · 13.3 · 13.5 · 14.1 · 14.4 · 14.6 · 14.7 · 14.8 · 15.1 · 16.1 · 16.3 · 16.4 · 17.2 · 17.5 · 19.1 · 19.4
 
 ---
 
@@ -438,6 +439,299 @@ Zum Schluss die Dinge, die vorher schon funktioniert haben und es geblieben sein
   - Ablauf: Website öffnen, Spielerliste und Serverkonsole ansehen
   - Erwartet: Spieler werden gefunden, die Konsole zeigt neue Zeilen — Run- und Bedwars-Server
     melden jetzt zusätzlich ihre Spieler mit.
+
+---
+
+## 13 — Die Speedway-Map, korrigiert
+
+Die Punkte der Map wurden neu aus den Blöcken der Welt gelesen. Jeder einzelne liegt jetzt auf
+dem Block, der ihn markiert — 16 von 16 Keeper-Plätzen, 8 von 8 Generator-Podesten.
+
+- [ ] **13.1 Acht Teams statt vier** · `BLOCKER`
+  - Ablauf: Bedwars-Server starten, Konsole lesen, dann `/bw status`
+  - Erwartet: `Hosting doubles (8x2) on speedway`. Im Warteraum stehen acht Wollblöcke.
+
+- [ ] **13.2 Der Spawner steht hinten auf den Stone Brick Slabs** · `BLOCKER`
+  - Ablauf: Runde starten, in die eigene Basis, nach hinten laufen (weg von der Mitte)
+  - Erwartet: Eisen und Gold fallen in der Nische auf die sechs Bruchsteinziegel-Stufen,
+    nicht mehr vorne auf dem freien Boden. Für GRAU ist das `-86 / 66 / -31.5`.
+
+- [ ] **13.3 Beide Shopkeeper stehen in ihrer Nische auf der Sea Lantern** · `BLOCKER`
+  - Ablauf: Runde mit acht Spielern (oder `/bw start` und durchlaufen), jede Basis ansehen
+  - Erwartet: In jeder Basis stehen zwei Villager, jeder in einer der beiden beleuchteten
+    Nischen — zwei Sea Lanterns als Boden, ein Barrier als Dach. Für Grau `-82 / 66 / -37.5`
+    (Items) und `-82 / 66 / -25.5` (Upgrades). Keiner steht auf dem Podest davor, keiner
+    schwebt, keiner steckt in einer Wand.
+  - Konsole sagt beim Start: `16 shop keepers are standing in 8 bases.`
+
+- [ ] **13.4 Vier Smaragd-Generatoren** · `WICHTIG`
+  - Ablauf: `/bw generators`
+  - Erwartet: Vier Diamant- und vier Smaragd-Generatoren. Zwei Smaragde liegen oben
+    (`-11.5/66/15.5` und `12.5/66/-14.5`), zwei auf der unteren Ebene
+    (`-2.5/56/8.5` und `3.5/56/-7.5`).
+
+- [ ] **13.5 Die Startplattform verschwindet** · `BLOCKER`
+  - Ablauf: Runde starten und nach oben schauen
+  - Erwartet: Das Holzhaus über der Mitte ist weg. Konsole:
+    `The waiting platform is gone (877 blocks).`
+
+- [ ] **13.6 In fremden Basen darf gebaut werden** · `WICHTIG`
+  - Ablauf: Als Rot in die blaue Basis laufen, dort Wolle setzen — erst neben dem Bett,
+    dann direkt auf dem gegnerischen Spawn
+  - Erwartet: Neben dem Bett geht es. Nur im Umkreis von vier Blöcken um den Spawn kommt
+    `build.protected`. Auf dem eigenen Spawn darf man selbst bauen.
+
+- [ ] **13.7 Generatoren lassen sich nicht zumauern** · `NORMAL`
+  - Ablauf: Direkt auf ein Generator-Podest bauen, eigenes wie fremdes
+  - Erwartet: Geht bei keinem.
+
+- [ ] **13.8 Es bleibt Tag** · `NORMAL`
+  - Ablauf: Zehn Minuten spielen
+  - Erwartet: Die Sonne steht still. In `maps/speedway.yml` steht `time.daylight-cycle: false`.
+
+---
+
+## 14 — Kampf, Tod und Werkzeuge
+
+- [ ] **14.1 Kein Respawn-Knopf mehr** · `BLOCKER`
+  - Ablauf: Sich in die Leere fallen lassen oder totschlagen lassen
+  - Erwartet: Kein Todesbildschirm, kein Knopf. Man ist sofort Zuschauer über der Mitte und
+    sieht den Countdown.
+
+- [ ] **14.2 Der Countdown zählt** · `WICHTIG`
+  - Ablauf: Sterben und auf den Titel schauen
+  - Erwartet: `Back in 5s`, `4s`, `3s` … — nicht mehr das Wort `seconds`.
+
+- [ ] **14.3 Die Leere tötet oben** · `WICHTIG`
+  - Ablauf: Von einer Brücke fallen
+  - Erwartet: Der Tod kommt bei y 40, nicht erst hundert Blöcke tiefer.
+
+- [ ] **14.4 Werkzeuge werden aufgewertet, nicht ausgesucht** · `BLOCKER`
+  - Ablauf: Shop → Werkzeuge
+  - Erwartet: Drei Knöpfe: Schere, Spitzhacke, Axt. Die Spitzhacke zeigt Holz; nach dem Kauf
+    zeigt derselbe Knopf Eisen, dann Gold, dann Diamant. Nie vier Spitzhacken nebeneinander.
+
+- [ ] **14.5 Dasselbe für Schwert und Rüstung** · `WICHTIG`
+  - Ablauf: Shop → Nahkampf und Rüstung
+  - Erwartet: Je ein Knopf, der die nächste Stufe zeigt. Ganz oben steht `Fully upgraded`.
+
+- [ ] **14.6 Ein Tod kostet eine Stufe, Holz bleibt** · `BLOCKER`
+  - Ablauf: Diamantspitzhacke kaufen, sterben, Inventar ansehen; dann noch dreimal sterben
+  - Erwartet: Nach dem ersten Tod Gold, dann Eisen, dann Holz — und Holz bleibt für immer.
+    Beim Schwert dasselbe: unten steht das Holzschwert, das nie verloren geht.
+
+- [ ] **14.7 Fireballs fliegen** · `BLOCKER`
+  - Ablauf: Fireball kaufen, Rechtsklick in die Luft und Rechtsklick auf einen Block
+  - Erwartet: Er verlässt sofort und schnell die Hand, fliegt geradeaus, explodiert beim
+    Aufprall mit Zischen. Er zündet nichts an und reißt nur Blöcke weg, die jemand in dieser
+    Runde gesetzt hat — die Karte selbst bleibt heil.
+
+- [ ] **14.8 Der Dream Defender kämpft** · `BLOCKER`
+  - Ablauf: Eisengolem kaufen und auf den Boden der eigenen Basis setzen, dann einen Gegner
+    hereinlassen
+  - Erwartet: Der Golem greift den Gegner an und bleibt an ihm dran. Teammitglieder rührt er
+    nicht an. Nach vier Minuten verschwindet er.
+
+- [ ] **14.9 Der Golem erstickt nicht** · `WICHTIG`
+  - Ablauf: Das Ei gegen eine Wand klicken statt auf den Boden, und einmal unter einen
+    einen Block hohen Überhang
+  - Erwartet: Er erscheint vor der Wand, nicht in ihr. Wo kein Platz ist, kommt
+    `There is no room for that here.` und das Ei bleibt im Inventar.
+
+- [ ] **14.10 1.8-PvP lässt sich einschalten** · `WICHTIG`
+  - Ablauf: `/bw admin`, `1.8 PvP` anklicken, dann zuschlagen
+  - Erwartet: Kein Ladebalken am Schwert, kein Sweep-Effekt. Ohne den Schalter wie vorher.
+
+---
+
+## 15 — Admin-Inventar und Locator Bar
+
+- [ ] **15.1 Die Locator Bar ist aus** · `BLOCKER`
+  - Ablauf: Mit zwei Spielern auf den Bedwars-Server, über der Hotbar schauen
+  - Erwartet: Keine Leiste, die verrät, wo die anderen stehen.
+
+- [ ] **15.2 `/bw admin` öffnet die Schalter** · `WICHTIG`
+  - Ablauf: `/bw admin`
+  - Erwartet: Sieben Schalter — 1.8 PvP, Locator Bar, Tracker-Kompass, Tag und Nacht,
+    Rohstoffe an den Killer, Hunger, Shop. Klicken schaltet um, das Menü bleibt offen und
+    zeigt sofort den neuen Stand.
+
+- [ ] **15.3 Der Stand überlebt den Neustart** · `NORMAL`
+  - Ablauf: Etwas umschalten, `configs/bedwars/features.yml` ansehen, Server neu starten
+  - Erwartet: Die Datei hat den Wert, und nach dem Neustart steht der Schalter noch so.
+
+- [ ] **15.4 Die Einstellungen sind in der Rundenlobby erreichbar** · `WICHTIG`
+  - Ablauf: Als OP auf den Bedwars-Server, im Warteraum in den letzten Hotbar-Platz greifen
+  - Erwartet: Ein Comparator "Settings". Rechtsklick öffnet dasselbe Menü wie `/bw admin`.
+    Wer kein OP ist und kein `bedwars.admin` hat, bekommt das Item gar nicht erst.
+
+- [ ] **15.5 Auto Start lässt sich abschalten** · `WICHTIG`
+  - Ablauf: Im Menü `Auto Start` ausschalten, dann mit genug Leuten im Warteraum stehen
+  - Erwartet: Kein Countdown. Einmalig die Zeile, dass der automatische Start aus ist. Die
+    Runde beginnt erst auf `/bw start`. Wieder einschalten lässt den Countdown normal laufen.
+
+- [ ] **15.6 Der Kompass ersetzt die Leiste** · `NORMAL`
+  - Ablauf: Im Shop unter Sonstiges den `Tracker Compass` kaufen und in die Hand nehmen
+  - Erwartet: Die Nadel zeigt auf den nächsten Gegner. In der Tasche tut sie nichts.
+
+---
+
+## 16 — Was vorher kaputt war
+
+- [ ] **16.1 Keine `MemorySection`-Nachrichten mehr** · `BLOCKER`
+  - Ablauf: Jemanden töten, ein Bett zerstören, eine Falle auslösen, eine Runde zu Ende
+    spielen
+  - Erwartet: Überall echte Sätze. Nirgends
+    `MemorySection[path='trap.set-off', root='YamlConfiguration']`.
+  - Hinweis: Betraf elf Texte, darunter jede Todesmeldung. Eine alte `messages.yml` wird
+    beim Start selbst repariert — vorhandene Blöcke werden verworfen und neu geschrieben.
+
+- [ ] **16.2 Sauberes Herunterfahren** · `WICHTIG`
+  - Ablauf: Einen Run- oder Bedwars-Server stoppen und die letzten Zeilen lesen
+  - Erwartet: Kein `IllegalStateException: zip file closed` und kein
+    `The plugin classloader for RunPlugin has thrown a zip file error` mehr.
+
+- [ ] **16.3 Das Inventar springt nicht mehr** · `BLOCKER`
+  - Ablauf: Shop öffnen, mehrfach hintereinander kaufen und auf Reiter klicken
+  - Erwartet: Kein Blinken, kein Zurückspringen auf die erste Seite, kein Zurücksetzen unter
+    der Hand. Preise und `Fully upgraded` stimmen sofort.
+
+- [ ] **16.4 In der Lobby tut nichts weh** · `BLOCKER`
+  - Ablauf: Im Hub vom Parkour fallen, in Lava/Feuer laufen falls vorhanden, warten bis der
+    Hunger sinken müsste
+  - Erwartet: Keine Herzen weg, keine Nahrungsanzeige, die leerläuft. Wer unter die Welt
+    fällt, steht wieder am Spawn statt endlos zu fallen. Im Kreativmodus bleibt alles wie
+    vorher — das ist der Bauzustand.
+
+---
+
+## 17 — Bedwars als Event
+
+- [ ] **17.1 Event anlegen** · `WICHTIG`
+  - Ablauf: In der Lobby `/events`, neues Event, Typ auf `Bedwars` klicken
+  - Erwartet: Ein zusätzlicher Knopf `Teamgröße` erscheint (Bett-Symbol) und zählt 1 bis 8
+    durch. Darunter steht der Modus, den das ergibt.
+
+- [ ] **17.2 Das Event startet die Runde** · `BLOCKER`
+  - Ablauf: Start auf `sofort` stellen, anlegen und in der Lobby stehen bleiben
+  - Erwartet: Binnen 15 Sekunden eine Ansage, ein Bedwars-Server wird gestartet, alle in der
+    Lobby werden mitgenommen, sobald er Spieler annimmt.
+
+- [ ] **17.3 Die Teamgröße kommt an** · `WICHTIG`
+  - Ablauf: Auf dem gestarteten Server `/bw status`
+  - Erwartet: Der Modus passt zur eingestellten Teamgröße (1 → solo, 2 → doubles, 3 → trio,
+    ab 4 → quad). Im Log steht `This round belongs to the event '<name>'`.
+
+- [ ] **17.4 Die Bedwars-Lobby ist vor dem Event offen** · `WICHTIG`
+  - Ablauf: Event mit Start in ein paar Minuten anlegen und warten, bis fünf Minuten vorher
+    erreicht sind
+  - Erwartet: In der Lobby erscheint "… startet in Kürze - die Bedwars-Lobby ist offen".
+    Unter `/events` → Event steht ein Knopf "Zur Bedwars-Lobby". Wer ihn drückt, landet im
+    Warteraum der Runde.
+
+- [ ] **17.5 Die Runde wartet auf die Eventzeit** · `BLOCKER`
+  - Ablauf: Früh in die Bedwars-Lobby gehen, dort mit genug Leuten stehen bleiben
+  - Erwartet: Kein Countdown, stattdessen "Waiting for <Event>, which begins in …". Bei 60,
+    30, 20, 15, 10, 5 … Sekunden wird heruntergezählt. Zur Eventzeit läuft der normale
+    Lobby-Countdown los, und die Übriggebliebenen aus dem Hub werden nachgeholt.
+
+- [ ] **17.6 Niemand wird zweimal geschickt** · `NORMAL`
+  - Ablauf: Nach dem Warp zurück in die Lobby, dort eine Minute stehen bleiben
+  - Erwartet: Man wird nicht alle 15 Sekunden erneut hinübergezogen.
+
+---
+
+## 18 — Erklärungen
+
+Jeder Eintrag im Shop, jedes Upgrade, jede Falle und jeder Schalter sagt jetzt, was er tut.
+
+- [ ] **18.1 Shop-Items erklären sich** · `WICHTIG`
+  - Ablauf: Shop öffnen und über jeden Eintrag fahren
+  - Erwartet: Über dem Preis stehen zwei bis fünf Zeilen, die sagen wofür das Item da ist.
+    Dinge, die man nicht sieht, stehen ausdrücklich drin: Glas ist explosionsfest, End Stone
+    fireball-fest, Rüstung und Schere bleiben über den Tod, Schwerter nicht.
+
+- [ ] **18.2 Upgrades und Fallen erklären sich** · `WICHTIG`
+  - Ablauf: Upgrade-Keeper anklicken
+  - Erwartet: Jedes Upgrade sagt, was es dem Team bringt. Jede Falle sagt, wann sie auslöst
+    und was sie beim Gegner macht — und dass Magic Milk dagegen hilft.
+
+- [ ] **18.3 Die Einstellungen erklären sich** · `WICHTIG`
+  - Ablauf: `/bw admin` bzw. das Comparator-Item, über jeden Schalter fahren
+  - Erwartet: Ein Absatz was der Schalter ist, eine Leerzeile, dann was **an** und was **aus**
+    jeweils bedeutet. Unten "Now: On/Off" und "Click to switch it off/on" — nicht mehr nur
+    "Click to switch".
+  - Dieselben Texte stehen als Kommentare in `configs/bedwars/features.yml`.
+
+- [ ] **18.4 Was heißt „Diamond II in 3:20"?** · `WICHTIG`
+  - Ablauf: `/bw timeline`, mit der Maus über eine Zeile fahren
+  - Erwartet: Ein Tooltip mit Name, Zeitpunkt und einem Satz, was dabei passiert. Unter der
+    Liste steht der Hinweis, dass man hovern kann.
+
+- [ ] **18.5 Ereignisse erklären sich beim Auslösen** · `NORMAL`
+  - Ablauf: `/bw timeline skip` durchlaufen lassen
+  - Erwartet: Nach jeder Ankündigung eine graue Zeile, was das Ereignis bedeutet. Bei Bed
+    Destruction also, dass ab jetzt niemand mehr respawnt.
+
+- [ ] **18.6 Die Texte sind änderbar** · `NORMAL`
+  - Ablauf: In `configs/bedwars/shop.yml` bei einem Item die `lore` ändern, `/bw reload`
+  - Erwartet: Der neue Text steht im Shop. Nichts davon ist im Code festgenagelt.
+
+---
+
+## 19 — Der Parkour in der Lobby
+
+Neu und noch nie gelaufen. Es gibt beim ersten Start keine Strecke — die muss gebaut werden.
+
+- [ ] **19.1 Eine Strecke bauen** · `BLOCKER`
+  - Ablauf: Als OP in der Lobby hinstellen und der Reihe nach
+    `/parkour setup test start`, ein Stück laufen, `/parkour setup test checkpoint`,
+    noch ein Stück, `/parkour setup test finish`
+  - Erwartet: Jede Zeile wird bestätigt. Danach liegt `plugins/LobbyPlugin/parkour.yml` mit
+    Start, Checkpoint und Ziel, jeweils mit den Koordinaten, an denen Du standest.
+
+- [ ] **19.2 `/parkour` zeigt die Strecken** · `WICHTIG`
+  - Ablauf: `/parkour`
+  - Erwartet: Die Strecke mit Anzahl Checkpoints, anklickbar zum Starten.
+
+- [ ] **19.3 Der Lauf startet von selbst** · `WICHTIG`
+  - Ablauf: Einfach auf den Startpunkt laufen, ohne Befehl
+  - Erwartet: Titel mit dem Streckennamen und "Los!", darunter die eigene Bestzeit.
+
+- [ ] **19.4 Checkpoints und Reihenfolge** · `BLOCKER`
+  - Ablauf: Über den Checkpoint laufen, dann versuchen, direkt ins Ziel zu springen und dabei
+    den zweiten Checkpoint auszulassen
+  - Erwartet: Der Checkpoint gibt einen Ton und eine Actionbar mit Zwischenzeit. Das Ziel
+    zählt erst, wenn alle Checkpoints hinter Dir liegen — Abkürzen geht nicht.
+
+- [ ] **19.5 Runterfallen kostet nur Zeit** · `WICHTIG`
+  - Ablauf: Mitten im Lauf ins Nichts springen
+  - Erwartet: Zurück am letzten Checkpoint (bzw. am Start), kein Schaden, die Uhr läuft weiter.
+
+- [ ] **19.6 Bestzeit und Bestenliste** · `WICHTIG`
+  - Ablauf: Zweimal ins Ziel, das zweite Mal langsamer; danach `/parkour top test`
+  - Erwartet: Beim ersten Mal "Neue Bestzeit!" und eine Ansage an alle. Beim zweiten Mal
+    bleibt die alte Zeit stehen und es gibt keine Ansage. Die Bestenliste zeigt die schnellere.
+
+- [ ] **19.7 Die Strecke ist sichtbar** · `WICHTIG`
+  - Ablauf: Nach dem Bauen in die Lobby schauen
+  - Erwartet: Über dem Start schwebt Text mit Streckenname, Anzahl Checkpoints und dem
+    aktuellen Rekord. Eine unfertige Strecke sagt das dort auch.
+
+- [ ] **19.8 Bestenliste als Hologramm** · `NORMAL`
+  - Ablauf: `/parkour setup test board`, dann eine Zeit laufen
+  - Erwartet: An der Stelle hängt eine Liste mit den fünf besten Zeiten. Nach einer neuen
+    Bestzeit steht sie sofort drin, ohne Neustart.
+
+- [ ] **19.9 Kein Text bleibt liegen** · `NORMAL`
+  - Ablauf: Lobby-Plugin neu laden bzw. Server neu starten
+  - Erwartet: Keine doppelten Hologramme. Text-Displays sind nicht persistent und werden beim
+    Abschalten zusätzlich aktiv entfernt.
+
+- [ ] **19.10 Der Lauf endet beim Verlassen** · `NORMAL`
+  - Ablauf: Mitten im Lauf `/warp survival`, dann zurück in die Lobby
+  - Erwartet: Kein laufender Lauf mehr, keine absurde Zeit. `/parkour leave` bricht ebenfalls
+    ab und setzt zurück an den Spawn.
 
 ---
 

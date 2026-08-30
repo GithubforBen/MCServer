@@ -91,7 +91,7 @@ public class FileType implements Serializable {
          */
         public static String getVersion(ASSET type) {
             return switch (type) {
-                case BEDWARS_SPEEDWAY -> "1";
+                case BEDWARS_SPEEDWAY -> "3";
             };
         }
 

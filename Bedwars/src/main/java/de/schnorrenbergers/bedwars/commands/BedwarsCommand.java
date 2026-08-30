@@ -3,6 +3,7 @@ package de.schnorrenbergers.bedwars.commands;
 import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.addon.Addon;
 import de.schnorrenbergers.bedwars.addon.AddonRegistry;
+import de.schnorrenbergers.bedwars.admin.AdminMenu;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.api.BedwarsGameEndEvent;
@@ -22,6 +23,8 @@ import de.schnorrenbergers.bedwars.shop.ShopMenu;
 import de.schnorrenbergers.bedwars.shop.upgrade.UpgradeMenu;
 import de.schnorrenbergers.bedwars.util.Messages;
 import de.schnorrenbergers.bedwars.util.Text;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -57,6 +60,7 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "status" -> status(sender);
             case "reload" -> reload(sender);
+            case "admin", "settings" -> admin(sender);
             case "addons" -> addons(sender);
             case "addon" -> addon(sender, args);
             case "start" -> start(sender);
@@ -77,7 +81,7 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
 
     private void usage(CommandSender sender) {
         Messages.send(sender, "command.usage", "usage",
-                "status | setup | start | stop | generators | timeline [skip] | shop | upgrades"
+                "status | setup | start | stop | admin | generators | timeline [skip] | shop | upgrades"
                         + " | stats | watch | reload | addons | addon <id> on|off|default");
     }
 
@@ -188,11 +192,31 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
         for (TimelineEvent event : events) {
             String key = timeline.hasHappened(event) ? "timeline.entry.done"
                     : event.equals(next) ? "timeline.entry.next" : "timeline.entry.waiting";
-            Messages.send(sender, key,
+            sender.sendMessage(explain(event, Messages.get(key,
                     "at", Text.clock(event.seconds()),
                     "event", Text.plain(event.displayName()),
-                    "time", Text.clock(timeline.getSecondsUntilNext()));
+                    "time", Text.clock(timeline.getSecondsUntilNext()))));
         }
+        Messages.send(sender, "timeline.hover-hint");
+    }
+
+    /**
+     * Hangs the description of an event onto its line.
+     * <p>
+     * The sidebar has room for a name and a countdown and nothing else, so a player reads "Diamond II in
+     * 3:20" and learns exactly when something will happen to them without ever learning what. The line
+     * here is the same name, and holding the mouse over it says what it means.
+     *
+     * @param event the event
+     * @param line  the line it is written on
+     * @return that line, with the description as its hover text
+     */
+    private static Component explain(TimelineEvent event, Component line) {
+        if (!event.hasDescription()) return line;
+        return line.hoverEvent(HoverEvent.showText(Messages.get("timeline.hover",
+                "event", Text.plain(event.displayName()),
+                "at", Text.clock(event.seconds()),
+                "description", event.description())));
     }
 
     /**
@@ -312,6 +336,18 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
      * Lists every addon with its state and who decided it - as a menu for somebody who is standing in the
      * lobby, and as text for the console, which is the other place this question is asked from.
      */
+    /**
+     * Opens the switches of the server: 1.8 combat, the locator bar, the sun, and the rest of them.
+     */
+    private void admin(CommandSender sender) {
+        if (denied(sender)) return;
+        if (!(sender instanceof Player player)) {
+            Messages.send(sender, "command.players-only");
+            return;
+        }
+        AdminMenu.open(player);
+    }
+
     private void addons(CommandSender sender) {
         AddonRegistry registry = Bedwars.getInstance().getAddons();
         if (sender instanceof Player player && (player.hasPermission(PERMISSION) || player.isOp())) {
@@ -377,8 +413,8 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                 @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length <= 1) {
-            return filter(List.of("status", "setup", "start", "stop", "generators", "timeline", "shop",
-                            "upgrades", "stats", "watch", "reload", "addons", "addon"),
+            return filter(List.of("status", "setup", "start", "stop", "admin", "generators", "timeline",
+                            "shop", "upgrades", "stats", "watch", "reload", "addons", "addon"),
                     args.length == 0 ? "" : args[0]);
         }
         if (args[0].equalsIgnoreCase("timeline") && args.length == 2) {

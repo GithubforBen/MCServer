@@ -15,6 +15,9 @@ commands:
   bwdebug:
     description: Eine Bedwars Runde starten und hinspringen
     usage: /bwdebug [list|stop <name>]
+  parkour:
+    description: Die Sprungstrecken der Lobby laufen und bauen
+    usage: /parkour [list|start <strecke>|leave|top <strecke>|setup <strecke> start|checkpoint|undo|finish|board|name|delete]
 permissions:
   network.warp.always:
     description: Darf jeden Server jederzeit verlassen

@@ -57,6 +57,8 @@ public final class ShopSettings {
                 "  permanent: the buyer keeps it through a death",
                 "  armor-tier: this entry is an armour level - boots and leggings, worn for good",
                 "  tool / tool-tier: a step of a tool chain, which falls back one step when the buyer dies",
+                "     the shop shows one button per chain: the step the buyer may buy next.",
+                "     Swords and armour are not chains - every level of those is bought on its own",
                 "  sword: buying it takes the sword the buyer already carries",
                 "  lifetime-seconds: how long what a spawn egg summons stays around",
                 "  slot: where it sits on the page, -1 fills the page from the top left");
@@ -69,44 +71,100 @@ public final class ShopSettings {
 
     private void writeDefaults() {
         category("blocks", "<white>Blocks", Material.TERRACOTTA, 2);
-        teamBlock(item("blocks", "wool", Material.WHITE_WOOL, 16, Currency.IRON, 4, "<white>Wool"), "WOOL");
-        teamBlock(item("blocks", "terracotta", Material.TERRACOTTA, 16, Currency.IRON, 12,
-                "<white>Hardened Clay"), "TERRACOTTA");
-        teamBlock(item("blocks", "glass", Material.GLASS, 4, Currency.IRON, 12,
-                "<white>Blast-Proof Glass"), "GLASS");
-        item("blocks", "end-stone", Material.END_STONE, 12, Currency.IRON, 24, "<white>End Stone");
-        item("blocks", "ladder", Material.LADDER, 8, Currency.IRON, 4, "<white>Ladder");
-        item("blocks", "planks", Material.OAK_PLANKS, 16, Currency.GOLD, 4, "<white>Oak Planks");
-        item("blocks", "obsidian", Material.OBSIDIAN, 4, Currency.EMERALD, 4, "<white>Obsidian");
+        teamBlock(lore(item("blocks", "wool", Material.WHITE_WOOL, 16, Currency.IRON, 4, "<white>Wool"),
+                "<gray>The cheapest way across a gap.",
+                "<gray>Comes in your team's colour, so",
+                "<gray>everybody can see whose bridge it is.",
+                "<red>Burns, and breaks in seconds."), "WOOL");
+        teamBlock(lore(item("blocks", "terracotta", Material.TERRACOTTA, 16, Currency.IRON, 12,
+                "<white>Hardened Clay"),
+                "<gray>Three times the iron of wool and worth it:",
+                "<gray>it takes real time to break through",
+                "<gray>and it does not burn."), "TERRACOTTA");
+        teamBlock(lore(item("blocks", "glass", Material.GLASS, 4, Currency.IRON, 12,
+                "<white>Blast-Proof Glass"),
+                "<gray>No explosion touches it - not tnt,",
+                "<gray>not a fireball.",
+                "<gray>Four blocks around a bed are four blocks",
+                "<gray>nobody blows their way through."), "GLASS");
+        lore(item("blocks", "end-stone", Material.END_STONE, 12, Currency.IRON, 24, "<white>End Stone"),
+                "<gray>Slow to mine and immune to fireballs.",
+                "<gray>The block a defence is actually built of.");
+        lore(item("blocks", "ladder", Material.LADDER, 8, Currency.IRON, 4, "<white>Ladder"),
+                "<gray>Straight up, or straight down without",
+                "<gray>the fall. Cheap and unnoticed.");
+        lore(item("blocks", "planks", Material.OAK_PLANKS, 16, Currency.GOLD, 4, "<white>Oak Planks"),
+                "<gray>Survives an explosion where wool does not,",
+                "<gray>and goes down fast enough to be placed",
+                "<gray>in the middle of a fight.");
+        lore(item("blocks", "obsidian", Material.OBSIDIAN, 4, Currency.EMERALD, 4, "<white>Obsidian"),
+                "<gray>The last word in defence.",
+                "<gray>Only a diamond pickaxe gets through it,",
+                "<gray>and not quickly.");
 
         category("melee", "<red>Melee", Material.GOLDEN_SWORD, 3);
-        sword(item("melee", "stone-sword", Material.STONE_SWORD, 1, Currency.IRON, 10, "<white>Stone Sword"));
-        sword(item("melee", "iron-sword", Material.IRON_SWORD, 1, Currency.GOLD, 7, "<white>Iron Sword"));
-        sword(item("melee", "diamond-sword", Material.DIAMOND_SWORD, 1, Currency.EMERALD, 4,
-                "<white>Diamond Sword"));
-        enchant(item("melee", "knockback-stick", Material.STICK, 1, Currency.GOLD, 5,
-                "<white>Stick <gray>(Knockback I)"), "KNOCKBACK:1");
+        // no chain: a sword is bought outright, and whichever one you can afford is the one you get.
+        // A death costs it entirely - what comes back is the wooden sword of the starting kit
+        sword(lore(item("melee", "stone-sword", Material.STONE_SWORD, 1, Currency.IRON, 10,
+                "<white>Stone Sword"),
+                "<gray>The first upgrade anybody buys.",
+                "<red>Lost on death - you start again",
+                "<red>with the wooden one."));
+        sword(lore(item("melee", "iron-sword", Material.IRON_SWORD, 1, Currency.GOLD, 7,
+                "<white>Iron Sword"),
+                "<gray>Enough to win a fight against anybody",
+                "<gray>who spent their gold on something else.",
+                "<red>Lost on death."));
+        sword(lore(item("melee", "diamond-sword", Material.DIAMOND_SWORD, 1, Currency.EMERALD, 4,
+                "<white>Diamond Sword"),
+                "<gray>The best there is. Four emeralds is",
+                "<gray>most of a trip to the middle.",
+                "<red>Lost on death, so carry it carefully."));
+        enchant(lore(item("melee", "knockback-stick", Material.STICK, 1, Currency.GOLD, 5,
+                "<white>Stick <gray>(Knockback I)"),
+                "<gray>Does almost no damage and wins fights",
+                "<gray>anyway: it throws people off bridges.",
+                "<gray>The void does not care about armour."), "KNOCKBACK:1");
 
         category("armor", "<aqua>Armor", Material.CHAINMAIL_BOOTS, 4);
-        armor(item("armor", "chainmail-armor", Material.CHAINMAIL_BOOTS, 1, Currency.IRON, 40,
-                "<white>Chainmail Armor"), 1);
-        armor(item("armor", "iron-armor", Material.IRON_BOOTS, 1, Currency.GOLD, 12,
-                "<white>Iron Armor"), 2);
-        armor(item("armor", "diamond-armor", Material.DIAMOND_BOOTS, 1, Currency.EMERALD, 6,
-                "<white>Diamond Armor"), 3);
+        armor(lore(item("armor", "chainmail-armor", Material.CHAINMAIL_BOOTS, 1, Currency.IRON, 40,
+                "<white>Chainmail Armor"),
+                "<green>Kept for the whole round, deaths included.",
+                "<gray>Boots and leggings. The chestplate stays",
+                "<gray>your team's leather so people can still",
+                "<gray>tell whose side you are on."), 1);
+        armor(lore(item("armor", "iron-armor", Material.IRON_BOOTS, 1, Currency.GOLD, 12,
+                "<white>Iron Armor"),
+                "<green>Kept for the whole round, deaths included.",
+                "<gray>Bought outright - you do not have to",
+                "<gray>own the chainmail first."), 2);
+        armor(lore(item("armor", "diamond-armor", Material.DIAMOND_BOOTS, 1, Currency.EMERALD, 6,
+                "<white>Diamond Armor"),
+                "<green>Kept for the whole round, deaths included.",
+                "<gray>Six emeralds once, and every fight for",
+                "<gray>the rest of the round is easier."), 3);
 
         category("tools", "<yellow>Tools", Material.STONE_PICKAXE, 5);
-        permanent(item("tools", "shears", Material.SHEARS, 1, Currency.IRON, 20, "<white>Shears"));
-        tool(enchant(item("tools", "wooden-pickaxe", Material.WOODEN_PICKAXE, 1, Currency.IRON, 10,
-                "<white>Wooden Pickaxe"), "EFFICIENCY:1"), "pickaxe", 1);
+        permanent(lore(item("tools", "shears", Material.SHEARS, 1, Currency.IRON, 20, "<white>Shears"),
+                "<green>Kept for the whole round, deaths included.",
+                "<gray>Takes wool down instantly. Twenty iron once,",
+                "<gray>and every wool defence stops mattering."));
+        tool(enchant(lore(item("tools", "wooden-pickaxe", Material.WOODEN_PICKAXE, 1, Currency.IRON, 10,
+                "<white>Wooden Pickaxe"),
+                "<gray>Step one of the pickaxe. Buy it again and",
+                "<gray>the same button hands you the next one.",
+                "<yellow>A death costs one step, never this one."), "EFFICIENCY:1"), "pickaxe", 1);
         tool(enchant(item("tools", "iron-pickaxe", Material.IRON_PICKAXE, 1, Currency.IRON, 10,
                 "<white>Iron Pickaxe"), "EFFICIENCY:2"), "pickaxe", 2);
         tool(enchant(item("tools", "golden-pickaxe", Material.GOLDEN_PICKAXE, 1, Currency.GOLD, 3,
                 "<white>Golden Pickaxe"), "EFFICIENCY:3"), "pickaxe", 3);
         tool(enchant(item("tools", "diamond-pickaxe", Material.DIAMOND_PICKAXE, 1, Currency.GOLD, 6,
                 "<white>Diamond Pickaxe"), "EFFICIENCY:3"), "pickaxe", 4);
-        tool(enchant(item("tools", "wooden-axe", Material.WOODEN_AXE, 1, Currency.IRON, 10,
-                "<white>Wooden Axe"), "EFFICIENCY:1"), "axe", 1);
+        tool(enchant(lore(item("tools", "wooden-axe", Material.WOODEN_AXE, 1, Currency.IRON, 10,
+                "<white>Wooden Axe"),
+                "<gray>Step one of the axe, for wood and wool.",
+                "<gray>Upgrades through the same button.",
+                "<yellow>A death costs one step, never this one."), "EFFICIENCY:1"), "axe", 1);
         tool(enchant(item("tools", "stone-axe", Material.STONE_AXE, 1, Currency.IRON, 10,
                 "<white>Stone Axe"), "EFFICIENCY:1"), "axe", 2);
         tool(enchant(item("tools", "iron-axe", Material.IRON_AXE, 1, Currency.GOLD, 3,
@@ -115,25 +173,81 @@ public final class ShopSettings {
                 "<white>Diamond Axe"), "EFFICIENCY:3"), "axe", 4);
 
         category("potions", "<light_purple>Potions", Material.BREWING_STAND, 6);
-        effect(item("potions", "speed-potion", Material.POTION, 1, Currency.EMERALD, 1,
-                "<white>Speed II Potion <gray>(45s)"), "SPEED:1:45");
-        effect(item("potions", "jump-potion", Material.POTION, 1, Currency.EMERALD, 1,
-                "<white>Jump V Potion <gray>(45s)"), "JUMP_BOOST:4:45");
-        effect(item("potions", "invisibility-potion", Material.POTION, 1, Currency.EMERALD, 2,
-                "<white>Invisibility Potion <gray>(30s)"), "INVISIBILITY:0:30");
+        effect(lore(item("potions", "speed-potion", Material.POTION, 1, Currency.EMERALD, 1,
+                "<white>Speed II Potion <gray>(45s)"),
+                "<gray>Forty-five seconds of outrunning everybody.",
+                "<gray>Bought for the trip to the middle, or for",
+                "<gray>getting out of one that went wrong."), "SPEED:1:45");
+        effect(lore(item("potions", "jump-potion", Material.POTION, 1, Currency.EMERALD, 1,
+                "<white>Jump V Potion <gray>(45s)"),
+                "<gray>Jump onto anything, and take no fall damage",
+                "<gray>getting down again.",
+                "<gray>Crosses gaps that have no bridge."), "JUMP_BOOST:4:45");
+        effect(lore(item("potions", "invisibility-potion", Material.POTION, 1, Currency.EMERALD, 2,
+                "<white>Invisibility Potion <gray>(30s)"),
+                "<gray>Thirty seconds of not being there.",
+                "<red>Your armour still shows. Take it off first",
+                "<red>or you are a floating set of boots."), "INVISIBILITY:0:30");
 
         category("utility", "<green>Utility", Material.TNT, 7);
-        item("utility", "golden-apple", Material.GOLDEN_APPLE, 1, Currency.GOLD, 3, "<white>Golden Apple");
-        item("utility", "fireball", Material.FIRE_CHARGE, 1, Currency.IRON, 40, "<white>Fireball");
-        item("utility", "tnt", Material.TNT, 1, Currency.GOLD, 8, "<white>TNT");
-        item("utility", "ender-pearl", Material.ENDER_PEARL, 1, Currency.EMERALD, 4, "<white>Ender Pearl");
-        item("utility", "water-bucket", Material.WATER_BUCKET, 1, Currency.EMERALD, 3, "<white>Water Bucket");
-        item("utility", "magic-milk", Material.MILK_BUCKET, 1, Currency.GOLD, 4, "<white>Magic Milk");
-        item("utility", "sponge", Material.SPONGE, 4, Currency.GOLD, 3, "<white>Sponge");
-        lifetime(item("utility", "bedbug", Material.SILVERFISH_SPAWN_EGG, 1, Currency.EMERALD, 2,
-                "<white>Bedbug"), 15);
-        lifetime(item("utility", "dream-defender", Material.IRON_GOLEM_SPAWN_EGG, 1, Currency.IRON, 120,
-                "<white>Dream Defender"), 240);
+        lore(item("utility", "golden-apple", Material.GOLDEN_APPLE, 1, Currency.GOLD, 3,
+                "<white>Golden Apple"),
+                "<gray>Eaten mid fight: four hearts back and two",
+                "<gray>extra on top for two minutes.",
+                "<gray>The cheapest way to survive a rush.");
+        lore(item("utility", "fireball", Material.FIRE_CHARGE, 1, Currency.IRON, 40, "<white>Fireball"),
+                "<gray>Right click to throw. Flies straight,",
+                "<gray>explodes on contact and sets nothing alight.",
+                "<gray>Breaks what players built - never the map,",
+                "<gray>never glass, never end stone.",
+                "<yellow>It will not hurt your own team.");
+        lore(item("utility", "tnt", Material.TNT, 1, Currency.GOLD, 8, "<white>TNT"),
+                "<gray>Lights itself the moment it is placed.",
+                "<gray>Two seconds, then a hole big enough to",
+                "<gray>walk through.",
+                "<red>Blast-proof glass stops it dead.");
+        lore(item("utility", "ender-pearl", Material.ENDER_PEARL, 1, Currency.EMERALD, 4,
+                "<white>Ender Pearl"),
+                "<gray>Straight into a base, over every defence.",
+                "<gray>Or straight out of one.",
+                "<yellow>A few seconds between two throws, so it is",
+                "<yellow>an escape rather than a way of travelling.");
+        lore(item("utility", "water-bucket", Material.WATER_BUCKET, 1, Currency.EMERALD, 3,
+                "<white>Water Bucket"),
+                "<gray>Poured down a wall it stops anybody",
+                "<gray>climbing it, and it takes the blast out",
+                "<gray>of tnt placed in it.",
+                "<gray>Also a way down that does not hurt.");
+        lore(item("utility", "magic-milk", Material.MILK_BUCKET, 1, Currency.GOLD, 4,
+                "<white>Magic Milk"),
+                "<gray>Drink it and the traps of every base ignore",
+                "<gray>you for a while.",
+                "<gray>What you drink before you go rushing.",
+                "<green>Your own potions are not washed off.");
+        // what is left of the locator bar once it is switched off: the same information, but it costs
+        // something, it has to be held in a hand that could be holding a sword, and every team it is
+        // pointed at costs another emerald
+        permanent(lore(item("utility", "tracker-compass", Material.COMPASS, 1, Currency.EMERALD, 1,
+                "<white>Tracker Compass"),
+                "<green>Kept for the whole round, deaths included.",
+                "<gray>Hold it and the needle points at the",
+                "<gray>nearest player of the team you picked.",
+                "<gray>Right click to point it at another team.",
+                "<yellow>One emerald per team, the first time only."));
+        lore(item("utility", "sponge", Material.SPONGE, 4, Currency.GOLD, 3, "<white>Sponge"),
+                "<gray>Drinks a water defence up so you can walk",
+                "<gray>through where somebody poured one.");
+        lifetime(lore(item("utility", "bedbug", Material.SILVERFISH_SPAWN_EGG, 1, Currency.EMERALD, 2,
+                "<white>Bedbug"),
+                "<gray>A silverfish on your side for fifteen seconds.",
+                "<gray>It does little damage and takes up all of",
+                "<gray>somebody's attention, which is the point."), 15);
+        lifetime(lore(item("utility", "dream-defender", Material.IRON_GOLEM_SPAWN_EGG, 1, Currency.IRON, 120,
+                "<white>Dream Defender"),
+                "<gray>An iron golem that guards your base for",
+                "<gray>four minutes and hits very hard.",
+                "<gray>It never turns on your own team.",
+                "<yellow>Needs room: it is three blocks tall."), 240);
     }
 
     /**
@@ -166,6 +280,22 @@ public final class ShopSettings {
         file.get(path + ".team-block", family);
     }
 
+    /**
+     * Writes what an entry is for, above its price.
+     * <p>
+     * Every entry has one. A shop where half the items are self explanatory and the other half are not is
+     * a shop you have to be told about by somebody who already knows it - and the ones that are not self
+     * explanatory are exactly the ones that decide rounds.
+     *
+     * @param path  the entry
+     * @param lines what it does, MiniMessage
+     * @return the path, so this chains onto the call that created the entry
+     */
+    private String lore(String path, String... lines) {
+        if (!file.contains(path + ".lore")) file.set(path + ".lore", List.of(lines));
+        return path;
+    }
+
     private String enchant(String path, String... enchantments) {
         if (!file.contains(path + ".enchantments")) file.set(path + ".enchantments", List.of(enchantments));
         return path;
@@ -194,6 +324,10 @@ public final class ShopSettings {
 
     private void sword(String path) {
         file.get(path + ".sword", true);
+        // an earlier version wrote the swords into the file as a tool chain, which turned the three of
+        // them into one button that had to be climbed. They are not a chain, so the keys go again
+        file.set(path + ".tool", null);
+        file.set(path + ".tool-tier", null);
     }
 
     // ------------------------------------------------------------------ reading

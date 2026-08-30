@@ -59,7 +59,7 @@ public final class UpgradeMenu {
         drawQueue(menu, settings, team);
         drawUpgrades(menu, settings, player, buyer, team);
         drawTraps(menu, settings, player, buyer, team);
-        player.openInventory(menu.getInventory());
+        CustomInventory.show(player, menu);
     }
 
     /**
@@ -119,7 +119,6 @@ public final class UpgradeMenu {
             }
             menu.setItem(slot, icon(upgrade.icon(), Text.item(upgrade.displayName()), lore),
                     new SimpleItemAction(event -> {
-                        event.getWhoClicked().closeInventory();
                         if (maxed) return;
                         act(player, () -> Bedwars.getInstance().getUpgrades()
                                 .buy(Bedwars.getInstance().getGame(), buyer, upgrade));
@@ -155,7 +154,6 @@ public final class UpgradeMenu {
             }
             menu.setItem(slot, icon(trap.icon(), Text.item(trap.displayName()), lore),
                     new SimpleItemAction(event -> {
-                        event.getWhoClicked().closeInventory();
                         if (full) return;
                         act(player, () -> Bedwars.getInstance().getTraps()
                                 .buy(Bedwars.getInstance().getGame(), buyer, trap));
@@ -164,15 +162,16 @@ public final class UpgradeMenu {
     }
 
     /**
-     * Runs a purchase and opens the menu again, so the queue and the levels are up to date.
+     * Runs a purchase and redraws the menu, so the queue and the levels are up to date.
+     * <p>
+     * Redrawn into the screen that is already open rather than reopened - closing a menu the player is
+     * still standing in front of is what made every click of it flicker.
      */
     private static void act(Player player, Runnable purchase) {
         Game game = Bedwars.getInstance().getGame();
         if (!game.isRunning()) return;
         purchase.run();
-        Bukkit.getScheduler().runTask(Bedwars.getInstance(), () -> {
-            if (player.isOnline()) open(player);
-        });
+        open(player);
     }
 
     /**

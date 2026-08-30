@@ -53,13 +53,26 @@ public final class TimelineSettings {
     }
 
     private void writeDefaults() {
-        generator("diamond-2", "<aqua>Diamond II", 360, "DIAMOND", 2);
-        generator("emerald-2", "<green>Emerald II", 720, "EMERALD", 2);
-        generator("diamond-3", "<aqua>Diamond III", 1080, "DIAMOND", 3);
-        generator("emerald-3", "<green>Emerald III", 1440, "EMERALD", 3);
-        event("bed-destruction", "<red>Bed Destruction", 1800, TimelineEvent.Action.BED_DESTRUCTION);
-        event("sudden-death", "<dark_red>Sudden Death", 2400, TimelineEvent.Action.SUDDEN_DEATH);
-        event("game-end", "<gold>Game End", 3000, TimelineEvent.Action.GAME_END);
+        generator("diamond-2", "<aqua>Diamond II", 360, "DIAMOND", 2,
+                "The diamond generators in the middle start dropping faster. Holding the middle is worth"
+                        + " more from here on than it was before.");
+        generator("emerald-2", "<green>Emerald II", 720, "EMERALD", 2,
+                "The emerald generators speed up. Emeralds buy the armour and the diamond sword, so this"
+                        + " is when fights start being decided by what people are wearing.");
+        generator("diamond-3", "<aqua>Diamond III", 1080, "DIAMOND", 3,
+                "Diamonds again, faster still. Team upgrades that were out of reach are now affordable.");
+        generator("emerald-3", "<green>Emerald III", 1440, "EMERALD", 3,
+                "Emeralds at their fastest. This is the last thing that makes anybody stronger before"
+                        + " the beds fall.");
+        event("bed-destruction", "<red>Bed Destruction", 1800, TimelineEvent.Action.BED_DESTRUCTION,
+                "Every bed still standing is destroyed at once. From here nobody respawns: one death and"
+                        + " you are out of the round for good.");
+        event("sudden-death", "<dark_red>Sudden Death", 2400, TimelineEvent.Action.SUDDEN_DEATH,
+                "A dragon appears over the middle for every team that is still alive, and it hunts"
+                        + " everybody who is not on its own team. Rounds do not last long after this.");
+        event("game-end", "<gold>Game End", 3000, TimelineEvent.Action.GAME_END,
+                "The hard time limit. The round stops and is decided on points: ten for a bed, five for"
+                        + " a final kill, one for an ordinary kill. A tie at the top means nobody won.");
 
         file.section("sudden-death", "The dragons of the sudden death event.");
         file.get("sudden-death.dragons-per-team", 1,
@@ -70,7 +83,7 @@ public final class TimelineSettings {
                 "How much health one dragon has. 200 is what a vanilla dragon has.");
         file.get("sudden-death.height", 25,
                 "How far above the middle of the map the dragons appear.");
-        file.get("sudden-death.radius", 60.0d,
+        file.get("sudden-death.radius", 140.0d,
                 "How far a dragon may drift from the middle before it is put back.",
                 "Without this they wander off across the void and the event is over without a fight.");
 
@@ -86,18 +99,26 @@ public final class TimelineSettings {
     /**
      * Writes one generator step, without touching what is already in the file.
      */
-    private void generator(String id, String displayName, int seconds, String type, int tier) {
+    private void generator(String id, String displayName, int seconds, String type, int tier,
+                           String description) {
         String path = "events." + id;
-        event(id, displayName, seconds, TimelineEvent.Action.GENERATOR_TIER);
+        event(id, displayName, seconds, TimelineEvent.Action.GENERATOR_TIER, description);
         file.get(path + ".generator", type);
         file.get(path + ".tier", tier);
     }
 
-    private void event(String id, String displayName, int seconds, TimelineEvent.Action action) {
+    /**
+     * @param description what the event means in plain words. The sidebar has room for a name and a
+     *                    countdown and nothing else, so "Diamond II in 3:20" tells a player when
+     *                    something happens without ever telling them what - this is where that goes.
+     */
+    private void event(String id, String displayName, int seconds, TimelineEvent.Action action,
+                       String description) {
         String path = "events." + id;
         file.get(path + ".at", seconds);
         file.get(path + ".display-name", displayName);
         file.get(path + ".action", action.name());
+        file.get(path + ".description", description);
     }
 
     // ------------------------------------------------------------------ reading
@@ -107,6 +128,7 @@ public final class TimelineSettings {
             String path = "events." + id;
             events.add(new TimelineEvent(id,
                     file.read(path + ".display-name", id),
+                    file.read(path + ".description", ""),
                     Math.max(0, file.read(path + ".at", 0)),
                     TimelineEvent.Action.byName(file.read(path + ".action",
                             TimelineEvent.Action.ANNOUNCE.name())),
@@ -121,7 +143,7 @@ public final class TimelineSettings {
         dragonBuffDragons = Math.max(0, file.read("sudden-death.dragon-buff-dragons", 1));
         dragonHealth = Math.max(1.0d, file.read("sudden-death.health", 200.0d));
         dragonHeight = Math.max(0, file.read("sudden-death.height", 25));
-        dragonRadius = Math.max(8.0d, file.read("sudden-death.radius", 60.0d));
+        dragonRadius = Math.max(8.0d, file.read("sudden-death.radius", 140.0d));
         weights = new Standings.Weights(
                 file.read("points.bed", 10),
                 file.read("points.final-kill", 5),

@@ -8,8 +8,13 @@ import org.bukkit.configuration.ConfigurationSection;
  */
 public class TeamSpot {
 
-    /** How far from the spawn nobody but the team may build, when the map does not say. */
-    public static final int DEFAULT_PROTECTION = 8;
+    /**
+     * How far from the spawn nobody but the team may build, when the map does not say.
+     * <p>
+     * Small on purpose: this is the spawn platform, not the base. A radius that covers the whole island
+     * keeps an enemy from building anywhere in it, which takes away both the rush and the defence.
+     */
+    public static final int DEFAULT_PROTECTION = 4;
 
     private final TeamColor color;
 

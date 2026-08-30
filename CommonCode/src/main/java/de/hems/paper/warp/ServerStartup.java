@@ -104,7 +104,21 @@ public final class ServerStartup {
      * @param name   the name of the server
      */
     public static void warpWhenReady(Player player, String name) {
-        Set<UUID> waiting = idsOf(List.of(player));
+        warpWhenReady(List.of(player), name);
+    }
+
+    /**
+     * Warps a group to a server that is already on its way up, waiting for it rather than failing.
+     * <p>
+     * Unlike {@link #ensureAndWarp} this never starts anything: it is for a server somebody else has
+     * already ordered, and a server that never comes up is given up on rather than started again.
+     *
+     * @param players who is going
+     * @param name    the name of the server
+     */
+    public static void warpWhenReady(Collection<? extends Player> players, String name) {
+        Set<UUID> waiting = idsOf(players);
+        if (waiting.isEmpty()) return;
         PaperContext.async(() -> awaitAndWarp(waiting, name));
     }
 

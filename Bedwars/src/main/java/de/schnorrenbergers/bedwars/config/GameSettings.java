@@ -28,6 +28,11 @@ public final class GameSettings {
     private boolean resourcesToKiller;
     private int respawnProtectionSeconds;
     private int enderPearlCooldownSeconds;
+    private java.util.List<String> blastProof;
+    private java.util.List<String> fireballProof;
+    private double fireballDamageCap;
+    private float fireballPower;
+    private float tntPower;
     private boolean keepPlayingWhenOffline;
     private boolean statsEnabled;
     private String statsDirectory;
@@ -84,6 +89,29 @@ public final class GameSettings {
         keepPlayingWhenOffline = file.get("death.keep-place-when-offline", true,
                 "Whether somebody who leaves while their bed still stands keeps their place in the round",
                 "and can come back into it. With no bed left, leaving is always final.");
+        blastProof = file.raw().getStringList("explosions.blast-proof");
+        if (blastProof.isEmpty()) {
+            blastProof = java.util.List.of("GLASS", "STAINED_GLASS", "GLASS_PANE");
+            file.set("explosions.blast-proof", blastProof);
+            file.raw().setComments("explosions", java.util.List.of(
+                    "What survives an explosion, and how hard the two of them hit.",
+                    "The entries are matched against the end of a block's name, so 'GLASS' covers every",
+                    "colour of stained glass as well - which is what makes the blast-proof glass of the",
+                    "shop worth its twelve iron."));
+        }
+        fireballProof = file.raw().getStringList("explosions.fireball-proof");
+        if (fireballProof.isEmpty()) {
+            fireballProof = java.util.List.of("END_STONE");
+            file.set("explosions.fireball-proof", fireballProof);
+        }
+        fireballPower = (float) Math.max(0.5d, file.get("explosions.fireball-power", 2.5d,
+                "How big the hole a fireball makes is."));
+        tntPower = (float) Math.max(0.5d, file.get("explosions.tnt-power", 6.0d,
+                "And how big the one tnt makes is. Vanilla tnt is 4."));
+        fireballDamageCap = Math.max(0.0d, file.get("explosions.fireball-damage-cap", 5.0d,
+                "The most a single fireball may take off a player, in half hearts.",
+                "The blast still knocks them about - it just does not delete them."));
+
         statsEnabled = file.get("stats.enabled", true,
                 "Whether the numbers of the round are written down when it ends.");
         statsDirectory = file.get("stats.directory", "./stats",
@@ -162,6 +190,50 @@ public final class GameSettings {
 
     public boolean isStopServerWhenDone() {
         return stopServerWhenDone;
+    }
+
+    /**
+     * @param material a block that an explosion wants to take
+     * @return whether it survives any explosion at all
+     */
+    public boolean isBlastProof(org.bukkit.Material material) {
+        return matches(blastProof, material);
+    }
+
+    /**
+     * @param material a block that a fireball wants to take
+     * @return whether it survives a fireball, though not necessarily tnt
+     */
+    public boolean isFireballProof(org.bukkit.Material material) {
+        return matches(fireballProof, material);
+    }
+
+    /**
+     * @param names    what the config listed
+     * @param material the block
+     * @return whether the block's name ends with any of them
+     */
+    private static boolean matches(java.util.List<String> names, org.bukkit.Material material) {
+        String name = material.name();
+        for (String entry : names) {
+            if (!entry.isBlank() && name.endsWith(entry.toUpperCase(java.util.Locale.ROOT))) return true;
+        }
+        return false;
+    }
+
+    public float getFireballPower() {
+        return fireballPower;
+    }
+
+    public float getTntPower() {
+        return tntPower;
+    }
+
+    /**
+     * @return the most a fireball may take off one player, in half hearts
+     */
+    public double getFireballDamageCap() {
+        return fireballDamageCap;
     }
 
     public int getGeneratorRadius() {

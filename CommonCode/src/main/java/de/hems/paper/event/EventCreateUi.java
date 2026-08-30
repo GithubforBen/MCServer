@@ -4,6 +4,7 @@ import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.paper.util.ChatPrompt;
+import de.hems.types.event.BedwarsEventSettings;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
 import org.bukkit.ChatColor;
@@ -87,6 +88,22 @@ public final class EventCreateUi {
                     draft.setType(nextType);
                     player.openInventory(build(player, draft, startOffsetMin, durationMin).getInventory());
                 }));
+
+        // only bedwars has anything to set here so far, and a button that does nothing on five of six
+        // types is worse than one that appears when it means something
+        if (draft.getType() == EventType.BEDWARS) {
+            BedwarsEventSettings bedwars = new BedwarsEventSettings(draft);
+            int size = bedwars.getTeamSize();
+            int nextSize = size >= BedwarsEventSettings.MAX_TEAM_SIZE ? 1 : size + 1;
+            ui.setItem(13, new ItemApi(Material.RED_BED, ChatColor.GOLD + "Teamgröße",
+                    List.of(ChatColor.GRAY + "Aktuell: " + ChatColor.WHITE + size + " pro Team",
+                            ChatColor.GRAY + "Modus: " + ChatColor.WHITE + bedwars.getMode(),
+                            ChatColor.GRAY + "Klicken für: " + nextSize + " pro Team")).build(),
+                    new SimpleItemAction(click -> {
+                        new BedwarsEventSettings(draft).setTeamSize(nextSize);
+                        player.openInventory(build(player, draft, startOffsetMin, durationMin).getInventory());
+                    }));
+        }
 
         long nextStart = nextValue(START_OFFSETS_MINUTES, startOffsetMin);
         ui.setItem(14, new ItemApi(Material.CLOCK, ChatColor.GOLD + "Start",

@@ -2,6 +2,7 @@ package de.schnorrenbergers.bedwars.lobby;
 
 import de.hems.api.ItemApi;
 import de.schnorrenbergers.bedwars.Bedwars;
+import de.schnorrenbergers.bedwars.admin.AdminMenu;
 import de.schnorrenbergers.bedwars.game.Equipment;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
@@ -41,8 +42,12 @@ public class LobbyListener implements Listener {
     /** Marks the item that opens the team menu, so it is recognised however it was renamed. */
     private static final NamespacedKey ITEM_KEY = new NamespacedKey("bedwars", "lobby-item");
     private static final String TEAM_ITEM = "team";
+    /** Marks the item that opens the server settings, which only an admin is given. */
+    private static final String SETTINGS_ITEM = "settings";
     /** Where the wool sits in the hotbar. */
     private static final int TEAM_ITEM_SLOT = 0;
+    /** And where the settings sit, at the other end of it. */
+    private static final int SETTINGS_ITEM_SLOT = 8;
 
     private final Plugin plugin;
 
@@ -97,6 +102,10 @@ public class LobbyListener implements Listener {
         player.setGameMode(GameMode.ADVENTURE);
         Equipment.reset(player, lobby);
         player.getInventory().setItem(TEAM_ITEM_SLOT, teamItem());
+        // the switches within reach of the person running the round, rather than only through a command:
+        // the settings that matter - 1.8 combat, the automatic start - are decided while everybody is
+        // standing in the lobby waiting, which is exactly when a command is the most awkward way to do it
+        if (mayAdminister(player)) player.getInventory().setItem(SETTINGS_ITEM_SLOT, settingsItem());
         if (game != null && game.getMode().getTeamCount() > 0) player.getInventory().setHeldItemSlot(TEAM_ITEM_SLOT);
     }
 
@@ -121,9 +130,54 @@ public class LobbyListener implements Listener {
      */
     private static ItemStack teamItem() {
         ItemStack item = new ItemApi(Material.WHITE_WOOL,
-                LegacyComponentSerializer.legacySection().serialize(Messages.get("lobby.select.item"))).build();
+                legacy(Messages.get("lobby.select.item")), lore("lobby.select.lore")).build();
         item.editMeta(meta -> meta.getPersistentDataContainer().set(ITEM_KEY, PersistentDataType.STRING, TEAM_ITEM));
         return item;
+    }
+
+    /**
+     * @param component a message
+     * @return it in the old colour codes, which is what {@link ItemApi} takes
+     */
+    private static String legacy(net.kyori.adventure.text.Component component) {
+        return LegacyComponentSerializer.legacySection().serialize(component);
+    }
+
+    /**
+     * Reads a tooltip out of {@code messages.yml}.
+     * <p>
+     * One key with pipes in it rather than a key per line: the number of lines is part of the wording, and
+     * splitting it across {@code lore-1}, {@code lore-2} and {@code lore-3} makes rewording it a change to
+     * the code rather than to the file.
+     *
+     * @param key the message
+     * @return its lines
+     */
+    private static java.util.List<String> lore(String key) {
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        for (String line : Messages.raw(key).split("\\|")) {
+            lines.add(legacy(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(line)));
+        }
+        return lines;
+    }
+
+    /**
+     * @return the comparator that opens the server settings
+     */
+    private static ItemStack settingsItem() {
+        ItemStack item = new ItemApi(Material.COMPARATOR,
+                legacy(Messages.get("lobby.settings-item")), lore("lobby.settings-lore")).build();
+        item.editMeta(meta -> meta.getPersistentDataContainer()
+                .set(ITEM_KEY, PersistentDataType.STRING, SETTINGS_ITEM));
+        return item;
+    }
+
+    /**
+     * @param player who is asking
+     * @return whether they are allowed to change how the round is played
+     */
+    private static boolean mayAdminister(Player player) {
+        return player.isOp() || player.hasPermission("bedwars.admin");
     }
 
     // ------------------------------------------------------------------ the wool
@@ -134,12 +188,15 @@ public class LobbyListener implements Listener {
         if (game == null || !game.isWaiting()) return;
         ItemStack item = event.getItem();
         if (item == null || item.getItemMeta() == null) return;
-        if (!TEAM_ITEM.equals(item.getItemMeta().getPersistentDataContainer()
-                .get(ITEM_KEY, PersistentDataType.STRING))) {
-            return;
-        }
+        String kind = item.getItemMeta().getPersistentDataContainer()
+                .get(ITEM_KEY, PersistentDataType.STRING);
+        if (kind == null) return;
         event.setCancelled(true);
-        TeamSelectMenu.open(event.getPlayer());
+        if (TEAM_ITEM.equals(kind)) {
+            TeamSelectMenu.open(event.getPlayer());
+        } else if (SETTINGS_ITEM.equals(kind) && mayAdminister(event.getPlayer())) {
+            AdminMenu.open(event.getPlayer());
+        }
     }
 
     // ---------------------------------------------------------------- protection
