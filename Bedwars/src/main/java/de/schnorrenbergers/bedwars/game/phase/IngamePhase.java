@@ -198,6 +198,7 @@ public class IngamePhase extends GamePhase {
         participant.setState(GamePlayer.State.ALIVE);
         player.setGameMode(GameMode.SURVIVAL);
         Equipment.reset(player, spawnOf(team));
+        Equipment.clearEnderChest(player);
         Equipment.giveStartingKit(player, team);
         Messages.send(player, "game.your-team", "team", team.getColor().getDisplayName());
     }

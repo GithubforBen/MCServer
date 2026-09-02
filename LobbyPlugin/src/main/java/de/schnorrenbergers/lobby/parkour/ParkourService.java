@@ -7,6 +7,7 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +31,30 @@ public class ParkourService {
 
     private final ParkourStore store;
     private final ParkourHolograms holograms;
+    private final ParkourMarkers markers;
     private final Map<UUID, ParkourRun> running = new HashMap<>();
+    /** What a runner was carrying before the course took their hotbar over. */
+    private final Map<UUID, ItemStack[]> stowed = new HashMap<>();
+    /**
+     * Who is standing in a start they just gave up on, and which course it is.
+     * <p>
+     * Giving up puts a player back on the start, and the start is what begins a run when it is walked
+     * into - so without this, breaking off a run restarts it on the very next step and there is no way
+     * off the course at all.
+     */
+    private final Map<UUID, String> leftStanding = new HashMap<>();
 
     public ParkourService(ParkourStore store) {
         this.store = store;
         this.holograms = new ParkourHolograms(store);
+        this.markers = new ParkourMarkers(this, store);
+    }
+
+    /**
+     * @return the rings that show where the checkpoints and the finish are
+     */
+    public ParkourMarkers getMarkers() {
+        return markers;
     }
 
     public ParkourStore getStore() {
@@ -71,7 +91,13 @@ public class ParkourService {
         World world = LobbyWorld.get();
         if (world == null || course.getStart() == null) return;
 
+        // only the first start stows anything: walking back into a start you are already running from
+        // would otherwise stow the course items themselves and hand them back at the finish
+        stowed.computeIfAbsent(player.getUniqueId(), key -> copyOf(player.getInventory().getContents()));
+        leftStanding.remove(player.getUniqueId());
         running.put(player.getUniqueId(), new ParkourRun(course));
+        player.getInventory().clear();
+        ParkourItems.give(player);
         player.teleport(course.getStart().toLocation(world));
         player.showTitle(Title.title(
                 Component.text(course.getDisplayName(), NamedTextColor.AQUA),
@@ -86,14 +112,86 @@ public class ParkourService {
     }
 
     /**
-     * Ends a run without a time.
+     * Gives a run up: back to the start of the course, with nothing written down.
+     * <p>
+     * To the start rather than to wherever the player was standing. Somebody who gives up halfway is
+     * standing in the middle of a course, and leaving them there means climbing back out of it by hand -
+     * or, on a course built over the void, not being able to leave at all.
      *
      * @param player who is giving up
-     * @param say    whether to tell them, which a player who simply logged off does not need
      */
-    public void quit(Player player, boolean say) {
+    public void quit(Player player) {
+        ParkourRun run = running.remove(player.getUniqueId());
+        if (run == null) return;
+        restore(player);
+        World world = LobbyWorld.get();
+        ParkourPoint start = run.getCourse().getStart();
+        if (world != null && start != null) {
+            player.setFallDistance(0f);
+            player.teleport(start.toLocation(world));
+            leftStanding.put(player.getUniqueId(), run.getCourse().getName());
+        }
+        player.sendMessage(Component.text("Lauf abgebrochen.", NamedTextColor.GRAY));
+        player.playSound(player, Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.8f);
+    }
+
+    /**
+     * Ends a run for somebody who is not there to be sent anywhere: they logged off, or warped to another
+     * server. Their things are handed back, and nothing else happens.
+     *
+     * @param player whose run is over
+     */
+    public void abandon(Player player) {
+        leftStanding.remove(player.getUniqueId());
         if (running.remove(player.getUniqueId()) == null) return;
-        if (say) player.sendMessage(Component.text("Lauf abgebrochen.", NamedTextColor.GRAY));
+        restore(player);
+    }
+
+    /**
+     * Puts a runner back at the start with the clock at zero.
+     *
+     * @param player who wants the course again
+     */
+    public void restart(Player player) {
+        ParkourRun run = running.get(player.getUniqueId());
+        if (run == null) return;
+        ParkourCourse course = run.getCourse();
+        World world = LobbyWorld.get();
+        ParkourPoint start = course.getStart();
+        if (world == null || start == null) return;
+
+        running.put(player.getUniqueId(), new ParkourRun(course));
+        player.setFallDistance(0f);
+        player.teleport(start.toLocation(world));
+        player.sendActionBar(Component.text("Neu gestartet", NamedTextColor.YELLOW));
+        player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+    }
+
+    /**
+     * @param contents an inventory as bukkit hands it over
+     * @return a copy of it that the next {@code clear()} cannot empty
+     * <p>
+     * The array bukkit returns holds live views of the slots, so stowing it and clearing the inventory
+     * afterwards would stow nothing at all.
+     */
+    private static ItemStack[] copyOf(ItemStack[] contents) {
+        ItemStack[] copy = new ItemStack[contents.length];
+        for (int slot = 0; slot < contents.length; slot++) {
+            copy[slot] = contents[slot] == null ? null : contents[slot].clone();
+        }
+        return copy;
+    }
+
+    /**
+     * Hands a runner back whatever they were carrying before the course took the hotbar over.
+     */
+    private void restore(Player player) {
+        ItemStack[] before = stowed.remove(player.getUniqueId());
+        if (before == null) {
+            ParkourItems.take(player);
+            return;
+        }
+        player.getInventory().setContents(before);
     }
 
     /**
@@ -133,11 +231,16 @@ public class ParkourService {
      * Starts a run for somebody who walked onto a start without asking for it.
      */
     private void enterStart(Player player, Location to) {
+        String standing = leftStanding.get(player.getUniqueId());
         for (ParkourCourse course : store.all()) {
             if (!course.isComplete() || !course.getStart().reachedFrom(to)) continue;
+            // the course they just gave up on does not start again until they have walked off its start
+            if (course.getName().equals(standing)) return;
             start(player, course);
             return;
         }
+        // out of every start, so the next one they walk into counts again whichever it is
+        if (standing != null) leftStanding.remove(player.getUniqueId());
     }
 
     /**
@@ -146,6 +249,7 @@ public class ParkourService {
     private void finish(Player player, ParkourRun run) {
         long millis = run.elapsed();
         running.remove(player.getUniqueId());
+        restore(player);
         ParkourCourse course = run.getCourse();
         ParkourStore.Record previous = store.best(course.getName(), player.getUniqueId());
         boolean improved = store.submit(course.getName(), player.getUniqueId(), player.getName(), millis);

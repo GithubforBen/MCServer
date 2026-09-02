@@ -62,6 +62,7 @@ public class SetupCommand {
             case "team" -> team(player, args);
             case "gen" -> generator(player, args);
             case "build" -> build(player, args);
+            case "time" -> time(player, args);
             case "mode" -> mode(player, args);
             case "name" -> displayName(player, args);
             case "save" -> save(player);
@@ -79,7 +80,7 @@ public class SetupCommand {
         SetupSession session = session();
         if (session == null) {
             Messages.send(sender, "setup.usage", "usage",
-                    "setup <map> | list | lobby | spectator | team | gen | build | mode | name | check | save | exit");
+                    "setup <map> | list | lobby | spectator | team | gen | build | time | mode | name | check | save | exit");
             return;
         }
         Messages.send(sender, "setup.status",
@@ -317,6 +318,61 @@ public class SetupCommand {
         Messages.send(player, "setup.build-set",
                 "max", String.valueOf(session.getMap().getBuildMaxY()),
                 "void", String.valueOf(session.getMap().getVoidY()));
+    }
+
+    /**
+     * {@code /bw setup time <day|night|cycle|ticks>} - what the sky does on this map.
+     * <p>
+     * There was no way at all to say this: every map file carried a time block that the round then
+     * ignored, so a map built for the night was played at noon and nobody could do anything about it.
+     */
+    private void time(Player player, String[] args) {
+        SetupSession session = requireSession(player);
+        if (session == null) return;
+        if (args.length < 2) {
+            Messages.send(player, "setup.usage", "usage", "setup time <day|noon|night|midnight|cycle|ticks>");
+            return;
+        }
+        ArenaMap map = session.getMap();
+        String what = args[1].toLowerCase(Locale.ROOT);
+        switch (what) {
+            case "cycle", "moving" -> map.setDaylightCycle(true);
+            case "day", "morning" -> {
+                map.setDaylightCycle(false);
+                map.setFixedTime(1000L);
+            }
+            case "noon", "midday" -> {
+                map.setDaylightCycle(false);
+                map.setFixedTime(6000L);
+            }
+            case "night", "evening" -> {
+                map.setDaylightCycle(false);
+                map.setFixedTime(14000L);
+            }
+            case "midnight" -> {
+                map.setDaylightCycle(false);
+                map.setFixedTime(18000L);
+            }
+            default -> {
+                Integer ticks = number(args[1]);
+                if (ticks == null) {
+                    Messages.send(player, "setup.not-a-number", "input", args[1]);
+                    return;
+                }
+                map.setDaylightCycle(false);
+                map.setFixedTime(Math.floorMod(ticks, 24000));
+            }
+        }
+        session.touch();
+        // straight onto the world as well, so whoever is standing in it sees what they just set instead
+        // of having to reload the map to find out whether they got it right
+        if (player.getWorld() != null) {
+            player.getWorld().setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, map.isDaylightCycle());
+            player.getWorld().setTime(map.getFixedTime());
+        }
+        Messages.send(player, "setup.time-set",
+                "cycle", Messages.raw(map.isDaylightCycle() ? "setup.time.moving" : "setup.time.fixed"),
+                "ticks", String.valueOf(map.getFixedTime()));
     }
 
     /**

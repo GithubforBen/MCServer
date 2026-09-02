@@ -8,6 +8,7 @@ import de.schnorrenbergers.bedwars.addon.AddonSettings;
 import de.schnorrenbergers.bedwars.addon.ListeningAddon;
 import de.schnorrenbergers.bedwars.api.BedwarsGameStateChangeEvent;
 import de.schnorrenbergers.bedwars.api.BedwarsPlayerRespawnEvent;
+import de.schnorrenbergers.bedwars.game.Equipment;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.phase.PhaseType;
@@ -339,6 +340,9 @@ public final class KitsAddon extends ListeningAddon {
             player.getInventory().addItem(stack.clone()).values()
                     .forEach(rest -> player.getWorld().dropItem(player.getLocation(), rest));
         }
+        // a kit that hands out a sword hands out a better one than the starting kit did a tick earlier,
+        // and both of them stayed: the warrior walked into the round carrying two
+        Equipment.dropWoodenSword(player);
         if (kit.perk() != null) {
             player.addPotionEffect(new PotionEffect(kit.perk(), PotionEffect.INFINITE_DURATION,
                     kit.amplifier(), false, false, true));

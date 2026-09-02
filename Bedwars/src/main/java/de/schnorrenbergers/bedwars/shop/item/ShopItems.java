@@ -31,6 +31,8 @@ import java.util.Map;
  */
 public final class ShopItems {
 
+    /** The shop page whose entries are plain building material. */
+    private static final String BLOCK_CATEGORY = "blocks";
     /** The two halves of an armour set that are actually replaced; helmet and chestplate stay leather. */
     private static final String[] ARMOR_SLOTS = {"_BOOTS", "_LEGGINGS"};
 
@@ -65,6 +67,10 @@ public final class ShopItems {
         Material material = item.teamBlock().apply(item.material(),
                 team == null ? null : team.getColor());
         ItemStack stack = new ItemStack(material, item.amount());
+        // building material is handed over bare. A name and a tag are what make two stacks of wool refuse
+        // to be one, and a player who mines their own wool back gets a plain block from the world - so a
+        // named one would sit in a second slot next to it and neither would ever stack again
+        if (plainBlock(item, material)) return stack;
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) return stack;
 
@@ -82,6 +88,23 @@ public final class ShopItems {
         meta.getPersistentDataContainer().set(key(), PersistentDataType.STRING, item.id());
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    /**
+     * @param item     the entry
+     * @param material what it is handed over as
+     * @return whether it is plain building material rather than something that has to be recognisable
+     */
+    private static boolean plainBlock(ShopItem item, Material material) {
+        // by page rather than by material: the jump pad is a pressure plate and the rescue platform is
+        // bought as a block too, and both of them are found again by the tag that this would strip
+        return BLOCK_CATEGORY.equals(item.category())
+                && material.isBlock()
+                && item.enchantments().isEmpty()
+                && item.effects().isEmpty()
+                && !item.isTool()
+                && !item.isArmor()
+                && !item.permanent();
     }
 
     /**
@@ -150,6 +173,9 @@ public final class ShopItems {
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) return stack;
 
+        // the button says what the entry is called even when the item itself is handed over bare, which
+        // is what building material is: the name belongs to the shop page, not to the block in the hand
+        meta.displayName(Text.item(item.displayName()));
         boolean affordable = Cost.shortfall(player, item.costs()) == null;
         List<Component> lore = new ArrayList<>();
         item.lore().forEach(line -> lore.add(Text.item(line)));

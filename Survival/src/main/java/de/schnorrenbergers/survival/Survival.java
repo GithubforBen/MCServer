@@ -16,6 +16,7 @@ import de.hems.paper.event.RunService;
 import de.hems.paper.team.TeamService;
 import de.schnorrenbergers.survival.antiEnd.AntiEndListener;
 import de.schnorrenbergers.survival.commands.*;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopChestListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
@@ -95,6 +96,7 @@ public final class Survival extends JavaPlugin {
         de.hems.paper.warp.ServerConnector.register(this);
         new ShopkeeperManager();
         new ShopkeeperListener();
+        new ShopChestListener();
         new ATMListener();
         chunkLimiter = new ChunkLimiter(new ChunkLimiterSettings());
         chunkLimiter.start();

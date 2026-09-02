@@ -2,6 +2,7 @@ package de.schnorrenbergers.bedwars.shop;
 
 import de.schnorrenbergers.bedwars.api.BedwarsPurchaseEvent;
 import de.schnorrenbergers.bedwars.config.ShopSettings;
+import de.schnorrenbergers.bedwars.game.Equipment;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
@@ -11,7 +12,6 @@ import de.schnorrenbergers.bedwars.shop.item.ShopItems;
 import de.schnorrenbergers.bedwars.util.Messages;
 import de.schnorrenbergers.bedwars.util.Text;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -106,12 +106,12 @@ public class ShopService {
             loadout.setToolTier(item.toolGroup(), item.toolTier());
             // the sword chain is a tool chain, so its steps come through here rather than below - and the
             // wooden sword still has to go, or the buyer walks away carrying two
-            if (item.sword()) dropWoodenSword(player);
             replaceTool(player, item);
+            if (item.sword()) Equipment.dropWoodenSword(player);
         } else {
             if (item.permanent()) loadout.addPermanent(item.id());
-            if (item.sword()) dropWoodenSword(player);
             give(player, ShopItems.build(item, team));
+            if (item.sword()) Equipment.dropWoodenSword(player);
         }
         refresh(game, buyer, player);
     }
@@ -154,20 +154,6 @@ public class ShopService {
         }
     }
 
-    /**
-     * Takes the wooden sword away when a better one is bought - hypixel's rule, and the reason a player
-     * with a diamond sword does not carry three swords around.
-     */
-    private void dropWoodenSword(Player player) {
-        PlayerInventory inventory = player.getInventory();
-        ItemStack[] contents = inventory.getStorageContents();
-        for (int slot = 0; slot < contents.length; slot++) {
-            if (contents[slot] != null && contents[slot].getType() == Material.WOODEN_SWORD) {
-                inventory.setItem(slot, null);
-            }
-        }
-    }
-
     // ------------------------------------------------------------------ respawning
 
     /**
@@ -190,8 +176,8 @@ public class ShopService {
             if (step == null) continue;
             // a chain that fell back to its first step has no entry there - the wooden sword and the bare
             // hands are what a death costs, and the starting kit has already handed those out
-            if (step.sword()) dropWoodenSword(player);
             give(player, ShopItems.build(step, null));
+            if (step.sword()) Equipment.dropWoodenSword(player);
         }
         for (String id : loadout.getPermanent()) {
             ShopItem item = settings.get(id);

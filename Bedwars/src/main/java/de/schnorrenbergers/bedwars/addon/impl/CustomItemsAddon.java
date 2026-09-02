@@ -8,6 +8,8 @@ import de.schnorrenbergers.bedwars.game.BlockTracker;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
+import de.schnorrenbergers.bedwars.listener.BuildListener;
+import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.shop.Cost;
 import de.schnorrenbergers.bedwars.shop.Currency;
 import de.schnorrenbergers.bedwars.shop.item.ShopCategory;
@@ -15,16 +17,21 @@ import de.schnorrenbergers.bedwars.shop.item.ShopItem;
 import de.schnorrenbergers.bedwars.shop.item.ShopItems;
 import de.schnorrenbergers.bedwars.util.Messages;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.type.Ladder;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerEggThrowEvent;
 import org.bukkit.event.player.PlayerFishEvent;
@@ -39,8 +46,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -62,6 +71,7 @@ public final class CustomItemsAddon extends ListeningAddon {
     private static final String PLATFORM = "rescue-platform";
     private static final String EGG = "bridge-egg";
     private static final String PAD = "jump-pad";
+    private static final String TOWER = "pop-up-tower";
 
     private final AddonConfig config;
     /** The tasks this addon started, so that switching it off really stops it. */
@@ -78,6 +88,11 @@ public final class CustomItemsAddon extends ListeningAddon {
     private Material padMaterial;
     private double padPower;
     private int padCooldown;
+    private Material towerMaterial;
+    private int towerHeight;
+    private boolean towerRoof;
+    /** The blocks of every rescue platform that is standing, so nobody can mine one out from under you. */
+    private final Set<Block> platforms = new HashSet<>();
 
     public CustomItemsAddon(Plugin plugin, AddonSettings settings) {
         super(plugin);
@@ -86,7 +101,9 @@ public final class CustomItemsAddon extends ListeningAddon {
     }
 
     private void read() {
-        categorySlot = config.get("category-slot", 6, "Where the page sits in the shop's top row.");
+        // 8, not 6: the potions page is configured for 6, and two pages in one tab is one page - the
+        // second is drawn over the first and the first cannot be opened at all
+        categorySlot = config.get("category-slot", 8, "Where the page sits in the shop's top row.");
         hookPower = Math.max(0.1d, config.get("grappling-hook.power", 1.6d,
                 "How hard the hook pulls."));
         platformMaterial = config.material("rescue-platform.material", Material.SLIME_BLOCK,
@@ -103,10 +120,18 @@ public final class CustomItemsAddon extends ListeningAddon {
         padPower = Math.max(0.1d, config.get("jump-pad.power", 1.1d, "How far a pad throws."));
         padCooldown = Math.max(1, config.get("jump-pad.cooldown-ticks", 20,
                 "How long before the same player can be launched again."));
+        towerMaterial = config.material("pop-up-tower.material", Material.AIR,
+                "What the tower is built of. AIR means the buyer's own team wool, which is what makes",
+                "a tower something you can see the owner of from across the map.");
+        towerHeight = Math.max(2, config.get("pop-up-tower.height", 4,
+                "How tall the walls are. The ladder inside is the same height."));
+        towerRoof = config.get("pop-up-tower.roof", true,
+                "Whether it is closed at the top. Off leaves it open to whatever is above you.");
         price(HOOK, Currency.GOLD, 6);
         price(PLATFORM, Currency.GOLD, 4);
         price(EGG, Currency.EMERALD, 1);
         price(PAD, Currency.GOLD, 4);
+        price(TOWER, Currency.IRON, 24);
         config.save();
     }
 
@@ -131,7 +156,7 @@ public final class CustomItemsAddon extends ListeningAddon {
 
     @Override
     public String getDescription() {
-        return "Grappling hook, rescue platform, bridge egg and jump pad, on a page of their own";
+        return "Grappling hook, rescue platform, bridge egg, jump pad and pop-up tower, on a page of their own";
     }
 
     @Override
@@ -143,12 +168,15 @@ public final class CustomItemsAddon extends ListeningAddon {
         shop.register(item(PLATFORM, Material.BLAZE_ROD, ShopItem.TeamBlock.NONE));
         shop.register(item(EGG, Material.EGG, ShopItem.TeamBlock.NONE));
         shop.register(item(PAD, padMaterial, ShopItem.TeamBlock.NONE));
+        shop.register(item(TOWER, Material.CHEST, ShopItem.TeamBlock.NONE));
     }
 
     @Override
     protected void onDisable(Game game) {
         var shop = Bedwars.getInstance().getShopSettings();
-        for (String id : List.of(HOOK, PLATFORM, EGG, PAD, CATEGORY)) shop.unregister(id);
+        for (String id : List.of(HOOK, PLATFORM, EGG, PAD, TOWER, CATEGORY)) shop.unregister(id);
+        // the tasks that would have taken them away are cancelled below, so nothing would ever empty this
+        platforms.clear();
         tasks.forEach(BukkitTask::cancel);
         tasks.clear();
         lastJump.clear();
@@ -226,8 +254,11 @@ public final class CustomItemsAddon extends ListeningAddon {
                 Block block = under.clone().add(x, 0.0d, z).getBlock();
                 if (!block.getType().isAir()) continue;
                 block.setType(platformMaterial, false);
-                tracker.remember(block);
+                // deliberately not remembered as a player built block: what is remembered may be broken
+                // and may be blown up, and a platform somebody can mine out from under a falling player
+                // is four gold spent on nothing
                 placed.add(block);
+                platforms.add(block);
             }
         }
         if (placed.isEmpty()) {
@@ -247,10 +278,127 @@ public final class CustomItemsAddon extends ListeningAddon {
      */
     private void takeAway(BlockTracker tracker, List<Block> placed) {
         for (Block block : placed) {
+            platforms.remove(block);
             if (block.getType() != platformMaterial) continue;
             block.setType(Material.AIR, false);
             tracker.forget(block);
         }
+    }
+
+    /**
+     * Nobody takes a rescue platform apart, not even the player standing on it.
+     * <p>
+     * It lasts ten seconds and then goes by itself. In those ten seconds it is the only thing between a
+     * player and the void, and a platform an enemy can knock out is a platform that is worse than none:
+     * it costs four gold and it kills you a moment later than falling would have.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBreak(BlockBreakEvent event) {
+        if (!platforms.contains(event.getBlock())) return;
+        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) return;
+        event.setCancelled(true);
+        Messages.send(event.getPlayer(), "item.platform-solid");
+    }
+
+    /**
+     * And no blast takes one either, for the same reason.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onExplode(EntityExplodeEvent event) {
+        event.blockList().removeIf(platforms::contains);
+    }
+
+    // -------------------------------------------------------------- pop-up tower
+
+    /**
+     * Builds a tower around whoever used it: four walls, a ladder up the inside and a lid on top.
+     * <p>
+     * What it is bought for is the half second after a fight goes wrong in the open. Everything about it
+     * follows from that: it goes up around the player rather than in front of them, the ladder is already
+     * inside so that going up costs nothing, and it is made of the team's own wool so that the tower says
+     * whose it is before anybody climbs it.
+     */
+    private void raiseTower(Player player, Game game, GamePlayer user, ItemStack held) {
+        GameTeam team = user.getTeam();
+        Material material = towerMaterial == Material.AIR || !towerMaterial.isBlock()
+                ? (team == null ? Material.WHITE_WOOL : team.getColor().getWool())
+                : towerMaterial;
+        Block floor = player.getLocation().getBlock();
+        ArenaMap arena = game.getArena();
+        // the same rule a hand placed block obeys: nine columns that arrive at once are still nine blocks,
+        // and a tower over a generator or in somebody's spawn is the cheapest way there is to close one off
+        if (arena != null && (floor.getY() + towerHeight > arena.getBuildMaxY()
+                || BuildListener.nearProtectedSpot(game, arena, player, floor))) {
+            Messages.send(player, "item.tower-no-room");
+            return;
+        }
+        BlockTracker tracker = game.getBlockTracker();
+        List<Block> placed = new ArrayList<>();
+
+        for (int y = 0; y < towerHeight; y++) {
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x == 0 && z == 0) continue;
+                    set(tracker, floor.getRelative(x, y, z), material, placed);
+                }
+            }
+        }
+        if (towerRoof) {
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    set(tracker, floor.getRelative(x, towerHeight, z), material, placed);
+                }
+            }
+        }
+        if (placed.isEmpty()) {
+            Messages.send(player, "item.tower-no-room");
+            return;
+        }
+        // the ladder goes into the column the player is standing in, hung on the north wall - a tower you
+        // cannot climb is a wall you have boxed yourself into
+        for (int y = 0; y < towerHeight; y++) {
+            Block rung = floor.getRelative(0, y, 0);
+            if (!rung.getType().isAir()) continue;
+            Ladder ladder = (Ladder) Material.LADDER.createBlockData();
+            ladder.setFacing(BlockFace.SOUTH);
+            rung.setBlockData(ladder, false);
+            tracker.remember(rung);
+        }
+        held.setAmount(held.getAmount() - 1);
+        player.playSound(player, Sound.BLOCK_WOOL_PLACE, 1.0f, 1.0f);
+    }
+
+    /**
+     * The click that raises one.
+     */
+    @EventHandler(priority = EventPriority.LOW)
+    public void onTowerUse(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        ItemStack held = event.getItem();
+        if (held == null || !TOWER.equals(ShopItems.idOf(held))) return;
+        event.setCancelled(true);
+
+        Game game = Bedwars.getInstance().getGame();
+        Player player = event.getPlayer();
+        if (game == null || !game.isRunning() || game.getWorld() == null) return;
+        GamePlayer user = game.get(player);
+        if (user == null || !user.isAlive()) return;
+        raiseTower(player, game, user, held);
+    }
+
+    /**
+     * Puts one block of a tower down, leaving anything that is already there alone.
+     */
+    private static void set(BlockTracker tracker, Block block, Material material, List<Block> placed) {
+        if (!block.getType().isAir()) return;
+        block.setType(material, false);
+        // remembered, unlike the rescue platform: a tower is meant to be broken into, and a wall that
+        // nothing can touch would end every fight it is used in
+        tracker.remember(block);
+        placed.add(block);
     }
 
     // ----------------------------------------------------------------- bridge egg
@@ -382,6 +530,7 @@ public final class CustomItemsAddon extends ListeningAddon {
      */
     public static @Nullable String kindOf(@Nullable ItemStack stack) {
         String id = ShopItems.idOf(stack);
-        return HOOK.equals(id) || PLATFORM.equals(id) || EGG.equals(id) || PAD.equals(id) ? id : null;
+        return HOOK.equals(id) || PLATFORM.equals(id) || EGG.equals(id) || PAD.equals(id)
+                || TOWER.equals(id) ? id : null;
     }
 }

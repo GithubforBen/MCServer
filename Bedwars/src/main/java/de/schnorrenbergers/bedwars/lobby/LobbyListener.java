@@ -131,6 +131,8 @@ public class LobbyListener implements Listener {
         Location lobby = lobbyLocation();
         player.setGameMode(GameMode.ADVENTURE);
         Equipment.reset(player, lobby);
+        // the last round's ender chest is still theirs until something says otherwise
+        Equipment.clearEnderChest(player);
         player.getInventory().setItem(TEAM_ITEM_SLOT, teamItem());
         // the switches within reach of the person running the round, rather than only through a command:
         // the settings that matter - 1.8 combat, the automatic start - are decided while everybody is

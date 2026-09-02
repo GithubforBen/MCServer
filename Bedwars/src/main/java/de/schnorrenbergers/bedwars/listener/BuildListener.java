@@ -154,8 +154,12 @@ public class BuildListener implements Listener {
 
     /**
      * @return whether this block would land somewhere nobody may build
+     * <p>
+     * Public because a block does not have to arrive through a place event to be somewhere it must not be:
+     * the pop-up tower puts nine columns down at once without one, and a tower raised over a diamond
+     * generator would wall it in exactly the way this rule exists to stop.
      */
-    private boolean nearProtectedSpot(Game game, ArenaMap arena, Player player, Block block) {
+    public static boolean nearProtectedSpot(Game game, ArenaMap arena, Player player, Block block) {
         Location at = block.getLocation();
         int generatorRadius = game.getSettings().getGeneratorRadius();
         for (GeneratorSpot generator : arena.getGenerators()) {

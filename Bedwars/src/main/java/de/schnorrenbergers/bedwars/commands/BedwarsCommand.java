@@ -437,7 +437,8 @@ public class BedwarsCommand implements CommandExecutor, TabCompleter {
      */
     private List<String> completeSetup(String[] args) {
         List<String> subcommands = new ArrayList<>(List.of(
-                "list", "lobby", "spectator", "team", "gen", "build", "mode", "name", "check", "save", "exit"));
+                "list", "lobby", "spectator", "team", "gen", "build", "time", "mode", "name", "check",
+                "save", "exit"));
         if (args.length == 2) {
             subcommands.addAll(Bedwars.getInstance().getMaps().list());
             return filter(subcommands, args[1]);

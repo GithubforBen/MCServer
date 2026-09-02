@@ -111,6 +111,27 @@ public class ShopkeeperManager {
         return result;
     }
 
+    /**
+     * @param location a block
+     * @return the shop whose stock chest stands there, or {@code null} when no shop does
+     */
+    public static Shopkeeper withChestAt(Location location) {
+        if (location == null || location.getWorld() == null) return null;
+        List<Shopkeeper> candidates = chestIndex().get(Chunk.getChunkKey(location));
+        if (candidates == null) return null;
+        for (Shopkeeper shopkeeper : candidates) {
+            Location chest = shopkeeper.getChest();
+            if (chest == null || chest.getWorld() == null) continue;
+            if (!chest.getWorld().equals(location.getWorld())) continue;
+            if (chest.getBlockX() == location.getBlockX()
+                    && chest.getBlockY() == location.getBlockY()
+                    && chest.getBlockZ() == location.getBlockZ()) {
+                return shopkeeper;
+            }
+        }
+        return null;
+    }
+
     public static Shopkeeper createShopkeeper(Player player, String name) {
         int money = MoneyHandler.getMoney(player.getUniqueId());
         if (money < 20 * 100) {

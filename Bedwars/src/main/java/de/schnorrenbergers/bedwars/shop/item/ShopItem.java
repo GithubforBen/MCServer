@@ -92,9 +92,25 @@ public record ShopItem(String id, String category, String displayName, Material 
      * @param buyer  which team is looking at it
      * @return whether this entry may be bought here at all
      */
+    /**
+     * @param slot where the copy sits on a page
+     * @return the same entry, drawn somewhere else
+     * <p>
+     * The quick buy page shows entries that belong to another page, and a slot they were given for their
+     * home page would scatter them across it. Everything that decides what a purchase does - the id above
+     * all - is carried over untouched, so buying from either page is the same purchase.
+     */
+    public ShopItem withSlot(int slot) {
+        return new ShopItem(id, category, displayName, material, amount, costs, lore, enchantments,
+                effects, teamBlock, permanent, armorTier, toolGroup, toolTier, sword, slot, lifetime,
+                enemyOnly);
+    }
+
     public boolean sellableBy(@Nullable GameTeam seller, @Nullable GameTeam buyer) {
         if (!enemyOnly) return true;
-        return seller != null && !seller.equals(buyer);
+        // a base nobody joined has keepers so that the map is not full of dead corners, but it is not a
+        // hostile base: what is sold only in one has to stay behind an actual walk into somebody's spawn
+        return seller != null && !seller.isEmpty() && !seller.equals(buyer);
     }
 
     /**

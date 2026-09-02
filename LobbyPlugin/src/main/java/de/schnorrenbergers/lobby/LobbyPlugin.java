@@ -55,6 +55,8 @@ public final class LobbyPlugin extends JavaPlugin {
         // after the world is loaded, and once: the text hangs in the lobby world and is not persistent,
         // so every start has to put it back up
         parkour.getHolograms().refresh();
+        // and the rings around the checkpoints, which are what makes a course visible from the ground
+        parkour.getMarkers().start(this);
         registerCommand("servermanger", new ServerManagerCommand());
         registerCommand("warp", new WarpCommand());
         EventService.init(this);

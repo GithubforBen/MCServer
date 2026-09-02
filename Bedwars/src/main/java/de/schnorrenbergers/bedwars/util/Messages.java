@@ -328,6 +328,16 @@ public final class Messages {
         texts.put("build.too-high", "<prefix><red>You cannot build above <white><limit></white>.");
         texts.put("build.protected", "<prefix><red>You cannot build here.");
         texts.put("build.not-yours", "<prefix><red>You can only break what somebody built.");
+        texts.put("item.platform-solid", "<prefix><red>A rescue platform cannot be broken. It goes by itself.");
+        texts.put("item.tower-no-room", "<prefix><red>There is no room here for a tower.");
+        texts.put("custom-item.pop-up-tower.name", "<white>Pop-Up Tower");
+        texts.put("custom-item.pop-up-tower.lore", "<gray>Four walls and a ladder, around you, at once.");
+        texts.put("setup.time-set", "<prefix><gray>Time: <white><cycle></white> <dark_gray>(<ticks>)");
+        texts.put("setup.time.moving", "the sun moves");
+        texts.put("setup.time.fixed", "held still");
+        texts.put("chest.not-yours", "<prefix><red>That chest belongs to <white><team></white><red>.");
+        texts.put("chest.deposited", "<prefix><gray>Stored <white><what></white> <gray>in your team chest.");
+        texts.put("chest.nothing-to-deposit", "<prefix><gray>You are not carrying anything to store.");
 
         texts.put("bed.own", "<prefix><red>That is your own bed.");
         texts.put("bed.nobody", "the game");

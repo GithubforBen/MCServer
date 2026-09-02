@@ -21,6 +21,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -30,8 +31,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -67,8 +70,8 @@ public final class RandomEventsAddon extends ListeningAddon {
     private static final int SEARCH_HEIGHT = 24;
 
     private Block chest;
-    /** The beacon and its base under the chest, so the whole marker comes away with it. */
-    private final List<Block> marker = new ArrayList<>();
+    /** The beacon and its base under the chest, each with the block it replaced, so both come back. */
+    private final Map<Block, BlockData> marker = new LinkedHashMap<>();
 
     private int intervalSeconds;
     private int warningSeconds;
@@ -328,18 +331,25 @@ public final class RandomEventsAddon extends ListeningAddon {
 
     /**
      * Sets one block of the marker, remembering what was there so it can be put back.
+     * <p>
+     * What was there, not only where: the beacon goes into the floor the chest stands on, and putting that
+     * floor back as air left a hole. The next chest then found its footing one block lower, and the one
+     * after that lower again - which is why two loot chests in a round never appeared at the same height.
      */
     private void place(Game game, Block block, Material material) {
-        marker.add(block);
+        marker.put(block, block.getBlockData().clone());
         block.setType(material, false);
         game.getBlockTracker().remember(block);
     }
 
     private void removeChest() {
         Game game = Bedwars.getInstance() == null ? null : Bedwars.getInstance().getGame();
-        for (Block block : marker) {
+        for (Map.Entry<Block, BlockData> entry : marker.entrySet()) {
+            Block block = entry.getKey();
+            // only what is still ours: a player who mined the beacon away in the meantime has already
+            // decided what stands there, and putting the floor back under them would undo their work
             if (block.getType() == Material.BEACON || block.getType() == Material.IRON_BLOCK) {
-                block.setType(Material.AIR, false);
+                block.setBlockData(entry.getValue(), false);
             }
             if (game != null) game.getBlockTracker().forget(block);
         }

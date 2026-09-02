@@ -1,6 +1,5 @@
 package de.schnorrenbergers.lobby.parkour;
 
-import de.schnorrenbergers.lobby.LobbyWorld;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -106,8 +105,9 @@ public class ParkourCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Du läufst gerade keine Strecke.", NamedTextColor.GRAY));
             return;
         }
-        parkour.quit(player, true);
-        LobbyWorld.place(player);
+        // to the start of the course, the same as the barrier in the hotbar does - one way of giving up,
+        // one place it puts you
+        parkour.quit(player);
     }
 
     private void top(CommandSender sender, String[] args) {

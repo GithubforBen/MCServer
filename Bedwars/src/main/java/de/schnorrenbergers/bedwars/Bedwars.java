@@ -40,6 +40,7 @@ import de.schnorrenbergers.bedwars.listener.DragonListener;
 import de.schnorrenbergers.bedwars.listener.RulesListener;
 import de.schnorrenbergers.bedwars.listener.ShopListener;
 import de.schnorrenbergers.bedwars.listener.SpecialItemListener;
+import de.schnorrenbergers.bedwars.listener.TeamChestListener;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.Rules;
 import de.schnorrenbergers.bedwars.game.timeline.Dragons;
@@ -129,6 +130,7 @@ public final class Bedwars extends JavaPlugin {
         new LobbyListener(this);
         new BedListener(this);
         new BuildListener(this, game.getBlockTracker());
+        new TeamChestListener(this);
         new CombatListener(this);
         new ChatListener(this);
         new ShopListener(this);
@@ -281,7 +283,7 @@ public final class Bedwars extends JavaPlugin {
         game.setArena(arena, world);
         // before anybody is let in: the locator bar and the time of day are what a player sees in their
         // first second on the server, and setting them afterwards is a flicker everybody notices
-        Rules.applyTo(world, arena, featureSettings);
+        Rules.applyTo(world, arena, featureSettings, true);
         getLogger().info("Arena " + arena.getName() + " is loaded as '" + world.getName()
                 + "' in " + world.getWorldFolder().getPath());
     }
