@@ -108,6 +108,22 @@ public class FileType implements Serializable {
                 case BEDWARS_SPEEDWAY -> "Bedwars Map: Speedway";
             };
         }
+
+        /**
+         * Which bedwars map an asset installs.
+         * <p>
+         * The lobby offers the maps of a round before any bedwars server exists to ask, so the list has to
+         * be readable from the blueprint. A new map is therefore one entry here and one line in this
+         * switch, and it shows up in the round menu without anything else being touched.
+         *
+         * @param type the asset
+         * @return the id of the map it installs, or {@code null} when it is not a bedwars map
+         */
+        public static String getBedwarsMap(ASSET type) {
+            return switch (type) {
+                case BEDWARS_SPEEDWAY -> "speedway";
+            };
+        }
     }
 
     /**

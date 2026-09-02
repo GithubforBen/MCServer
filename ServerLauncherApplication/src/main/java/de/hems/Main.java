@@ -13,6 +13,7 @@ import de.hems.utils.event.EventSettlement;
 import de.hems.utils.event.EventStore;
 import de.hems.utils.event.RunStore;
 import de.hems.utils.money.MoneyStore;
+import de.hems.utils.round.RoundStore;
 import de.hems.utils.team.BackpackStore;
 import de.hems.utils.team.TeamStore;
 import de.hems.utils.bot.adminabuse.*;
@@ -60,6 +61,7 @@ public class Main {
     private RunStore runStore;
     private AwardStore awardStore;
     private MoneyStore moneyStore;
+    private RoundStore roundStore;
     private JDA jda;
     private WebServer webServer;
     private IdleServerWatchdog idleServerWatchdog;
@@ -108,6 +110,9 @@ public class Main {
         memoryWatch = new MemoryWatch(serverHandler);
         memoryWatch.start();
         new CapacityEvents(memoryWatch);
+        // rounds players put up themselves, and the rules an admin allows them under
+        roundStore = new RoundStore();
+        new RoundEvents(roundStore, serverHandler);
         new StartServerEvent();
         new RestartServerEvent();
         new StopServerEvent();
@@ -257,6 +262,10 @@ public class Main {
 
     public MemoryWatch getMemoryWatch() {
         return memoryWatch;
+    }
+
+    public RoundStore getRoundStore() {
+        return roundStore;
     }
 
     public StashStore getStashStore() {

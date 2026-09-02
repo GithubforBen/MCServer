@@ -10,12 +10,15 @@ import de.hems.paper.event.BedwarsEventStarter;
 import de.hems.paper.event.EventService;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.RunService;
+import de.hems.paper.money.MoneyService;
+import de.hems.paper.round.RoundService;
 import de.hems.paper.warp.ServerConnector;
 import de.schnorrenbergers.lobby.bedwars.BedwarsDebugCommand;
 import de.schnorrenbergers.lobby.parkour.CheckpointListener;
 import de.schnorrenbergers.lobby.parkour.ParkourCommand;
 import de.schnorrenbergers.lobby.parkour.ParkourService;
 import de.schnorrenbergers.lobby.parkour.ParkourStore;
+import de.schnorrenbergers.lobby.rounds.RoundCommand;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -58,6 +61,10 @@ public final class LobbyPlugin extends JavaPlugin {
         // event's time comes and takes everybody standing here along
         BedwarsEventStarter.init(this);
         registerCommand("events", new EventCommand());
+        // rounds players put up themselves, and the bits they pay for cosmetics with
+        RoundService.init(this);
+        MoneyService.init(this);
+        registerCommand("runde", new RoundCommand());
         registerCommand("bwdebug", new BedwarsDebugCommand());
         new LobbyJoinListener();
         new LobbyProtectionListener(this);

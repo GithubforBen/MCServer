@@ -7,6 +7,9 @@ import de.schnorrenbergers.bedwars.game.Equipment;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.map.MapPoint;
+import de.schnorrenbergers.bedwars.round.RoundAdminMenu;
+import de.schnorrenbergers.bedwars.round.RoundContext;
+import de.schnorrenbergers.bedwars.round.RoundStateListener;
 import de.schnorrenbergers.bedwars.scoreboard.Sidebar;
 import de.schnorrenbergers.bedwars.util.Messages;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -64,8 +67,14 @@ public class LobbyListener implements Listener {
         Player player = event.getPlayer();
         if (game == null || game.isSetupMode()) return;
 
+        if (RoundContext.isKicked(player)) {
+            // thrown out of this round already; being sent back is the whole point of having been kicked
+            RoundContext.kick(player);
+            return;
+        }
         GamePlayer joined = game.join(player);
         Sidebar.apply(player, game);
+        reportRound(game, game.getOnlineCount());
         if (game.isWaiting()) {
             prepareForLobby(player);
             Messages.broadcast("lobby.joined",
@@ -84,10 +93,21 @@ public class LobbyListener implements Listener {
         Game game = game();
         if (game == null || !game.isWaiting()) return;
         game.forget(event.getPlayer().getUniqueId());
+        reportRound(game, Math.max(0, game.getOnlineCount() - 1));
         Messages.broadcast("lobby.left",
                 "player", event.getPlayer().getName(),
                 "online", String.valueOf(Math.max(0, game.getOnlineCount() - 1)),
                 "maximum", String.valueOf(game.getMaximumPlayers()));
+    }
+
+    /**
+     * Keeps the lobby's round list current on how many people are in here.
+     *
+     * @param game   the round
+     * @param online how many are on it
+     */
+    private static void reportRound(Game game, int online) {
+        RoundContext.report(RoundStateListener.stateOf(game.getPhaseType()), online);
     }
 
     /**
@@ -174,10 +194,11 @@ public class LobbyListener implements Listener {
 
     /**
      * @param player who is asking
-     * @return whether they are allowed to change how the round is played
+     * @return whether they are allowed to change how the round is played - a real admin, or the player
+     *         who put this round up in the first place
      */
     private static boolean mayAdminister(Player player) {
-        return player.isOp() || player.hasPermission("bedwars.admin");
+        return RoundContext.mayAdminister(player);
     }
 
     // ------------------------------------------------------------------ the wool
@@ -195,7 +216,13 @@ public class LobbyListener implements Listener {
         if (TEAM_ITEM.equals(kind)) {
             TeamSelectMenu.open(event.getPlayer());
         } else if (SETTINGS_ITEM.equals(kind) && mayAdminister(event.getPlayer())) {
-            AdminMenu.open(event.getPlayer());
+            // a round somebody started has more to it than switches: who may come in, when it begins,
+            // and who has to leave. Without a round behind it there is nothing to run, only settings
+            if (RoundContext.exists()) {
+                RoundAdminMenu.open(event.getPlayer());
+            } else {
+                AdminMenu.open(event.getPlayer());
+            }
         }
     }
 
