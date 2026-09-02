@@ -12,6 +12,7 @@ import de.hems.utils.event.AwardStore;
 import de.hems.utils.event.EventSettlement;
 import de.hems.utils.event.EventStore;
 import de.hems.utils.event.RunStore;
+import de.hems.utils.cosmetic.CosmeticStore;
 import de.hems.utils.money.MoneyStore;
 import de.hems.utils.round.RoundStore;
 import de.hems.utils.team.BackpackStore;
@@ -62,6 +63,7 @@ public class Main {
     private AwardStore awardStore;
     private MoneyStore moneyStore;
     private RoundStore roundStore;
+    private CosmeticStore cosmeticStore;
     private JDA jda;
     private WebServer webServer;
     private IdleServerWatchdog idleServerWatchdog;
@@ -100,6 +102,10 @@ public class Main {
         // server, where only that one server could see it and nothing else could spend it
         moneyStore = new MoneyStore();
         new MoneyEvents(moneyStore);
+        // cosmetics are sold here rather than on the server the shop is on: the price, the bits and the
+        // ownership all live here, so a purchase is one step and not three that can fail halfway
+        cosmeticStore = new CosmeticStore();
+        new CosmeticEvents(cosmeticStore, moneyStore);
         eventStore = new EventStore();
         runStore = new RunStore();
         awardStore = new AwardStore();
@@ -266,6 +272,10 @@ public class Main {
 
     public RoundStore getRoundStore() {
         return roundStore;
+    }
+
+    public CosmeticStore getCosmeticStore() {
+        return cosmeticStore;
     }
 
     public StashStore getStashStore() {

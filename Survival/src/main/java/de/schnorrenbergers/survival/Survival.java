@@ -1,6 +1,8 @@
 package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.cosmetic.CosmeticService;
+import de.hems.paper.cosmetic.WinEffects;
 import de.hems.paper.money.MoneyService;
 import de.hems.paper.admin.AdminStash;
 import de.hems.paper.admin.PlayerAdminHandler;
@@ -66,6 +68,9 @@ public final class Survival extends JavaPlugin {
         new RequestPlayerMoneyEventHandler();
         // the bits themselves live on the launcher now, this keeps the local copy current
         MoneyService.init(this);
+        CosmeticService.init(this);
+        // registered here as well, so the admin menu can say which effects actually exist
+        WinEffects.init(this);
         new PlayerAdminHandler(this);
         AdminStash.init(this);
         TeamService.init(this);

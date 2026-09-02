@@ -8,6 +8,8 @@ import de.hems.paper.commands.WarpCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.EventService;
+import de.hems.paper.cosmetic.CosmeticService;
+import de.hems.paper.cosmetic.WinEffects;
 import de.hems.paper.round.RoundService;
 import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.BedwarsEventSettings;
@@ -135,6 +137,9 @@ public final class Bedwars extends JavaPlugin {
         new SpectatorListener(this);
         new RulesListener(this);
         new de.schnorrenbergers.bedwars.round.RoundStateListener(this);
+        // what a round ends with, and what players carry into it
+        WinEffects.init(this);
+        new de.schnorrenbergers.bedwars.cosmetic.GadgetListener(this);
         if (gameSettings.isStatsEnabled()) {
             stats = new StatsTracker(this, new FileStatsRepository(
                     new File(gameSettings.getStatsDirectory())));
@@ -332,6 +337,7 @@ public final class Bedwars extends JavaPlugin {
             new PlayerAdminHandler(this);
             EventService.init(this);
             RoundService.init(this);
+            CosmeticService.init(this);
             networked = true;
         } catch (Exception e) {
             getLogger().warning("No network connection (" + e.getMessage()
