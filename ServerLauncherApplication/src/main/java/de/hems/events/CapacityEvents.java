@@ -33,7 +33,10 @@ public class CapacityEvents {
 
     private synchronized void onSlot(RequestServerSlotEvent request) throws Exception {
         boolean granted = memory.fits(request.getMemoryMB());
-        if (!granted) {
+        if (granted) {
+            // held until the server actually exists, so the next request in the same second sees it
+            memory.hold(request.getMemoryMB());
+        } else {
             memory.recordRefusal(request.getMemoryMB(), request.getPlayerName(), request.getPurpose());
         }
         CapacityData capacity = memory.snapshot();

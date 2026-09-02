@@ -32,6 +32,8 @@ public class ServerHandler {
     private static final String CONFIG_ROOT = "servers";
 
     private final List<ServerInstance> instances = new CopyOnWriteArrayList<>();
+    /** Set once the launcher has one, so a granted slot is given back when its server starts. */
+    private MemoryWatch memoryWatch;
 
     public ServerHandler() throws Exception {
         loadKnownServers();
@@ -149,6 +151,8 @@ public class ServerHandler {
 
         ServerInstance instance = new ServerInstance(name, memory, jarFile, resolved, template);
         instances.add(instance);
+        // the slot this server was granted before it existed is now the server itself
+        if (memoryWatch != null) memoryWatch.release(memory);
         instance.start();
         rememberServer(name, memory, jarFile, template, resolved);
         announceRegistered(instance);
@@ -201,6 +205,13 @@ public class ServerHandler {
         for (ServerInstance instance : instances) {
             instance.stop();
         }
+    }
+
+    /**
+     * @param memoryWatch the budget this handler starts servers against
+     */
+    public void setMemoryWatch(MemoryWatch memoryWatch) {
+        this.memoryWatch = memoryWatch;
     }
 
     public boolean doesInstanceExist(ListenerAdapter.ServerName name) {

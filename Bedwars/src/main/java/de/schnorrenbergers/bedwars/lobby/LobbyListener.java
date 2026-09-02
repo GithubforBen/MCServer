@@ -68,8 +68,11 @@ public class LobbyListener implements Listener {
         if (game == null || game.isSetupMode()) return;
 
         if (RoundContext.isKicked(player)) {
-            // thrown out of this round already; being sent back is the whole point of having been kicked
-            RoundContext.kick(player);
+            // thrown out of this round already; being sent back is the whole point of having been kicked.
+            // A tick later, because the proxy channel is not usable in the join event itself
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                if (player.isOnline()) RoundContext.kick(player);
+            });
             return;
         }
         GamePlayer joined = game.join(player);

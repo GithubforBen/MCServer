@@ -114,6 +114,7 @@ public class Main {
         serverHandler = new ServerHandler();
         // what the machine has left, and which server is sitting on memory it never uses
         memoryWatch = new MemoryWatch(serverHandler);
+        serverHandler.setMemoryWatch(memoryWatch);
         memoryWatch.start();
         new CapacityEvents(memoryWatch);
         // rounds players put up themselves, and the rules an admin allows them under

@@ -96,6 +96,9 @@ public class InkWinEffect implements WinEffect {
                         iterator.remove();
                         continue;
                     }
+                    // never touch a chunk that is not loaded: reading a block there loads it, and an
+                    // effect that generates terrain to look at it is not an effect, it is a stall
+                    if (!world.isChunkLoaded(at.getBlockX() >> 4, at.getBlockZ() >> 4)) continue;
                     if (!at.getBlock().getType().isAir()) {
                         land(at);
                         iterator.remove();

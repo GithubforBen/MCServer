@@ -44,6 +44,13 @@ public class MemoryWatch {
     private static final long RECENT_WINDOW_MS = 7L * 24L * 60L * 60L * 1000L;
     /** What is kept back for the operating system and the launcher when no reserve is configured. */
     private static final int DEFAULT_RESERVE_MB = 2048;
+    /**
+     * How long a granted slot is held before it is assumed the server it was for never came.
+     * <p>
+     * Long enough for a paper server to be written out and started, short enough that a caller that died
+     * between asking and starting does not keep two gigabytes of nothing reserved for the evening.
+     */
+    private static final long RESERVATION_MS = 120_000L;
 
     private final ServerHandler servers;
     private final File file;
@@ -54,6 +61,8 @@ public class MemoryWatch {
     private final List<Long> refusals = new CopyOnWriteArrayList<>();
     private int refusedTotal;
     private Thread sampler;
+    /** Memory that has been promised to a start that has not happened yet, newest last. */
+    private final List<Reservation> reservations = new CopyOnWriteArrayList<>();
 
     public MemoryWatch(ServerHandler servers) {
         this(servers, new File("./capacity.yml"));
@@ -182,12 +191,24 @@ public class MemoryWatch {
     }
 
     /**
-     * @return how much heap the running servers have been promised altogether
+     * @return how much heap the running servers have been promised altogether, including the servers that
+     *         have been granted a slot but have not started yet
      */
     public int allocatedMB() {
         int total = 0;
         servers.updateInstances();
         for (ServerInstance instance : servers.getInstances()) total += instance.getAllocatedMemoryMB();
+        return total + reservedMB();
+    }
+
+    /**
+     * @return the memory promised to starts that have not happened yet
+     */
+    private int reservedMB() {
+        long now = System.currentTimeMillis();
+        reservations.removeIf(reservation -> reservation.expiresAt <= now);
+        int total = 0;
+        for (Reservation reservation : reservations) total += reservation.memoryMB;
         return total;
     }
 
@@ -199,6 +220,51 @@ public class MemoryWatch {
         int budget = budgetMB();
         if (budget == Integer.MAX_VALUE) return true;
         return allocatedMB() + memoryMB <= budget;
+    }
+
+    /**
+     * Takes the memory of a granted start out of the budget before the server exists.
+     * <p>
+     * Without this two players pressing the button in the same second are both told yes: neither server is
+     * running when the other one is asked about, so the sum of what is promised is right twice and wrong
+     * once the second one starts.
+     *
+     * @param memoryMB the heap that was granted
+     */
+    public synchronized void hold(int memoryMB) {
+        reservations.add(new Reservation(memoryMB, System.currentTimeMillis() + RESERVATION_MS));
+    }
+
+    /**
+     * Gives a held slot back, because the server it was held for now exists and counts on its own.
+     * <p>
+     * The started server does not always get exactly what was asked for - this machine's per server cap
+     * can have cut it down on the way - so a slot of the right size is preferred and the oldest one is
+     * taken otherwise. Holding on to a slot whose server is already running would keep the budget smaller
+     * than it is for two minutes, which is the wrong way to be wrong.
+     *
+     * @param memoryMB the heap the started server got
+     */
+    public synchronized void release(int memoryMB) {
+        for (Reservation reservation : reservations) {
+            if (reservation.memoryMB != memoryMB) continue;
+            reservations.remove(reservation);
+            return;
+        }
+        if (!reservations.isEmpty()) reservations.remove(0);
+    }
+
+    /**
+     * Memory promised to a start that has not happened yet.
+     */
+    private static final class Reservation {
+        private final int memoryMB;
+        private final long expiresAt;
+
+        private Reservation(int memoryMB, long expiresAt) {
+            this.memoryMB = memoryMB;
+            this.expiresAt = expiresAt;
+        }
     }
 
     /**
