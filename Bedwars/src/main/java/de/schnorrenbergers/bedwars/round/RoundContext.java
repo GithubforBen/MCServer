@@ -109,6 +109,38 @@ public final class RoundContext {
     }
 
     /**
+     * Whether somebody may be on this round at all.
+     * <p>
+     * A closed round that only hides itself from a list is not closed: a server name is easy to guess and
+     * easy to type into {@code /warp}. This is where "private" is actually enforced.
+     *
+     * @param player who turned up
+     * @return whether they may stay
+     */
+    public static boolean mayJoin(Player player) {
+        RoundData current = round;
+        if (current == null || player == null) return true;
+        if (player.isOp() || player.hasPermission("bedwars.admin")) return true;
+        return current.isAllowed(player.getUniqueId());
+    }
+
+    /**
+     * Lets somebody into a closed round.
+     *
+     * @param player who may come
+     * @return whether they were not already invited
+     */
+    public static boolean invite(UUID player) {
+        RoundData current = round;
+        if (current == null) return false;
+        RoundData updated = current.copy();
+        if (!updated.invite(player)) return false;
+        round = updated;
+        RoundService.saveAsync(updated, null);
+        return true;
+    }
+
+    /**
      * Opens or closes the round to strangers.
      *
      * @param open whether it shows up in the lobby list

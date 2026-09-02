@@ -14,6 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -106,6 +107,15 @@ public class RoundStore {
         round.setTeamSize(entry.getInt("team-size", 2));
         round.setAddons(new LinkedHashSet<>(entry.getStringList("addons")));
         round.setOpen(entry.getBoolean("open", true));
+        Set<UUID> invited = new LinkedHashSet<>();
+        for (String guest : entry.getStringList("invited")) {
+            try {
+                invited.add(UUID.fromString(guest));
+            } catch (IllegalArgumentException ignored) {
+                // one unreadable entry costs one guest, not the guest list
+            }
+        }
+        round.setInvited(invited);
         round.setState(state(entry.getString("state")));
         round.setCreatedAt(entry.getLong("created-at", System.currentTimeMillis()));
         round.setEndedAt(entry.getLong("ended-at", 0L));
@@ -130,6 +140,9 @@ public class RoundStore {
         config.set(path + ".team-size", round.getTeamSize());
         config.set(path + ".addons", new ArrayList<>(round.getAddons()));
         config.set(path + ".open", round.isOpen());
+        List<String> invited = new ArrayList<>();
+        for (UUID guest : round.getInvited()) invited.add(guest.toString());
+        config.set(path + ".invited", invited);
         config.set(path + ".state", round.getState().name());
         config.set(path + ".created-at", round.getCreatedAt());
         config.set(path + ".ended-at", round.getEndedAt());

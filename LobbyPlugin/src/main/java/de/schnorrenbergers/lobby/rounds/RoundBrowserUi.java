@@ -92,8 +92,8 @@ public final class RoundBrowserUi {
         List<RoundData> joinable = new ArrayList<>();
         for (RoundData round : RoundService.getOpenRounds()) {
             if (round.getServerName() == null) continue;
-            // a closed round is for its owner and whoever they take with them, so it is not advertised
-            if (!round.isOpen() && !round.isOwner(player.getUniqueId()) && !player.isOp()) continue;
+            // a closed round is for its owner and the people they invited, so nobody else is shown it
+            if (!round.isAllowed(player.getUniqueId()) && !player.isOp()) continue;
             joinable.add(round);
         }
         return joinable;
@@ -110,7 +110,11 @@ public final class RoundBrowserUi {
         if (round.getPlayers() > 0) {
             lore.add(ChatColor.GRAY + "Spieler: " + ChatColor.WHITE + round.getPlayers());
         }
-        if (!round.isOpen()) lore.add(ChatColor.YELLOW + "Privat");
+        if (!round.isOpen()) {
+            lore.add(ChatColor.YELLOW + "Privat"
+                    + (round.isOwner(viewer.getUniqueId()) && !round.getInvited().isEmpty()
+                    ? ChatColor.GRAY + " (" + round.getInvited().size() + " eingeladen)" : ""));
+        }
         if (round.isOwner(viewer.getUniqueId())) lore.add(ChatColor.GREEN + "Deine Runde");
         lore.add(" ");
         lore.add(ChatColor.YELLOW + "Klicken zum Beitreten");

@@ -14,7 +14,7 @@ commands:
     usage: /events
   runde:
     description: Eigene Runden starten und beitreten
-    usage: /runde [liste|start|admin]
+    usage: /runde [liste|start|einladen <spieler>|admin]
     aliases: [runden, rounds]
   bwdebug:
     description: Eine Bedwars Runde starten und hinspringen

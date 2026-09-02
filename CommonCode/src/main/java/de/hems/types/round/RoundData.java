@@ -27,6 +27,7 @@ public class RoundData implements Serializable {
     private int teamSize = 2;
     private ArrayList<String> addons = new ArrayList<>();
     private boolean open = true;
+    private ArrayList<String> invited = new ArrayList<>();
     private RoundState state = RoundState.PREPARING;
     private long createdAt = System.currentTimeMillis();
     private long endedAt;
@@ -131,6 +132,60 @@ public class RoundData implements Serializable {
         this.open = open;
     }
 
+    /**
+     * @return who the owner has let in on a closed round
+     */
+    public Set<UUID> getInvited() {
+        Set<UUID> guests = new LinkedHashSet<>();
+        for (String raw : invited == null ? List.<String>of() : invited) {
+            try {
+                guests.add(UUID.fromString(raw));
+            } catch (IllegalArgumentException ignored) {
+                // one unreadable entry costs one guest, not the guest list
+            }
+        }
+        return guests;
+    }
+
+    public void setInvited(Set<UUID> guests) {
+        this.invited = new ArrayList<>();
+        if (guests == null) return;
+        for (UUID guest : guests) {
+            if (guest != null) invited.add(guest.toString());
+        }
+    }
+
+    /**
+     * Lets somebody into a closed round.
+     *
+     * @param player who may come
+     * @return whether they were not already invited
+     */
+    public boolean invite(UUID player) {
+        if (player == null) return false;
+        if (invited == null) invited = new ArrayList<>();
+        String key = player.toString();
+        if (invited.contains(key)) return false;
+        invited.add(key);
+        return true;
+    }
+
+    /**
+     * Whether somebody may go to this round.
+     * <p>
+     * An open round lets anybody in and a closed one only its owner and their guests. Without this,
+     * "private" would be nothing but not being listed - and a server name is easy to guess and easy to
+     * type into /warp.
+     *
+     * @param player who wants in
+     * @return whether they may
+     */
+    public boolean isAllowed(UUID player) {
+        if (open) return true;
+        if (player == null) return false;
+        return isOwner(player) || getInvited().contains(player);
+    }
+
     public RoundState getState() {
         return state == null ? RoundState.PREPARING : state;
     }
@@ -188,6 +243,7 @@ public class RoundData implements Serializable {
         copy.teamSize = teamSize;
         copy.addons = new ArrayList<>(addons == null ? List.of() : addons);
         copy.open = open;
+        copy.invited = new ArrayList<>(invited == null ? List.of() : invited);
         copy.state = state;
         copy.createdAt = createdAt;
         copy.endedAt = endedAt;

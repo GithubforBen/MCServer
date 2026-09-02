@@ -67,11 +67,18 @@ public class LobbyListener implements Listener {
         Player player = event.getPlayer();
         if (game == null || game.isSetupMode()) return;
 
-        if (RoundContext.isKicked(player)) {
-            // thrown out of this round already; being sent back is the whole point of having been kicked.
-            // A tick later, because the proxy channel is not usable in the join event itself
+        if (RoundContext.isKicked(player) || !RoundContext.mayJoin(player)) {
+            // thrown out of this round, or never invited into a private one. Either way they go back, a
+            // tick later, because the proxy channel is not usable in the join event itself
+            boolean uninvited = !RoundContext.isKicked(player);
             plugin.getServer().getScheduler().runTask(plugin, () -> {
-                if (player.isOnline()) RoundContext.kick(player);
+                if (!player.isOnline()) return;
+                if (uninvited) {
+                    player.sendMessage(net.kyori.adventure.text.Component.text(
+                            "Diese Runde ist privat - du musst eingeladen werden.",
+                            net.kyori.adventure.text.format.NamedTextColor.RED));
+                }
+                RoundContext.kick(player);
             });
             return;
         }

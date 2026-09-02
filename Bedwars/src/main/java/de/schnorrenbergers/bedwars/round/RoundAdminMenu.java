@@ -2,7 +2,11 @@ package de.schnorrenbergers.bedwars.round;
 
 import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
+import de.hems.communication.ListenerAdapter;
+import de.hems.paper.PaperContext;
 import de.hems.paper.customInventory.types.SimpleItemAction;
+import de.hems.paper.servermanager.NetworkPlayers;
+import de.hems.types.admin.PlayerSnapshot;
 import de.hems.types.round.RoundData;
 import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.admin.AdminMenu;
@@ -18,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * What the person who started this round can do with it.
@@ -67,6 +72,15 @@ public final class RoundAdminMenu {
         menu.setItem(12, new ItemApi(Material.BARRIER, ChatColor.AQUA + "Spieler entfernen",
                         List.of(ChatColor.GRAY + "Wer stört, fliegt zurück in die Lobby.")).build(),
                 new SimpleItemAction(event -> openKickList((Player) event.getWhoClicked())));
+
+        if (round != null && !round.isOpen()) {
+            menu.setItem(13, new ItemApi(Material.PAPER, ChatColor.AQUA + "Einladen",
+                            List.of(ChatColor.GRAY + "Wer im Netzwerk online ist,",
+                                    ChatColor.GRAY + "darf danach in deine private Runde.",
+                                    ChatColor.GRAY + "Eingeladen: " + ChatColor.WHITE
+                                            + round.getInvited().size())).build(),
+                    new SimpleItemAction(event -> openInviteList((Player) event.getWhoClicked())));
+        }
 
         menu.setItem(14, new ItemApi(Material.COMPARATOR, ChatColor.AQUA + "Einstellungen",
                         List.of(ChatColor.GRAY + "1.8-Kampf, Autostart und der Rest")).build(),
@@ -122,6 +136,62 @@ public final class RoundAdminMenu {
         lore.add(ChatColor.YELLOW + "Klicken zum Umschalten");
         return new ItemApi(round.isOpen() ? Material.LIME_DYE : Material.GRAY_DYE,
                 ChatColor.AQUA + (round.isOpen() ? "Öffentlich" : "Privat"), lore).build();
+    }
+
+    /**
+     * Everybody in the network who is not here yet, one head each, click to invite.
+     * <p>
+     * Loaded from the other servers rather than from this one, because the people worth inviting are by
+     * definition the ones who are not standing in this round.
+     */
+    private static void openInviteList(Player admin) {
+        admin.sendMessage(ChatColor.GRAY + "Frage die Server nach ihren Spielern ...");
+        PaperContext.async(() -> {
+            Map<String, List<PlayerSnapshot>> byServer = NetworkPlayers.byServer();
+            List<PlayerSnapshot> candidates = new ArrayList<>();
+            String self = ListenerAdapter.getName().toString();
+            for (Map.Entry<String, List<PlayerSnapshot>> entry : byServer.entrySet()) {
+                if (self.equalsIgnoreCase(entry.getKey())) continue;
+                candidates.addAll(entry.getValue());
+            }
+            candidates.sort((a, b) -> String.valueOf(a.getName()).compareToIgnoreCase(String.valueOf(b.getName())));
+            PaperContext.sync(() -> showInvites(admin, candidates));
+        });
+    }
+
+    private static void showInvites(Player admin, List<PlayerSnapshot> candidates) {
+        RoundData round = RoundContext.get();
+        CustomInventory menu = new CustomInventory(9 * 4, "Einladen", null);
+        menu.fillPlaceHolder();
+        int slot = 0;
+        for (PlayerSnapshot candidate : candidates) {
+            if (slot >= 9 * 3) break;
+            boolean invited = round != null && round.getInvited().contains(candidate.getUuid());
+            List<String> lore = new ArrayList<>();
+            lore.add(ChatColor.GRAY + "Auf: " + ChatColor.WHITE + candidate.getServer());
+            lore.add(" ");
+            lore.add(invited ? ChatColor.GREEN + "Ist schon eingeladen"
+                    : ChatColor.YELLOW + "Klicken lädt ein");
+            menu.setItem(slot++, new ItemApi(invited ? Material.LIME_DYE : Material.PLAYER_HEAD,
+                            ChatColor.AQUA + candidate.getName(), lore).build(),
+                    new SimpleItemAction(event -> {
+                        Player clicker = (Player) event.getWhoClicked();
+                        if (RoundContext.invite(candidate.getUuid())) {
+                            clicker.sendMessage(ChatColor.GREEN + candidate.getName()
+                                    + " darf jetzt in deine Runde.");
+                        }
+                        openInviteList(clicker);
+                    }));
+        }
+        if (slot == 0) {
+            menu.setItem(13, new ItemApi(Material.GRAY_DYE,
+                            ChatColor.GRAY + "Sonst ist gerade niemand online").build(),
+                    new SimpleItemAction(event -> {
+                    }));
+        }
+        menu.setItem(9 * 4 - 1, new ItemApi(Material.ARROW, ChatColor.GRAY + "Zurück").build(),
+                new SimpleItemAction(event -> open((Player) event.getWhoClicked())));
+        CustomInventory.show(admin, menu);
     }
 
     /**
