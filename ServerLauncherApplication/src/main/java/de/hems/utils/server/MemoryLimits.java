@@ -62,7 +62,7 @@ public final class MemoryLimits {
      * @param fallback     what to use when neither says anything
      * @return the limit, or the fallback
      */
-    private static int read(String variable, String configKey, int fallback) {
+    public static int read(String variable, String configKey, int fallback) {
         String environment = System.getenv(variable);
         if (environment != null && !environment.isBlank()) {
             try {

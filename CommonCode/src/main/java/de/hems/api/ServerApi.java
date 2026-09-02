@@ -4,18 +4,23 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.server.RequestServerRestartEvent;
 import de.hems.communication.events.server.RequestServerStartEvent;
 import de.hems.communication.events.server.RequestServerStopEvent;
+import de.hems.communication.events.server.RequestCapacityEvent;
+import de.hems.communication.events.server.RequestServerSlotEvent;
 import de.hems.communication.events.server.RequestServersEvent;
+import de.hems.communication.events.server.RespondServerSlotEvent;
 import de.hems.communication.events.server.RespondServersEvent;
 import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.types.FileType;
 import de.hems.types.Server;
 import de.hems.types.ServerTemplate;
+import de.hems.types.server.CapacityData;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -215,5 +220,54 @@ public final class ServerApi {
      */
     public static Set<FileType.PLUGIN> requiredPlugins(ServerTemplate template) {
         return template.getRequiredPlugins();
+    }
+
+    /* ------------------------------------------------------------------ how full the machine is */
+
+    /**
+     * Asks the host how much room is left on the machine. Blocks until the answer arrives.
+     *
+     * @return what the host reports, or {@code null} when it did not answer in time
+     */
+    public static CapacityData capacity() throws Exception {
+        RequestCapacityEvent request = new RequestCapacityEvent();
+        ListenerAdapter.sendListeners(request);
+        RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
+        if (response == null || !(response.getData() instanceof CapacityData capacity)) return null;
+        return capacity;
+    }
+
+    /**
+     * Asks whether one more server of this size may be started, before anything is created.
+     * <p>
+     * The host answers, not the caller: two players asking in the same second are two questions, and the
+     * host sees them one after the other. A refusal is counted there as well, which is what later turns
+     * into the memory recommendation in the server manager.
+     *
+     * @param memoryMB   the heap the new server would want
+     * @param playerId   who is asking, may be {@code null}
+     * @param playerName their name, for the host's log
+     * @param purpose    what the server is for
+     * @return the answer, never {@code null} - a host that stays silent counts as a no
+     */
+    public static Slot requestSlot(int memoryMB, UUID playerId, String playerName, String purpose)
+            throws Exception {
+        RequestServerSlotEvent request = new RequestServerSlotEvent(memoryMB, playerId, playerName, purpose);
+        ListenerAdapter.sendListeners(request);
+        RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
+        if (!(response instanceof RespondServerSlotEvent slot)) {
+            return new Slot(false, null);
+        }
+        return new Slot(slot.isGranted(),
+                response.getData() instanceof CapacityData capacity ? capacity : null);
+    }
+
+    /**
+     * Whether one more server may be started, and what the machine looked like when that was decided.
+     *
+     * @param granted  whether it may be started
+     * @param capacity the state of the machine, {@code null} when the host did not answer
+     */
+    public record Slot(boolean granted, CapacityData capacity) {
     }
 }

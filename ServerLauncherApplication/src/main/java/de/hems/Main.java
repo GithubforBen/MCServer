@@ -22,6 +22,7 @@ import de.hems.utils.bot.tickets.SetTicketChannelListener;
 import de.hems.utils.bot.tickets.Tickets;
 import de.hems.utils.bot.verification.OnAccountVerifyCommand;
 import de.hems.utils.server.IdleServerWatchdog;
+import de.hems.utils.server.MemoryWatch;
 import de.hems.utils.server.ServerHandler;
 import de.hems.utils.types.RunningMode;
 import de.hems.utils.webconsole.WebServer;
@@ -62,6 +63,7 @@ public class Main {
     private JDA jda;
     private WebServer webServer;
     private IdleServerWatchdog idleServerWatchdog;
+    private MemoryWatch memoryWatch;
     //TODO: add a way to auto add ops
 
     public Main() throws Exception {
@@ -102,6 +104,10 @@ public class Main {
         new EventEvents(eventStore, runStore, awardStore, new EventSettlement(eventStore, runStore, awardStore));
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
+        // what the machine has left, and which server is sitting on memory it never uses
+        memoryWatch = new MemoryWatch(serverHandler);
+        memoryWatch.start();
+        new CapacityEvents(memoryWatch);
         new StartServerEvent();
         new RestartServerEvent();
         new StopServerEvent();
@@ -247,6 +253,10 @@ public class Main {
 
     public MoneyStore getMoneyStore() {
         return moneyStore;
+    }
+
+    public MemoryWatch getMemoryWatch() {
+        return memoryWatch;
     }
 
     public StashStore getStashStore() {

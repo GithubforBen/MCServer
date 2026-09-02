@@ -127,6 +127,10 @@ public final class ServerManagerUi {
         inventory.setItem(SIZE - 5, new ItemApi(Material.ENDER_PEARL, ChatColor.LIGHT_PURPLE + "Warp Menü",
                         List.of(ChatColor.GRAY + "Zu einem Server springen")).build(),
                 new SimpleItemAction((event) -> openWarpMenu((Player) event.getWhoClicked())));
+        inventory.setItem(SIZE - 3, new ItemApi(Material.REDSTONE_BLOCK, ChatColor.AQUA + "Arbeitsspeicher",
+                        List.of(ChatColor.GRAY + "Wie voll die Maschine ist",
+                                ChatColor.GRAY + "und wo noch Platz zu holen wäre")).build(),
+                new SimpleItemAction((event) -> CapacityUi.open((Player) event.getWhoClicked())));
         inventory.setItem(SIZE - 1, new ItemApi(Material.NETHER_STAR, ChatColor.GREEN + "Neuer Server",
                         List.of(ChatColor.GRAY + "Vorlage, RAM und Plugins auswählen")).build(),
                 new SimpleItemAction((event) -> openTemplateMenu((Player) event.getWhoClicked())));
