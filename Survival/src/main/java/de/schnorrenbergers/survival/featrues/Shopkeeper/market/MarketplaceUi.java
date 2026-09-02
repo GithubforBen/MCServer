@@ -1,5 +1,6 @@
 package de.schnorrenbergers.survival.featrues.Shopkeeper.market;
 
+import de.hems.paper.cosmetic.CosmeticsUi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.schnorrenbergers.survival.Survival;
 import net.kyori.adventure.text.Component;
@@ -141,6 +142,15 @@ public class MarketplaceUi {
                 return build();
             }));
         }
+        // the cosmetics are not offers and do not belong among the tabs at the top - they are bought with
+        // the same bits, so this is where somebody already has their wallet open
+        inventory.setItem(47, label(Material.FIREWORK_ROCKET, "Cosmetics", NamedTextColor.LIGHT_PURPLE,
+                List.of("Sieges-Effekte und Gadgets",
+                        "fürs ganze Netzwerk, bezahlt mit Bits")), MarketAction.handles(event -> {
+            Player clicker = (Player) event.getWhoClicked();
+            clicker.closeInventory();
+            CosmeticsUi.open(clicker);
+        }));
         inventory.setItem(49, label(Material.BOOK, "Seite " + (page + 1) + " von " + pages,
                 NamedTextColor.WHITE, List.of(
                         "Linksklick auf ein Item kauft es",

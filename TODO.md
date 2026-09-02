@@ -1,7 +1,7 @@
 # TODO
 
-Stand: 2026-08-19. Offene Punkte aus der Shopkeeper-/Marktplatz-Runde und die noch nicht
-begonnene Event-Arbeit.
+Stand: 2026-09-02. Offene Punkte aus der Shopkeeper-/Marktplatz-Runde, dem Eventsystem und der
+Runde um eigene Runden, Speicher, Geld und Cosmetics.
 
 ---
 
@@ -73,11 +73,14 @@ Lebenszyklus (erledigt):
 - [x] Bei der Abwicklung werden die Verzeichnisse der Run-Server gelöscht und ihre
       Port-Reservierung freigegeben (30 s Karenz, damit der Prozess die Dateien loslässt)
 
+Erledigt:
+- [x] Ein Lauf, den niemand fortsetzt, wird nach 24 Stunden ohne Anfassen als ABGEBROCHEN
+      geschlossen und sein Server weggeräumt (`runs.abandon-after-hours`, `0` = nie)
+- [x] Ein abgesagtes Event wird nicht mehr sofort abgewickelt: seine Server gehen aus, die
+      Läufe bleiben pausiert liegen, bis die geplante Zeit wirklich vorbei ist. "Wieder
+      aktivieren" bringt sie damit zurück
+
 Offen:
-- [ ] Ein Lauf, den niemand je fortsetzt, bleibt bis zum Eventende PAUSED — erst dann
-      räumt ihn die Abwicklung weg
-- [ ] Ein abgesagtes Event wird sofort abgewickelt. Klickt man danach "Wieder
-      aktivieren", ist es zwar wieder aktiv, aber seine Läufe sind weg
 - [ ] Spezialitems als Preise (pluginspezifisch) — bisher nur normale Materialien
 
 ### 1.4 Event-Server — erledigt
@@ -123,9 +126,13 @@ Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiz
 
 ## 3. Offene Entscheidungen
 
-- [ ] `MoneyHandler.addMoney()` an den Verkäufer kann fehlschlagen. Dann ist das Geld weg:
-      Käufer hat bezahlt und die Ware, Shopbesitzer bekommt nichts. Bewusst kein Rollback.
-      Soll das abgesichert werden?
+- [ ] `MoneyHandler.addMoney()` an den Verkäufer kann fehlschlagen. Das Loch ist kleiner
+      geworden, seit das Geld beim Launcher liegt: eine Gutschrift ist eine Differenz, die
+      dort angewandt wird, und der einzige verbleibende Fehlerfall ist eine Nachricht, die
+      das Netz nicht erreicht. Die wird jetzt dreimal versucht und im Fehlerfall mit Konto
+      und Betrag als `LOST BALANCE CHANGE` geloggt, damit sie von Hand korrigierbar ist.
+      Was fehlt, ist eine dauerhafte Warteschlange, die den Betrag nach einem Absturz noch
+      hat. Bewusst nicht gebaut — soll das rein?
 - [ ] `/shop debug` als Diagnose: listet Shops ohne Villager und verwaiste Villager mit
       Shop-ID. Nur bauen, falls die Villager-Prüfung oben Probleme zeigt.
 
@@ -133,12 +140,140 @@ Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiz
 
 ## 4. Kleinkram im Code
 
-- [ ] `Inventorys.java:217` — `//TODO: add option` im Item-Manager-Inventar
-- [ ] `Main.java:54` — Ops automatisch hinzufügen
-- [ ] `VelocityConfigurator.java:25` — Workaround ersetzen
-- [ ] `VerifyAccount.java:5` — Account-Verknüpfung fehlt komplett
-- [ ] `LobbyPlugin.java:31` — Parkour
-- [ ] `.idea/misc.xml` stand auf `openjdk-23`; falls IntelliJ wieder zickt, auf 25 prüfen
+- [x] `VelocityConfigurator.java:25` — Workaround raus. `velocity.toml` gehört dem Launcher
+      komplett und wird bei jedem Start neu geschrieben; die Schreibaufrufe sagen das jetzt,
+      statt `firstTime` zu belügen
+- [x] `LobbyPlugin.java:31` — der Parkour ist längst da, nur der Kommentar stand noch
+- [x] `.idea/misc.xml` steht auf JDK 25
+- [ ] `Inventorys.java:217` — `//TODO: add option` im Item-Manager-Inventar. Aus dem Code geht
+      nicht hervor, welche Option gemeint ist — **was soll da hin?**
+- [x] `Main.java:54` — Ops kommen jetzt über Discord: `/op` und `/deop`, nur für den Besitzer,
+      schreiben in dieselbe `ops`-Liste und werden auf laufenden Servern sofort angewandt
+- [x] `VerifyAccount.java:5` — Account-Verknüpfung ist da: `/verify <name>` im Discord gibt einen
+      Code, `/verify <code>` im Spiel verknüpft, `/verify wer <spieler>` schaut nach. Die alte
+      leere `VerifyAccount`-Klasse ist raus
+
+---
+
+## 5. Eigene Runden, Speicher, Geld und Cosmetics
+
+Stand: 2026-09-02. Alles gebaut und kompiliert, nichts davon auf einem laufenden Server geprüft.
+
+### 5.1 Geld gehört jetzt dem Launcher — erledigt
+- [x] `money.yml` beim Launcher, `MoneyStore` als einziger Schreiber
+- [x] Änderungen sind Differenzen unter einem Lock, jede angewandte wird ans Netz gemeldet
+- [x] `configs/money-config.yml` von Survival wird beim ersten Start einmal übernommen
+- [x] `MoneyHandler` behält seine Signaturen, antwortet aus der lokalen Kopie
+- [x] `MoneyService.changeBlocking` als strenger Weg, wo etwas Wertvolles herausgeht
+
+- [x] Eine Änderung, die das Netz nicht erreicht, wird dreimal versucht und sonst als
+      `LOST BALANCE CHANGE` mit Konto und Betrag geloggt
+
+Offen:
+- [ ] `MoneyHandler.removeMoney` ist eine Schätzung, wenn dasselbe Konto auf zwei Servern in
+      derselben Sekunde leergeräumt wird. Der Launcher lehnt die zweite Änderung ab und korrigiert
+      die Kopie, aber der zweite Server hat da schon „ja" gesagt. Für Shop-Käufe eines Spielers auf
+      einem Server ist das dicht; falls das mal weh tut, müssen die Aufrufer auf `changeBlocking`
+      umgestellt werden
+- [ ] Keine dauerhafte Warteschlange für Änderungen, die nach drei Versuchen nicht rausgehen.
+      Nach einem Absturz in genau diesem Moment ist der Betrag nur noch im Log
+- [ ] `AwardService` zahlt Geldpreise weiterhin nur auf Survival aus. Das war nötig, solange nur
+      Survival Geld kannte — jetzt könnte jeder Server das
+
+### 5.2 Speicherbudget und Empfehlung — erledigt
+- [x] Der Launcher kennt die Größe der Maschine und hält eine Reserve frei
+- [x] Starts, die nicht mehr ins Budget passen, werden abgelehnt und gezählt
+- [x] Ein bewilligter Start hält seinen Speicher, bis sein Server wirklich läuft
+- [x] Alle 30 Sekunden wird gemessen, was jeder Server hält (RSS aus `/proc`), Spitze bleibt stehen
+- [x] Panel im Server Manager: Budget, abgelehnte Starts, Vorschläge mit Zahlen dahinter
+- [x] Umsetzbar im Spiel: RAM pro Server setzen, gilt beim nächsten Start dieses Servers
+
+- [x] Der Vorschlag lässt sich anklicken: ein Klick schreibt den vorgeschlagenen Wert weg
+
+Offen:
+- [ ] Gemessen wird nur unter Linux. Auf Windows zeigt das Panel das Budget, aber keine Vorschläge
+- [ ] `ServerHandler.startNewInstance` lehnt selbst nichts ab. Das Budget greift über die
+      Slot-Anfrage, die die Lobby stellt — ein Admin, der im Server Manager einen Server erstellt,
+      kann das Budget bewusst überziehen. Absicht; falls das doch verhindert werden soll, gehört
+      die Prüfung zusätzlich in `startNewInstance`
+- [ ] Ein übernommener Vorschlag gilt erst beim nächsten Start dieses Servers. Ein Knopf, der den
+      Server gleich mit durchstartet, fehlt — bei SURVIVAL wäre das aber nichts, was man aus
+      Versehen anklicken will
+
+### 5.3 Selbst gestartete Runden — erledigt
+- [x] `/runde` in der Lobby: laufende Runden sehen, beitreten, eigene aufmachen
+- [x] Map, Modus, Addons und öffentlich/privat vor dem Start wählbar
+- [x] Vom Admin freischaltbar, dazu Limits pro Spieler, insgesamt, Wartezeit und Event-Sperren
+- [x] Rundenadmin ist, wer startet: Wartelobby steuern, kicken, privat schalten
+- [x] Der Rundenserver liest seine Runde beim Start über den eigenen Namen, wie die Events auch
+- [x] Der Launcher räumt Runden auf, deren Server weg ist
+
+- [x] „Privat" ist echt: eine geschlossene Runde hat eine Gästeliste, `/runde einladen <spieler>`
+      in der Lobby oder der Einladen-Knopf im Rundenmenü füllt sie, und wer ohne Einladung
+      hinwarpt, wird auf dem Rundenserver zurückgeschickt
+- [x] Maps, die von Hand dazukommen: Weltordner nach `./bedwars-maps` beim Launcher, landen auf
+      jedem neuen Rundenserver und stehen im Lobby-Menü
+
+Offen:
+- [ ] Der Rundenadmin kann die Runde nicht selbst beenden. Bewusst so — der Idle-Watchdog macht den
+      Server zu, sobald der letzte raus ist
+- [ ] Rausgeworfene Spieler bleiben nur für die Lebensdauer des Rundenservers draußen. Da der
+      Server mit der Runde endet, reicht das — es ist trotzdem keine Sperre
+- [ ] Eingeladen werden kann nur, wer gerade online ist. Eine Einladung an jemanden, der später
+      kommt, gibt es nicht
+- [ ] Eine Map ohne `<name>.yml` kommt unfertig auf dem Server an und muss dort einmal mit
+      `/bw setup` eingerichtet werden. Das ist richtig so, heißt aber: einfach eine Welt
+      hinlegen reicht noch nicht zum Spielen
+
+### 5.4 Cosmetics und Gadgets — erledigt
+- [x] Katalog und Besitz beim Launcher (`cosmetics.yml`), Effekt-Code auf dem Spielserver
+- [x] Kauf komplett im Launcher: Preis lesen, Bits abbuchen, gutschreiben, in einem Schritt
+- [x] Shop als Knopf im Marktplatz auf Survival, ein Klick kauft/legt an/legt ab
+- [x] Adminmenü: freischalten, verkäuflich, Preis, für alle gratis
+- [x] Sieges-Effekt „Raketen" (für alle gratis, ersetzt das alte Feuerwerk am Rundenende)
+- [x] Sieges-Effekt „Tinte": Explosionen von der Bauhöhe über die Map, ohne Schaden und Rückstoß
+- [x] Gadget „Endlos-Perle": kommt nach dem Cooldown zurück, Cooldown in den Cosmetic-Settings
+
+Offen:
+- [ ] Der Cooldown der Endlos-Perle steht auf 22 Ticks — Vanilla plus die zehn Prozent. Das ist
+      fast geschenkt. Wenn sich das im Spiel als zu stark zeigt, ist es eine Zahl in
+      `cosmetics.yml` unter `endless-pearl.settings.cooldown-ticks`
+- [ ] Gekauft und angelegt wird nur auf Survival. Wer nur Bedwars spielt, muss dafür einmal
+      rüber — die Effekte selbst laufen überall
+- [ ] Der Besitz aller Spieler wird komplett an jeden Server verteilt, wie bei den Teams. Bei
+      vielen Spielern ist das irgendwann zu viel, dann müsste pro Spieler nachgeladen werden
+- [ ] Nur Sieges-Effekte und ein Gadget. Für weitere Arten (Killeffekte, Partikelspuren) gibt es
+      noch keinen Typ
+
+### 5.5 Am lebenden Server nachprüfen
+- [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers
+- [ ] Zwei Spieler starten gleichzeitig eine Runde, wenn nur noch für eine Platz ist
+- [ ] Die gemessenen Spitzen sind plausibel (RSS ist mehr als der Heap — der Vorschlag rechnet mit
+      Faktor 1,4 auf die Spitze, das sollte an echten Zahlen geprüft werden)
+- [ ] Tinte auf einer vollen Runde: kostet es TPS?
+- [ ] Rundenadmin kickt jemanden, der danach wieder joinen will
+- [ ] Eine private Runde: jemand ohne Einladung warpt direkt auf den Servernamen
+- [ ] Eine Welt nach `./bedwars-maps` legen und prüfen, dass sie auf dem nächsten Rundenserver
+      liegt und im Lobby-Menü steht
+- [ ] Ein abgesagtes Event wieder aktivieren und prüfen, dass seine Läufe noch da sind
+- [ ] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
+
+### 5.6 Discord-Verknüpfung und Ops — erledigt
+- [x] `/verify <minecraftname>` im Discord gibt einen Code (6 Zeichen, 10 Minuten, ephemeral)
+- [x] `/verify <code>` im Spiel verknüpft, geprüft wird beim Launcher gegen die UUID
+- [x] `/verify wer <spieler>` sagt, wer das auf Discord ist (Op oder `network.verify.lookup`)
+- [x] `/unlink` im Discord löst eine Verknüpfung, nur der Besitzer
+- [x] `/op` und `/deop` im Discord, nur der Besitzer, gelten auf laufenden Servern sofort
+- [x] Die Besitzer-ID steht in `discord-owner-id` statt fest im Code von `/payingplayer`
+
+Offen:
+- [ ] `/verify` gibt es in Lobby und Survival. Auf einem Bedwars-Rundenserver nicht — dort steht
+      man selten, wenn man gerade einen Code eintippt, aber es ist eine Lücke
+- [ ] Ein Spieler, der sich umbenennt, behält den alten Namen in `links.yml`. Die UUID stimmt,
+      die Anzeige nicht — beim nächsten Verknüpfen wird der Name aktualisiert
+- [ ] Die Verknüpfung steht nirgends in der Admin-Website, nur im Spiel
+- [ ] Nachprüfen: `/op` auf einem laufenden Server — bekommt der Spieler die Rechte wirklich
+      sofort und stehen sie nach einem Neustart noch in der `ops.json`?
 
 ---
 

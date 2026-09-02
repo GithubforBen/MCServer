@@ -37,6 +37,8 @@ public class EventSettlement {
 
     /** How often to look for events that have ended. */
     private static final long CHECK_INTERVAL_MS = 60_000L;
+    /** How long a run may lie untouched before it is given up on, unless the config says otherwise. */
+    private static final int DEFAULT_ABANDON_HOURS = 24;
 
     private final EventStore events;
     private final RunStore runs;
@@ -55,19 +57,123 @@ public class EventSettlement {
                 } catch (Exception e) {
                     System.out.println("Could not settle the events: " + e.getMessage());
                 }
+                try {
+                    abandonForgottenRuns();
+                } catch (Exception e) {
+                    System.out.println("Could not tidy up the runs: " + e.getMessage());
+                }
             }
         }, CHECK_INTERVAL_MS, CHECK_INTERVAL_MS);
     }
 
     /**
      * Settles every event whose time is up and that has not been settled yet.
+     * <p>
+     * A cancelled event is a special case. Cancelling is a decision somebody can take back - the button
+     * to do it is right there in the calendar - and settling throws the runs and their worlds away, so an
+     * event that was cancelled by mistake used to come back without anything that had been played on it.
+     * So a cancelled event is put on ice instead: its servers are switched off, which is the part that
+     * costs memory, and the rest waits until the time it was planned for has actually passed.
      */
     public void settleFinished() {
+        long now = System.currentTimeMillis();
         for (EventData event : events.getEvents()) {
             if (event.isApplied()) continue;
             EventState state = event.getState();
+            if (state == EventState.CANCELLED && now < event.getEndsAt()) {
+                suspend(event);
+                continue;
+            }
             if (state != EventState.FINISHED && state != EventState.CANCELLED) continue;
             settle(event);
+        }
+    }
+
+    /**
+     * Frees what a cancelled event is holding without throwing anything away.
+     * <p>
+     * Cheap to repeat: a server that is already off is not stopped again, and a run that is already
+     * paused stays as it is. So this can run every minute until the event's time is finally up.
+     *
+     * @param event the cancelled event
+     */
+    private void suspend(EventData event) {
+        List<RunData> board = runs.getRunsOf(event.getId());
+        if (board.isEmpty()) return;
+        boolean changed = false;
+        for (RunData run : board) {
+            if (run.getState() != RunData.State.RUNNING) continue;
+            // the store hands out its own objects, so changing one and writing it back is the whole update
+            run.pause();
+            runs.put(run);
+            announceRun(run);
+            changed = true;
+        }
+        stopServers(board);
+        if (changed) {
+            System.out.println("Event " + event.getName() + " is cancelled - its runs are paused and wait "
+                    + "until its time is over, so reactivating it brings them back.");
+        }
+    }
+
+    /**
+     * Gives up on runs nobody has come back to.
+     * <p>
+     * A paused run keeps a whole generated world on the disk and offers its team a "continue" button. Left
+     * alone that is fine for an hour and wrong after a week: an event that runs for days would collect a
+     * world per attempt, and the button would eventually be pressed for a run whose team has long stopped
+     * caring. After the configured time the run is closed as abandoned and its server is thrown away, so
+     * what is offered is the truth.
+     */
+    public void abandonForgottenRuns() {
+        long limit = abandonAfterHours() * 60L * 60L * 1000L;
+        if (limit <= 0L) return;
+        long now = System.currentTimeMillis();
+        List<RunData> forgotten = new java.util.ArrayList<>();
+        for (RunData run : runs.getRuns()) {
+            if (!run.isOpen() || run.quietFor(now) < limit) continue;
+            EventData event = events.getEvent(run.getEventId());
+            // an event that is over is settled as a whole, which does this and more
+            if (event == null || event.isApplied()) continue;
+            forgotten.add(run);
+        }
+        if (forgotten.isEmpty()) return;
+        for (RunData run : forgotten) {
+            long quiet = run.quietFor(now);
+            run.finish(RunData.State.ABANDONED);
+            runs.put(run);
+            announceRun(run);
+            System.out.println("Run " + run.getId() + " was untouched for " + (quiet / 3_600_000L)
+                    + " hours and is given up on.");
+        }
+        discardServers(forgotten);
+    }
+
+    /**
+     * @return how many hours a run may lie untouched, {@code 0} to never give up on one
+     */
+    private int abandonAfterHours() {
+        YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
+        if (!config.contains("runs.abandon-after-hours")) {
+            config.set("runs.abandon-after-hours", DEFAULT_ABANDON_HOURS);
+            config.setComments("runs.abandon-after-hours", List.of(
+                    "How many hours a paused event run may lie untouched before it is given up on and its",
+                    "server is thrown away. 0 keeps every run until its event is over."));
+            Main.getInstance().getConfiguration().save();
+        }
+        return config.getInt("runs.abandon-after-hours", DEFAULT_ABANDON_HOURS);
+    }
+
+    /**
+     * Tells the network that a run changed.
+     *
+     * @param run the run in its new state
+     */
+    private void announceRun(RunData run) {
+        try {
+            ListenerAdapter.sendListeners(new RunUpdatedEvent(run.getId(), run));
+        } catch (Exception e) {
+            System.out.println("Could not announce run " + run.getId() + ": " + e.getMessage());
         }
     }
 
@@ -84,7 +190,7 @@ public class EventSettlement {
             awardPlaces(event, board);
             awardParticipation(event, board);
         }
-        stopServers(board);
+        discardServers(board);
         clearRuns(board);
 
         EventData settled = event.copy();
@@ -145,7 +251,29 @@ public class EventSettlement {
      *
      * @param board the runs of the event
      */
-    private void stopServers(List<RunData> board) {
+    private void discardServers(List<RunData> board) {
+        Set<String> servers = stopServers(board);
+        if (servers.isEmpty()) return;
+        // the process needs a moment to let go of its files, so the directories go after a grace period
+        new Timer("run-server-cleanup", true).schedule(new TimerTask() {
+            @Override
+            public void run() {
+                for (String server : servers) discardServer(server);
+            }
+        }, SHUTDOWN_GRACE_MS);
+    }
+
+    /**
+     * Switches the servers of a set of runs off and leaves their worlds where they are.
+     * <p>
+     * This is the half that is always safe: a stopped server costs nothing and can be started again under
+     * the same name, which is exactly what continuing a run does. Throwing the directory away is the other
+     * half, and it is only right once nobody can want the world back.
+     *
+     * @param board the runs whose servers should stop
+     * @return the servers that were addressed
+     */
+    private Set<String> stopServers(List<RunData> board) {
         Set<String> servers = new LinkedHashSet<>();
         for (RunData run : board) {
             if (run.getServerName() != null) servers.add(run.getServerName());
@@ -160,14 +288,7 @@ public class EventSettlement {
                 System.out.println("Could not stop the run server " + server + ": " + e.getMessage());
             }
         }
-        if (servers.isEmpty()) return;
-        // the process needs a moment to let go of its files, so the directories go after a grace period
-        new Timer("run-server-cleanup", true).schedule(new TimerTask() {
-            @Override
-            public void run() {
-                for (String server : servers) discardServer(server);
-            }
-        }, SHUTDOWN_GRACE_MS);
+        return servers;
     }
 
     /**

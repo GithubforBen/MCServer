@@ -8,10 +8,14 @@ import de.hems.paper.commands.WarpCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.EventService;
+import de.hems.paper.cosmetic.CosmeticService;
+import de.hems.paper.cosmetic.WinEffects;
+import de.hems.paper.round.RoundService;
 import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.BedwarsEventSettings;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
+import de.hems.types.round.RoundData;
 import de.schnorrenbergers.bedwars.addon.AddonRegistry;
 import de.schnorrenbergers.bedwars.addon.AddonSettings;
 import de.schnorrenbergers.bedwars.addon.impl.BedTokenAddon;
@@ -45,6 +49,7 @@ import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.map.MapLoader;
 import de.schnorrenbergers.bedwars.map.MapRepository;
 import de.schnorrenbergers.bedwars.map.setup.SetupSession;
+import de.schnorrenbergers.bedwars.round.RoundContext;
 import de.schnorrenbergers.bedwars.shop.ShopService;
 import de.schnorrenbergers.bedwars.shop.trap.TrapService;
 import de.schnorrenbergers.bedwars.shop.upgrade.UpgradeService;
@@ -117,6 +122,7 @@ public final class Bedwars extends JavaPlugin {
         game.setTimeline(new Timeline(timelineSettings));
         game.setDragons(new Dragons(timelineSettings));
         loadArena();
+        applyRoundAddons();
         addons.apply(game);
         game.start(this);
 
@@ -130,6 +136,10 @@ public final class Bedwars extends JavaPlugin {
         new DragonListener(this);
         new SpectatorListener(this);
         new RulesListener(this);
+        new de.schnorrenbergers.bedwars.round.RoundStateListener(this);
+        // what a round ends with, and what players carry into it
+        WinEffects.init(this);
+        new de.schnorrenbergers.bedwars.cosmetic.GadgetListener(this);
         if (gameSettings.isStatsEnabled()) {
             stats = new StatsTracker(this, new FileStatsRepository(
                     new File(gameSettings.getStatsDirectory())));
@@ -234,6 +244,16 @@ public final class Bedwars extends JavaPlugin {
                     + new java.util.Date(eventStartsAt) + ".");
             return settings.getMode();
         }
+        // no event ordered this round, so somebody did: the same lookup, by the same name, in the list of
+        // rounds players put up themselves
+        RoundContext.load(self);
+        RoundData round = RoundContext.get();
+        if (round != null) {
+            getLogger().info("This round was started by " + round.getOwnerName() + ": "
+                    + round.getTeamSize() + " players per team on "
+                    + (round.getMap() == null ? "whatever map is here" : round.getMap()) + ".");
+            return round.getMode();
+        }
         return gameSettings.getMode();
     }
 
@@ -244,7 +264,10 @@ public final class Bedwars extends JavaPlugin {
      * up, and a plugin that refuses to load there would make {@code /bw setup} impossible to reach.
      */
     private void loadArena() {
-        ArenaMap arena = maps.pick(gameSettings.getMap(), game.getMode());
+        RoundData round = RoundContext.get();
+        String wanted = round != null && round.getMap() != null && !round.getMap().isBlank()
+                ? round.getMap() : gameSettings.getMap();
+        ArenaMap arena = maps.pick(wanted, game.getMode());
         if (arena == null) {
             getLogger().warning("No map to play. Put a world folder into " + maps.getDirectory().getPath()
                     + " and set it up with /bw setup <name>.");
@@ -261,6 +284,24 @@ public final class Bedwars extends JavaPlugin {
         Rules.applyTo(world, arena, featureSettings);
         getLogger().info("Arena " + arena.getName() + " is loaded as '" + world.getName()
                 + "' in " + world.getWorldFolder().getPath());
+    }
+
+    /**
+     * Switches the addons the way whoever started this round wanted them.
+     * <p>
+     * Their choice is the whole choice: an addon they did not tick is off, whatever {@code addons.yml}
+     * says, because a menu that quietly leaves something on is a menu nobody trusts. An id the registry
+     * does not know is ignored rather than fatal, so the lobby and this server can gain an addon in
+     * either order.
+     */
+    private void applyRoundAddons() {
+        RoundData round = RoundContext.get();
+        if (round == null) return;
+        java.util.Map<String, Boolean> wanted = new java.util.HashMap<>();
+        for (de.schnorrenbergers.bedwars.addon.Addon addon : addons.all()) {
+            wanted.put(addon.getId(), round.getAddons().contains(addon.getId()));
+        }
+        addons.applyEventOverrides(wanted);
     }
 
     /**
@@ -295,6 +336,8 @@ public final class Bedwars extends JavaPlugin {
             new ListenerAdapter(ServerIdentity.of(this, "BEDWARS"));
             new PlayerAdminHandler(this);
             EventService.init(this);
+            RoundService.init(this);
+            CosmeticService.init(this);
             networked = true;
         } catch (Exception e) {
             getLogger().warning("No network connection (" + e.getMessage()

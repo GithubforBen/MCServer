@@ -62,6 +62,11 @@ public class RunData implements Serializable {
      * exact value always comes from the run server, which counts real ticks.
      */
     private long activeSince;
+    /**
+     * When the run last went quiet, so a run nobody ever comes back to can be told from one that was
+     * paused a minute ago. Zero while somebody is playing it.
+     */
+    private long quietSince;
     private State state = State.RUNNING;
     /** Which objectives are done, kept as names so an unknown one cannot break deserialisation. */
     private Set<String> completed = new LinkedHashSet<>();
@@ -161,6 +166,7 @@ public class RunData implements Serializable {
     public void pause() {
         if (getState() != State.RUNNING) return;
         activeSince = 0L;
+        quietSince = System.currentTimeMillis();
         state = State.PAUSED;
     }
 
@@ -170,6 +176,7 @@ public class RunData implements Serializable {
     public void resume() {
         if (getState() != State.PAUSED && getState() != State.RUNNING) return;
         activeSince = System.currentTimeMillis();
+        quietSince = 0L;
         state = State.RUNNING;
     }
 
@@ -197,7 +204,29 @@ public class RunData implements Serializable {
     public void finish(State state) {
         this.state = state;
         this.activeSince = 0L;
+        this.quietSince = 0L;
         this.finishedAt = System.currentTimeMillis();
+    }
+
+    /**
+     * @return since when nobody has been playing this run, {@code 0} while somebody is
+     */
+    public long getQuietSince() {
+        return quietSince;
+    }
+
+    public void setQuietSince(long quietSince) {
+        this.quietSince = quietSince;
+    }
+
+    /**
+     * How long this run has been lying around untouched.
+     *
+     * @param now the current time
+     * @return the milliseconds it has been quiet, {@code 0} while it is being played
+     */
+    public long quietFor(long now) {
+        return quietSince <= 0L ? 0L : Math.max(0L, now - quietSince);
     }
 
     /**

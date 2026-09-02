@@ -127,6 +127,10 @@ public final class ServerManagerUi {
         inventory.setItem(SIZE - 5, new ItemApi(Material.ENDER_PEARL, ChatColor.LIGHT_PURPLE + "Warp Menü",
                         List.of(ChatColor.GRAY + "Zu einem Server springen")).build(),
                 new SimpleItemAction((event) -> openWarpMenu((Player) event.getWhoClicked())));
+        inventory.setItem(SIZE - 3, new ItemApi(Material.REDSTONE_BLOCK, ChatColor.AQUA + "Arbeitsspeicher",
+                        List.of(ChatColor.GRAY + "Wie voll die Maschine ist",
+                                ChatColor.GRAY + "und wo noch Platz zu holen wäre")).build(),
+                new SimpleItemAction((event) -> CapacityUi.open((Player) event.getWhoClicked())));
         inventory.setItem(SIZE - 1, new ItemApi(Material.NETHER_STAR, ChatColor.GREEN + "Neuer Server",
                         List.of(ChatColor.GRAY + "Vorlage, RAM und Plugins auswählen")).build(),
                 new SimpleItemAction((event) -> openTemplateMenu((Player) event.getWhoClicked())));
@@ -283,9 +287,64 @@ public final class ServerManagerUi {
                     clicker.closeInventory();
                     warpTo(clicker, server);
                 }));
+        inventory.setItem(4, new ItemApi(Material.FURNACE, ChatColor.AQUA + "Arbeitsspeicher",
+                        List.of(ChatColor.GRAY + "Läuft mit: " + ChatColor.WHITE + server.memory + " MB",
+                                " ",
+                                ChatColor.YELLOW + "Klicken, um den Wert zu ändern",
+                                ChatColor.DARK_GRAY + "Gilt beim nächsten Start dieses Servers.")).build(),
+                new SimpleItemAction((event) -> {
+                    Player clicker = (Player) event.getWhoClicked();
+                    clicker.closeInventory();
+                    askForMemory(clicker, server);
+                }));
         inventory.setItem(7, new ItemApi(Material.ARROW, ChatColor.GRAY + "Zurück").build(),
                 new SimpleItemAction((event) -> openServerList((Player) event.getWhoClicked())));
         player.openInventory(inventory.getInventory());
+    }
+
+    /**
+     * Asks how much memory a server should get and writes it down.
+     * <p>
+     * This is the other end of the recommendation in {@link CapacityUi}: being told that survival is
+     * sitting on two spare gigabytes is only useful if there is somewhere to act on it, and editing the
+     * launcher's config by hand is not somewhere.
+     *
+     * @param player the admin
+     * @param server the server to change
+     */
+    private static void askForMemory(Player player, Server server) {
+        ChatPrompt.ask(player, ChatColor.GOLD + "Wie viel RAM soll " + server.name
+                + " bekommen? (in MB, 'abbrechen' bricht ab)", (answer) -> {
+            if (answer == null || answer.isBlank()) return;
+            int wanted;
+            try {
+                wanted = Integer.parseInt(answer.trim().replace("MB", "").replace("mb", "").trim());
+            } catch (NumberFormatException e) {
+                player.sendMessage(ChatColor.RED + "Das ist keine Zahl.");
+                return;
+            }
+            PaperContext.async(() -> {
+                ServerApi.Memory result;
+                try {
+                    result = ServerApi.setMemory(server.name, wanted);
+                } catch (Exception e) {
+                    PaperContext.sync(() -> player.sendMessage(ChatColor.RED
+                            + "Der Host antwortet gerade nicht."));
+                    return;
+                }
+                PaperContext.sync(() -> {
+                    if (!result.successful()) {
+                        player.sendMessage(ChatColor.RED + (result.message() == null
+                                ? "Das hat nicht geklappt." : result.message()));
+                        return;
+                    }
+                    player.sendMessage(ChatColor.GREEN + server.name + " bekommt beim nächsten Start "
+                            + result.memoryMB() + " MB.");
+                    player.sendMessage(ChatColor.GRAY + "Der laufende Server behält seine "
+                            + server.memory + " MB, bis er gestoppt und neu gestartet wird.");
+                });
+            });
+        });
     }
 
     /* --------------------------------------------------------------- server creation */

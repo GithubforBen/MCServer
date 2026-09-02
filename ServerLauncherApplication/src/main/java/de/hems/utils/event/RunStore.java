@@ -86,6 +86,9 @@ public class RunStore {
         // a run that was being played when the launcher went down comes back paused rather than with a
         // clock that has been running the whole time it was off
         run.setActiveSince(0L);
+        // and it has been quiet since the launcher went down, not since it was last written: an outage
+        // is not somebody playing, but it is also not a run its team walked away from
+        run.setQuietSince(entry.getLong("quiet-since", 0L));
         run.setIntendedTeamSize(entry.getInt("intended-team-size", 0));
         run.setCompleted(new LinkedHashSet<>(entry.getStringList("completed")));
         try {
@@ -93,6 +96,9 @@ public class RunStore {
         } catch (IllegalArgumentException e) {
             run.setState(RunData.State.RUNNING);
         }
+        // a run that was being played when the launcher stopped has no quiet time written down, and it is
+        // quiet now: nobody is on a server that is not running yet
+        if (run.isOpen() && run.getQuietSince() <= 0L) run.setQuietSince(System.currentTimeMillis());
         return run;
     }
 
@@ -109,6 +115,7 @@ public class RunStore {
         config.set(path + ".intended-team-size", run.getIntendedTeamSize());
         config.set(path + ".completed", new ArrayList<>(run.getCompleted()));
         config.set(path + ".state", run.getState().name());
+        config.set(path + ".quiet-since", run.getQuietSince());
     }
 
     public synchronized void save() {

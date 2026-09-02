@@ -1,84 +1,49 @@
 package de.schnorrenbergers.survival.featrues.money;
 
-import de.hems.api.UUIDFetcher;
-import de.schnorrenbergers.survival.Survival;
+import de.hems.paper.money.MoneyService;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Team;
 
-import java.util.List;
 import java.util.UUID;
 
+/**
+ * The money of a player or a team.
+ * <p>
+ * This used to be the owner of the money: it read and wrote {@code configs/money-config.yml} next to the
+ * survival server. The money now belongs to the launcher ({@link MoneyService}), so the lobby can sell
+ * something for bits too, and this is what is left - the survival flavoured way of asking for it.
+ * <p>
+ * The signatures did not change, and neither did what they promise. {@link #removeMoney} still answers
+ * right away and still says no when the account is short. It answers from this server's copy of the
+ * balances rather than from the launcher, which is a guess in exactly one situation: the same account is
+ * emptied on two servers within the same second. The launcher refuses the second change and pushes the
+ * corrected balance back. For a shop where one player buys from one server that is the right trade;
+ * anything that hands over something expensive should use {@link MoneyService#changeBlocking} instead.
+ */
 public class MoneyHandler {
     public static final Material MONEY_ITEM = Material.DIAMOND;
 
-    public static synchronized void addMoney(int amount, UUID uuid) {
-        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
-        if (config.contains(uuid.toString() + ".money")) {
-            config.set(uuid + ".money", config.getInt(uuid + ".money") + amount);
-        } else {
-            config.set(uuid + ".money", amount);
-            config.setComments(uuid.toString() + ".money", List.of("This is the money of the player " +
-                    UUIDFetcher.findNameByUUID(uuid)));
-        }
-        Survival.getInstance().getMoneyConfig().save();
+    public static void addMoney(int amount, UUID uuid) {
+        MoneyService.change(MoneyService.holderOf(uuid), amount, false, "survival");
     }
 
-    public static synchronized boolean removeMoney(int amount, UUID uuid) {
-        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
-        if (config.contains(uuid.toString() + ".money")) {
-            if (config.getInt(uuid.toString() + ".money") < amount) return false;
-            config.set(uuid.toString() + ".money", config.getInt(uuid + ".money") - amount);
-        } else {
-            return false;
-        }
-        Survival.getInstance().getMoneyConfig().save();
-        return true;
+    public static boolean removeMoney(int amount, UUID uuid) {
+        return MoneyService.change(MoneyService.holderOf(uuid), -amount, true, "survival");
     }
 
-    public static synchronized int getMoney(UUID uuid) {
-        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
-        if (config.contains(uuid.toString() + ".money")) {
-            return config.getInt(uuid.toString() + ".money");
-        }
-        return 0;
+    public static int getMoney(UUID uuid) {
+        return MoneyService.get(uuid);
     }
 
-    public static synchronized void addMoney(int amount, Team team) {
-        System.out.println("team add");
-        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
-        if (config.contains(team.getName() + ".money")) {
-            config.set(team.getName() + ".money", config.getInt(team.getName() + ".money") + amount);
-        } else {
-            config.set(team.getName() + ".money", amount);
-            config.setComments(team.getName() + ".money", List.of("This is the money of the team " + team.getName()));
-        }
-        Survival.getInstance().getMoneyConfig().save();
+    public static void addMoney(int amount, Team team) {
+        MoneyService.change(MoneyService.holderOf(team), amount, false, "survival team");
     }
 
-    public static synchronized boolean removeMoney(int amount, Team team) {
-        System.out.println("team remove");
-        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
-        if (config.contains(team.getName() + ".money")) {
-            if (config.getInt(team.getName() + ".money") < amount) {
-                System.out.println("not enough moje");
-                return false;
-            }
-            config.set(team.getName() + ".money", config.getInt(team.getName() + ".money") - amount);
-        } else {
-            System.out.println("name not found");
-            return false;
-        }
-        Survival.getInstance().getMoneyConfig().save();
-        return true;
+    public static boolean removeMoney(int amount, Team team) {
+        return MoneyService.change(MoneyService.holderOf(team), -amount, true, "survival team");
     }
 
-    public static synchronized int getMoney(Team team) {
-        YamlConfiguration config = Survival.getInstance().getMoneyConfig().getConfig();
-        if (config.contains(team.getName() + ".money")) {
-            return config.getInt(team.getName() + ".money");
-        }
-        return 0;
+    public static int getMoney(Team team) {
+        return MoneyService.get(team);
     }
 }

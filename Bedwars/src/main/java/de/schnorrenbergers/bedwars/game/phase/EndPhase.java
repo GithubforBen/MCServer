@@ -3,12 +3,16 @@ package de.schnorrenbergers.bedwars.game.phase;
 import de.hems.api.ServerApi;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.PaperContext;
+import de.hems.paper.cosmetic.WinContext;
+import de.hems.paper.cosmetic.WinEffects;
 import de.hems.paper.warp.ServerConnector;
 import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
 import de.schnorrenbergers.bedwars.game.Standings;
+import de.schnorrenbergers.bedwars.map.ArenaMap;
+import de.schnorrenbergers.bedwars.map.TeamSpot;
 import de.schnorrenbergers.bedwars.util.Messages;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -20,7 +24,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * It is decided.
@@ -37,8 +43,15 @@ public class EndPhase extends GamePhase {
     /** How many players the closing board names. */
     private static final int TOP = 3;
 
+    /** How wide an effect reaches when the map does not say. */
+    private static final double DEFAULT_RADIUS = 48.0d;
+    private static final double MIN_RADIUS = 24.0d;
+    private static final double MAX_RADIUS = 160.0d;
+
     private int remaining;
     private boolean sentHome;
+    /** Whether a cosmetic took over the celebration, in which case the plain fireworks stay away. */
+    private boolean cosmeticPlayed;
 
     public EndPhase(Game game) {
         super(game);
@@ -61,6 +74,58 @@ public class EndPhase extends GamePhase {
         showTitle(winner);
         showBoard();
         calm();
+        cosmeticPlayed = playWinEffects(winner);
+    }
+
+    /**
+     * Plays what the winners are wearing.
+     * <p>
+     * One effect per distinct choice, over the whole map rather than over one player: the effect belongs to
+     * the round that was just won, and everybody who lost it is standing there watching.
+     *
+     * @param winner the winning team, may be {@code null}
+     * @return whether anything was played, so the plain fireworks know to stay out of the way
+     */
+    private boolean playWinEffects(GameTeam winner) {
+        if (winner == null || game.getWorld() == null) return false;
+        List<Player> present = new ArrayList<>();
+        List<UUID> ids = new ArrayList<>();
+        for (GamePlayer member : winner.getMembers()) {
+            Player player = member.getPlayer();
+            if (player == null) continue;
+            present.add(player);
+            ids.add(player.getUniqueId());
+        }
+        if (present.isEmpty()) return false;
+        Location middle = game.getMiddle();
+        if (middle == null) middle = game.getWorld().getSpawnLocation();
+        ArenaMap arena = game.getArena();
+        int topY = arena == null ? middle.getBlockY() + 30 : arena.getBuildMaxY();
+        WinContext context = new WinContext(Bedwars.getInstance(), present, middle, topY,
+                mapRadius(middle), null);
+        return WinEffects.playForAll(ids, context) > 0;
+    }
+
+    /**
+     * How far the map reaches, measured rather than configured: the furthest team spawn from the middle,
+     * with a little on top so an effect covers the bases as well.
+     *
+     * @param middle the middle of the map
+     * @return the radius in blocks
+     */
+    private double mapRadius(Location middle) {
+        ArenaMap arena = game.getArena();
+        if (arena == null || game.getWorld() == null) return DEFAULT_RADIUS;
+        double furthest = 0.0d;
+        for (TeamSpot spot : arena.getTeams().values()) {
+            if (spot.getSpawn() == null) continue;
+            Location at = spot.getSpawn().toLocation(game.getWorld());
+            double dx = at.getX() - middle.getX();
+            double dz = at.getZ() - middle.getZ();
+            furthest = Math.max(furthest, Math.sqrt(dx * dx + dz * dz));
+        }
+        if (furthest <= 0.0d) return DEFAULT_RADIUS;
+        return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, furthest + 16.0d));
     }
 
     /**
@@ -119,7 +184,7 @@ public class EndPhase extends GamePhase {
     @Override
     public void tick(long ticks) {
         if (sentHome || ticks % 20L != 0L) return;
-        celebrate();
+        if (!cosmeticPlayed) celebrate();
         if (remaining-- > 0) return;
         sentHome = true;
         sendEverybodyHome();
@@ -128,6 +193,9 @@ public class EndPhase extends GamePhase {
 
     /**
      * Sets a firework off over each of the winners, in their own colour.
+     * <p>
+     * What a round ends with when the cosmetics are not there to end it - no network, or a winner who has
+     * nothing on. A round that ends in silence looks broken.
      */
     private void celebrate() {
         GameTeam winner = game.getWinner();
