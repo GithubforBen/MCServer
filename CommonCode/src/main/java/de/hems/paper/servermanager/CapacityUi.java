@@ -68,8 +68,9 @@ public final class CapacityUi {
 
         List<MemoryAdviceData> entries = capacity.getAdvice();
         for (int i = 0; i < entries.size() && ADVICE_START + i < SIZE - 9; i++) {
-            inventory.setItem(ADVICE_START + i, adviceIcon(entries.get(i)), new SimpleItemAction(event -> {
-            }));
+            MemoryAdviceData entry = entries.get(i);
+            inventory.setItem(ADVICE_START + i, adviceIcon(entry),
+                    new SimpleItemAction(event -> apply((Player) event.getWhoClicked(), entry)));
         }
         inventory.setItem(SIZE - 9, new ItemApi(Material.CLOCK, ChatColor.YELLOW + "Aktualisieren").build(),
                 new SimpleItemAction(event -> open((Player) event.getWhoClicked())));
@@ -101,6 +102,41 @@ public final class CapacityUi {
             lore.add(ChatColor.DARK_GRAY + "also wird auch kein Start abgelehnt.");
         }
         return new ItemApi(Material.REDSTONE_BLOCK, ChatColor.AQUA + "Speicher im Netzwerk", lore).build();
+    }
+
+    /**
+     * Writes a suggestion down.
+     * <p>
+     * The whole point of measuring is to end up here: one click puts the suggested heap into the
+     * launcher's config, and the server takes it the next time it comes up. It is not applied to the
+     * running server, because a jvm's heap is fixed when it starts - saying otherwise would be a lie an
+     * admin only finds out about when the machine is full anyway.
+     *
+     * @param player the admin
+     * @param entry  the suggestion they clicked
+     */
+    private static void apply(Player player, MemoryAdviceData entry) {
+        player.closeInventory();
+        PaperContext.async(() -> {
+            ServerApi.Memory result;
+            try {
+                result = ServerApi.setMemory(entry.getServer(), entry.getSuggestedMB());
+            } catch (Exception e) {
+                PaperContext.sync(() -> player.sendMessage(ChatColor.RED + "Der Host antwortet gerade nicht."));
+                return;
+            }
+            PaperContext.sync(() -> {
+                if (!result.successful()) {
+                    player.sendMessage(ChatColor.RED + (result.message() == null
+                            ? "Das hat nicht geklappt." : result.message()));
+                    return;
+                }
+                player.sendMessage(ChatColor.GREEN + entry.getServer() + " bekommt beim nächsten Start "
+                        + result.memoryMB() + " MB statt " + entry.getAllocatedMB() + " MB.");
+                player.sendMessage(ChatColor.GRAY + "Der laufende Server behält seinen Speicher, "
+                        + "bis er einmal gestoppt und neu gestartet wurde.");
+            });
+        });
     }
 
     /**
@@ -190,6 +226,9 @@ public final class CapacityUi {
         lore.add(ChatColor.YELLOW + "Das macht " + entry.getFreedMB() + " MB frei"
                 + (entry.getExtraRounds() > 0 ? " - Platz für " + entry.getExtraRounds()
                 + (entry.getExtraRounds() == 1 ? " weitere Runde." : " weitere Runden.") : "."));
+        lore.add(" ");
+        lore.add(ChatColor.YELLOW + "Klicken übernimmt den Vorschlag");
+        lore.add(ChatColor.DARK_GRAY + "Gilt beim nächsten Start dieses Servers.");
         return new ItemApi(Material.FURNACE, ChatColor.AQUA + entry.getServer(), lore).build();
     }
 }
