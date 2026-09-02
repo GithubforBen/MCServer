@@ -11,10 +11,14 @@ import de.hems.communication.events.round.SaveRoundEvent;
 import de.hems.communication.events.round.SaveRoundPolicyEvent;
 import de.hems.types.round.RoundData;
 import de.hems.types.round.RoundPolicy;
+import de.hems.types.round.RoundMaps;
+import de.hems.types.round.RoundSnapshot;
 import de.hems.types.round.RoundState;
 import de.hems.utils.round.RoundStore;
+import de.hems.utils.server.CustomMaps;
 import de.hems.utils.server.ServerHandler;
 
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -62,8 +66,24 @@ public class RoundEvents {
     }
 
     private void onRequest(RequestRoundsEvent request) throws Exception {
+        RoundSnapshot snapshot = new RoundSnapshot(new ArrayList<>(rounds.getRounds()),
+                rounds.getPolicy().copy(), maps());
         ListenerAdapter.sendListeners(new RespondRoundsEvent(
-                request.getSender(), rounds.snapshot(), request.getEventId()));
+                request.getSender(), snapshot, request.getEventId()));
+    }
+
+    /**
+     * Every map a round server ends up with: the ones the blueprint ships and the ones an admin dropped
+     * into {@code ./bedwars-maps} themselves.
+     *
+     * @return the map ids, in a stable order
+     */
+    private ArrayList<String> maps() {
+        ArrayList<String> maps = new ArrayList<>(RoundMaps.available());
+        for (String map : new CustomMaps().list()) {
+            if (!maps.contains(map)) maps.add(map);
+        }
+        return maps;
     }
 
     private void onSave(SaveRoundEvent request) throws Exception {

@@ -61,6 +61,10 @@ public class PaperConfigurator extends ServerConfigurator {
         }
         // the worlds and the configuration that belongs to them, written once and then left to the admins
         new AssetInstaller(new File(this.directory)).install(template.getAssets());
+        // and the maps somebody dropped into ./bedwars-maps themselves, which no release knows about
+        if (template == ServerTemplate.BEDWARS) {
+            new CustomMaps().installInto(new File(this.directory));
+        }
 
         overwriteToFile("eula.txt", "eula=true", true);
         // written every time so that a server keeps working after it was given another port

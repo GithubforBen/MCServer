@@ -2,7 +2,6 @@ package de.hems.utils.round;
 
 import de.hems.types.round.RoundData;
 import de.hems.types.round.RoundPolicy;
-import de.hems.types.round.RoundSnapshot;
 import de.hems.types.round.RoundState;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -201,13 +200,6 @@ public class RoundStore {
         this.policy = policy == null ? new RoundPolicy() : policy;
         writePolicy();
         save();
-    }
-
-    /**
-     * @return the rounds and the rules in one object, ready to be sent
-     */
-    public RoundSnapshot snapshot() {
-        return new RoundSnapshot(new ArrayList<>(rounds.values()), policy.copy());
     }
 
     /**

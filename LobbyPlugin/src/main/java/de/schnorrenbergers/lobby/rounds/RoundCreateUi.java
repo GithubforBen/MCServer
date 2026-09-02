@@ -3,6 +3,7 @@ package de.schnorrenbergers.lobby.rounds;
 import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
+import de.hems.paper.round.RoundService;
 import de.hems.paper.round.RoundStarter;
 import de.hems.types.round.RoundAddon;
 import de.hems.types.round.RoundData;
@@ -54,7 +55,7 @@ public final class RoundCreateUi {
         round.setTeamSize(2);
         round.setAddons(RoundAddon.defaults());
         round.setOpen(true);
-        List<String> maps = RoundMaps.available();
+        List<String> maps = RoundService.getMaps();
         round.setMap(maps.isEmpty() ? null : maps.get(0));
         return round;
     }
@@ -111,7 +112,7 @@ public final class RoundCreateUi {
      * Steps to the next map, wrapping around at the end.
      */
     private static void nextMap(RoundData draft) {
-        List<String> maps = RoundMaps.available();
+        List<String> maps = RoundService.getMaps();
         if (maps.isEmpty()) return;
         int index = maps.indexOf(draft.getMap());
         draft.setMap(maps.get((index + 1) % maps.size()));
@@ -119,7 +120,7 @@ public final class RoundCreateUi {
 
     private static ItemStack mapIcon(RoundData draft) {
         List<String> lore = new ArrayList<>();
-        List<String> maps = RoundMaps.available();
+        List<String> maps = RoundService.getMaps();
         for (String map : maps) {
             boolean chosen = map.equals(draft.getMap());
             lore.add((chosen ? ChatColor.GREEN + "» " : ChatColor.DARK_GRAY + "  ")
@@ -127,8 +128,8 @@ public final class RoundCreateUi {
         }
         if (maps.size() <= 1) {
             lore.add(" ");
-            lore.add(ChatColor.DARK_GRAY + "Mehr Maps gibt es, sobald welche");
-            lore.add(ChatColor.DARK_GRAY + "mit der Vorlage ausgeliefert werden.");
+            lore.add(ChatColor.DARK_GRAY + "Mehr Maps: Weltordner nach");
+            lore.add(ChatColor.DARK_GRAY + "./bedwars-maps beim Launcher legen.");
         } else {
             lore.add(" ");
             lore.add(ChatColor.YELLOW + "Klicken für die nächste Map");

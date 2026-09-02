@@ -11,6 +11,7 @@ import de.hems.communication.events.round.SaveRoundPolicyEvent;
 import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.paper.PaperContext;
 import de.hems.types.round.RoundData;
+import de.hems.types.round.RoundMaps;
 import de.hems.types.round.RoundPolicy;
 import de.hems.types.round.RoundSnapshot;
 import de.hems.types.round.RoundState;
@@ -42,6 +43,7 @@ public final class RoundService {
 
     private static final Map<UUID, RoundData> rounds = new ConcurrentHashMap<>();
     private static volatile RoundPolicy policy = new RoundPolicy();
+    private static volatile List<String> maps = List.of();
     private static volatile boolean loaded = false;
     private static boolean initialized = false;
 
@@ -92,6 +94,20 @@ public final class RoundService {
      */
     public static RoundPolicy getPolicy() {
         return policy;
+    }
+
+    /**
+     * The maps a round can be played on.
+     * <p>
+     * What the launcher reported, because it is the only node that knows what a round server will be
+     * built with. Falls back to the maps of the blueprint while nothing has been reported yet, which is
+     * the state right after start and after talking to an older launcher.
+     *
+     * @return the map ids
+     */
+    public static List<String> getMaps() {
+        List<String> reported = maps;
+        return reported.isEmpty() ? RoundMaps.available() : reported;
     }
 
     /**
@@ -278,6 +294,7 @@ public final class RoundService {
             rounds.keySet().retainAll(fresh.keySet());
             rounds.putAll(fresh);
             policy = snapshot.getPolicy();
+            maps = List.copyOf(snapshot.getMaps());
             loaded = true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
