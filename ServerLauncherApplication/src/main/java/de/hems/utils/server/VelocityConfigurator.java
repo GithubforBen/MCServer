@@ -22,13 +22,16 @@ public class VelocityConfigurator extends ServerConfigurator {
         super(directory);
         this.port = port;
         this.plugins = plugins;
-        //TODO: replace this enterprise™ workaround
-        //deletes the configuration so it can be set again
-        if (!firstTime) new File(directory + "/velocity.toml").delete();
-        firstTime = true;
         System.out.println(plugins.length + " plugins will be installed.");
     }
 
+    /**
+     * Writes the proxy's configuration.
+     * <p>
+     * {@code velocity.toml} belongs to the launcher in full: the ports of the servers are in it, and those
+     * change whenever a server is created. So it is thrown away and written again on every start, and
+     * every write below says so rather than pretending to be a first time setup.
+     */
     public void configure() throws Exception {
         String jarName = FileType.SERVER.getFileName(FileType.SERVER.VELOCITY);
         File jar = new File(this.directory + "/" + jarName);
@@ -46,20 +49,20 @@ public class VelocityConfigurator extends ServerConfigurator {
         }
         File toml = new File(this.directory + "/velocity.toml");
         if (toml.exists()) {toml.delete();}
-        writeToFile("velocity.toml", "bind = \"" + Main.getInstance().getIp() + ":" + port + "\"", false);
-        writeToFile("velocity.toml", "player-info-forwarding-mode = \"modern\"", false);
-        writeToFile("velocity.toml", "config-version = \"2.8\"", false);
+        writeToFile("velocity.toml", "bind = \"" + Main.getInstance().getIp() + ":" + port + "\"", true);
+        writeToFile("velocity.toml", "player-info-forwarding-mode = \"modern\"", true);
+        writeToFile("velocity.toml", "config-version = \"2.8\"", true);
         if (Main.getInstance().getConfiguration().getConfig().contains("serversecret")) {
-            overwriteToFile("forwarding.secret", Main.getInstance().getConfiguration().getConfig().getString("serversecret"), false);
-            writeToFile("velocity.toml", "forwarding-secret-file = \"forwarding.secret\"", false);
+            overwriteToFile("forwarding.secret", Main.getInstance().getConfiguration().getConfig().getString("serversecret"), true);
+            writeToFile("velocity.toml", "forwarding-secret-file = \"forwarding.secret\"", true);
         } else {
             Main.getInstance().getConfiguration().getConfig().setComments("serversecret", List.of("The velocity secret key."));
             Main.getInstance().getConfiguration().getConfig().set("serversecret", SecureTokenGenerator.generateSecureToken());
             Main.getInstance().getConfiguration().save();
             throw new MissingConfigurationException("serversecret is missing in config.yml. You might want to change it to something else. It was auto set.");
         }
-        writeToFile("velocity.toml", "show-max-players = 100",false);
-        writeToFile("velocity.toml", "motd = \"<blue><b>minecraft server</b></blue>\"",false);
+        writeToFile("velocity.toml", "show-max-players = 100", true);
+        writeToFile("velocity.toml", "motd = \"<blue><b>minecraft server</b></blue>\"", true);
         writeToFile("velocity.toml", "# Should we authenticate players with Mojang? By default, this is on.\n" +
                 "online-mode = true\n" +
                 "\n" +
@@ -105,18 +108,18 @@ public class VelocityConfigurator extends ServerConfigurator {
                 "sample-players-in-ping = false\n" +
                 "\n" +
                 "# If not enabled (default is true) player IP addresses will be replaced by <ip address withheld> in logs\n" +
-                "enable-player-address-logging = true",false);
+                "enable-player-address-logging = true", true);
         // every server that is known when the proxy boots. Servers that are created later are registered at
         // runtime by the velocity plugin, so warping works without touching this file again.
-        writeToFile("velocity.toml", "[servers]",false);
+        writeToFile("velocity.toml", "[servers]", true);
         for (ListenerAdapter.ServerName value : ListenerAdapter.ServerName.servers()) {
-            writeToFile("velocity.toml", value + " = \"localhost:" + value.getPort() + "\"", false);
+            writeToFile("velocity.toml", value + " = \"localhost:" + value.getPort() + "\"", true);
         }
         writeToFile("velocity.toml", "try = [\n" +
                 "    \""+ ListenerAdapter.ServerName.LOBBY +"\",\n" +
                 "    \""+ ListenerAdapter.ServerName.SURVIVAL +"\"\n" +
-                "]", false);
-        writeToFile("velocity.toml", "[forced-hosts]",false);
+                "]", true);
+        writeToFile("velocity.toml", "[forced-hosts]", true);
         writeToFile("velocity.toml", "[advanced]\n" +
                 "# How large a Minecraft packet has to be before we compress it. Setting this to zero will\n" +
                 "# compress all packets, and setting it to -1 will disable compression entirely.\n" +
@@ -207,7 +210,7 @@ public class VelocityConfigurator extends ServerConfigurator {
                 "map = \"Velocity\"\n" +
                 "\n" +
                 "# Whether plugins should be shown in query response by default or not\n" +
-                "show-plugins = false\n",false);
+                "show-plugins = false\n", true);
         System.out.println("Velocity configuration done!");
     }
 }

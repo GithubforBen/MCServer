@@ -476,6 +476,11 @@ Rundenadmin - in der Wartelobby bekommt er dasselbe Einstellungs-Item wie ein ec
 drei Dinge, die nur für eine eigene Runde gelten: sofort starten, privat schalten und Spieler
 rauswerfen. Ein Admin ist immer auch Rundenadmin.
 
+Eine private Runde ist wirklich privat: sie steht nicht in der Liste, und wer den Servernamen rät
+und hinwarpt, wird auf dem Rundenserver zurückgeschickt. Wer rein darf, entscheidet der Besitzer
+über `/runde einladen <spieler>` in der Lobby oder über den Einladen-Knopf im Rundenmenü, der alle
+zeigt, die woanders im Netzwerk online sind.
+
 Standardmäßig ist das **aus**. Ein Admin schaltet es über `/runde admin` frei und stellt dort auch
 alles andere ein:
 
@@ -499,6 +504,15 @@ beide ein Ja bekommen - und damit jede Ablehnung an einer Stelle gezählt wird.
 
 Der Knopf sagt vorher, warum er nicht geht ("Event XY startet in 3 Minuten"), statt es erst nach
 dem Klick zu verraten.
+
+### Maps
+
+Zur Auswahl stehen die Maps, die mit der `BEDWARS`-Vorlage ausgeliefert werden, plus alles, was in
+`./bedwars-maps` neben dem Launcher liegt. Ein Weltordner dort (mit `level.dat`) landet auf jedem
+neu erstellten Rundenserver und taucht im Menü auf — ohne Release, ohne Code. Liegt die zugehörige
+`<name>.yml` mit den Setup-Punkten daneben, wird sie mitkopiert; sonst muss die Map auf dem Server
+einmal mit `/bw setup <name>` eingerichtet werden. Kopiert wird nur, was noch nicht da ist, damit
+eine auf dem Server bearbeitete Kopie erhalten bleibt.
 
 ## Arbeitsspeicher
 
@@ -524,9 +538,10 @@ sich pro Server den höchsten Wert. Im Server Manager gibt es dafür ein eigenes
   frei, Platz für eine weitere Runde")
 
 Ein Vorschlag entsteht nur zu einem gemessenen Wert. Wo nicht gemessen werden kann, sagt das Panel
-das, statt Zahlen zu erfinden. Umsetzen lässt er sich direkt: im Server Manager den Server
-anklicken, "Arbeitsspeicher" setzen und ihn einmal neu starten. Der neue Wert landet in
-`servers.<NAME>.memory` und gilt auch nach einem Neustart des ganzen Netzwerks.
+das, statt Zahlen zu erfinden. Umsetzen lässt er sich mit einem Klick auf den Vorschlag selbst —
+oder von Hand über den Server im Server Manager. Der neue Wert landet in `servers.<NAME>.memory`
+und gilt beim nächsten Start dieses Servers, auch nach einem Neustart des ganzen Netzwerks. Der
+laufende Server behält seinen Speicher: der Heap einer JVM steht fest, sobald sie läuft.
 
 Gezählt wird auch, was nur reserviert ist: ein bewilligter Start hält seinen Speicher, bis der
 Server dazu wirklich läuft.

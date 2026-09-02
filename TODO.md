@@ -73,11 +73,14 @@ Lebenszyklus (erledigt):
 - [x] Bei der Abwicklung werden die Verzeichnisse der Run-Server gelöscht und ihre
       Port-Reservierung freigegeben (30 s Karenz, damit der Prozess die Dateien loslässt)
 
+Erledigt:
+- [x] Ein Lauf, den niemand fortsetzt, wird nach 24 Stunden ohne Anfassen als ABGEBROCHEN
+      geschlossen und sein Server weggeräumt (`runs.abandon-after-hours`, `0` = nie)
+- [x] Ein abgesagtes Event wird nicht mehr sofort abgewickelt: seine Server gehen aus, die
+      Läufe bleiben pausiert liegen, bis die geplante Zeit wirklich vorbei ist. "Wieder
+      aktivieren" bringt sie damit zurück
+
 Offen:
-- [ ] Ein Lauf, den niemand je fortsetzt, bleibt bis zum Eventende PAUSED — erst dann
-      räumt ihn die Abwicklung weg
-- [ ] Ein abgesagtes Event wird sofort abgewickelt. Klickt man danach "Wieder
-      aktivieren", ist es zwar wieder aktiv, aber seine Läufe sind weg
 - [ ] Spezialitems als Preise (pluginspezifisch) — bisher nur normale Materialien
 
 ### 1.4 Event-Server — erledigt
@@ -123,9 +126,13 @@ Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiz
 
 ## 3. Offene Entscheidungen
 
-- [ ] `MoneyHandler.addMoney()` an den Verkäufer kann fehlschlagen. Dann ist das Geld weg:
-      Käufer hat bezahlt und die Ware, Shopbesitzer bekommt nichts. Bewusst kein Rollback.
-      Soll das abgesichert werden?
+- [ ] `MoneyHandler.addMoney()` an den Verkäufer kann fehlschlagen. Das Loch ist kleiner
+      geworden, seit das Geld beim Launcher liegt: eine Gutschrift ist eine Differenz, die
+      dort angewandt wird, und der einzige verbleibende Fehlerfall ist eine Nachricht, die
+      das Netz nicht erreicht. Die wird jetzt dreimal versucht und im Fehlerfall mit Konto
+      und Betrag als `LOST BALANCE CHANGE` geloggt, damit sie von Hand korrigierbar ist.
+      Was fehlt, ist eine dauerhafte Warteschlange, die den Betrag nach einem Absturz noch
+      hat. Bewusst nicht gebaut — soll das rein?
 - [ ] `/shop debug` als Diagnose: listet Shops ohne Villager und verwaiste Villager mit
       Shop-ID. Nur bauen, falls die Villager-Prüfung oben Probleme zeigt.
 
@@ -133,12 +140,19 @@ Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiz
 
 ## 4. Kleinkram im Code
 
-- [ ] `Inventorys.java:217` — `//TODO: add option` im Item-Manager-Inventar
-- [ ] `Main.java:54` — Ops automatisch hinzufügen
-- [ ] `VelocityConfigurator.java:25` — Workaround ersetzen
-- [ ] `VerifyAccount.java:5` — Account-Verknüpfung fehlt komplett
-- [ ] `LobbyPlugin.java:31` — Parkour
-- [ ] `.idea/misc.xml` stand auf `openjdk-23`; falls IntelliJ wieder zickt, auf 25 prüfen
+- [x] `VelocityConfigurator.java:25` — Workaround raus. `velocity.toml` gehört dem Launcher
+      komplett und wird bei jedem Start neu geschrieben; die Schreibaufrufe sagen das jetzt,
+      statt `firstTime` zu belügen
+- [x] `LobbyPlugin.java:31` — der Parkour ist längst da, nur der Kommentar stand noch
+- [x] `.idea/misc.xml` steht auf JDK 25
+- [ ] `Inventorys.java:217` — `//TODO: add option` im Item-Manager-Inventar. Aus dem Code geht
+      nicht hervor, welche Option gemeint ist — **was soll da hin?**
+- [ ] `Main.java:54` — Ops automatisch hinzufügen. Ops kommen heute aus `ops` in der
+      `main-config.yml`. Unklar, was "automatisch" heißen soll: ein Befehl im Spiel, über
+      Discord, oder aus der Admin-Website? **Bitte entscheiden**
+- [ ] `VerifyAccount.java:5` — Account-Verknüpfung fehlt komplett. `/verify` im Discord tut
+      bisher nichts, `getMinecraftByDiscord` gibt immer `null`. Das ist ein eigenes Feature
+      (Code erzeugen, im Spiel eingeben, Zuordnung speichern), kein Kleinkram
 
 ---
 
@@ -153,12 +167,17 @@ Stand: 2026-09-02. Alles gebaut und kompiliert, nichts davon auf einem laufenden
 - [x] `MoneyHandler` behält seine Signaturen, antwortet aus der lokalen Kopie
 - [x] `MoneyService.changeBlocking` als strenger Weg, wo etwas Wertvolles herausgeht
 
+- [x] Eine Änderung, die das Netz nicht erreicht, wird dreimal versucht und sonst als
+      `LOST BALANCE CHANGE` mit Konto und Betrag geloggt
+
 Offen:
 - [ ] `MoneyHandler.removeMoney` ist eine Schätzung, wenn dasselbe Konto auf zwei Servern in
       derselben Sekunde leergeräumt wird. Der Launcher lehnt die zweite Änderung ab und korrigiert
       die Kopie, aber der zweite Server hat da schon „ja" gesagt. Für Shop-Käufe eines Spielers auf
       einem Server ist das dicht; falls das mal weh tut, müssen die Aufrufer auf `changeBlocking`
       umgestellt werden
+- [ ] Keine dauerhafte Warteschlange für Änderungen, die nach drei Versuchen nicht rausgehen.
+      Nach einem Absturz in genau diesem Moment ist der Betrag nur noch im Log
 - [ ] `AwardService` zahlt Geldpreise weiterhin nur auf Survival aus. Das war nötig, solange nur
       Survival Geld kannte — jetzt könnte jeder Server das
 
@@ -170,14 +189,17 @@ Offen:
 - [x] Panel im Server Manager: Budget, abgelehnte Starts, Vorschläge mit Zahlen dahinter
 - [x] Umsetzbar im Spiel: RAM pro Server setzen, gilt beim nächsten Start dieses Servers
 
+- [x] Der Vorschlag lässt sich anklicken: ein Klick schreibt den vorgeschlagenen Wert weg
+
 Offen:
 - [ ] Gemessen wird nur unter Linux. Auf Windows zeigt das Panel das Budget, aber keine Vorschläge
 - [ ] `ServerHandler.startNewInstance` lehnt selbst nichts ab. Das Budget greift über die
       Slot-Anfrage, die die Lobby stellt — ein Admin, der im Server Manager einen Server erstellt,
       kann das Budget bewusst überziehen. Absicht; falls das doch verhindert werden soll, gehört
       die Prüfung zusätzlich in `startNewInstance`
-- [ ] Die Empfehlung schlägt Werte vor, führt sie aber nicht aus. Ein „Übernehmen"-Knopf direkt am
-      Vorschlag wäre der nächste Schritt
+- [ ] Ein übernommener Vorschlag gilt erst beim nächsten Start dieses Servers. Ein Knopf, der den
+      Server gleich mit durchstartet, fehlt — bei SURVIVAL wäre das aber nichts, was man aus
+      Versehen anklicken will
 
 ### 5.3 Selbst gestartete Runden — erledigt
 - [x] `/runde` in der Lobby: laufende Runden sehen, beitreten, eigene aufmachen
@@ -187,14 +209,22 @@ Offen:
 - [x] Der Rundenserver liest seine Runde beim Start über den eigenen Namen, wie die Events auch
 - [x] Der Launcher räumt Runden auf, deren Server weg ist
 
+- [x] „Privat" ist echt: eine geschlossene Runde hat eine Gästeliste, `/runde einladen <spieler>`
+      in der Lobby oder der Einladen-Knopf im Rundenmenü füllt sie, und wer ohne Einladung
+      hinwarpt, wird auf dem Rundenserver zurückgeschickt
+- [x] Maps, die von Hand dazukommen: Weltordner nach `./bedwars-maps` beim Launcher, landen auf
+      jedem neuen Rundenserver und stehen im Lobby-Menü
+
 Offen:
 - [ ] Der Rundenadmin kann die Runde nicht selbst beenden. Bewusst so — der Idle-Watchdog macht den
       Server zu, sobald der letzte raus ist
-- [ ] Die Map-Liste kommt aus den Assets der Vorlage (`FileType.ASSET.getBedwarsMap`). Eine Welt,
-      die ein Admin von Hand nach `maps/` legt, taucht in der Lobby nicht auf
 - [ ] Rausgeworfene Spieler bleiben nur für die Lebensdauer des Rundenservers draußen. Da der
       Server mit der Runde endet, reicht das — es ist trotzdem keine Sperre
-- [ ] Ein privater Runde fehlt das Einladen. „Privat" heißt derzeit nur: steht nicht in der Liste
+- [ ] Eingeladen werden kann nur, wer gerade online ist. Eine Einladung an jemanden, der später
+      kommt, gibt es nicht
+- [ ] Eine Map ohne `<name>.yml` kommt unfertig auf dem Server an und muss dort einmal mit
+      `/bw setup` eingerichtet werden. Das ist richtig so, heißt aber: einfach eine Welt
+      hinlegen reicht noch nicht zum Spielen
 
 ### 5.4 Cosmetics und Gadgets — erledigt
 - [x] Katalog und Besitz beim Launcher (`cosmetics.yml`), Effekt-Code auf dem Spielserver
@@ -223,6 +253,11 @@ Offen:
       Faktor 1,4 auf die Spitze, das sollte an echten Zahlen geprüft werden)
 - [ ] Tinte auf einer vollen Runde: kostet es TPS?
 - [ ] Rundenadmin kickt jemanden, der danach wieder joinen will
+- [ ] Eine private Runde: jemand ohne Einladung warpt direkt auf den Servernamen
+- [ ] Eine Welt nach `./bedwars-maps` legen und prüfen, dass sie auf dem nächsten Rundenserver
+      liegt und im Lobby-Menü steht
+- [ ] Ein abgesagtes Event wieder aktivieren und prüfen, dass seine Läufe noch da sind
+- [ ] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
 
 ---
 

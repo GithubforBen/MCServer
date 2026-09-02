@@ -46,6 +46,10 @@ public final class MoneyService {
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
     /** How often to retry while the list has never arrived, in ticks. */
     private static final long STARTUP_RETRY_TICKS = 40L;
+    /** How often a change is offered to the launcher before it is written off as lost. */
+    private static final int SEND_ATTEMPTS = 3;
+    /** How long to wait between those attempts, multiplied by the attempt number. */
+    private static final long SEND_RETRY_MS = 250L;
 
     private static final Map<String, Integer> balances = new ConcurrentHashMap<>();
     private static volatile boolean loaded = false;
@@ -195,18 +199,37 @@ public final class MoneyService {
 
     /**
      * Posts a change without waiting for the answer.
+     * <p>
+     * Retried, because this is where money is lost. The local copy has already said yes - somebody has
+     * been paid or charged as far as this server is concerned - and if the message never reaches the
+     * launcher, that never happened. A send that fails three times is written to the log with the account
+     * and the amount, which is the least that lets it be put right by hand.
      */
     private static void send(String holder, int delta, boolean requireCover, String reason) {
         if (!PaperContext.hasPlugin()) return;
         PaperContext.async(() -> {
-            try {
-                ListenerAdapter.sendListeners(new ChangeBalanceEvent(holder, delta, requireCover, reason));
-            } catch (Exception e) {
-                Bukkit.getLogger().warning("Could not post the balance change of " + holder + ": " + e.getMessage());
-                // the copy said yes and the launcher never heard about it, so the copy is now wrong. The
-                // next refresh puts it right rather than leaving somebody with money that does not exist
-                refreshAsync();
+            for (int attempt = 1; attempt <= SEND_ATTEMPTS; attempt++) {
+                try {
+                    ListenerAdapter.sendListeners(new ChangeBalanceEvent(holder, delta, requireCover, reason));
+                    return;
+                } catch (Exception e) {
+                    if (attempt < SEND_ATTEMPTS) {
+                        try {
+                            Thread.sleep(SEND_RETRY_MS * attempt);
+                        } catch (InterruptedException interrupted) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                        continue;
+                    }
+                    Bukkit.getLogger().severe("LOST BALANCE CHANGE: " + holder + " "
+                            + (delta >= 0 ? "+" : "") + delta + " (" + reason + ") never reached the host: "
+                            + e.getMessage() + " - correct this by hand in money.yml.");
+                }
             }
+            // the copy said yes and the launcher never heard about it, so the copy is now wrong. The
+            // next refresh puts it right rather than leaving somebody with money that does not exist
+            refreshAsync();
         });
     }
 

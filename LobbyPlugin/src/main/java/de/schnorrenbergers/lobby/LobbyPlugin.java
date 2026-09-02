@@ -42,7 +42,7 @@ public final class LobbyPlugin extends JavaPlugin {
             new CustomInventoryListener(this);
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }//TODO: parkour
+        }
         LobbyWorld.load(this);
         ServerConnector.register(this);
         new PlayerAdminHandler(this);
