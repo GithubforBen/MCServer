@@ -467,13 +467,120 @@ das Spezifischere gewinnt.
 Hand geprüft werden sollte, steht in `Bedwars/TESTS.md`; der Umsetzungsplan mit allen Entscheidungen
 in `Bedwars/PLAN.md`.
 
+## Eigene Runden
+
+Spieler können in der Lobby selbst eine Bedwars-Runde aufmachen. `/runde` zeigt, was gerade läuft,
+und wer will, stellt sich über `/runde start` eine eigene zusammen: Map, Modus (Solo bis Quad),
+Addons und ob sie öffentlich in der Liste steht oder privat bleibt. Wer sie startet, ist
+Rundenadmin - in der Wartelobby bekommt er dasselbe Einstellungs-Item wie ein echter Admin, plus
+drei Dinge, die nur für eine eigene Runde gelten: sofort starten, privat schalten und Spieler
+rauswerfen. Ein Admin ist immer auch Rundenadmin.
+
+Standardmäßig ist das **aus**. Ein Admin schaltet es über `/runde admin` frei und stellt dort auch
+alles andere ein:
+
+| Einstellung | Was sie macht |
+|-------------|---------------|
+| Selbst starten | Der Hauptschalter. Aus heißt: nur Admins. |
+| Runden pro Spieler | Wie viele Runden einer gleichzeitig offen haben darf |
+| Runden insgesamt | Obergrenze über das ganze Netzwerk, `0` = kein Limit |
+| Wartezeit | Sekunden, bis derselbe Spieler wieder starten darf |
+| Während Events sperren | Läuft ein Event, startet niemand privat |
+| Vorlauf vor Events | Minuten vor einem Event ist ebenfalls Schluss |
+| Speicher pro Runde | Was ein Rundenserver bekommt, `0` = was die Vorlage sagt |
+
+Die Werte liegen beim Launcher in `rounds.yml` unter `policy`, zusammen mit den Runden selbst.
+Jede Änderung gilt sofort auf allen Servern.
+
+Dazu kommt eine Bedingung, die nicht einstellbar ist: der Speicher muss da sein. Bevor eine Runde
+startet, fragt die Lobby den Launcher, ob noch ein Server dieser Größe auf die Maschine passt.
+Gefragt wird dort und nicht in der Lobby, damit zwei Spieler, die im selben Moment klicken, nicht
+beide ein Ja bekommen - und damit jede Ablehnung an einer Stelle gezählt wird.
+
+Der Knopf sagt vorher, warum er nicht geht ("Event XY startet in 3 Minuten"), statt es erst nach
+dem Klick zu verraten.
+
+## Arbeitsspeicher
+
+Der Launcher kennt jetzt die Größe seiner Maschine, hält eine Reserve fürs System frei und lehnt
+Starts ab, die nicht mehr ins Budget passen. Ohne das fällt ein volles Netzwerk nicht auf: es
+fängt an zu swappen, und dann ruckelt alles gleichzeitig.
+
+| Einstellung | Umgebungsvariable | Standard |
+|-------------|-------------------|----------|
+| `memory.budget-mb` | `MCSERVER_MEMORY_BUDGET_MB` | Maschine minus Reserve |
+| `memory.reserve-mb` | `MCSERVER_MEMORY_RESERVE_MB` | 2048 |
+| `memory.max-memory-mb` | `MCSERVER_MAX_MEMORY_MB` | aus (Deckel pro Server) |
+| `memory.memory-percent` | `MCSERVER_MEMORY_PERCENT` | 100 |
+
+Ablehnen allein verschiebt das Problem nur, deshalb misst derselbe Wächter alle 30 Sekunden, wie
+viel jeder Server tatsächlich hält (Resident Size aus `/proc`, also nur unter Linux), und merkt
+sich pro Server den höchsten Wert. Im Server Manager gibt es dafür ein eigenes Panel:
+
+- das Budget als Balken, mit vergeben und frei
+- wie oft ein Start in den letzten 7 Tagen abgelehnt wurde, und insgesamt
+- die Server, die dauerhaft deutlich weniger halten als sie bekommen haben, mit einem konkreten
+  Vorschlag ("SURVIVAL: 4096 MB zugewiesen, Spitze 1400 MB, 2048 MB würden reichen - macht 2048 MB
+  frei, Platz für eine weitere Runde")
+
+Ein Vorschlag entsteht nur zu einem gemessenen Wert. Wo nicht gemessen werden kann, sagt das Panel
+das, statt Zahlen zu erfinden. Umsetzen lässt er sich direkt: im Server Manager den Server
+anklicken, "Arbeitsspeicher" setzen und ihn einmal neu starten. Der neue Wert landet in
+`servers.<NAME>.memory` und gilt auch nach einem Neustart des ganzen Netzwerks.
+
+Gezählt wird auch, was nur reserviert ist: ein bewilligter Start hält seinen Speicher, bis der
+Server dazu wirklich läuft.
+
+## Geld
+
+Die Bits gehören seit dieser Runde dem Launcher, nicht mehr dem Survival-Server. Vorher lagen sie in
+`configs/money-config.yml` neben Survival: nur dieser eine Server konnte sie lesen, nur er konnte
+sie ausgeben, und ein neu aufgesetzter Survival-Server hätte die Wirtschaft mitgenommen. Jetzt
+liegen sie in `money.yml` beim Launcher, so wie die Teams und die Events auch. Beim ersten Start
+wird die alte Datei einmal übernommen, danach nie wieder - sonst kämen ausgegebene Bits zurück.
+
+Jede Änderung ist eine Differenz, keine neue Summe, und wird beim Launcher unter einem Lock
+angewandt. Zwei Server, die im selben Moment auszahlen, addieren sich damit, statt sich zu
+überschreiben. Jede angewandte Änderung wird gemeldet, die Kopien auf den Servern ziehen nach.
+
+`MoneyHandler` auf Survival heißt und verspricht dasselbe wie vorher. Es antwortet aus der lokalen
+Kopie, also sofort - eine Schätzung ist das in genau einem Fall, nämlich wenn dasselbe Konto auf
+zwei Servern in derselben Sekunde leergeräumt wird. Dann lehnt der Launcher die zweite Änderung ab
+und schickt den richtigen Stand hinterher. Für alles, wo an der Antwort etwas Wertvolles hängt,
+gibt es `MoneyService.changeBlocking` - der Cosmetic-Kauf geht diesen Weg.
+
+## Cosmetics
+
+Cosmetics sind netzwerkweit und werden mit Bits bezahlt. Zu kaufen gibt es sie im Marktplatz auf
+Survival (`/shop`, Knopf in der unteren Reihe) - dieselbe Oberfläche kauft, legt an und legt ab, je
+nachdem, wie man zu dem Cosmetic gerade steht.
+
+| Cosmetic | Art | Was es macht |
+|----------|-----|--------------|
+| Raketen | Sieges-Effekt | Feuerwerk über den Gewinnern. Für alle gratis, das ist der Standard. |
+| Tinte | Sieges-Effekt | Von der Bauhöhe regnen Explosionen über die ganze Map - nur Optik, kein Schaden, kein Rückstoß |
+| Endlos-Perle | Gadget | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden |
+
+Admins verwalten sie im selben Menü über "Verwalten": Linksklick schaltet ein Cosmetic von
+verkäuflich über nur besitzbar auf aus, Rechtsklick erhöht den Preis, Shift macht es für alle
+gratis. Alles landet beim Launcher in `cosmetics.yml`, zusammen mit dem Besitz.
+
+Der Kauf selbst passiert komplett im Launcher: Preis lesen, Bits abbuchen, Cosmetic gutschreiben -
+in einem Schritt unter einem Lock. Auf zwei Server verteilt wären das drei Runden mit zwei Stellen,
+an denen es auf halbem Weg schiefgehen kann, und auf halbem Weg heißt: bezahlt und nichts bekommen.
+
+Ein Cosmetic ist zwei Hälften, die sich über eine id treffen. Dem Launcher gehört die Hälfte, die
+eine Entscheidung ist (gibt es das, verkauft es sich, für wie viel), dem Spielserver die Hälfte, die
+Code ist. Ein neuer Effekt ist deshalb ein Eintrag in `de.hems.types.cosmetic.Cosmetics` und eine
+Klasse, die `WinEffect` implementiert - dazwischen darf jede Seite der anderen voraus sein.
+
 ## Module
 
 | Modul | Inhalt |
 |-------|--------|
 | `ServerLauncherApplication` | Startet und konfiguriert die Server, Discord Bot, Admin Website |
-| `CommonCode` | Netzwerk-Events, `ServerApi`, Server Manager UI, Warp System |
-| `LobbyPlugin` | Lobby, Parkour, Server Manager |
+| `CommonCode` | Netzwerk-Events, `ServerApi`, Server Manager UI, Warp System, Geld, Runden, Cosmetics |
+| `LobbyPlugin` | Lobby, Parkour, Server Manager, eigene Runden |
 | `Survival` | Survival Spielmodus |
 | `Bedwars` | Bedwars Minispiel |
 | `BackpackPlugin` | Geteilter Team-Rucksack |

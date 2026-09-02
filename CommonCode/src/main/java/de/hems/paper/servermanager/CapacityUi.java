@@ -170,8 +170,9 @@ public final class CapacityUi {
             lore.add(ChatColor.YELLOW + "weniger, als ihnen zugewiesen wurde.");
             lore.add(ChatColor.YELLOW + "Weniger zuweisen macht Platz für Runden.");
             lore.add(" ");
-            lore.add(ChatColor.DARK_GRAY + "Ändern über die Einstellungen des Servers");
-            lore.add(ChatColor.DARK_GRAY + "oder memory.max-memory-mb im Launcher.");
+            lore.add(ChatColor.DARK_GRAY + "Ändern: im Server Manager den Server");
+            lore.add(ChatColor.DARK_GRAY + "anklicken, Arbeitsspeicher setzen und");
+            lore.add(ChatColor.DARK_GRAY + "ihn einmal neu starten.");
         }
         return new ItemApi(Material.PAPER, ChatColor.AQUA + "Empfehlung", lore).build();
     }

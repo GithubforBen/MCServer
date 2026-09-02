@@ -48,6 +48,12 @@ public class RoundStore {
         }
         this.config = YamlConfiguration.loadConfiguration(file);
         load();
+        // written out even when nothing was ever changed, so the file says what the rules are instead of
+        // being an empty file an admin has to guess the defaults of
+        if (!config.contains("policy")) {
+            writePolicy();
+            save();
+        }
     }
 
     private void load() {

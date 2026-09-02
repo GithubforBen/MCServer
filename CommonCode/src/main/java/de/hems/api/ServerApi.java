@@ -7,7 +7,9 @@ import de.hems.communication.events.server.RequestServerStopEvent;
 import de.hems.communication.events.server.RequestCapacityEvent;
 import de.hems.communication.events.server.RequestServerSlotEvent;
 import de.hems.communication.events.server.RequestServersEvent;
+import de.hems.communication.events.server.RespondServerMemoryEvent;
 import de.hems.communication.events.server.RespondServerSlotEvent;
+import de.hems.communication.events.server.SetServerMemoryEvent;
 import de.hems.communication.events.server.RespondServersEvent;
 import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.types.FileType;
@@ -260,6 +262,37 @@ public final class ServerApi {
         }
         return new Slot(slot.isGranted(),
                 response.getData() instanceof CapacityData capacity ? capacity : null);
+    }
+
+    /**
+     * Writes down how much heap a server gets the next time it starts.
+     * <p>
+     * The running server keeps the heap it was started with - that is fixed when a jvm starts - so this
+     * takes effect when it next comes up. Blocks until the host has answered.
+     *
+     * @param serverName the server
+     * @param memoryMB   the heap it should get
+     * @return what the host says about it
+     */
+    public static Memory setMemory(String serverName, int memoryMB) throws Exception {
+        SetServerMemoryEvent request = new SetServerMemoryEvent(serverName, memoryMB);
+        ListenerAdapter.sendListeners(request);
+        RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
+        if (!(response instanceof RespondServerMemoryEvent answer)) {
+            return new Memory(false, "Der Host antwortet nicht.", 0);
+        }
+        return new Memory(answer.isSuccessful(), answer.getMessage(),
+                response.getData() instanceof Integer applied ? applied : 0);
+    }
+
+    /**
+     * What the host made of a memory change.
+     *
+     * @param successful whether it was written down
+     * @param message    why not, {@code null} when it was
+     * @param memoryMB   the value that is now configured
+     */
+    public record Memory(boolean successful, String message, int memoryMB) {
     }
 
     /**
