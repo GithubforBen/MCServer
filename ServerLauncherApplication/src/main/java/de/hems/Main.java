@@ -12,6 +12,7 @@ import de.hems.utils.event.AwardStore;
 import de.hems.utils.event.EventSettlement;
 import de.hems.utils.event.EventStore;
 import de.hems.utils.event.RunStore;
+import de.hems.utils.money.MoneyStore;
 import de.hems.utils.team.BackpackStore;
 import de.hems.utils.team.TeamStore;
 import de.hems.utils.bot.adminabuse.*;
@@ -57,6 +58,7 @@ public class Main {
     private EventStore eventStore;
     private RunStore runStore;
     private AwardStore awardStore;
+    private MoneyStore moneyStore;
     private JDA jda;
     private WebServer webServer;
     private IdleServerWatchdog idleServerWatchdog;
@@ -90,6 +92,10 @@ public class Main {
         new TeamEvents(teamStore, backpackStore);
         stashStore = new StashStore();
         new StashEvents(stashStore);
+        // the money of the network belongs here as well: it used to sit next to the survival
+        // server, where only that one server could see it and nothing else could spend it
+        moneyStore = new MoneyStore();
+        new MoneyEvents(moneyStore);
         eventStore = new EventStore();
         runStore = new RunStore();
         awardStore = new AwardStore();
@@ -237,6 +243,10 @@ public class Main {
 
     public AwardStore getAwardStore() {
         return awardStore;
+    }
+
+    public MoneyStore getMoneyStore() {
+        return moneyStore;
     }
 
     public StashStore getStashStore() {

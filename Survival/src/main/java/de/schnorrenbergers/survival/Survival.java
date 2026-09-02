@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival;
 
 import de.hems.communication.ListenerAdapter;
+import de.hems.paper.money.MoneyService;
 import de.hems.paper.admin.AdminStash;
 import de.hems.paper.admin.PlayerAdminHandler;
 import de.hems.paper.commands.ServerManagerCommand;
@@ -63,6 +64,8 @@ public final class Survival extends JavaPlugin {
             throw new RuntimeException(e);
         }
         new RequestPlayerMoneyEventHandler();
+        // the bits themselves live on the launcher now, this keeps the local copy current
+        MoneyService.init(this);
         new PlayerAdminHandler(this);
         AdminStash.init(this);
         TeamService.init(this);
