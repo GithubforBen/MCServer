@@ -36,7 +36,13 @@ commands:
   warp:
     description: Auf einen anderen Server springen
     usage: /warp [server]
+  verify:
+    description: Deinen Discord-Account verknüpfen und nachschauen, wer wer ist
+    usage: /verify <code> | /verify wer <spieler>
 permissions:
   network.warp.always:
     description: Darf jeden Server jederzeit verlassen
+    default: op
+  network.verify.lookup:
+    description: Darf nachschauen, welcher Discord-Account zu einem Spieler gehört
     default: op

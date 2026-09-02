@@ -10,6 +10,9 @@ import de.hems.paper.event.BedwarsEventStarter;
 import de.hems.paper.event.EventService;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.RunService;
+import de.hems.paper.admin.NetworkOps;
+import de.hems.paper.commands.VerifyCommand;
+import de.hems.paper.discord.AccountLinkService;
 import de.hems.paper.round.RoundService;
 import de.hems.paper.warp.ServerConnector;
 import de.schnorrenbergers.lobby.bedwars.BedwarsDebugCommand;
@@ -63,6 +66,10 @@ public final class LobbyPlugin extends JavaPlugin {
         // rounds players put up themselves
         RoundService.init(this);
         registerCommand("runde", new RoundCommand());
+        // who is who on discord: the link is confirmed here and looked up here
+        AccountLinkService.init(this);
+        NetworkOps.init(this);
+        registerCommand("verify", new VerifyCommand());
         registerCommand("bwdebug", new BedwarsDebugCommand());
         new LobbyJoinListener();
         new LobbyProtectionListener(this);

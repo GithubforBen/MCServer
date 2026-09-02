@@ -147,12 +147,11 @@ Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiz
 - [x] `.idea/misc.xml` steht auf JDK 25
 - [ ] `Inventorys.java:217` — `//TODO: add option` im Item-Manager-Inventar. Aus dem Code geht
       nicht hervor, welche Option gemeint ist — **was soll da hin?**
-- [ ] `Main.java:54` — Ops automatisch hinzufügen. Ops kommen heute aus `ops` in der
-      `main-config.yml`. Unklar, was "automatisch" heißen soll: ein Befehl im Spiel, über
-      Discord, oder aus der Admin-Website? **Bitte entscheiden**
-- [ ] `VerifyAccount.java:5` — Account-Verknüpfung fehlt komplett. `/verify` im Discord tut
-      bisher nichts, `getMinecraftByDiscord` gibt immer `null`. Das ist ein eigenes Feature
-      (Code erzeugen, im Spiel eingeben, Zuordnung speichern), kein Kleinkram
+- [x] `Main.java:54` — Ops kommen jetzt über Discord: `/op` und `/deop`, nur für den Besitzer,
+      schreiben in dieselbe `ops`-Liste und werden auf laufenden Servern sofort angewandt
+- [x] `VerifyAccount.java:5` — Account-Verknüpfung ist da: `/verify <name>` im Discord gibt einen
+      Code, `/verify <code>` im Spiel verknüpft, `/verify wer <spieler>` schaut nach. Die alte
+      leere `VerifyAccount`-Klasse ist raus
 
 ---
 
@@ -258,6 +257,23 @@ Offen:
       liegt und im Lobby-Menü steht
 - [ ] Ein abgesagtes Event wieder aktivieren und prüfen, dass seine Läufe noch da sind
 - [ ] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
+
+### 5.6 Discord-Verknüpfung und Ops — erledigt
+- [x] `/verify <minecraftname>` im Discord gibt einen Code (6 Zeichen, 10 Minuten, ephemeral)
+- [x] `/verify <code>` im Spiel verknüpft, geprüft wird beim Launcher gegen die UUID
+- [x] `/verify wer <spieler>` sagt, wer das auf Discord ist (Op oder `network.verify.lookup`)
+- [x] `/unlink` im Discord löst eine Verknüpfung, nur der Besitzer
+- [x] `/op` und `/deop` im Discord, nur der Besitzer, gelten auf laufenden Servern sofort
+- [x] Die Besitzer-ID steht in `discord-owner-id` statt fest im Code von `/payingplayer`
+
+Offen:
+- [ ] `/verify` gibt es in Lobby und Survival. Auf einem Bedwars-Rundenserver nicht — dort steht
+      man selten, wenn man gerade einen Code eintippt, aber es ist eine Lücke
+- [ ] Ein Spieler, der sich umbenennt, behält den alten Namen in `links.yml`. Die UUID stimmt,
+      die Anzeige nicht — beim nächsten Verknüpfen wird der Name aktualisiert
+- [ ] Die Verknüpfung steht nirgends in der Admin-Website, nur im Spiel
+- [ ] Nachprüfen: `/op` auf einem laufenden Server — bekommt der Spieler die Rechte wirklich
+      sofort und stehen sie nach einem Neustart noch in der `ops.json`?
 
 ---
 

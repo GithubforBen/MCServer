@@ -3,6 +3,7 @@ package de.hems.utils.bot.payingplayer;
 import de.hems.Main;
 import de.hems.api.UUIDFetcher;
 import de.hems.utils.bot.tickets.Tickets;
+import de.hems.utils.bot.verification.DiscordOwner;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -18,8 +19,8 @@ public class PayingPlayerCommand extends ListenerAdapter {
         if (!event.getName().equals("payingplayer")) {
             return;
         }
-        if (!event.getUser().getId().equals("668439460819632143")) {
-            event.reply("You are not allowed to use this command, becuase you are not for_sale").queue();
+        if (!DiscordOwner.is(event.getUser())) {
+            event.reply("Diesen Befehl darf nur der Besitzer des Netzwerks benutzen.").setEphemeral(true).queue();
             return;
         }
         String minecraftname = event.getOption("minecraftname").getAsString();

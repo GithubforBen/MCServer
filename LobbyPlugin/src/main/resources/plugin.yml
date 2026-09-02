@@ -16,6 +16,9 @@ commands:
     description: Eigene Runden starten und beitreten
     usage: /runde [liste|start|einladen <spieler>|admin]
     aliases: [runden, rounds]
+  verify:
+    description: Deinen Discord-Account verknüpfen und nachschauen, wer wer ist
+    usage: /verify <code> | /verify wer <spieler>
   bwdebug:
     description: Eine Bedwars Runde starten und hinspringen
     usage: /bwdebug [list|stop <name>]
@@ -25,4 +28,7 @@ commands:
 permissions:
   network.warp.always:
     description: Darf jeden Server jederzeit verlassen
+    default: op
+  network.verify.lookup:
+    description: Darf nachschauen, welcher Discord-Account zu einem Spieler gehört
     default: op

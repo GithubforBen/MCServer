@@ -589,6 +589,42 @@ eine Entscheidung ist (gibt es das, verkauft es sich, für wie viel), dem Spiels
 Code ist. Ein neuer Effekt ist deshalb ein Eintrag in `de.hems.types.cosmetic.Cosmetics` und eine
 Klasse, die `WinEffect` implementiert - dazwischen darf jede Seite der anderen voraus sein.
 
+## Discord-Verknüpfung
+
+Ein Minecraft-Name ist alles, was man von jemandem hat, wenn er auffällt. Die Verknüpfung macht daraus
+eine Person, die man auch anschreiben kann.
+
+| Wo | Befehl | Was er macht |
+|----|--------|--------------|
+| Discord | `/verify <minecraftname>` | Gibt dir einen Code, sechs Zeichen, zehn Minuten gültig |
+| Im Spiel | `/verify <code>` | Verknüpft die beiden Accounts |
+| Im Spiel | `/verify` | Zeigt, mit welchem Discord du verknüpft bist |
+| Im Spiel | `/verify wer <spieler>` | Sagt, wer das auf Discord ist (Op oder `network.verify.lookup`) |
+| Discord | `/unlink <minecraftname>` | Löst eine Verknüpfung (nur der Besitzer) |
+
+Zwei Schritte, weil ein Schritt nichts wert wäre: auf Discord kann jeder jeden Namen eingeben, und den
+Code zurücktippen kann nur, wer wirklich als dieser Account eingeloggt ist. Eine Liste, in der auch
+gelogen sein könnte, ist schlechter als keine — der ganze Zweck ist ja zu wissen, wen man anschreibt.
+
+Der Code lebt nur im Speicher. Ein Neustart des Launchers mitten im Verknüpfen kostet einen Befehl.
+Gespeicherte Verknüpfungen liegen in `links.yml` beim Launcher und sind auf jedem Server sofort da.
+
+### Operator-Rechte
+
+| Befehl | Wer darf |
+|--------|----------|
+| `/op <minecraftname>` | Nur der Besitzer |
+| `/deop <minecraftname>` | Nur der Besitzer |
+
+Der Name landet in `ops` in der `main-config.yml` — derselben Liste, aus der jeder neue Server gebaut
+wird — und die Änderung wird ans Netzwerk gemeldet, sodass laufende Server sie sofort übernehmen und in
+ihre eigene `ops.json` schreiben. Kein Neustart nötig.
+
+Wer der Besitzer ist, steht unter `discord-owner-id` in der `main-config.yml`. Der Wert war vorher fest
+im Code von `/payingplayer` verdrahtet; er ist jetzt an einer Stelle und änderbar, ohne neu zu bauen.
+Operator ist jedes Recht, das es gibt — deshalb hängt das bewusst am Besitzer und nicht an einer
+Discord-Rolle.
+
 ## Module
 
 | Modul | Inhalt |

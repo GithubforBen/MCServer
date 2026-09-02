@@ -12,6 +12,8 @@ import de.hems.utils.event.AwardStore;
 import de.hems.utils.event.EventSettlement;
 import de.hems.utils.event.EventStore;
 import de.hems.utils.event.RunStore;
+import de.hems.utils.bot.verification.AccountLinkStore;
+import de.hems.utils.bot.verification.DiscordOwner;
 import de.hems.utils.cosmetic.CosmeticStore;
 import de.hems.utils.money.MoneyStore;
 import de.hems.utils.round.RoundStore;
@@ -64,10 +66,18 @@ public class Main {
     private MoneyStore moneyStore;
     private RoundStore roundStore;
     private CosmeticStore cosmeticStore;
+    private AccountLinkStore accountLinkStore;
     private JDA jda;
     private WebServer webServer;
     private IdleServerWatchdog idleServerWatchdog;
     private MemoryWatch memoryWatch;
+    /** Background work for the bot, which must never block discord's reply window. */
+    private final java.util.concurrent.ExecutorService background =
+            java.util.concurrent.Executors.newCachedThreadPool(runnable -> {
+                Thread thread = new Thread(runnable, "launcher-async");
+                thread.setDaemon(true);
+                return thread;
+            });
     //TODO: add a way to auto add ops
 
     public Main() throws Exception {
@@ -120,6 +130,9 @@ public class Main {
         // rounds players put up themselves, and the rules an admin allows them under
         roundStore = new RoundStore();
         new RoundEvents(roundStore, serverHandler);
+        // who is who: a minecraft name is all anybody has when somebody has to be written to
+        accountLinkStore = new AccountLinkStore();
+        new AccountLinkEvents(accountLinkStore);
         new StartServerEvent();
         new RestartServerEvent();
         new StopServerEvent();
@@ -133,7 +146,8 @@ public class Main {
                     .addEventListeners(
                             new SetTicketChannelListener(),
                             new TicketListener(),
-                            new OnAccountVerifyCommand(),
+                            new OnAccountVerifyCommand(accountLinkStore),
+                            new de.hems.utils.bot.verification.OpCommand(accountLinkStore),
                             new PayingPlayerCommand(),
                             new SetLoggingChannel())
                     .setActivity(Activity.playing("Playing on " + getIp()))
@@ -147,7 +161,21 @@ public class Main {
                             Commands.slash("setloggingchannel", "Set the channel for admin abuse logging").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
                             ))
                     .addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true))
+                    .addCommands(
+                            Commands.slash("op", "Gib einem Spieler Operator-Rechte (nur der Besitzer)")
+                                    .addOption(OptionType.STRING, "minecraftname", "Wer Operator werden soll.", true)
+                                    .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)))
+                    .addCommands(
+                            Commands.slash("deop", "Nimm einem Spieler die Operator-Rechte (nur der Besitzer)")
+                                    .addOption(OptionType.STRING, "minecraftname", "Wem sie genommen werden.", true)
+                                    .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)))
+                    .addCommands(
+                            Commands.slash("unlink", "Löse die Verknüpfung eines Accounts (nur der Besitzer)")
+                                    .addOption(OptionType.STRING, "minecraftname", "Wessen Verknüpfung gelöst wird.", true)
+                                    .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)))
                     .queue();
+            // read once at start so the key is in the config file even before anybody uses a command
+            DiscordOwner.id();
         } else {
             configuration.getConfig().set("discord-token", "<<add token here>>");
             configuration.getConfig().setComments("discord-token", List.of("The discord token to use for the bot!"));
@@ -277,6 +305,20 @@ public class Main {
 
     public CosmeticStore getCosmeticStore() {
         return cosmeticStore;
+    }
+
+    public AccountLinkStore getAccountLinkStore() {
+        return accountLinkStore;
+    }
+
+    /**
+     * Runs work that must not sit on the thread it was started from - a discord command that has to ask
+     * mojang for a uuid has three seconds to answer, and mojang does not always take less than that.
+     *
+     * @param runnable the work to run
+     */
+    public void async(Runnable runnable) {
+        background.submit(runnable);
     }
 
     public StashStore getStashStore() {
