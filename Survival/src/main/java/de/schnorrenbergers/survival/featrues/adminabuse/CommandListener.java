@@ -3,6 +3,7 @@ package de.schnorrenbergers.survival.featrues.adminabuse;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.adminabuse.RequestAdminAbuseEvent;
 import de.schnorrenbergers.survival.Survival;
+import de.schnorrenbergers.survival.featrues.adminjoin.AdminJoinService;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,7 +25,9 @@ public class CommandListener implements Listener {
         }
         for (String flag : flags()) {
             if (event.getMessage().startsWith("/" + flag)) {
-                ListenerAdapter.sendListeners(new RequestAdminAbuseEvent(ListenerAdapter.ServerName.HOST, event.getMessage(), event.getPlayer().getName()));
+                // the real name, never the disguise: an abuse log that reads "Admin" for everybody
+                // says nothing about who did it, which is the only thing it exists to say
+                ListenerAdapter.sendListeners(new RequestAdminAbuseEvent(ListenerAdapter.ServerName.HOST, event.getMessage(), AdminJoinService.realName(event.getPlayer())));
                 event.getPlayer().sendMessage("Authenticate this command with /legitamise");
             }
         }
@@ -32,7 +35,7 @@ public class CommandListener implements Listener {
 
     @EventHandler
     public void onCommand(org.bukkit.event.player.PlayerGameModeChangeEvent event) throws Exception {
-        ListenerAdapter.sendListeners(new RequestAdminAbuseEvent(ListenerAdapter.ServerName.HOST, "Game mode change to " + event.getNewGameMode().toString(), event.getPlayer().getName()));
+        ListenerAdapter.sendListeners(new RequestAdminAbuseEvent(ListenerAdapter.ServerName.HOST, "Game mode change to " + event.getNewGameMode().toString(), AdminJoinService.realName(event.getPlayer())));
         event.getPlayer().sendMessage("Authenticate this command with /legitamise");
     }
 

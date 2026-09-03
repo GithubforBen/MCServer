@@ -80,6 +80,8 @@ public final class Survival extends JavaPlugin {
         NetworkOps.init(this);
         new PlayerAdminHandler(this);
         AdminStash.init(this);
+        // /admin join: the same stash, carried rather than opened, under a name nobody recognises
+        de.schnorrenbergers.survival.featrues.adminjoin.AdminJoinService.init(this);
         TeamService.init(this);
         new TeamSyncListener();
         // claims are only worth having if somebody can see where they are: a title on crossing, the

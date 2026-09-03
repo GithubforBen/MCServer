@@ -369,6 +369,32 @@ Beides ist revisionsgesichert: wer die Ablage öffnet, bekommt ihre Revision mit
 anderes gespeichert - im Browser oder im Spiel - wird der Schreibvorgang mit 409 abgelehnt statt zu
 überschreiben.
 
+### Die Ablage tragen: `/admin join`
+
+`/admin join` auf Survival macht aus einem Admin den **Admin**: der Chat meldet, dass der Spieler
+gegangen ist, gleich darauf, dass „Admin" gekommen ist, und ab da heißt er überall so - über dem
+Kopf, in der Tabliste, im Chat - mit dem Skin dazu. Nochmal getippt geht es andersherum zurück. Wie
+er heißt und wessen Skin er trägt, steht in `./configs/admin-join.yml` (`display-name`,
+`skin-account`); der Skin wird beim Serverstart einmal bei Mojang geholt. Ohne geladenen Skin
+passiert gar nichts - der richtige Name über dem falschen Gesicht wäre genau das Merkmal, an dem
+man ihn erkennt.
+
+Sein Inventar in dieser Gestalt **ist die Ablage**. Sie wird dabei nicht kopiert, sondern
+ausgeliehen: beim Umschalten wird sie beim Launcher geleert und liegt in seinen Taschen, beim
+Zurückschalten wird sie von dort zurückgeschrieben. Anders ginge es nicht - zwei Admins mit
+derselben Ablage in der Tasche wären zwei Mal dieselben Diamanten. Solange jemand sie trägt, sagt
+`/admin` das mit Namen, und ein zweiter Admin kann sich nicht verkleiden. Passen die Sachen nicht in
+36 Stapel, lehnt der Befehl ab, statt den Rest fallenzulassen.
+
+Sein eigenes Inventar liegt so lange in `plugins/survival/admin-join.yml`, nicht im Speicher: ein
+Neustart mitten in der Verkleidung darf niemandem seine Sachen kosten. Nach dem Neustart ist er
+weiterhin der Admin und bekommt die Gestalt beim Join wieder aufgesetzt. Stirbt er in der
+Verkleidung, behält er das Inventar - es gehört ihm nicht, es ist die Ablage.
+
+Die uuid bleibt die eigene. Geld, Teams, Cosmetics und Bans wissen also weiterhin, wer da steht,
+und das Adminabuse-Log bekommt bewusst den echten Namen: ein Log, in dem alles „Admin" getan hat,
+beantwortet die einzige Frage nicht, für die es existiert.
+
 ## Chunk Limiter
 
 Damit ein ruckelnder Server spielbar bleibt, senkt der Survival-Server bei Lag die Sichtweite - aber nur

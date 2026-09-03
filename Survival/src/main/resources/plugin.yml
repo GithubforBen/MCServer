@@ -11,8 +11,8 @@ commands:
     description: Testbefehle für Entwickler, öffnet Inventare und startet Animationen
     usage: /debug <animation|inv <name>>
   admin:
-    description: Öffnet den Admin-Stash und die Geld-Werkzeuge
-    usage: /admin
+    description: Öffnet den Admin-Stash, die Geld-Werkzeuge und die Admin-Gestalt
+    usage: /admin [join|money]
   cteam:
     description: Öffnet den Team-Manager und verwaltet dein Team
     usage: /cteam

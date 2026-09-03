@@ -272,6 +272,25 @@ Offen:
 - [ ] Der Disco-Boden und das Sprungpad schicken Blockpakete an alle im Umkreis. Bei vielen Trägern
       gleichzeitig ist das ungemessen
 
+### 5.4b Admin-Gestalt — erledigt
+- [x] `/admin join` auf Survival: Chat meldet Verlassen und Kommen, Name, Tabliste und Skin werden
+      zur Admin-Gestalt, nochmal getippt zurück
+- [x] Name und Skin-Account in `./configs/admin-join.yml`, Skin einmal pro Start von Mojang
+- [x] Das Admin-Inventar ist die Ablage, ausgeliehen statt kopiert: beim Launcher geleert, beim
+      Zurückschalten zurückgeschrieben, revisionsgesichert wie das Ablagefenster
+- [x] Eigenes Inventar liegt auf Platte, nicht im Speicher; nach einem Neustart bleibt die Gestalt
+- [x] Adminabuse-Log und `/admin` melden den echten Namen, nicht die Gestalt
+
+Offen:
+- [ ] Es kann immer nur einer gleichzeitig verkleidet sein — Folge davon, dass die Ablage das
+      Inventar ist. Für mehrere bräuchte jeder eine eigene Ablage
+- [ ] Ob `setPlayerProfile` im laufenden Spiel wirklich alles umzieht (Name über dem Kopf, Skin,
+      eigene Sicht in F5), ist ungeprüft. Wenn nicht, hilft nur ein Reconnect an der Stelle
+- [ ] Passt die Ablage nicht in 36 Stapel, lehnt der Befehl ab. Eine Ablage mit 54 Slots ist damit
+      nur zu tragen, wenn sie halb leer ist
+- [ ] Ein verkleideter Admin heißt für jeden Code, der `getName()` fragt, „Admin". Geprüft und
+      umgebogen ist das Adminabuse-Log; andere Stellen wurden nicht durchgesehen
+
 ### 5.5 Am lebenden Server nachprüfen
 - [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers
 - [ ] Zwei Spieler starten gleichzeitig eine Runde, wenn nur noch für eine Platz ist
