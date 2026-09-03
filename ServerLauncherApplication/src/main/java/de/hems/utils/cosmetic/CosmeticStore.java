@@ -4,6 +4,7 @@ import de.hems.types.cosmetic.CosmeticData;
 import de.hems.types.cosmetic.CosmeticSnapshot;
 import de.hems.types.cosmetic.CosmeticType;
 import de.hems.types.cosmetic.Cosmetics;
+import de.hems.types.cosmetic.GadgetSlot;
 import de.hems.types.cosmetic.PlayerCosmetics;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -252,13 +253,14 @@ public class CosmeticStore {
      *
      * @param player who
      * @param type   which kind
+     * @param slot   which slot, for gadgets; {@code null} for every other kind
      * @param id     what to wear, {@code null} for nothing
      * @return their new state, or {@code null} when they do not own it
      */
-    public synchronized PlayerCosmetics select(UUID player, CosmeticType type, String id) {
+    public synchronized PlayerCosmetics select(UUID player, CosmeticType type, GadgetSlot slot, String id) {
         PlayerCosmetics cosmetics = of(player);
         if (id != null && !owns(cosmetics, id)) return null;
-        cosmetics.select(type, id);
+        cosmetics.select(type, slot, id);
         writePlayer(cosmetics);
         save();
         return cosmetics;

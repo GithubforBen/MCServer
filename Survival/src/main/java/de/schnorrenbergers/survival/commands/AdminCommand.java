@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival.commands;
 
 import de.hems.paper.admin.AdminStash;
+import de.schnorrenbergers.survival.featrues.adminjoin.AdminJoinService;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -22,6 +23,9 @@ import java.util.UUID;
  * <p>
  * Called on its own it opens the stash: the chest the web interface drops items into when an admin pulls
  * something out of a player's inventory there.
+ * <p>
+ * {@code /admin join} is the other half of that chest: instead of opening it, the admin carries it, under
+ * a name and a face nobody recognises. See {@link AdminJoinService}.
  */
 public class AdminCommand implements CommandExecutor, TabCompleter {
 
@@ -36,12 +40,34 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             openStash(sender);
             return true;
         }
+        if (args[0].equalsIgnoreCase("join")) {
+            join(sender);
+            return true;
+        }
         if (args[0].equalsIgnoreCase("money")) {
             money(sender, args);
             return true;
         }
         sendUsage(sender);
         return true;
+    }
+
+    /**
+     * Steps into the admin disguise, or back out of it.
+     *
+     * @param sender who asked
+     */
+    private void join(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Nur ein Spieler kann sich verkleiden.");
+            return;
+        }
+        AdminJoinService service = AdminJoinService.getInstance();
+        if (service == null) {
+            player.sendMessage(ChatColor.RED + "❌ Das ist auf diesem Server nicht eingerichtet.");
+            return;
+        }
+        service.toggle(player);
     }
 
     /**
@@ -52,6 +78,14 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     private void openStash(CommandSender sender) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Die Ablage kann nur ein Spieler öffnen.");
+            return;
+        }
+        // somebody in disguise has the stash in their pockets, so there is nothing here to open - and
+        // opening it anyway would write an empty chest over what they are carrying
+        String holder = AdminJoinService.stashHolder();
+        if (holder != null) {
+            player.sendMessage(ChatColor.RED + "❌ " + holder
+                    + " trägt die Ablage gerade (/admin join).");
             return;
         }
         AdminStash stash = AdminStash.getInstance();
@@ -119,6 +153,8 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
 
     private void sendUsage(CommandSender sender) {
         sender.sendMessage(ChatColor.GOLD + "/admin" + ChatColor.GRAY + " öffnet die Admin-Ablage");
+        sender.sendMessage(ChatColor.GRAY + "/admin join" + ChatColor.DARK_GRAY
+                + " - als Admin auftreten, nochmal für zurück");
         sender.sendMessage(ChatColor.GRAY + "/admin money add|remove <spieler> <betrag>");
         sender.sendMessage(ChatColor.GRAY + "/admin money query <spieler>");
     }
@@ -127,7 +163,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                 @NotNull String label, @NotNull String @NotNull [] args) {
         if (!sender.isOp()) return List.of();
-        if (args.length <= 1) return List.of("stash", "money");
+        if (args.length <= 1) return List.of("stash", "join", "money");
         if (args.length == 2 && args[0].equalsIgnoreCase("money")) {
             return List.of("add", "remove", "query");
         }

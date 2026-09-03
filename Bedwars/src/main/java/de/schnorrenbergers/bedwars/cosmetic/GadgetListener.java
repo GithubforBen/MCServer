@@ -1,6 +1,7 @@
 package de.schnorrenbergers.bedwars.cosmetic;
 
 import de.hems.paper.cosmetic.Gadgets;
+import de.hems.types.cosmetic.GadgetSlot;
 import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.api.BedwarsGameStateChangeEvent;
 import de.schnorrenbergers.bedwars.api.BedwarsPlayerRespawnEvent;
@@ -28,7 +29,7 @@ public class GadgetListener implements Listener {
     public GadgetListener(Plugin plugin) {
         this.plugin = plugin;
         // a spectator with a grappling hook is somebody flying around the map of a round they are out of
-        Gadgets.setGuard(GadgetListener::isPlaying);
+        Gadgets.setGuard(GadgetListener::isPlaying, GadgetSlot.BEDWARS);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 

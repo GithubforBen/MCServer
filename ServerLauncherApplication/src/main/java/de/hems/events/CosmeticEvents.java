@@ -117,7 +117,7 @@ public class CosmeticEvents {
 
     private void onSelect(SelectCosmeticEvent request) throws Exception {
         PlayerCosmetics updated = cosmetics.select(
-                request.getPlayerId(), request.getType(), request.getCosmeticId());
+                request.getPlayerId(), request.getType(), request.getSlot(), request.getCosmeticId());
         if (updated == null) return;
         ListenerAdapter.sendListeners(new PlayerCosmeticsUpdatedEvent(updated.copy()));
     }

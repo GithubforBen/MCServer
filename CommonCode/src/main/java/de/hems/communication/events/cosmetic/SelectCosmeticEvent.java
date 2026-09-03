@@ -4,6 +4,7 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.types.Event;
 import de.hems.communication.events.types.EventFoundationData;
 import de.hems.types.cosmetic.CosmeticType;
+import de.hems.types.cosmetic.GadgetSlot;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -15,15 +16,22 @@ public class SelectCosmeticEvent extends EventFoundationData implements Event, S
 
     private UUID playerId;
     private CosmeticType type;
+    /** Which slot, for gadgets; {@code null} for the kinds that are worn in one place. */
+    private GadgetSlot slot;
     private String cosmeticId;
 
     public SelectCosmeticEvent() {
     }
 
     public SelectCosmeticEvent(UUID playerId, CosmeticType type, String cosmeticId) {
+        this(playerId, type, null, cosmeticId);
+    }
+
+    public SelectCosmeticEvent(UUID playerId, CosmeticType type, GadgetSlot slot, String cosmeticId) {
         super(ListenerAdapter.ServerName.HOST);
         this.playerId = playerId;
         this.type = type;
+        this.slot = slot;
         this.cosmeticId = cosmeticId;
     }
 
@@ -33,6 +41,10 @@ public class SelectCosmeticEvent extends EventFoundationData implements Event, S
 
     public CosmeticType getType() {
         return type;
+    }
+
+    public GadgetSlot getSlot() {
+        return slot;
     }
 
     public String getCosmeticId() {

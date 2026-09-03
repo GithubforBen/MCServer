@@ -14,6 +14,7 @@ import de.hems.types.cosmetic.CosmeticData;
 import de.hems.types.cosmetic.CosmeticPurchase;
 import de.hems.types.cosmetic.CosmeticSnapshot;
 import de.hems.types.cosmetic.CosmeticType;
+import de.hems.types.cosmetic.GadgetSlot;
 import de.hems.types.cosmetic.PlayerCosmetics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -164,7 +165,19 @@ public final class CosmeticService {
      * @return the cosmetic, or {@code null} when they wear none of that kind
      */
     public static @Nullable CosmeticData getSelected(UUID player, CosmeticType type) {
-        String id = of(player).getSelected(type);
+        return getSelected(player, type, null);
+    }
+
+    /**
+     * What somebody is wearing of one kind, in one slot.
+     *
+     * @param player a player
+     * @param type   a kind
+     * @param slot   which slot, for gadgets; {@code null} for every other kind
+     * @return the cosmetic, or {@code null} when they wear none there
+     */
+    public static @Nullable CosmeticData getSelected(UUID player, CosmeticType type, GadgetSlot slot) {
+        String id = of(player).getSelected(type, slot);
         if (id == null) return null;
         CosmeticData cosmetic = get(id);
         if (cosmetic == null || !cosmetic.isEnabled() || !owns(player, id)) return null;
@@ -227,13 +240,25 @@ public final class CosmeticService {
      * @param id     what to wear, {@code null} for nothing
      */
     public static void selectAsync(UUID player, CosmeticType type, String id) {
+        selectAsync(player, type, null, id);
+    }
+
+    /**
+     * Puts a cosmetic on in one slot, or takes it off there.
+     *
+     * @param player who
+     * @param type   which kind
+     * @param slot   which slot, for gadgets; {@code null} for every other kind
+     * @param id     what to wear, {@code null} for nothing
+     */
+    public static void selectAsync(UUID player, CosmeticType type, GadgetSlot slot, String id) {
         if (player == null || !PaperContext.hasPlugin()) return;
         PlayerCosmetics local = of(player).copy();
-        local.select(type, id);
+        local.select(type, slot, id);
         players.put(player, local);
         PaperContext.async(() -> {
             try {
-                ListenerAdapter.sendListeners(new SelectCosmeticEvent(player, type, id));
+                ListenerAdapter.sendListeners(new SelectCosmeticEvent(player, type, slot, id));
             } catch (Exception e) {
                 Bukkit.getLogger().warning("Could not store the cosmetic choice: " + e.getMessage());
                 refreshAsync();

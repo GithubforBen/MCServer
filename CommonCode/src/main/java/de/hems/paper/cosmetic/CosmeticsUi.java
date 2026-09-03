@@ -6,6 +6,7 @@ import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.paper.money.MoneyService;
 import de.hems.types.cosmetic.CosmeticData;
 import de.hems.types.cosmetic.CosmeticType;
+import de.hems.types.cosmetic.GadgetSlot;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -13,9 +14,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -115,18 +118,30 @@ public final class CosmeticsUi {
     private static ItemStack icon(Player player, CosmeticData cosmetic) {
         UUID id = player.getUniqueId();
         boolean owned = CosmeticService.owns(id, cosmetic.getId());
-        CosmeticData worn = CosmeticService.getSelected(id, cosmetic.getType());
-        boolean selected = worn != null && worn.getId().equalsIgnoreCase(cosmetic.getId());
+        boolean gadget = cosmetic.getType() == CosmeticType.GADGET;
+        Set<GadgetSlot> slots = gadget ? Gadgets.slotsOf(cosmetic.getId()) : Set.of();
+        Set<GadgetSlot> wornIn = gadget ? wornIn(id, cosmetic) : Set.of();
+        boolean selected = gadget ? !wornIn.isEmpty()
+                : isWorn(CosmeticService.getSelected(id, cosmetic.getType()), cosmetic);
 
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.GRAY + cosmetic.getDescription());
-        // gadgets are the one kind that a server can be without, so somebody standing on such a server
-        // should read that here rather than work it out from a pearl that never comes back
-        if (cosmetic.getType() == CosmeticType.GADGET && !Gadgets.areEnabled()) {
-            lore.add(ChatColor.DARK_GRAY + "Hier wirkt es nicht - anlegen kannst du es trotzdem.");
+        // a gadget belongs to certain servers rather than to the network, so where it works is the first
+        // thing somebody needs to read - before the price, and long before they wonder why nothing happens
+        if (gadget) {
+            lore.add(ChatColor.DARK_GRAY + "Wirkt in: " + GadgetSlot.list(slots));
+            GadgetSlot here = Gadgets.slot();
+            if (here == null) {
+                lore.add(ChatColor.DARK_GRAY + "Hier gibt es keine Gadgets - anlegen kannst du es trotzdem.");
+            } else if (!slots.contains(here)) {
+                lore.add(ChatColor.DARK_GRAY + "Auf " + here.getDisplayName() + " wirkt es nicht.");
+            }
         }
         lore.add(" ");
-        if (selected) {
+        if (selected && gadget) {
+            lore.add(ChatColor.GREEN + "Angelegt in: " + GadgetSlot.list(wornIn));
+            lore.add(ChatColor.YELLOW + "Klicken zum Ablegen");
+        } else if (selected) {
             lore.add(ChatColor.GREEN + "Angelegt");
             lore.add(ChatColor.YELLOW + "Klicken zum Ablegen");
         } else if (owned) {
@@ -147,6 +162,52 @@ public final class CosmeticsUi {
     }
 
     /**
+     * Puts one cosmetic on, or takes it off.
+     * <p>
+     * A gadget goes into every slot it works in at once, and comes out of every slot it is in. One click
+     * for one thing: somebody who buys the grappling hook wants the grappling hook, not a choice about
+     * which of two servers they want it on - while the slots still keep their lobby gadget and their
+     * survival gadget apart.
+     *
+     * @param id       whose cosmetics
+     * @param cosmetic what was clicked
+     * @return whether it was taken off, rather than put on
+     */
+    private static boolean wear(UUID id, CosmeticData cosmetic) {
+        if (cosmetic.getType() != CosmeticType.GADGET) {
+            boolean selected = isWorn(CosmeticService.getSelected(id, cosmetic.getType()), cosmetic);
+            CosmeticService.selectAsync(id, cosmetic.getType(), selected ? null : cosmetic.getId());
+            return selected;
+        }
+        Set<GadgetSlot> wornIn = wornIn(id, cosmetic);
+        boolean selected = !wornIn.isEmpty();
+        for (GadgetSlot slot : selected ? wornIn : Gadgets.slotsOf(cosmetic.getId())) {
+            CosmeticService.selectAsync(id, CosmeticType.GADGET, slot,
+                    selected ? null : cosmetic.getId());
+        }
+        return selected;
+    }
+
+    /**
+     * @param id       whose cosmetics
+     * @param cosmetic a gadget
+     * @return the slots they are wearing it in, which is where taking it off has to reach
+     */
+    private static Set<GadgetSlot> wornIn(UUID id, CosmeticData cosmetic) {
+        Set<GadgetSlot> wornIn = new LinkedHashSet<>();
+        for (GadgetSlot slot : Gadgets.slotsOf(cosmetic.getId())) {
+            if (isWorn(CosmeticService.getSelected(id, CosmeticType.GADGET, slot), cosmetic)) {
+                wornIn.add(slot);
+            }
+        }
+        return wornIn;
+    }
+
+    private static boolean isWorn(CosmeticData worn, CosmeticData cosmetic) {
+        return worn != null && worn.getId().equalsIgnoreCase(cosmetic.getId());
+    }
+
+    /**
      * @param cosmetic the cosmetic
      * @param owned    whether the player has it
      * @return the item it is drawn as - its own once it is theirs, grey while it is not
@@ -164,9 +225,15 @@ public final class CosmeticsUi {
     private static void click(Player player, CosmeticData cosmetic, CosmeticType tab) {
         UUID id = player.getUniqueId();
         if (CosmeticService.owns(id, cosmetic.getId())) {
-            CosmeticData worn = CosmeticService.getSelected(id, cosmetic.getType());
-            boolean selected = worn != null && worn.getId().equalsIgnoreCase(cosmetic.getId());
-            CosmeticService.selectAsync(id, cosmetic.getType(), selected ? null : cosmetic.getId());
+            // a catalogue entry from a version this server does not have yet has nowhere to go, and a
+            // button that does nothing at all is worse than one that says why
+            if (cosmetic.getType() == CosmeticType.GADGET
+                    && Gadgets.slotsOf(cosmetic.getId()).isEmpty()) {
+                player.sendMessage(ChatColor.RED
+                        + "Dieses Gadget kennt der Server noch nicht - anlegen geht noch nicht.");
+                return;
+            }
+            boolean selected = wear(id, cosmetic);
             player.playSound(player, Sound.UI_BUTTON_CLICK, 0.6f, selected ? 0.9f : 1.3f);
             open(player, tab);
             return;
@@ -187,7 +254,7 @@ public final class CosmeticsUi {
                     + purchase.getPaid() + " Bits bezahlt, " + purchase.getBalance() + " übrig.");
             player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.4f);
             // straight on, because the next thing anybody does after buying one is put it on
-            CosmeticService.selectAsync(id, cosmetic.getType(), cosmetic.getId());
+            wear(id, cosmetic);
             open(player, tab);
         });
     }
