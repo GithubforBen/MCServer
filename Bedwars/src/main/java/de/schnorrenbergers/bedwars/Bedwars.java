@@ -9,7 +9,7 @@ import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.EventService;
 import de.hems.paper.cosmetic.CosmeticService;
-import de.hems.paper.cosmetic.WinEffects;
+import de.hems.paper.cosmetic.CosmeticEffects;
 import de.hems.paper.round.RoundService;
 import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.BedwarsEventSettings;
@@ -36,15 +36,16 @@ import de.schnorrenbergers.bedwars.listener.BedListener;
 import de.schnorrenbergers.bedwars.listener.BuildListener;
 import de.schnorrenbergers.bedwars.listener.ChatListener;
 import de.schnorrenbergers.bedwars.listener.CombatListener;
-import de.schnorrenbergers.bedwars.listener.DragonListener;
 import de.schnorrenbergers.bedwars.listener.RulesListener;
 import de.schnorrenbergers.bedwars.listener.ShopListener;
+import de.schnorrenbergers.bedwars.listener.SuddenDeathListener;
 import de.schnorrenbergers.bedwars.listener.SpecialItemListener;
 import de.schnorrenbergers.bedwars.listener.TeamChestListener;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.Rules;
 import de.schnorrenbergers.bedwars.game.timeline.Dragons;
 import de.schnorrenbergers.bedwars.game.timeline.Timeline;
+import de.schnorrenbergers.bedwars.game.timeline.Withers;
 import de.schnorrenbergers.bedwars.lobby.LobbyListener;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.map.MapLoader;
@@ -122,6 +123,7 @@ public final class Bedwars extends JavaPlugin {
         game.setShopKeepers(new ShopKeepers());
         game.setTimeline(new Timeline(timelineSettings));
         game.setDragons(new Dragons(timelineSettings));
+        game.setWithers(new Withers(timelineSettings));
         loadArena();
         applyRoundAddons();
         addons.apply(game);
@@ -135,12 +137,12 @@ public final class Bedwars extends JavaPlugin {
         new ChatListener(this);
         new ShopListener(this);
         new SpecialItemListener(this);
-        new DragonListener(this);
+        new SuddenDeathListener(this);
         new SpectatorListener(this);
         new RulesListener(this);
         new de.schnorrenbergers.bedwars.round.RoundStateListener(this);
         // what a round ends with, and what players carry into it
-        WinEffects.init(this);
+        CosmeticEffects.init(this);
         new de.schnorrenbergers.bedwars.cosmetic.GadgetListener(this);
         if (gameSettings.isStatsEnabled()) {
             stats = new StatsTracker(this, new FileStatsRepository(
@@ -160,6 +162,7 @@ public final class Bedwars extends JavaPlugin {
         Holograms.removeAll();
         if (game != null && game.getShopKeepers() != null) game.getShopKeepers().remove();
         if (game != null && game.getDragons() != null) game.getDragons().remove();
+        if (game != null && game.getWithers() != null) game.getWithers().remove();
         if (addons != null && game != null) addons.disableAll(game);
         if (game != null) game.shutdown();
     }
@@ -334,6 +337,10 @@ public final class Bedwars extends JavaPlugin {
         // registered before the connection is attempted, so a round without a launcher still has a way out
         register("warp", new WarpCommand());
         register("lobby", new LobbyCommand());
+        // the shop talks to the launcher and to nothing else, so it is registered with the rest of the
+        // network commands - and it is the whole reason somebody who only plays bedwars no longer has to
+        // travel to survival to put on what they bought
+        register("cosmetics", new de.hems.paper.commands.CosmeticsCommand());
         try {
             new ListenerAdapter(ServerIdentity.of(this, "BEDWARS"));
             new PlayerAdminHandler(this);

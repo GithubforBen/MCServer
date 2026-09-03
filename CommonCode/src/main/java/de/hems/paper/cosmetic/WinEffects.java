@@ -23,22 +23,19 @@ import java.util.UUID;
 public final class WinEffects {
 
     private static final Map<String, WinEffect> effects = new LinkedHashMap<>();
-    private static boolean initialized;
 
     private WinEffects() {
     }
 
     /**
-     * Registers the effects that ship with the network and the listener that keeps them harmless.
-     *
      * @param plugin the plugin they run on
+     * @deprecated the win effects are no longer the only kind there is - call
+     *         {@link CosmeticEffects#init(Plugin)}, which switches all of them on. Kept because a plugin
+     *         that only knows about win effects still has to end up with a working server.
      */
-    public static synchronized void init(Plugin plugin) {
-        if (initialized) return;
-        initialized = true;
-        register(new RocketWinEffect());
-        register(new InkWinEffect());
-        new CosmeticSafetyListener(plugin);
+    @Deprecated
+    public static void init(Plugin plugin) {
+        CosmeticEffects.init(plugin);
     }
 
     /**

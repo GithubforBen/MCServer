@@ -2,10 +2,14 @@ package de.schnorrenbergers.lobby;
 
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.admin.PlayerAdminHandler;
+import de.hems.paper.commands.CosmeticsCommand;
 import de.hems.paper.commands.EventCommand;
 import de.hems.paper.commands.ServerManagerCommand;
 import de.hems.paper.commands.WarpCommand;
+import de.hems.paper.cosmetic.CosmeticEffects;
+import de.hems.paper.cosmetic.CosmeticService;
 import de.hems.paper.customInventory.CustomInventoryListener;
+import de.hems.paper.money.MoneyService;
 import de.hems.paper.event.BedwarsEventStarter;
 import de.hems.paper.event.EventService;
 import de.hems.paper.hologram.Holograms;
@@ -72,6 +76,12 @@ public final class LobbyPlugin extends JavaPlugin {
         AccountLinkService.init(this);
         NetworkOps.init(this);
         registerCommand("verify", new VerifyCommand());
+        // the hub is where people stand around, so it is where they put their cosmetics on. The bits are
+        // needed with them: the shop shows what somebody can afford before they click
+        MoneyService.init(this);
+        CosmeticService.init(this);
+        CosmeticEffects.init(this);
+        registerCommand("cosmetics", new CosmeticsCommand());
         registerCommand("bwdebug", new BedwarsDebugCommand());
         new LobbyJoinListener();
         new LobbyProtectionListener(this);

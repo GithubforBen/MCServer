@@ -83,6 +83,22 @@ public final class CosmeticAdminUi {
         return menu;
     }
 
+    /**
+     * @param cosmetic one out of the catalogue
+     * @return whether this server can actually play it - the catalogue is the network's and the code is
+     *         this jar's, and an admin switching something on wants to know which of the two they are
+     *         looking at
+     */
+    private static boolean hasCode(CosmeticData cosmetic) {
+        String id = cosmetic.getId() == null ? "" : cosmetic.getId().toLowerCase(Locale.ROOT);
+        return switch (cosmetic.getType()) {
+            case WIN_EFFECT -> WinEffects.registered().contains(id);
+            case KILL_EFFECT -> KillEffects.registered().contains(id);
+            case TRAIL -> Trails.registered().contains(id);
+            case GADGET -> Gadgets.registered().contains(id);
+        };
+    }
+
     private static ItemStack icon(CosmeticData cosmetic) {
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.GRAY + cosmetic.getType().getDisplayName());
@@ -95,8 +111,7 @@ public final class CosmeticAdminUi {
         lore.add(ChatColor.GRAY + "Preis: " + ChatColor.WHITE + cosmetic.getPriceBits() + " Bits");
         lore.add(ChatColor.GRAY + "Für alle gratis: "
                 + (cosmetic.isFree() ? ChatColor.GREEN + "ja" : ChatColor.DARK_GRAY + "nein"));
-        if (!WinEffects.registered().contains(cosmetic.getId().toLowerCase(Locale.ROOT))
-                && cosmetic.getType() == de.hems.types.cosmetic.CosmeticType.WIN_EFFECT) {
+        if (!hasCode(cosmetic)) {
             lore.add(" ");
             lore.add(ChatColor.DARK_GRAY + "Auf diesem Server gibt es keinen Code dafür.");
         }

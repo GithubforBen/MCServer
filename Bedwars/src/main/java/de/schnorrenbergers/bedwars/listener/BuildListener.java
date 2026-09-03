@@ -1,10 +1,12 @@
 package de.schnorrenbergers.bedwars.listener;
 
 import de.schnorrenbergers.bedwars.Bedwars;
+import de.schnorrenbergers.bedwars.config.TimelineSettings;
 import de.schnorrenbergers.bedwars.game.BlockTracker;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
+import de.schnorrenbergers.bedwars.game.timeline.SuddenDeath;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.map.GeneratorSpot;
 import de.schnorrenbergers.bedwars.map.MapPoint;
@@ -14,8 +16,11 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -87,14 +92,36 @@ public class BuildListener implements Listener {
      * <p>
      * Tnt and fireballs are bought to break a defence, not to blow a hole into the map - and a bed that
      * could be blown up would turn the one thing a round is about into a matter of eight gold.
+     * <p>
+     * The sudden death is the exception, and it is the only one: its dragons and its withers are there to
+     * make the map smaller until what is left of it is not worth standing on, so what they blow up is
+     * whatever they are pointed at, the arena included.
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onExplode(EntityExplodeEvent event) {
         Game game = game();
         if (game == null || !game.isRunning()) return;
+        if (SuddenDeath.isOurs(game, sourceOf(event.getEntity()))) {
+            TimelineSettings timeline = Bedwars.getInstance().getTimelineSettings();
+            event.blockList().removeIf(block -> timeline.isIndestructible(block.getType()));
+            event.blockList().forEach(tracker::forget);
+            return;
+        }
         boolean fireball = event.getEntity() instanceof Fireball;
         event.blockList().removeIf(block -> !destructible(game, block, fireball));
         event.blockList().forEach(tracker::forget);
+    }
+
+    /**
+     * @param entity whatever went off
+     * @return what set it off: itself, or whoever shot it - a wither skull is not the wither, and it is
+     *         the wither that belongs to a team
+     */
+    private static Entity sourceOf(Entity entity) {
+        if (entity instanceof Projectile projectile && projectile.getShooter() instanceof LivingEntity shooter) {
+            return shooter;
+        }
+        return entity;
     }
 
     /**

@@ -9,6 +9,7 @@ import de.schnorrenbergers.bedwars.game.phase.GamePhase;
 import de.schnorrenbergers.bedwars.game.phase.LobbyPhase;
 import de.schnorrenbergers.bedwars.game.phase.PhaseType;
 import de.schnorrenbergers.bedwars.game.timeline.Dragons;
+import de.schnorrenbergers.bedwars.game.timeline.Withers;
 import de.schnorrenbergers.bedwars.game.timeline.Timeline;
 import de.schnorrenbergers.bedwars.generator.GeneratorManager;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
@@ -56,6 +57,7 @@ public class Game {
     private GeneratorManager generators;
     private Timeline timeline;
     private Dragons dragons;
+    private Withers withers;
     private UpgradeService upgrades;
     private TrapService traps;
     private ShopKeepers shopKeepers;
@@ -294,6 +296,17 @@ public class Game {
      */
     public @Nullable Dragons getDragons() {
         return dragons;
+    }
+
+    public void setWithers(Withers withers) {
+        this.withers = withers;
+    }
+
+    /**
+     * @return the withers of the sudden death, {@code null} before the plugin has wired them up
+     */
+    public @Nullable Withers getWithers() {
+        return withers;
     }
 
     public void setUpgrades(UpgradeService upgrades) {

@@ -9,8 +9,8 @@ import java.util.List;
  * One thing a team can buy for the whole team, out of {@code upgrades.yml}.
  * <p>
  * What an upgrade <em>does</em> is one of a handful of known effects rather than free text: a config that
- * could describe arbitrary behaviour would need a language of its own, while these six cover the hypixel
- * list, and a seventh is a new constant plus one branch in {@link UpgradeService}.
+ * could describe arbitrary behaviour would need a language of its own, while these seven cover the
+ * hypixel list, and an eighth is a new constant plus one branch in {@link UpgradeService}.
  *
  * @param id          how it is referred to
  * @param displayName what it is called, MiniMessage
@@ -42,6 +42,8 @@ public record Upgrade(String id, String displayName, Material icon, int slot, Up
         HEAL_POOL,
         /** The team gets a second dragon in sudden death. */
         DRAGON_BUFF,
+        /** The team gets one more wither per wave of the sudden death, per level. */
+        WITHER_BUFF,
         /** Bought and remembered, but nothing in the plugin acts on it - for addons. */
         NONE;
 

@@ -195,10 +195,20 @@ public class CosmeticStore {
     }
 
     /**
-     * @return the catalogue and the ownership in one object, ready to be sent
+     * @param withPlayers whether the ownership of every player on the network belongs in the answer
+     * @return the catalogue, ready to be sent
      */
-    public CosmeticSnapshot snapshot() {
-        return new CosmeticSnapshot(new ArrayList<>(catalog.values()), new HashMap<>(players));
+    public CosmeticSnapshot snapshot(boolean withPlayers) {
+        return new CosmeticSnapshot(new ArrayList<>(catalog.values()),
+                withPlayers ? new HashMap<>(players) : new HashMap<>());
+    }
+
+    /**
+     * @param player somebody
+     * @return what they own, as a copy that can be sent
+     */
+    public PlayerCosmetics snapshotOf(UUID player) {
+        return of(player).copy();
     }
 
     /**

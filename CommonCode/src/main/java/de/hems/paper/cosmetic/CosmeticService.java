@@ -5,6 +5,7 @@ import de.hems.communication.events.cosmetic.BuyCosmeticEvent;
 import de.hems.communication.events.cosmetic.CosmeticUpdatedEvent;
 import de.hems.communication.events.cosmetic.PlayerCosmeticsUpdatedEvent;
 import de.hems.communication.events.cosmetic.RequestCosmeticsEvent;
+import de.hems.communication.events.cosmetic.RequestPlayerCosmeticsEvent;
 import de.hems.communication.events.cosmetic.SaveCosmeticEvent;
 import de.hems.communication.events.cosmetic.SelectCosmeticEvent;
 import de.hems.communication.events.types.RespondDataEvent;
@@ -34,12 +35,19 @@ import java.util.function.Consumer;
  * in the same tick the round ends, and a network round trip there would be a pause in the middle of the
  * celebration. Writes go to the launcher, which is also where a purchase is decided, so the answer to
  * "did they pay" is never a guess.
+ * <p>
+ * The local copy holds the whole catalogue and the people who are here. The catalogue is small and every
+ * server wants all of it; the ownership is neither, so it arrives one player at a time when they join and
+ * is dropped again a while after they leave. Anything else grows with the number of players who ever
+ * bought something, on every server at once, for the sake of twenty of them.
  */
 public final class CosmeticService {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
     private static final long STARTUP_RETRY_TICKS = 40L;
+    /** How long somebody's cosmetics are kept after they leave, in ticks. */
+    private static final long FORGET_DELAY_TICKS = 20L * 60L;
 
     private static final Map<String, CosmeticData> catalog = new ConcurrentHashMap<>();
     private static final Map<UUID, PlayerCosmetics> players = new ConcurrentHashMap<>();
@@ -64,8 +72,19 @@ public final class CosmeticService {
         });
         ListenerAdapter.register(PlayerCosmeticsUpdatedEvent.class, event -> {
             PlayerCosmetics updated = ((PlayerCosmeticsUpdatedEvent) event).getCosmetics();
-            if (updated != null && updated.getPlayer() != null) players.put(updated.getPlayer(), updated);
+            if (updated == null || updated.getPlayer() == null) return;
+            // announced to the whole network, kept only where it is needed: somebody buying something on
+            // another server is not this server's business, and storing it anyway is the growth this
+            // change exists to stop
+            if (players.containsKey(updated.getPlayer())
+                    || Bukkit.getPlayer(updated.getPlayer()) != null) {
+                players.put(updated.getPlayer(), updated);
+            }
         });
+        new CosmeticJoinListener(plugin);
+        for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+            loadPlayerAsync(online.getUniqueId());
+        }
         refreshAsync();
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
             if (loaded) {
@@ -248,12 +267,15 @@ public final class CosmeticService {
     }
 
     /**
-     * Fetches the catalogue and the ownership. Blocks, so it must not run on the main thread.
+     * Fetches the catalogue. Blocks, so it must not run on the main thread.
+     * <p>
+     * The catalogue only: who owns what comes in per player, at the moment they join. An answer that
+     * happens to carry players anyway - an older launcher - is taken as well rather than thrown away.
      */
     public static void refreshBlocking() {
         try {
             if (!ListenerAdapter.isInitialized()) return;
-            RequestCosmeticsEvent request = new RequestCosmeticsEvent();
+            RequestCosmeticsEvent request = new RequestCosmeticsEvent(true);
             ListenerAdapter.sendListeners(request);
             RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
             if (response == null || !(response.getData() instanceof CosmeticSnapshot snapshot)) return;
@@ -263,7 +285,6 @@ public final class CosmeticService {
             }
             catalog.keySet().retainAll(freshCatalog.keySet());
             catalog.putAll(freshCatalog);
-            players.keySet().retainAll(snapshot.getPlayers().keySet());
             players.putAll(snapshot.getPlayers());
             loaded = true;
         } catch (InterruptedException e) {
@@ -271,5 +292,64 @@ public final class CosmeticService {
         } catch (Exception e) {
             Bukkit.getLogger().warning("Could not load the cosmetics: " + e.getMessage());
         }
+    }
+
+    /**
+     * @param player somebody
+     * @return whether this server has their cosmetics, rather than assuming they own nothing
+     */
+    public static boolean knows(UUID player) {
+        return player != null && players.containsKey(player);
+    }
+
+    /**
+     * Fetches what one player owns, in the background.
+     *
+     * @param player who to ask about
+     */
+    public static void loadPlayerAsync(UUID player) {
+        if (player == null || !PaperContext.hasPlugin()) return;
+        PaperContext.async(() -> loadPlayerBlocking(player));
+    }
+
+    /**
+     * Fetches what one player owns. Blocks, so it must not run on the main thread.
+     *
+     * @param player who to ask about
+     * @return what they own, or {@code null} when the launcher did not answer
+     */
+    public static @Nullable PlayerCosmetics loadPlayerBlocking(UUID player) {
+        if (player == null) return null;
+        try {
+            if (!ListenerAdapter.isInitialized()) return null;
+            RequestPlayerCosmeticsEvent request = new RequestPlayerCosmeticsEvent(player);
+            ListenerAdapter.sendListeners(request);
+            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
+            if (response == null || !(response.getData() instanceof PlayerCosmetics owned)) return null;
+            if (owned.getPlayer() == null) owned.setPlayer(player);
+            players.put(player, owned);
+            return owned;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception e) {
+            Bukkit.getLogger().warning("Could not load the cosmetics of " + player + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Forgets somebody who left, a while after they left.
+     * <p>
+     * Not at once: a round ends with the winners being sent home, and an effect that looks up what they
+     * are wearing a tick after they were moved would find nothing.
+     *
+     * @param player who left
+     */
+    static void forgetLater(UUID player) {
+        if (player == null || !PaperContext.hasPlugin()) return;
+        Bukkit.getScheduler().runTaskLater(PaperContext.getPlugin(), () -> {
+            if (Bukkit.getPlayer(player) == null) players.remove(player);
+        }, FORGET_DELAY_TICKS);
     }
 }

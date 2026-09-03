@@ -2,6 +2,7 @@ package de.schnorrenbergers.bedwars.game.timeline;
 
 import de.schnorrenbergers.bedwars.config.TimelineSettings;
 import de.schnorrenbergers.bedwars.game.Game;
+import de.schnorrenbergers.bedwars.game.GamePlayer;
 import de.schnorrenbergers.bedwars.game.GameTeam;
 import de.schnorrenbergers.bedwars.shop.upgrade.Upgrade;
 import de.schnorrenbergers.bedwars.util.Messages;
@@ -13,6 +14,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -25,14 +27,19 @@ import java.util.UUID;
  * The dragons of the sudden death.
  * <p>
  * A dragon belongs to a team, which is the whole difference between this and summoning one: it does not
- * touch the people who paid for it, and it stays over the middle of the map instead of flying off to where
- * a vanilla dragon expects its portal to be. Both of those are one line of api each, and without either
- * the event is a dragon disappearing into the void while everybody watches.
+ * touch the people who paid for it, and it goes after the ones who did not. A vanilla dragon circles the
+ * podium of its own end fight and only bothers whoever walks underneath it - in an arena that is a dragon
+ * flying laps over an empty middle while everybody sits in their base. So the round moves the podium onto
+ * whoever the dragon is hunting, and takes the map apart underneath it.
  */
 public final class Dragons {
 
     /** How often the dragons are checked for having drifted off, in ticks. */
     private static final int CHECK_INTERVAL = 20;
+    /** How often they pick who to go for, in ticks. */
+    private static final int HUNT_INTERVAL = 40;
+    /** How often they tear blocks out of what they are flying through, in ticks. */
+    private static final int CARVE_INTERVAL = 5;
     /** How often their bars are redrawn, in ticks. A health bar that jumps once a second reads as broken. */
     private static final int BAR_INTERVAL = 4;
 
@@ -41,6 +48,8 @@ public final class Dragons {
     private final Map<UUID, GameTeam> owners = new HashMap<>();
     /** The bar over everybody's screen, per dragon. The vanilla one only exists in the End. */
     private final Map<UUID, BossBar> bars = new HashMap<>();
+    /** Dragon to whoever it is going for right now. */
+    private final Map<UUID, UUID> prey = new HashMap<>();
     private final List<EnderDragon> spawned = new ArrayList<>();
 
     private Location centre;
@@ -145,36 +154,104 @@ public final class Dragons {
     }
 
     /**
-     * Puts the dragons that have drifted too far back over the middle, and forgets the ones that died.
+     * Keeps the dragons hunting, tears the map apart underneath them, and forgets the ones that died.
      *
+     * @param game  the round
      * @param ticks where the loop stands
      */
-    public void tick(long ticks) {
+    public void tick(Game game, long ticks) {
         if (spawned.isEmpty() || centre == null) return;
         if (ticks % BAR_INTERVAL == 0L) updateBars();
+        if (ticks % CARVE_INTERVAL == 0L) carve(game);
+        if (ticks % HUNT_INTERVAL == 0L) hunt(game);
         if (ticks % CHECK_INTERVAL != 0L) return;
 
         double radius = settings.getDragonRadius();
         spawned.removeIf(dragon -> {
             if (!dragon.isValid()) {
                 owners.remove(dragon.getUniqueId());
+                prey.remove(dragon.getUniqueId());
                 hideBar(dragon.getUniqueId());
                 return true;
             }
-            // a dragon that is on its way to somebody is left alone. Pulling it back to the middle in the
-            // middle of a charge is what made them turn round and fly off every time they got close, and
-            // a dragon that never reaches anybody is not sudden death, it is scenery
-            if (hunting(dragon)) return false;
             keepFlying(dragon);
+            // back to whatever it is going for, which is its prey while it has one and the middle of the
+            // map while it has not. Measuring against the middle instead would drag a dragon off a base
+            // in the corner of the map every time it got there
+            Location anchor = anchorOf(dragon);
             Location at = dragon.getLocation();
-            if (at.getWorld() != null && at.getWorld().equals(centre.getWorld())
-                    && at.distanceSquared(centre) <= radius * radius) {
+            if (at.getWorld() != null && at.getWorld().equals(anchor.getWorld())
+                    && at.distanceSquared(anchor) <= radius * radius) {
                 return false;
             }
-            dragon.teleport(centre.clone().add(0.0d, settings.getDragonHeight(), 0.0d));
+            dragon.teleport(anchor.clone().add(0.0d, settings.getDragonHeight(), 0.0d));
             dragon.setPhase(EnderDragon.Phase.CIRCLING);
             return false;
         });
+    }
+
+    // ------------------------------------------------------------------ hunting
+
+    /**
+     * Points every dragon at the nearest player who is not on its own team.
+     * <p>
+     * A dragon has no target the way an ordinary mob has one: it flies laps around its podium and picks up
+     * whoever happens to be near it. So the podium is what gets moved - onto the head of whoever it is
+     * hunting, once every two seconds. From the ground that is a dragon that comes for you and stays.
+     *
+     * @param game the round
+     */
+    private void hunt(Game game) {
+        for (EnderDragon dragon : spawned) {
+            if (!dragon.isValid()) continue;
+            GameTeam owner = owners.get(dragon.getUniqueId());
+            Player target = nearestEnemy(game, dragon, owner);
+            if (target == null) {
+                prey.remove(dragon.getUniqueId());
+                dragon.setPodium(centre);
+                continue;
+            }
+            prey.put(dragon.getUniqueId(), target.getUniqueId());
+            // the podium is where the dragon wants to be; the phase is what it does when it gets there.
+            // Both, because a dragon left circling would take a lap before it noticed it had moved
+            dragon.setPodium(target.getLocation());
+            dragon.setTarget(target);
+            if (!hunting(dragon)) dragon.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
+        }
+    }
+
+    /**
+     * @param game   the round
+     * @param dragon which dragon is looking
+     * @param owner  the team it will not touch
+     * @return the closest player it is allowed to go for, {@code null} when there is none in its world
+     */
+    private static @Nullable Player nearestEnemy(Game game, EnderDragon dragon, @Nullable GameTeam owner) {
+        Player closest = null;
+        double best = Double.MAX_VALUE;
+        for (GameTeam team : game.getAliveTeams()) {
+            if (owner != null && owner.equals(team)) continue;
+            for (GamePlayer member : team.getAliveMembers()) {
+                Player player = member.getPlayer();
+                if (player == null || !player.getWorld().equals(dragon.getWorld())) continue;
+                double distance = player.getLocation().distanceSquared(dragon.getLocation());
+                if (distance >= best) continue;
+                best = distance;
+                closest = player;
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * @param dragon one of ours
+     * @return where it belongs right now: over its prey, or over the middle while it has none
+     */
+    private Location anchorOf(EnderDragon dragon) {
+        UUID hunted = prey.get(dragon.getUniqueId());
+        Player player = hunted == null ? null : Bukkit.getPlayer(hunted);
+        if (player == null || !player.getWorld().equals(centre.getWorld())) return centre;
+        return player.getLocation();
     }
 
     /**
@@ -190,8 +267,8 @@ public final class Dragons {
      * Keeps a dragon out of everything it would do around a portal.
      * <p>
      * With no crystals left to guard, a vanilla dragon eventually lands on its podium and sits there
-     * breathing at whoever comes close. On an arena that podium is the middle of the map, and a dragon
-     * parked on the ground for the rest of the round is not the event anybody bought.
+     * breathing at whoever comes close. On an arena that podium is wherever the dragon is hunting, and a
+     * dragon parked on the ground for the rest of the round is not the event anybody bought.
      */
     private static void keepFlying(EnderDragon dragon) {
         switch (dragon.getPhase()) {
@@ -200,6 +277,29 @@ public final class Dragons {
             default -> dragon.setPhase(EnderDragon.Phase.CIRCLING);
         }
     }
+
+    // ------------------------------------------------------------------ carving
+
+    /**
+     * Takes the map apart around every dragon.
+     * <p>
+     * A vanilla dragon already breaks what it flies through, but it leaves the whole {@code DRAGON_IMMUNE}
+     * list standing - end stone, obsidian, iron bars - and an arena is built out of exactly that, so the
+     * dragons would fly through the map without leaving a mark on it. This is the event doing what it is
+     * for: the floor goes, and what is under the floor is the void.
+     *
+     * @param game the round
+     */
+    private void carve(Game game) {
+        double radius = settings.getDragonCarveRadius();
+        if (radius <= 0.0d) return;
+        for (EnderDragon dragon : spawned) {
+            if (!dragon.isValid()) continue;
+            SuddenDeath.carve(game, settings, dragon.getLocation(), radius);
+        }
+    }
+
+    // ----------------------------------------------------------------- lookups
 
     /**
      * @param entity something that hit or was hit
@@ -227,6 +327,7 @@ public final class Dragons {
         bars.clear();
         spawned.clear();
         owners.clear();
+        prey.clear();
         centre = null;
     }
 }

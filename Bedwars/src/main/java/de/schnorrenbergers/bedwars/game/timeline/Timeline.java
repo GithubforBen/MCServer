@@ -116,7 +116,7 @@ public final class Timeline {
         switch (event.action()) {
             case GENERATOR_TIER -> raiseGenerators(game, event);
             case BED_DESTRUCTION -> destroyBeds(game, event);
-            case SUDDEN_DEATH -> releaseDragons(game, event);
+            case SUDDEN_DEATH -> startSuddenDeath(game, event);
             case GAME_END -> decide(game);
             case ANNOUNCE -> announce(event, "timeline.event");
         }
@@ -176,11 +176,14 @@ public final class Timeline {
     }
 
     /**
-     * Lets the dragons out.
+     * Lets the dragons out and starts the countdown to the withers.
      */
-    private void releaseDragons(Game game, TimelineEvent event) {
+    private void startSuddenDeath(Game game, TimelineEvent event) {
         suddenDeath = true;
         int spawned = game.getDragons() == null ? 0 : game.getDragons().spawn(game);
+        // the withers are anchored on this moment rather than on the clock of the round, so that a
+        // /bw timeline skip onto sudden death gets its first wave five minutes later and not at once
+        if (game.getWithers() != null) game.getWithers().start(game, startTick + (long) elapsed * 20L);
         announce(event, "timeline.sudden-death");
         if (spawned == 0) {
             Bukkit.getLogger().warning("[Bedwars] Sudden death spawned no dragons - the map has no middle"

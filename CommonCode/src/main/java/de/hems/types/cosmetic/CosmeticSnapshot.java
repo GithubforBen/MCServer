@@ -8,12 +8,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Everything the launcher knows about cosmetics in one answer: the catalogue and who owns what.
+ * What the launcher knows about cosmetics: the catalogue, and - when the asker wanted it - who owns what.
  * <p>
- * The whole ownership map travels, the same way the whole team list does. That is a lot of ids for a
- * network with a lot of players, and it is still the right call here: a win effect has to be looked up at
- * the moment somebody wins, on a server that may never have seen that player before, and asking the
- * launcher at that moment would put a network round trip inside the celebration.
+ * The catalogue is small and every server wants all of it. The ownership is not: it grows with every
+ * player who ever bought anything, while a game server only ever needs the people standing on it, so it
+ * is normally left out and asked for one player at a time when they join. The map is still here for a
+ * caller that genuinely wants everybody - the admin side - and for an older server that does not know it
+ * could ask for less.
  */
 public class CosmeticSnapshot implements Serializable {
 

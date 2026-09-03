@@ -3,6 +3,10 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.bedwars.Bedwars
 api-version: '26.2'
 commands:
+  cosmetics:
+    description: Cosmetics kaufen, anlegen und ablegen
+    usage: /cosmetics [win_effect|kill_effect|trail|gadget|neu|verwalten]
+    aliases: [cosmetic]
   bw:
     description: Verwaltet die Bedwars Runde auf diesem Server
     usage: /bw <status|start|stop|setup|reload|addons|addon|generators|timeline|shop|upgrades|stats|watch>
