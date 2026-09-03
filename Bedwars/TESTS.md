@@ -77,6 +77,7 @@ JAVA_HOME=~/.jdks/openjdk-25.0.1 ./mvnw -pl Bedwars package   # Jar landet in bu
       Stufe), die Diamanten in der Mitte bleiben, wie sie waren.
 - [ ] Heal Pool: Regeneration nur in der eigenen Basis, hört draußen nach ein paar Sekunden auf.
 - [ ] Dragon Buff: kaufbar und gemerkt - wirken tut er erst in Phase 5.
+- [ ] Wither Buff: 14 Stufen, Preis 5 → 10 → 15 → ... → 70 Diamanten, wirkt erst in Phase 5.
 - [ ] Höchste Stufe erreicht → "Fully upgraded", kein weiterer Abzug.
 - [ ] Jeder Kauf wird im ganzen Team angesagt.
 
@@ -135,12 +136,38 @@ JAVA_HOME=~/.jdks/openjdk-25.0.1 ./mvnw -pl Bedwars package   # Jar landet in bu
       nicht in der Wolke, die der Feuerball hinterlässt - und er sucht sich kein eigenes Teammitglied
       als Ziel.
 - [ ] Der fremde Drache tut sehr wohl weh.
-- [ ] Der Drache bleibt über der Map und fliegt nicht in die Leere davon (`sudden-death.radius`).
-- [ ] Der Drache **landet nicht** und setzt sich nicht in die Mitte, sondern kreist und greift an.
-- [ ] Der Drache reißt **keine** Map-Blöcke heraus - nur selbst gebaute, wie jede andere Explosion.
+- [ ] Der Drache **jagt**: er kommt zum nächsten gegnerischen Spieler, auch bis in dessen Basis in
+      der Ecke der Map, und bleibt dort, solange der Spieler dort ist.
+- [ ] Er hängt nicht über der Mitte fest, sobald irgendwo ein Gegner steht - und kehrt dorthin
+      zurück, wenn keiner mehr erreichbar ist.
+- [ ] Der Drache **landet nicht** und setzt sich nicht auf den Boden.
+- [ ] Der Drache reißt die Map auf, wo er durchfliegt: Wolle, Endstein, Sandstein, alles
+      (`sudden-death.carve-radius`), es droppt nichts, und was in `sudden-death.indestructible`
+      steht - Bedrock, Barrier - bleibt stehen.
+- [ ] Nach ein paar Minuten fehlt der Map sichtbar Boden, und Spieler fallen ins Void.
+- [ ] Auch die Explosionen des Drachen nehmen Map-Blöcke mit; TNT und Feuerball von Spielern
+      **nicht** (Phase 4 gilt unverändert weiter).
 - [ ] Dragon Buff gekauft → dieses Team hat zwei Drachen.
 - [ ] Drache getötet → eine Zeile im Chat, keine Drops, kein XP, kein Portal.
 - [ ] Runde vorbei → alle Drachen sind sofort weg.
+
+## 10a. Wither-Wellen
+
+- [ ] 5 Minuten nach Sudden Death (`sudden-death.wither-delay-seconds`) kommt die erste Welle,
+      danach jede Minute (`sudden-death.wither-interval-seconds`) eine weitere.
+- [ ] Ohne Upgrade bekommt jedes **lebende** Team pro Welle einen Wither, mit Namensschild in
+      Teamfarbe, verteilt über der Mitte - nicht alle auf demselben Block.
+- [ ] Wither Buff Stufe n → n+1 Wither pro Welle für dieses Team, gedeckelt bei 15
+      (`sudden-death.wither-maximum`).
+- [ ] Der eigene Wither tut dem eigenen Team nichts und zielt nicht auf es - auch nicht mit dem
+      Schädel und nicht mit dem Wither-Effekt.
+- [ ] Kein Wither schießt auf die Shop-Villager.
+- [ ] Die Wither reißen ebenfalls Löcher in die Map, Bedrock und Barrier ausgenommen.
+- [ ] Keine Bossbar pro Wither (sonst 60 Balken übereinander); der Drache hat weiterhin seine.
+- [ ] Wither getötet → eine Zeile im Chat, keine Drops, kein XP.
+- [ ] `/bw timeline skip` auf Sudden Death → die erste Welle kommt 5 Minuten **danach**, nicht
+      sofort.
+- [ ] Runde vorbei → alle Wither sind sofort weg.
 
 ## 11. Zeitlimit und Endbildschirm
 

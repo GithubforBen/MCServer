@@ -36,15 +36,16 @@ import de.schnorrenbergers.bedwars.listener.BedListener;
 import de.schnorrenbergers.bedwars.listener.BuildListener;
 import de.schnorrenbergers.bedwars.listener.ChatListener;
 import de.schnorrenbergers.bedwars.listener.CombatListener;
-import de.schnorrenbergers.bedwars.listener.DragonListener;
 import de.schnorrenbergers.bedwars.listener.RulesListener;
 import de.schnorrenbergers.bedwars.listener.ShopListener;
+import de.schnorrenbergers.bedwars.listener.SuddenDeathListener;
 import de.schnorrenbergers.bedwars.listener.SpecialItemListener;
 import de.schnorrenbergers.bedwars.listener.TeamChestListener;
 import de.schnorrenbergers.bedwars.game.Game;
 import de.schnorrenbergers.bedwars.game.Rules;
 import de.schnorrenbergers.bedwars.game.timeline.Dragons;
 import de.schnorrenbergers.bedwars.game.timeline.Timeline;
+import de.schnorrenbergers.bedwars.game.timeline.Withers;
 import de.schnorrenbergers.bedwars.lobby.LobbyListener;
 import de.schnorrenbergers.bedwars.map.ArenaMap;
 import de.schnorrenbergers.bedwars.map.MapLoader;
@@ -122,6 +123,7 @@ public final class Bedwars extends JavaPlugin {
         game.setShopKeepers(new ShopKeepers());
         game.setTimeline(new Timeline(timelineSettings));
         game.setDragons(new Dragons(timelineSettings));
+        game.setWithers(new Withers(timelineSettings));
         loadArena();
         applyRoundAddons();
         addons.apply(game);
@@ -135,7 +137,7 @@ public final class Bedwars extends JavaPlugin {
         new ChatListener(this);
         new ShopListener(this);
         new SpecialItemListener(this);
-        new DragonListener(this);
+        new SuddenDeathListener(this);
         new SpectatorListener(this);
         new RulesListener(this);
         new de.schnorrenbergers.bedwars.round.RoundStateListener(this);
@@ -160,6 +162,7 @@ public final class Bedwars extends JavaPlugin {
         Holograms.removeAll();
         if (game != null && game.getShopKeepers() != null) game.getShopKeepers().remove();
         if (game != null && game.getDragons() != null) game.getDragons().remove();
+        if (game != null && game.getWithers() != null) game.getWithers().remove();
         if (addons != null && game != null) addons.disableAll(game);
         if (game != null) game.shutdown();
     }

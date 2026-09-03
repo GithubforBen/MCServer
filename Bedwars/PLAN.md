@@ -14,9 +14,9 @@ zuschaltbar sind.
 | Rundenstart | Über das Event-System, das auf `feature/events-and-marketplace` bereits steht. Dazu ein Debug-Command in der Lobby, der denselben Weg ohne Event nimmt |
 | Maps | Mehrere heruntergeladene Maps liegen bereit, beim Start wird eine gewählt. Punkte (Betten, Spawns, Generatoren, Händler) werden per Command gesetzt |
 | Shop | 1:1 Hypixel-Sortiment und -Preise, aber vollständig aus der Config |
-| Upgrades | Sharpened Swords, Reinforced Armor, Maniac Miner, Iron Forge, Heal Pool, Dragon Buff, Traps - **und** die Custom-Addons werden hier gekauft |
+| Upgrades | Sharpened Swords, Reinforced Armor, Maniac Miner, Iron Forge, Heal Pool, Dragon Buff, Wither Buff, Traps - **und** die Custom-Addons werden hier gekauft |
 | Generatoren | Hypixel-Timings als Standard, jeder Wert pro Map überschreibbar |
-| Endgame | Bed Destruction → Sudden Death mit Drachen → hartes Zeitlimit mit Punktentscheid |
+| Endgame | Bed Destruction → Sudden Death mit Drachen, die die Map zerlegen, dann Wither-Wellen im Minutentakt → hartes Zeitlimit mit Punktentscheid |
 | Bett-Addon | Ein sehr teures Item, das **nur am Händler eines fremden Teams** gekauft werden kann. Heimtragen, in der eigenen Basis platzieren |
 | Weitere Addons | Kits/Perks, Custom-Items, Killstreaks & Kopfgeld, Zufalls-Events - alle einzeln an- und abschaltbar |
 | Addon-Schalter | Drei Wege: `addons.yml` als Basis, Launcher darf überschreiben, GUI in der Warte-Lobby für den Einzelfall |
@@ -342,7 +342,7 @@ Countdown die Runde startet.
    Alles, was einen Tod überlebt, steht im `Loadout` des Spielers und **nicht** im Inventar - sonst
    ist es genau das, was der Tod löscht. Der Respawn spielt dieselbe Liste wieder ein.
 3. Upgrade-Händler: Sharpened Swords, Reinforced Armor I-IV, Maniac Miner I-II,
-   Iron Forge I-IV, Heal Pool, Dragon Buff. Ein Upgrade ist eine Zahl am Team, also muss es nach
+   Iron Forge I-IV, Heal Pool, Dragon Buff, Wither Buff I-XIV. Ein Upgrade ist eine Zahl am Team, also muss es nach
    jedem Kauf und jedem Respawn neu auf die Items gelegt werden - dafür gibt es genau eine Stelle.
 4. Traps: Warteschlange mit drei Plätzen, Preis 1/2/4 Diamanten, It's a Trap, Counter-Offensive,
    Alarm Trap, Miner Fatigue. Dazu eine Abklingzeit pro Team (`traps.cooldown-seconds`): ohne sie
@@ -383,12 +383,17 @@ Countdown die Runde startet.
    Iron Forge, und beides an derselben Zahl würde ein gekauftes Upgrade wieder überschreiben.
 3. Bed Destruction: alle Betten fallen, **beide Blockhälften** und ohne Drop - ein halbes Bett in
    der Basis sieht aus wie ein Bett, und das ist das Einzige, worin sich niemand irren darf.
-4. Sudden Death: ein Enderdrache pro lebendem Team (einer mehr pro Dragon-Buff-Stufe). Zwei Zeilen
-   API machen den Unterschied zu einem beschworenen Drachen: ein **Podium** auf der Kartenmitte,
-   sonst fliegt er dorthin, wo in einer End-Welt sein Portal stünde, und eine **Zugehörigkeit**,
-   damit er das Team, das ihn bezahlt hat, weder angreift noch jagt. Weil Anflug, Feuerball und die
-   Wolke danach drei verschiedene Entities sind, werden alle drei auf ihren Drachen zurückgeführt.
-   Blöcke reißt er keine heraus - dieselbe Explosionsregel wie beim TNT aus Phase 4.
+4. Sudden Death: ein Enderdrache pro lebendem Team (einer mehr pro Dragon-Buff-Stufe), und fünf
+   Minuten später jede Minute eine Welle Wither - einer pro Team, einer mehr pro Wither-Buff-Stufe,
+   höchstens fünfzehn. Zwei Zeilen API machen den Unterschied zu einem beschworenen Drachen: ein
+   **Podium**, sonst fliegt er dorthin, wo in einer End-Welt sein Portal stünde, und eine
+   **Zugehörigkeit**, damit er das Team, das ihn bezahlt hat, weder angreift noch jagt. Weil Anflug,
+   Feuerball und die Wolke danach drei verschiedene Entities sind, werden alle drei auf ihren Drachen
+   zurückgeführt. Das Podium wandert auf den nächsten Gegner, statt auf der Mitte zu stehen - ein
+   Drache, der über einer leeren Mitte kreist, während alle in ihren Basen sitzen, ist Kulisse. Und
+   er frisst sich durch die Map: die Explosionsregel aus Phase 4 gilt für die Bosse ausdrücklich
+   nicht, denn das Ende einer Runde, die niemand beenden kann, ist eine Map, von der nichts mehr
+   übrig ist, worauf man stehen kann.
 5. Hartes Zeitlimit: Entscheidung nach Punkten (Betten, Finals, Kills, Gewichte in der Config) mit
    sichtbarer Wertung. Ein **ausgeschiedenes** Team gewinnt nicht auf Punkte - es hat die Runde
    verloren, als sein letzter Spieler fiel, und eine Tabelle, die ihm den Sieg zurückgibt, macht die

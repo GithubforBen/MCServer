@@ -49,7 +49,7 @@ public final class UpgradeSettings {
         file.section("upgrades",
                 "What a team can buy for the whole team. 'prices' is one price per level.",
                 "'effect' is what buying it does and has to be one of:",
-                "  SHARPNESS, PROTECTION, HASTE, FORGE, HEAL_POOL, DRAGON_BUFF, NONE");
+                "  SHARPNESS, PROTECTION, HASTE, FORGE, HEAL_POOL, DRAGON_BUFF, WITHER_BUFF, NONE");
         writeUpgradeDefaults();
         writeTrapDefaults();
         readUpgrades();
@@ -99,6 +99,17 @@ public final class UpgradeSettings {
                 "<gray>death starts.",
                 "<gray>Only worth buying if the round is going to",
                 "<gray>run that long - see the timeline on the right.");
+        // fourteen levels rather than fifteen: the first wither is free, so level fourteen is the
+        // fifteenth, and a level that bought nothing would be a level somebody paid seventy-five for
+        upgrade("wither-buff", "<aqua>Wither Buff", Material.WITHER_SKELETON_SKULL, 25,
+                Upgrade.Effect.WITHER_BUFF, 14,
+                List.of(5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70),
+                "<gray>One more wither for your team in every wave",
+                "<gray>of the sudden death, per level, up to fifteen.",
+                "<gray>The waves start five minutes after sudden",
+                "<gray>death and come once a minute after that.",
+                "<gray>They do not touch your own team - and the",
+                "<gray>next level always costs five more.");
     }
 
     private void writeTrapDefaults() {
