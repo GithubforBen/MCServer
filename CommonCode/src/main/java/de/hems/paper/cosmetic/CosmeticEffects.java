@@ -21,6 +21,10 @@ public final class CosmeticEffects {
 
     /**
      * Registers every effect this build has code for and starts what has to run.
+     * <p>
+     * The gadgets are registered here as well, on every server, and still do nothing until a game mode
+     * says which slot this server is - see {@link Gadgets#setGuard}. Registering them everywhere is what
+     * lets the shop say where a gadget works rather than only whether it works here.
      *
      * @param plugin the plugin they belong to
      */
@@ -43,9 +47,28 @@ public final class CosmeticEffects {
 
         Gadgets.register(plugin, new EndlessPearlGadget(plugin));
         Gadgets.register(plugin, new GrappleGadget());
+        Gadgets.register(plugin, new DoubleJumpGadget());
+        Gadgets.register(plugin, new RocketBootsGadget());
+        Gadgets.register(plugin, new SnowballCannonGadget(plugin));
+        Gadgets.register(plugin, new DiscoFloorGadget());
+        Gadgets.register(plugin, new FootstepsGadget());
+        Gadgets.register(plugin, new JumpPadGadget(plugin));
+        Gadgets.register(plugin, new MountGadget());
+        Gadgets.register(plugin, new HarvestHelperGadget());
+        Gadgets.register(plugin, new SitGadget());
+        Gadgets.register(plugin, new WorkbenchGadget());
+        Gadgets.register(plugin, new PetGadget());
+        Gadgets.register(plugin, new BalloonGadget());
+        Gadgets.register(plugin, new ConfettiCannonGadget());
+        Gadgets.register(plugin, new PersonalWeatherGadget());
+        Gadgets.register(plugin, new ChatBubbleGadget(plugin));
+        Gadgets.register(plugin, new EmoteWheelGadget());
 
         new CosmeticSafetyListener(plugin);
         new CosmeticKillListener(plugin);
         Trails.start(plugin);
+        // every gadget is registered by now, so the loop that runs the passive ones and cleans up after
+        // all of them has something to run
+        Gadgets.start(plugin);
     }
 }

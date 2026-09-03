@@ -233,6 +233,9 @@ Offen:
 - [x] Sieges-Effekt „Raketen" (für alle gratis, ersetzt das alte Feuerwerk am Rundenende)
 - [x] Sieges-Effekt „Tinte": Explosionen von der Bauhöhe über die Map, ohne Schaden und Rückstoß
 - [x] Gadget „Endlos-Perle": kommt nach dem Cooldown zurück, Cooldown in den Cosmetic-Settings
+- [x] Gadget-Slots: je einer für Lobby, Survival und Bedwars, statt einem netzwerkweit
+- [x] 16 weitere Gadgets, Lobby und Survival schalten sie über `GadgetListener` frei
+- [x] Was ein Gadget spawnt oder austeilt, wird beim Ablegen, Weltwechsel und Quit wieder eingesammelt
 
 Nachgezogen (2026-09-03), alles gebaut und nichts davon auf einem laufenden Server geprüft:
 - [x] `/cosmetics` auf Lobby, Bedwars und Survival — der Marktplatz-Knopf bleibt zusätzlich
@@ -243,8 +246,9 @@ Nachgezogen (2026-09-03), alles gebaut und nichts davon auf einem laufenden Serv
       Flammenspur, Sternenstaub und Noten (Spur)
 - [x] Gadget-Framework in CommonCode (`Gadget`, `Gadgets`); die Endlos-Perle ist von Bedwars
       dorthin gezogen, neu dazu der Enterhaken
-- [x] Gadgets sind pro Server abgeschaltet, bis ein Spielmodus sie freischaltet — nur Bedwars tut
-      das, und nur für Spieler, die in der Runde sind
+- [x] Gadgets sind pro Server abgeschaltet, bis ein Spielmodus sie freischaltet, und der sagt dabei,
+      welcher Slot er ist. Bedwars nur für Spieler in der Runde, die Lobby nur in der Lobbywelt,
+      Survival für alle außer Zuschauern
 - [x] Besitz wird pro Spieler beim Join geladen und eine Minute nach dem Quit vergessen; der
       Katalog reist weiter für alle. Die alte Vollverteilung antwortet der Launcher weiterhin,
       damit ein älterer Server beim Rollout nicht plötzlich ohne Besitz dasteht
@@ -259,8 +263,14 @@ Offen:
 - [ ] Kill-Effekte hängen am vanilla `PlayerDeathEvent`. Ein Bedwars-Tod ohne den — der Sturz ins
       Void — löst deshalb keinen aus. Für einen Effekt über einem leeren Loch ist das richtig,
       für einen Void-Kill mit Verursacher wäre es diskutabel
-- [ ] Gadgets gibt es weiterhin nur in Bedwars. Für die Lobby müsste jemand entscheiden, ob ein
-      Enterhaken dort ausgegeben wird und was der Lobbyschutz dazu sagt
+- [ ] Nichts davon lief bisher auf einem echten Server. Die Kandidaten dafür stehen unter 5.5
+- [ ] Der Erntehelfer hat keinen Cooldown. Er nimmt niemandem etwas weg, spart aber pro Feld eine
+      Menge Klicks — wenn das zu viel ist, gehört eine Zahl in `harvest-helper.settings`
+- [ ] Reittier, Haustier und Ballon spawnen Entities. Sie sind nicht persistent und werden beim
+      Ablegen, Weltwechsel und Quit eingesammelt; ob nach einem Absturz wirklich nichts stehen
+      bleibt, ist ungeprüft
+- [ ] Der Disco-Boden und das Sprungpad schicken Blockpakete an alle im Umkreis. Bei vielen Trägern
+      gleichzeitig ist das ungemessen
 
 ### 5.5 Am lebenden Server nachprüfen
 - [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers
@@ -268,6 +278,11 @@ Offen:
 - [ ] Die gemessenen Spitzen sind plausibel (RSS ist mehr als der Heap — der Vorschlag rechnet mit
       Faktor 1,4 auf die Spitze, das sollte an echten Zahlen geprüft werden)
 - [ ] Tinte auf einer vollen Runde: kostet es TPS?
+- [ ] Ein Spieler mit Lobby-Gadget warpt nach Survival und zurück: bleibt kein Item, kein Tier und
+      kein Ballon zurück, und ist das Survival-Gadget noch angelegt?
+- [ ] Jemand, der vor dem Update ein Gadget anhatte: trägt er es nach dem Update in allen drei
+      Slots, und legt das erste Umlegen nur einen davon um?
+- [ ] Der Erntehelfer in einer fremden Claim oder WorldGuard-Region: erntet er dort nicht
 - [ ] Rundenadmin kickt jemanden, der danach wieder joinen will
 - [ ] Eine private Runde: jemand ohne Einladung warpt direkt auf den Servernamen
 - [ ] Eine Welt nach `./bedwars-maps` legen und prüfen, dass sie auf dem nächsten Rundenserver

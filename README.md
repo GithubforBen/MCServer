@@ -603,15 +603,46 @@ gerade steht.
 | Flammenspur | Partikelspur | Flammen hinter dem Träger, solange er läuft |
 | Sternenstaub | Partikelspur | Helle Funken, die langsam absinken |
 | Noten | Partikelspur | Bunte Noten über dem Kopf |
-| Endlos-Perle | Gadget | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden |
-| Enterhaken | Gadget | Angel, die den Träger dorthin zieht, wo der Haken gelandet ist |
 
-Es gibt vier Arten, und von jeder trägt man höchstens eine: Sieges-Effekt, Kill-Effekt,
-Partikelspur, Gadget. Die ersten drei sind Bilder und laufen auf jedem Server. Gadgets nicht: sie
-greifen ins Spiel ein, also schaltet jeder Spielmodus sie einzeln frei (`Gadgets.setGuard`). Heute
-tut das nur Bedwars, und dort nur für Spieler, die tatsächlich in der Runde sind - eine
-Endlos-Perle wäre auf Survival keine Optik mehr, sondern Wirtschaft. Wer ein Gadget auf einem
-Server anlegt, der keine hat, sieht das im Menü.
+Dazu die Gadgets. Sie stehen in derselben Liste, haben aber eine Spalte mehr: wo sie wirken.
+
+| Gadget | Wirkt in | Was es macht |
+|--------|----------|--------------|
+| Endlos-Perle | Bedwars | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden |
+| Enterhaken | Lobby, Survival, Bedwars | Angel, die den Träger dorthin zieht, wo der Haken gelandet ist |
+| Doppelsprung | Lobby | Zweiter Sprung in der Luft, weiche Landung |
+| Raketenstiefel | Lobby | Rechtsklick wirft nach oben, runter geht es langsam |
+| Schneeball-Kanone | Lobby | Schneebälle, die wegschubsen und niemandem wehtun |
+| Disco-Boden | Lobby | Der Boden leuchtet - als Paket an die Umstehenden, die Welt bleibt, wie sie ist |
+| Fußspuren | Lobby | Abdrücke links und rechts, wo der Träger langgeht |
+| Sprungpad | Lobby | Ein Pad zum Hinlegen, das jeden hochwirft und nach zwei Minuten weg ist |
+| Reittier | Lobby | Ein Pferd auf Zuruf, gesattelt und gezähmt |
+| Erntehelfer | Survival | Rechtsklick erntet reif und pflanzt neu, abzüglich des Saatguts |
+| Sitzen | Survival | Hinsetzen auf Treppen und Stufen |
+| Werkbank | Survival | Eine Werkbank überall, ohne Amboss und ohne Ofen |
+| Haustier | Lobby, Survival | Ein kleines Tier, das hinterherläuft |
+| Ballon | Lobby, Survival | Ein Ballon an einer Schnur über dem Kopf |
+| Konfetti-Kanone | Lobby, Survival | Rechtsklick, und es regnet Farbe |
+| Eigenes Wetter | Lobby, Survival | Eigene Tageszeit und eigenes Wetter, nur im eigenen Client |
+| Chat-Blase | Lobby, Survival | Die eigene Chatnachricht steht kurz über dem Kopf |
+| Emotes | Lobby, Survival | Menü mit Gesten, die alle in der Nähe sehen |
+
+Es gibt vier Arten: Sieges-Effekt, Kill-Effekt, Partikelspur, Gadget. Von den ersten dreien trägt
+man höchstens eine, und sie sind Bilder - sie laufen auf jedem Server. Gadgets nicht: sie greifen
+ins Spiel ein, also schaltet jeder Spielmodus sie einzeln frei (`Gadgets.setGuard`) und sagt dabei,
+welcher Slot er ist.
+
+Slots sind der Grund, warum ein Spieler mehr als ein Gadget tragen kann: einen für Lobby, einen für
+Survival, einen für Bedwars. Ohne das würde der Doppelsprung in der Lobby den Erntehelfer auf
+Survival ablegen. Ein Gadget sagt selbst, in welche Slots es gehört (`Gadget.slots()`), und ein
+Klick im Menü legt es in alle davon gleichzeitig an - wer den Enterhaken kauft, will den Enterhaken
+und keine Entscheidung über Server. Gespeichert wird es beim Launcher unter `GADGET_<SLOT>`; eine
+Auswahl aus der Zeit vor den Slots gilt weiter, bis sie einmal geändert wird.
+
+Was ein Gadget in der Welt hinterlässt, nimmt es auch wieder mit. Wer es ablegt, wer die Lobbywelt
+verlässt und wer sich ausloggt, verliert dabei sein Gadget-Item und alles, was es gespawnt hat -
+Ballon, Haustier, Pferd, Sitz. Ohne das füllt sich eine Lobby über ein Wochenende mit Tieren, deren
+Besitzer seit drei Neustarts weg sind.
 
 Partikelspuren zeichnen nichts für Zuschauer und nichts für unsichtbare Spieler. Das Zweite ist
 kein Detail: eine gekaufte Spur, die einen unsichtbaren Bedwars-Spieler verrät, wäre eine, die

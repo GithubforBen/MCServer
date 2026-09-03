@@ -2,6 +2,7 @@ package de.hems.paper.cosmetic;
 
 import de.hems.types.cosmetic.CosmeticData;
 import de.hems.types.cosmetic.Cosmetics;
+import de.hems.types.cosmetic.GadgetSlot;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.EnderPearl;
@@ -13,11 +14,17 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * An ender pearl that is not used up.
  * <p>
  * The cooldown is the whole balance of it - the pearl does nothing a bought one does not do, it simply
  * never runs out - so it lives in the cosmetic's settings and can be turned without a new version.
+ * <p>
+ * Bedwars and nowhere else. In a round of twenty minutes an endless pearl is a cosmetic; in a world
+ * people build in it is a way of never walking anywhere again, which is a change to the game and not
+ * something to sell for bits.
  */
 public class EndlessPearlGadget implements Gadget, Listener {
 
@@ -33,6 +40,11 @@ public class EndlessPearlGadget implements Gadget, Listener {
     @Override
     public String getId() {
         return Cosmetics.GADGET_ENDLESS_PEARL;
+    }
+
+    @Override
+    public Set<GadgetSlot> slots() {
+        return Set.of(GadgetSlot.BEDWARS);
     }
 
     @Override

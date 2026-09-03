@@ -2,6 +2,7 @@ package de.hems.paper.cosmetic;
 
 import de.hems.types.cosmetic.CosmeticData;
 import de.hems.types.cosmetic.Cosmetics;
+import de.hems.types.cosmetic.GadgetSlot;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -13,11 +14,11 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,16 +54,16 @@ public class GrappleGadget implements Gadget, Listener {
     }
 
     @Override
+    public Set<GadgetSlot> slots() {
+        return Set.of(GadgetSlot.LOBBY, GadgetSlot.SURVIVAL, GadgetSlot.BEDWARS);
+    }
+
+    @Override
     public ItemStack item(CosmeticData cosmetic) {
-        ItemStack rod = new ItemStack(Material.FISHING_ROD, 1);
-        ItemMeta meta = rod.getItemMeta();
-        if (meta != null) {
-            // unbreakable, because the gadget is the pull and not a rod with sixty-four uses, and a rod
-            // that breaks mid round would leave its owner with a cosmetic they cannot use again
-            meta.setUnbreakable(true);
-            rod.setItemMeta(meta);
-        }
-        return rod;
+        // marked as the gadget's, which is what keeps somebody who walks in and out of the lobby three
+        // times from carrying three rods; unbreakable, because the gadget is the pull and not a rod with
+        // sixty-four uses, and one that breaks mid round leaves its owner with a cosmetic they cannot use
+        return GadgetItems.of(Material.FISHING_ROD, getId(), "Enterhaken", "Wirf den Haken");
     }
 
     @Override

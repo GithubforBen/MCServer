@@ -74,6 +74,8 @@ public final class Survival extends JavaPlugin {
         CosmeticService.init(this);
         // registered here as well, so the admin menu can say which effects actually exist
         CosmeticEffects.init(this);
+        // the gadgets need one answer more than the other cosmetics: who counts as playing here
+        new de.schnorrenbergers.survival.featrues.cosmetic.GadgetListener(this);
         AccountLinkService.init(this);
         NetworkOps.init(this);
         new PlayerAdminHandler(this);

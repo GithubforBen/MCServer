@@ -81,6 +81,8 @@ public final class LobbyPlugin extends JavaPlugin {
         MoneyService.init(this);
         CosmeticService.init(this);
         CosmeticEffects.init(this);
+        // and the gadgets: the effects are the same everywhere, the answer to who may use one here is not
+        new de.schnorrenbergers.lobby.cosmetic.GadgetListener(this);
         registerCommand("cosmetics", new CosmeticsCommand());
         registerCommand("bwdebug", new BedwarsDebugCommand());
         new LobbyJoinListener();
