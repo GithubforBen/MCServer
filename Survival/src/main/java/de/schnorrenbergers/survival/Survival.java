@@ -4,7 +4,7 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.paper.admin.NetworkOps;
 import de.hems.paper.cosmetic.CosmeticService;
 import de.hems.paper.discord.AccountLinkService;
-import de.hems.paper.cosmetic.WinEffects;
+import de.hems.paper.cosmetic.CosmeticEffects;
 import de.hems.paper.money.MoneyService;
 import de.hems.paper.admin.AdminStash;
 import de.hems.paper.admin.PlayerAdminHandler;
@@ -16,6 +16,7 @@ import de.hems.paper.event.RunService;
 import de.hems.paper.team.TeamService;
 import de.schnorrenbergers.survival.antiEnd.AntiEndListener;
 import de.schnorrenbergers.survival.commands.*;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopChestListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.Shopkeeper;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperListener;
 import de.schnorrenbergers.survival.featrues.Shopkeeper.ShopkeeperManager;
@@ -72,13 +73,16 @@ public final class Survival extends JavaPlugin {
         MoneyService.init(this);
         CosmeticService.init(this);
         // registered here as well, so the admin menu can say which effects actually exist
-        WinEffects.init(this);
+        CosmeticEffects.init(this);
         AccountLinkService.init(this);
         NetworkOps.init(this);
         new PlayerAdminHandler(this);
         AdminStash.init(this);
         TeamService.init(this);
         new TeamSyncListener();
+        // claims are only worth having if somebody can see where they are: a title on crossing, the
+        // owner over the hotbar while standing on it, and /cteam grenze for the line itself
+        new de.schnorrenbergers.survival.featrues.team.ClaimDisplay(this);
         registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
         registerCommand("debug", new DebugCommand());
         registerCommand("cteam", new TeamCommand());
@@ -90,11 +94,13 @@ public final class Survival extends JavaPlugin {
         registerCommand("banane", new BanCommand());
         registerCommand("legitimize", new LegitimizeCommand());
         registerCommand("verify", new de.hems.paper.commands.VerifyCommand());
+        registerCommand("cosmetics", new de.hems.paper.commands.CosmeticsCommand());
         new Tablist();
         new CustomInventoryListener(this);
         de.hems.paper.warp.ServerConnector.register(this);
         new ShopkeeperManager();
         new ShopkeeperListener();
+        new ShopChestListener();
         new ATMListener();
         chunkLimiter = new ChunkLimiter(new ChunkLimiterSettings());
         chunkLimiter.start();

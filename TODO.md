@@ -234,16 +234,33 @@ Offen:
 - [x] Sieges-Effekt „Tinte": Explosionen von der Bauhöhe über die Map, ohne Schaden und Rückstoß
 - [x] Gadget „Endlos-Perle": kommt nach dem Cooldown zurück, Cooldown in den Cosmetic-Settings
 
+Nachgezogen (2026-09-03), alles gebaut und nichts davon auf einem laufenden Server geprüft:
+- [x] `/cosmetics` auf Lobby, Bedwars und Survival — der Marktplatz-Knopf bleibt zusätzlich
+- [x] Zwei neue Arten: Kill-Effekte und Partikelspuren, mit eigener Registry je Art
+      (`KillEffects`, `Trails`) und einem gemeinsamen `CosmeticEffects.init` statt drei
+      Einzelaufrufen pro Plugin
+- [x] Neue Effekte: Gewitter und Lichtsäule (Sieg), Blitzschlag, Seelen und Stichflamme (Kill),
+      Flammenspur, Sternenstaub und Noten (Spur)
+- [x] Gadget-Framework in CommonCode (`Gadget`, `Gadgets`); die Endlos-Perle ist von Bedwars
+      dorthin gezogen, neu dazu der Enterhaken
+- [x] Gadgets sind pro Server abgeschaltet, bis ein Spielmodus sie freischaltet — nur Bedwars tut
+      das, und nur für Spieler, die in der Runde sind
+- [x] Besitz wird pro Spieler beim Join geladen und eine Minute nach dem Quit vergessen; der
+      Katalog reist weiter für alle. Die alte Vollverteilung antwortet der Launcher weiterhin,
+      damit ein älterer Server beim Rollout nicht plötzlich ohne Besitz dasteht
+
 Offen:
 - [ ] Der Cooldown der Endlos-Perle steht auf 22 Ticks — Vanilla plus die zehn Prozent. Das ist
       fast geschenkt. Wenn sich das im Spiel als zu stark zeigt, ist es eine Zahl in
       `cosmetics.yml` unter `endless-pearl.settings.cooldown-ticks`
-- [ ] Gekauft und angelegt wird nur auf Survival. Wer nur Bedwars spielt, muss dafür einmal
-      rüber — die Effekte selbst laufen überall
-- [ ] Der Besitz aller Spieler wird komplett an jeden Server verteilt, wie bei den Teams. Bei
-      vielen Spielern ist das irgendwann zu viel, dann müsste pro Spieler nachgeladen werden
-- [ ] Nur Sieges-Effekte und ein Gadget. Für weitere Arten (Killeffekte, Partikelspuren) gibt es
-      noch keinen Typ
+- [ ] Der Enterhaken nimmt seinem Träger sechs Sekunden lang den Fallschaden, damit die Landung
+      ihn nicht umbringt. In Bedwars ist der Sturz die Map — wenn sich das als zu stark zeigt,
+      ist es `grappling-hook.settings.no-fall-millis`
+- [ ] Kill-Effekte hängen am vanilla `PlayerDeathEvent`. Ein Bedwars-Tod ohne den — der Sturz ins
+      Void — löst deshalb keinen aus. Für einen Effekt über einem leeren Loch ist das richtig,
+      für einen Void-Kill mit Verursacher wäre es diskutabel
+- [ ] Gadgets gibt es weiterhin nur in Bedwars. Für die Lobby müsste jemand entscheiden, ob ein
+      Enterhaken dort ausgegeben wird und was der Lobbyschutz dazu sagt
 
 ### 5.5 Am lebenden Server nachprüfen
 - [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers

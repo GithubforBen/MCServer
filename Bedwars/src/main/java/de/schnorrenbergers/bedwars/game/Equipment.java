@@ -70,6 +70,10 @@ public final class Equipment {
      * @param where  where to put them
      */
     public static void reset(Player player, Location where) {
+        // the end of a round makes everybody untouchable so that the celebration cannot be fought over,
+        // and nothing ever took that back: a player who went through an end phase started the next round
+        // unkillable and only lost it by dying once, which they could not do
+        player.setInvulnerable(false);
         player.setHealth(healthOf(player));
         player.setFoodLevel(20);
         player.setSaturation(20f);
@@ -89,6 +93,53 @@ public final class Equipment {
     private static double healthOf(Player player) {
         var attribute = player.getAttribute(Attribute.MAX_HEALTH);
         return attribute == null ? 20.0d : attribute.getValue();
+    }
+
+    /**
+     * Empties a player's ender chest.
+     * <p>
+     * Deliberately not part of {@link #reset(Player, Location)}: an ender chest is the one thing in a
+     * round that is meant to survive a death, so emptying it every respawn would take away the only
+     * reason to use one. It is emptied when a round begins and when somebody lands in the waiting lobby -
+     * an ender chest is per player and lives in their save file, so without this the diamonds of the last
+     * match are still in it when the next one starts.
+     *
+     * @param player whose chest to empty
+     */
+    public static void clearEnderChest(Player player) {
+        player.getEnderChest().clear();
+    }
+
+    /**
+     * Takes the starting sword away from somebody who is carrying a better one.
+     * <p>
+     * Hypixel's rule, and the reason a player with a diamond sword does not walk around with three swords.
+     * It is asked of the whole inventory rather than of the purchase that triggered it, because a sword
+     * arrives from more than one direction: the shop, a kit, and anything picked up off the floor.
+     *
+     * @param player whose inventory to tidy
+     */
+    public static void dropWoodenSword(Player player) {
+        PlayerInventory inventory = player.getInventory();
+        ItemStack[] contents = inventory.getStorageContents();
+        if (!hasBetterSword(contents)) return;
+        for (int slot = 0; slot < contents.length; slot++) {
+            if (contents[slot] != null && contents[slot].getType() == Material.WOODEN_SWORD) {
+                inventory.setItem(slot, null);
+            }
+        }
+    }
+
+    /**
+     * @param contents an inventory
+     * @return whether anything in it is a sword that is not the wooden one
+     */
+    private static boolean hasBetterSword(ItemStack[] contents) {
+        for (ItemStack stack : contents) {
+            if (stack == null || stack.getType() == Material.WOODEN_SWORD) continue;
+            if (stack.getType().name().endsWith("_SWORD")) return true;
+        }
+        return false;
     }
 
     /**

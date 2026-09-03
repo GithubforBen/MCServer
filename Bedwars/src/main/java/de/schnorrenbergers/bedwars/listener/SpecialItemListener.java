@@ -16,6 +16,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LargeFireball;
 import org.bukkit.entity.LivingEntity;
@@ -249,11 +251,36 @@ public class SpecialItemListener implements Listener {
         }
         // an iron golem that counts as player made will not raise a hand against a player, which is the
         // one thing a dream defender is bought for
-        if (mob instanceof IronGolem golem) golem.setPlayerCreated(false);
+        if (mob instanceof IronGolem golem) {
+            golem.setPlayerCreated(false);
+            var settings = Bedwars.getInstance().getGameSettings();
+            tame(golem, settings.getDefenderHealth(), settings.getDefenderDamage());
+        }
         mob.setRemoveWhenFarAway(false);
         mob.setPersistent(false);
         watch(mob, team, lifetimeOf(egg));
         return true;
+    }
+
+    /**
+     * Takes a dream defender down to what a round can live with.
+     * <p>
+     * A vanilla iron golem on hard has a hundred health and hits for up to twenty one, which is more than
+     * diamond armour survives twice. Bought for a hundred and twenty iron it then decides the base it is
+     * standing in on its own, and the only answer to one is to not go near it - which is not a fight.
+     *
+     * @param golem  the summoned defender
+     * @param health how much it can take
+     * @param damage how hard one of its swings lands
+     */
+    private static void tame(IronGolem golem, double health, double damage) {
+        AttributeInstance maxHealth = golem.getAttribute(Attribute.MAX_HEALTH);
+        if (maxHealth != null) {
+            maxHealth.setBaseValue(health);
+            golem.setHealth(Math.min(health, maxHealth.getValue()));
+        }
+        AttributeInstance attack = golem.getAttribute(Attribute.ATTACK_DAMAGE);
+        if (attack != null) attack.setBaseValue(damage);
     }
 
     /**

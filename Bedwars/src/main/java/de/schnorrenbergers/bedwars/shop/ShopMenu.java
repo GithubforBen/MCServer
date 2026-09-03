@@ -38,6 +38,8 @@ import java.util.List;
 public final class ShopMenu {
 
     private static final int SIZE = 54;
+    /** How many tabs fit along the top. */
+    private static final int TAB_ROW = 9;
 
     /** Where entries are put when they do not name a slot themselves: the four rows under the tabs. */
     private static final int[] CONTENT = {
@@ -164,13 +166,35 @@ public final class ShopMenu {
      */
     private static void drawTabs(CustomInventory menu, ShopSettings settings, Player player,
                                  @Nullable GameTeam seller, ShopCategory open) {
-        int next = 0;
+        boolean[] taken = new boolean[TAB_ROW];
         for (ShopCategory category : settings.getCategories()) {
-            int slot = category.slot() >= 0 ? category.slot() : next++;
-            if (slot < 0 || slot > 8) continue;
+            int slot = freeTab(taken, category.slot());
+            if (slot < 0) continue;
+            taken[slot] = true;
             menu.setItem(slot, tab(category, category.id().equals(open.id())),
                     new SimpleItemAction(event -> open(player, seller, category)));
         }
+    }
+
+    /**
+     * Finds a tab a page can actually be drawn in.
+     * <p>
+     * Two pages that ask for the same slot used to be one page: the second was drawn over the first and
+     * the first became unreachable, which is what happened to the potions the moment an addon added a page
+     * of its own at the slot the potions were configured for. The wish is honoured where it can be, and
+     * where it cannot the page moves rather than disappears.
+     *
+     * @param taken which tabs are already drawn
+     * @param wish  where the page would like to sit, or negative for no preference
+     * @return the slot to draw it in, or -1 when the top row is full
+     */
+    private static int freeTab(boolean[] taken, int wish) {
+        int start = wish >= 0 && wish < TAB_ROW ? wish : 0;
+        for (int offset = 0; offset < TAB_ROW; offset++) {
+            int slot = (start + offset) % TAB_ROW;
+            if (!taken[slot]) return slot;
+        }
+        return -1;
     }
 
     /**

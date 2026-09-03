@@ -47,7 +47,8 @@ public final class ShopKeepers {
         remove();
         if (game.getArena() == null || game.getWorld() == null) return;
         for (GameTeam team : game.getTeams()) {
-            if (!team.isAlive()) continue;
+            // every base the map has, not only the ones that are being played: an unused base is still a
+            // place people fight over and walk through, and one without keepers is a dead corner of the map
             TeamSpot spot = game.getArena().getTeam(team.getColor());
             if (spot == null) continue;
             place(game, team, spot.getShop(), false);
@@ -56,7 +57,7 @@ public final class ShopKeepers {
         // a base whose keeper is missing is a base that cannot buy anything, and the only way to notice
         // that in a running round is to walk into it - so the count is said out loud once
         Bukkit.getLogger().info("[Bedwars] " + spawned.size() + " shop keepers are standing in "
-                + game.getAliveTeams().size() + " bases.");
+                + game.getTeams().size() + " bases (" + game.getAliveTeams().size() + " of them played).");
     }
 
     /**

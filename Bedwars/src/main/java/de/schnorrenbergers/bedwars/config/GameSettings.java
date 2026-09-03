@@ -27,6 +27,9 @@ public final class GameSettings {
     private int shopRadius;
     private boolean resourcesToKiller;
     private int respawnProtectionSeconds;
+    private double teamChestRadius;
+    private double defenderHealth;
+    private double defenderDamage;
     private int enderPearlCooldownSeconds;
     private java.util.List<String> blastProof;
     private java.util.List<String> fireballProof;
@@ -80,6 +83,16 @@ public final class GameSettings {
                 "Without this, a generator can simply be walled in."));
         shopRadius = Math.max(0, file.get("build.shop-radius", 2,
                 "How close to a shop keeper nobody may build."));
+        defenderHealth = Math.max(1.0d, file.get("dream-defender.health", 60.0d,
+                "How much health a dream defender has. A vanilla iron golem has 100, which on a map",
+                "where nobody can reach it is a wall rather than a guard."));
+        defenderDamage = Math.max(0.0d, file.get("dream-defender.damage", 6.0d,
+                "How hard it hits. A vanilla iron golem is 15, which on hard is up to 21 damage a swing",
+                "and kills anybody in diamond armour in two. 6 makes it something you fight, not flee."));
+        teamChestRadius = Math.max(0.0d, file.get("team-chest-radius", 10.0d,
+                "How far from a team's spawn a chest still belongs to that team.",
+                "Only that team can open it, and punching it puts your resources in.",
+                "0 turns team chests off and leaves every chest open to everybody."));
         resourcesToKiller = file.get("death.resources-to-killer", true,
                 "Whether the resources somebody carried go to whoever killed them.",
                 "Off means they are lost, which makes hunting people down pointless.");
@@ -152,6 +165,27 @@ public final class GameSettings {
 
     public int getRespawnSeconds() {
         return respawnSeconds;
+    }
+
+    /**
+     * @return how much health a bought iron golem has
+     */
+    public double getDefenderHealth() {
+        return defenderHealth;
+    }
+
+    /**
+     * @return how much damage one of its swings does
+     */
+    public double getDefenderDamage() {
+        return defenderDamage;
+    }
+
+    /**
+     * @return how far from a spawn a chest counts as that team's, 0 when team chests are off
+     */
+    public double getTeamChestRadius() {
+        return teamChestRadius;
     }
 
     public int getRespawnProtectionSeconds() {

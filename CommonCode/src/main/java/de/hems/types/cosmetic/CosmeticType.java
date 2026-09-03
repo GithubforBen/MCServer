@@ -10,6 +10,10 @@ public enum CosmeticType {
 
     /** Goes off when its owner wins a round. */
     WIN_EFFECT("Sieges-Effekt", "Was passiert, wenn du gewinnst"),
+    /** Goes off when its owner kills somebody. */
+    KILL_EFFECT("Kill-Effekt", "Was passiert, wenn du jemanden erledigst"),
+    /** Follows its owner around. */
+    TRAIL("Partikelspur", "Was hinter dir herzieht, wenn du läufst"),
     /** Something you carry into a round. */
     GADGET("Gadget", "Kleine Extras, die du im Spiel dabei hast");
 

@@ -3,6 +3,7 @@ package de.schnorrenbergers.survival.featrues.team;
 import de.hems.paper.team.TeamService;
 import de.hems.types.team.TeamData;
 import org.bukkit.Chunk;
+import org.bukkit.World;
 
 /**
  * Which team owns which chunk.
@@ -34,7 +35,27 @@ public class ClaimManager {
      */
     public static TeamData getTeamDataOfChunk(Chunk chunk) {
         if (chunk == null) return null;
-        String key = keyOf(chunk);
+        return byKey(keyOf(chunk));
+    }
+
+    /**
+     * The same lookup by coordinates, for everything that wants to ask about a chunk without touching it.
+     * <p>
+     * A {@link Chunk} object is not free: asking the world for one loads it, and a map of the claims
+     * around somebody asks about a hundred and twenty-one of them at once. The claims are stored as text
+     * anyway, so the coordinates are all this ever needed.
+     *
+     * @param world the world
+     * @param x     the chunk's x
+     * @param z     the chunk's z
+     * @return the team that owns it, or {@code null}
+     */
+    public static TeamData getTeamDataOfChunk(World world, int x, int z) {
+        if (world == null) return null;
+        return byKey(TeamData.claimKey(world.getName(), x, z));
+    }
+
+    private static TeamData byKey(String key) {
         for (TeamData team : TeamService.getTeams()) {
             if (team.getClaims().contains(key)) return team;
         }

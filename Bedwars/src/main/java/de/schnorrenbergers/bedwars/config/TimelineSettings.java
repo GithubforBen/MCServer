@@ -3,10 +3,14 @@ package de.schnorrenbergers.bedwars.config;
 import de.schnorrenbergers.bedwars.game.Standings;
 import de.schnorrenbergers.bedwars.game.timeline.TimelineEvent;
 import de.schnorrenbergers.bedwars.util.ConfigFile;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * When the round does things to itself, out of {@code timeline.yml}.
@@ -25,6 +29,14 @@ public final class TimelineSettings {
     private double dragonHealth;
     private int dragonHeight;
     private double dragonRadius;
+    private double dragonCarveRadius;
+    private int witherDelaySeconds;
+    private int witherIntervalSeconds;
+    private int withersPerTeam;
+    private int witherBuffWithers;
+    private int witherMaximum;
+    private double witherHealth;
+    private final Set<Material> indestructible = EnumSet.noneOf(Material.class);
     private Standings.Weights weights = new Standings.Weights(10, 5, 1);
 
     public TimelineSettings() {
@@ -68,13 +80,19 @@ public final class TimelineSettings {
                 "Every bed still standing is destroyed at once. From here nobody respawns: one death and"
                         + " you are out of the round for good.");
         event("sudden-death", "<dark_red>Sudden Death", 2400, TimelineEvent.Action.SUDDEN_DEATH,
-                "A dragon appears over the middle for every team that is still alive, and it hunts"
-                        + " everybody who is not on its own team. Rounds do not last long after this.");
+                "A dragon appears over the middle for every team that is still alive, it hunts everybody"
+                        + " who is not on its own team, and it takes the map apart on the way. Five"
+                        + " minutes later the withers start, one per team and one more every minute."
+                        + " Rounds do not last long after this.");
         event("game-end", "<gold>Game End", 3000, TimelineEvent.Action.GAME_END,
                 "The hard time limit. The round stops and is decided on points: ten for a bed, five for"
                         + " a final kill, one for an ordinary kill. A tie at the top means nobody won.");
 
-        file.section("sudden-death", "The dragons of the sudden death event.");
+        file.section("sudden-death",
+                "The dragons and the withers of the sudden death event.",
+                "The event is what ends a round nobody can end: the bosses hunt whoever is not on their",
+                "own team, and what they fly through stops being map. Turn 'carve-radius' down to make",
+                "the arena last longer, up to make it fall apart faster.");
         file.get("sudden-death.dragons-per-team", 1,
                 "How many dragons every living team is given.");
         file.get("sudden-death.dragon-buff-dragons", 1,
@@ -82,10 +100,35 @@ public final class TimelineSettings {
         file.get("sudden-death.health", 200.0d,
                 "How much health one dragon has. 200 is what a vanilla dragon has.");
         file.get("sudden-death.height", 25,
-                "How far above the middle of the map the dragons appear.");
+                "How far above the middle of the map the dragons and the withers appear.");
         file.get("sudden-death.radius", 140.0d,
-                "How far a dragon may drift from the middle before it is put back.",
+                "How far a dragon may drift from whatever it is going for before it is put back.",
                 "Without this they wander off across the void and the event is over without a fight.");
+        file.get("sudden-death.carve-radius", 2.5d,
+                "How wide a hole a dragon tears out of the map as it flies, in blocks. 0 turns it off.",
+                "The vanilla dragon leaves end stone, obsidian and iron bars standing, which on most",
+                "arenas is the arena - this is what actually makes the map smaller.");
+        if (!file.contains("sudden-death.indestructible")) {
+            file.set("sudden-death.indestructible", List.of(
+                    Material.BEDROCK.name(), Material.BARRIER.name(), Material.LIGHT.name()));
+            file.raw().setComments("sudden-death.indestructible", List.of(
+                    "What neither a dragon nor a wither may take, whatever it flies through.",
+                    "Everything else goes, the map included: the point of the event is a map that",
+                    "gets smaller until what is left of it is not worth standing on."));
+        }
+
+        file.get("sudden-death.wither-delay-seconds", 300,
+                "How long after sudden death the first withers arrive.");
+        file.get("sudden-death.wither-interval-seconds", 60,
+                "How long between waves after that. Every living team gets its own withers.");
+        file.get("sudden-death.withers-per-team", 1,
+                "How many withers a team gets per wave without the wither buff.");
+        file.get("sudden-death.wither-buff-withers", 1,
+                "How many more it gets per level of the wither buff it bought.");
+        file.get("sudden-death.wither-maximum", 15,
+                "The most withers one team can be given in one wave, however much it bought.");
+        file.get("sudden-death.wither-health", 300.0d,
+                "How much health one wither has. 300 is what a vanilla wither has.");
 
         file.section("points",
                 "What decides a round that runs into the hard time limit.",
@@ -144,10 +187,34 @@ public final class TimelineSettings {
         dragonHealth = Math.max(1.0d, file.read("sudden-death.health", 200.0d));
         dragonHeight = Math.max(0, file.read("sudden-death.height", 25));
         dragonRadius = Math.max(8.0d, file.read("sudden-death.radius", 140.0d));
+        dragonCarveRadius = Math.max(0.0d, file.read("sudden-death.carve-radius", 2.5d));
+        witherDelaySeconds = Math.max(0, file.read("sudden-death.wither-delay-seconds", 300));
+        witherIntervalSeconds = Math.max(1, file.read("sudden-death.wither-interval-seconds", 60));
+        withersPerTeam = Math.max(0, file.read("sudden-death.withers-per-team", 1));
+        witherBuffWithers = Math.max(0, file.read("sudden-death.wither-buff-withers", 1));
+        witherMaximum = Math.max(0, file.read("sudden-death.wither-maximum", 15));
+        witherHealth = Math.max(1.0d, file.read("sudden-death.wither-health", 300.0d));
+        readIndestructible();
         weights = new Standings.Weights(
                 file.read("points.bed", 10),
                 file.read("points.final-kill", 5),
                 file.read("points.kill", 1));
+    }
+
+    /**
+     * Reads what the sudden death may not break.
+     */
+    private void readIndestructible() {
+        indestructible.clear();
+        for (String name : file.raw().getStringList("sudden-death.indestructible")) {
+            Material material = Material.matchMaterial(name);
+            if (material == null) {
+                Bukkit.getLogger().warning("[Bedwars] timeline.yml: '" + name + "' is not a material,"
+                        + " so the sudden death will break it like anything else.");
+                continue;
+            }
+            indestructible.add(material);
+        }
     }
 
     // ------------------------------------------------------------------ lookups
@@ -177,6 +244,54 @@ public final class TimelineSettings {
 
     public double getDragonRadius() {
         return dragonRadius;
+    }
+
+    /**
+     * @return how wide a hole a dragon tears out of the map as it flies, 0 when it tears none
+     */
+    public double getDragonCarveRadius() {
+        return dragonCarveRadius;
+    }
+
+    /**
+     * @return how many seconds after sudden death the first wave of withers arrives
+     */
+    public int getWitherDelaySeconds() {
+        return witherDelaySeconds;
+    }
+
+    /**
+     * @return how many seconds between the waves after that
+     */
+    public int getWitherIntervalSeconds() {
+        return witherIntervalSeconds;
+    }
+
+    public int getWithersPerTeam() {
+        return withersPerTeam;
+    }
+
+    public int getWitherBuffWithers() {
+        return witherBuffWithers;
+    }
+
+    /**
+     * @return the most withers one team gets in one wave
+     */
+    public int getWitherMaximum() {
+        return witherMaximum;
+    }
+
+    public double getWitherHealth() {
+        return witherHealth;
+    }
+
+    /**
+     * @param material a block the sudden death is about to take
+     * @return whether it has to stay standing
+     */
+    public boolean isIndestructible(Material material) {
+        return indestructible.contains(material);
     }
 
     /**

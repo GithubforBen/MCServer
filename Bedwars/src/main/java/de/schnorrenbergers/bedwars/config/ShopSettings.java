@@ -15,10 +15,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * What the item shop sells, out of {@code shop.yml}.
@@ -30,7 +32,15 @@ import java.util.Map;
 public final class ShopSettings {
 
     private final ConfigFile file;
+    /** The id of the page that is opened first and is made of entries of the other pages. */
+    public static final String QUICK_BUY = "quick-buy";
+
     private final List<ShopCategory> categories = new ArrayList<>();
+    /** What the quick buy page lists, by entry id, in the order it is written. */
+    private final List<String> quickBuyIds = new ArrayList<>();
+    private String quickBuyName = "<gold>Quick Buy";
+    private Material quickBuyIcon = Material.NETHER_STAR;
+    private int quickBuySlot = 1;
     private final Map<String, ShopItem> byId = new LinkedHashMap<>();
     /** What addons put into the shop while they are switched on; never written to the file. */
     private final Map<String, ShopItem> extraItems = new LinkedHashMap<>();
@@ -48,6 +58,7 @@ public final class ShopSettings {
         file.reload();
         categories.clear();
         byId.clear();
+        quickBuyIds.clear();
         file.section("categories",
                 "One block per page of the shop. 'slot' is where the tab sits in the top row.",
                 "Every entry underneath 'items' is one thing to buy:",
@@ -63,7 +74,9 @@ public final class ShopSettings {
                 "  lifetime-seconds: how long what a spawn egg summons stays around",
                 "  slot: where it sits on the page, -1 fills the page from the top left");
         writeDefaults();
+        writeQuickBuyDefaults();
         readAll();
+        readQuickBuy();
         file.save();
     }
 
@@ -120,11 +133,13 @@ public final class ShopSettings {
                 "<gray>The best there is. Four emeralds is",
                 "<gray>most of a trip to the middle.",
                 "<red>Lost on death, so carry it carefully."));
+        // knockback II, not I: at one level the stick barely moves anybody who is sprinting, which makes
+        // the five gold buy nothing. The point of it is the bridge, and it has to actually clear one
         enchant(lore(item("melee", "knockback-stick", Material.STICK, 1, Currency.GOLD, 5,
-                "<white>Stick <gray>(Knockback I)"),
+                "<white>Stick <gray>(Knockback II)"),
                 "<gray>Does almost no damage and wins fights",
                 "<gray>anyway: it throws people off bridges.",
-                "<gray>The void does not care about armour."), "KNOCKBACK:1");
+                "<gray>The void does not care about armour."), "KNOCKBACK:2");
 
         category("armor", "<aqua>Armor", Material.CHAINMAIL_BOOTS, 4);
         armor(lore(item("armor", "chainmail-armor", Material.CHAINMAIL_BOOTS, 1, Currency.IRON, 40,
@@ -251,6 +266,31 @@ public final class ShopSettings {
     }
 
     /**
+     * Writes the quick buy page the first time.
+     * <p>
+     * A list of ids rather than a page of its own: an entry copied onto a second page would be a second
+     * entry, with its own tool chain and its own armour level, and buying the copy would not be the same
+     * purchase as buying the original. What is written here is which of the real entries are shown first.
+     */
+    private void writeQuickBuyDefaults() {
+        file.get("quick-buy.display-name", quickBuyName);
+        file.get("quick-buy.icon", quickBuyIcon.name());
+        file.get("quick-buy.slot", quickBuySlot);
+        if (!file.contains("quick-buy.items")) {
+            file.set("quick-buy.items", List.of(
+                    "wool", "stone-sword", "chainmail-armor", "shears",
+                    "wooden-pickaxe", "wooden-axe", "golden-apple", "tnt",
+                    "ender-pearl", "water-bucket", "fireball", "obsidian"));
+        }
+        file.raw().setComments("quick-buy", List.of(
+                "The page the shop opens on: a short list of what is bought in almost every round,",
+                "so the four things somebody buys between two fights are not four pages apart.",
+                "'items' names entries of the pages below by their id. An id that names a tool step",
+                "brings its whole chain with it, because half a chain is a button that cannot be read.",
+                "An empty list turns the page off and the shop opens on the first category again."));
+    }
+
+    /**
      * Writes one page, without touching what is already in the file.
      */
     private void category(String id, String displayName, Material icon, int slot) {
@@ -357,6 +397,57 @@ public final class ShopSettings {
         }
         read.sort(Comparator.comparingInt(category -> category.slot() < 0 ? Integer.MAX_VALUE : category.slot()));
         categories.addAll(read);
+    }
+
+    private void readQuickBuy() {
+        quickBuyName = file.read("quick-buy.display-name", quickBuyName);
+        Material icon = material(file.read("quick-buy.icon", quickBuyIcon.name()), "the quick buy icon");
+        if (icon != null) quickBuyIcon = icon;
+        quickBuySlot = file.read("quick-buy.slot", quickBuySlot);
+        quickBuyIds.addAll(file.raw().getStringList("quick-buy.items"));
+    }
+
+    /**
+     * Builds the quick buy page out of the entries it names.
+     *
+     * @return the page, or {@code null} when nothing is on it
+     */
+    private @Nullable ShopCategory buildQuickBuy() {
+        if (quickBuyIds.isEmpty()) return null;
+        List<ShopItem> items = new ArrayList<>();
+        Set<String> taken = new HashSet<>();
+        for (String id : quickBuyIds) {
+            ShopItem item = get(id);
+            if (item == null) {
+                Bukkit.getLogger().warning("[Bedwars] shop.yml: quick-buy lists '" + id
+                        + "', which is not an entry of any page. It is skipped.");
+                continue;
+            }
+            // a tool step never travels alone: the button is the whole chain, and one step out of it
+            // would offer a pickaxe somebody already owns
+            for (ShopItem member : chainOf(item)) {
+                if (taken.add(member.id())) items.add(member.withSlot(-1));
+            }
+        }
+        if (items.isEmpty()) return null;
+        return new ShopCategory(QUICK_BUY, quickBuyName, quickBuyIcon, quickBuySlot, List.copyOf(items));
+    }
+
+    /**
+     * @param item an entry
+     * @return every step of its tool chain, or just the entry itself when it is not part of one
+     */
+    private List<ShopItem> chainOf(ShopItem item) {
+        if (!item.isTool()) return List.of(item);
+        List<ShopItem> steps = new ArrayList<>();
+        for (ShopCategory category : categories) {
+            for (ShopItem other : category.items()) {
+                if (other.isTool() && other.toolGroup().equalsIgnoreCase(item.toolGroup())) {
+                    steps.add(other);
+                }
+            }
+        }
+        return steps.isEmpty() ? List.of(item) : steps;
     }
 
     /**
@@ -511,12 +602,14 @@ public final class ShopSettings {
      * @return every page, with whatever the addons added to it
      */
     public List<ShopCategory> getCategories() {
-        if (extraItems.isEmpty() && extraCategories.isEmpty()) return List.copyOf(categories);
         List<ShopCategory> merged = new ArrayList<>();
         for (ShopCategory category : categories) merged.add(withExtras(category));
         for (ShopCategory category : extraCategories.values()) {
             if (configured(category.id()) == null) merged.add(withExtras(category));
         }
+        // built last: it names entries of the pages above, and the addons have only just added theirs
+        ShopCategory quickBuy = buildQuickBuy();
+        if (quickBuy != null) merged.add(quickBuy);
         merged.sort(Comparator.comparingInt(category -> category.slot() < 0 ? Integer.MAX_VALUE : category.slot()));
         return List.copyOf(merged);
     }

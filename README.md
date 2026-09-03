@@ -224,6 +224,26 @@ Danach wird die alte Datei als migriert markiert (nicht gelöscht).
 | `/cteam sethome` · `home` | Team-Home setzen und nutzen |
 | `/cteam info [team]` · `list` | Team-Infos, alle Teams im Netzwerk |
 | `/cteam claim` · `unclaim` · `chunks` | Chunks kaufen, freigeben, Karte anzeigen |
+| `/cteam grenze` | Zeichnet die Chunk-Grenzen um dich herum zehn Sekunden lang mit Partikeln |
+
+### Wem gehört der Boden hier
+
+Claims sind unterwegs sichtbar, nicht nur auf Befehl:
+
+- **Titel beim Betreten.** Wer die Grenze überschreitet, bekommt den Teamnamen in Teamfarbe
+  eingeblendet, darunter „Betreten" - beim Schritt zurück ins Freie steht dort „Wildnis" und
+  „Verlassen". Ausgelöst wird das vom Wechsel des **Besitzers**, nicht vom Chunkwechsel: quer über ein
+  Teamgebiet zu laufen überquert alle sechzehn Blöcke eine Chunkgrenze, und ein Titel bei jeder davon
+  wäre der Grund, das Ganze wieder abzuschalten.
+- **Actionbar währenddessen.** Solange jemand auf fremdem oder eigenem Boden steht, steht der
+  Teamname über der Hotbar, beim eigenen Team mit dem Zusatz „dein Team". In der Wildnis steht dort
+  nichts - eine leere Zeile ist dort die richtige Antwort und hält die Anzeige aus dem Weg.
+- **`/cteam grenze`.** Zeichnet die Kanten des eigenen Chunks und der angrenzenden Claims in
+  Teamfarbe, zehn Sekunden lang, und nur für den, der gefragt hat. Der Chunk, in dem man selbst
+  steht, ist immer dabei - weiß, wenn er noch frei ist.
+- **`/cteam chunks`.** Die Karte zeigt eine Farbe **pro Team** statt nur grün und rot, in der Mitte
+  einen Pfeil in Blickrichtung, und darunter eine Legende mit den Teams, die gerade zu sehen sind.
+  Norden ist oben. Der Mauszeiger über einem Feld nennt Team und Koordinaten.
 
 ### Einstellbar
 
@@ -566,15 +586,36 @@ gibt es `MoneyService.changeBlocking` - der Cosmetic-Kauf geht diesen Weg.
 
 ## Cosmetics
 
-Cosmetics sind netzwerkweit und werden mit Bits bezahlt. Zu kaufen gibt es sie im Marktplatz auf
-Survival (`/shop`, Knopf in der unteren Reihe) - dieselbe Oberfläche kauft, legt an und legt ab, je
-nachdem, wie man zu dem Cosmetic gerade steht.
+Cosmetics sind netzwerkweit und werden mit Bits bezahlt. Zu kaufen gibt es sie mit `/cosmetics` auf
+jedem Server - Lobby, Bedwars, Survival - und zusätzlich über den Knopf im Marktplatz auf Survival
+(`/shop`). Dieselbe Oberfläche kauft, legt an und legt ab, je nachdem, wie man zu dem Cosmetic
+gerade steht.
 
 | Cosmetic | Art | Was es macht |
 |----------|-----|--------------|
 | Raketen | Sieges-Effekt | Feuerwerk über den Gewinnern. Für alle gratis, das ist der Standard. |
 | Tinte | Sieges-Effekt | Von der Bauhöhe regnen Explosionen über die ganze Map - nur Optik, kein Schaden, kein Rückstoß |
+| Gewitter | Sieges-Effekt | Blitze um die Gewinner herum, ohne Feuer und ohne Schaden |
+| Lichtsäule | Sieges-Effekt | Eine Säule aus Licht aus jedem Gewinner heraus bis über die Map |
+| Blitzschlag | Kill-Effekt | Ein Blitz da, wo der Gegner gefallen ist |
+| Seelen | Kill-Effekt | Die Seele des Gegners steigt langsam auf |
+| Stichflamme | Kill-Effekt | Ein Ring aus Feuer um den Gefallenen |
+| Flammenspur | Partikelspur | Flammen hinter dem Träger, solange er läuft |
+| Sternenstaub | Partikelspur | Helle Funken, die langsam absinken |
+| Noten | Partikelspur | Bunte Noten über dem Kopf |
 | Endlos-Perle | Gadget | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden |
+| Enterhaken | Gadget | Angel, die den Träger dorthin zieht, wo der Haken gelandet ist |
+
+Es gibt vier Arten, und von jeder trägt man höchstens eine: Sieges-Effekt, Kill-Effekt,
+Partikelspur, Gadget. Die ersten drei sind Bilder und laufen auf jedem Server. Gadgets nicht: sie
+greifen ins Spiel ein, also schaltet jeder Spielmodus sie einzeln frei (`Gadgets.setGuard`). Heute
+tut das nur Bedwars, und dort nur für Spieler, die tatsächlich in der Runde sind - eine
+Endlos-Perle wäre auf Survival keine Optik mehr, sondern Wirtschaft. Wer ein Gadget auf einem
+Server anlegt, der keine hat, sieht das im Menü.
+
+Partikelspuren zeichnen nichts für Zuschauer und nichts für unsichtbare Spieler. Das Zweite ist
+kein Detail: eine gekaufte Spur, die einen unsichtbaren Bedwars-Spieler verrät, wäre eine, die
+niemand anlegt.
 
 Admins verwalten sie im selben Menü über "Verwalten": Linksklick schaltet ein Cosmetic von
 verkäuflich über nur besitzbar auf aus, Rechtsklick erhöht den Preis, Shift macht es für alle
@@ -586,8 +627,15 @@ an denen es auf halbem Weg schiefgehen kann, und auf halbem Weg heißt: bezahlt 
 
 Ein Cosmetic ist zwei Hälften, die sich über eine id treffen. Dem Launcher gehört die Hälfte, die
 eine Entscheidung ist (gibt es das, verkauft es sich, für wie viel), dem Spielserver die Hälfte, die
-Code ist. Ein neuer Effekt ist deshalb ein Eintrag in `de.hems.types.cosmetic.Cosmetics` und eine
-Klasse, die `WinEffect` implementiert - dazwischen darf jede Seite der anderen voraus sein.
+Code ist. Ein neuer Effekt ist deshalb ein Eintrag in `de.hems.types.cosmetic.Cosmetics`, eine
+Klasse, die `WinEffect`, `KillEffect`, `TrailEffect` oder `Gadget` implementiert, und eine Zeile in
+`CosmeticEffects.init` - dazwischen darf jede Seite der anderen voraus sein. Im Verwalten-Menü steht
+bei jedem Eintrag, ob dieser Server Code dafür hat.
+
+Den Katalog holt sich jeder Server alle fünf Minuten. Wem was gehört, holt er sich dagegen einzeln:
+beim Join des Spielers, und eine Minute nach dessen Quit wirft er es wieder weg. Vorher reiste der
+Besitz **aller** Spieler mit dem Katalog mit, was mit jedem Spieler wächst, der jemals etwas gekauft
+hat - für die zwanzig Leute, die gerade auf dem Server stehen.
 
 ## Discord-Verknüpfung
 

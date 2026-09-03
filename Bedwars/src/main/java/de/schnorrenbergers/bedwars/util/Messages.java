@@ -289,7 +289,7 @@ public final class Messages {
         texts.put("timeline.bed-destruction-yours", "<prefix><red>Your bed is gone. <gray>The next death is your last.");
         texts.put("timeline.sudden-death", "<prefix><dark_red><event></dark_red> <gray>- the dragons are out.");
         texts.put("timeline.sudden-death-title", "<dark_red>SUDDEN DEATH");
-        texts.put("timeline.sudden-death-subtitle", "<gray>A dragon for every team");
+        texts.put("timeline.sudden-death-subtitle", "<gray>A dragon for every team - and the map starts falling");
         texts.put("timeline.header", "<prefix><gray>The round runs for <white><total></white> <gray>(<white><elapsed></white> so far):");
         texts.put("timeline.entry.done", "<dark_gray>  <at> <strikethrough><event>");
         texts.put("timeline.entry.next", "<yellow>  <at> <event> <gray>- in <white><time>");
@@ -305,6 +305,10 @@ public final class Messages {
         texts.put("dragon.name", "<team> <dark_purple>Dragon");
         texts.put("dragon.bar", "<dark_purple>Dragon <gray>- <white><team>");
         texts.put("dragon.killed", "<prefix><gray>The dragon of <team> <gray>was brought down.");
+
+        texts.put("wither.name", "<team> <dark_gray>Wither");
+        texts.put("wither.wave", "<prefix><dark_gray>The withers are here <gray>- <white><amount></white> <gray>of them.");
+        texts.put("wither.killed", "<prefix><gray>A wither of <team> <gray>was brought down.");
 
         texts.put("end.time-limit", "<prefix><gold>Time is up! <gray>The score decides this round.");
         texts.put("end.score.header", "<prefix><gray>Final score:");
@@ -328,6 +332,16 @@ public final class Messages {
         texts.put("build.too-high", "<prefix><red>You cannot build above <white><limit></white>.");
         texts.put("build.protected", "<prefix><red>You cannot build here.");
         texts.put("build.not-yours", "<prefix><red>You can only break what somebody built.");
+        texts.put("item.platform-solid", "<prefix><red>A rescue platform cannot be broken. It goes by itself.");
+        texts.put("item.tower-no-room", "<prefix><red>There is no room here for a tower.");
+        texts.put("custom-item.pop-up-tower.name", "<white>Pop-Up Tower");
+        texts.put("custom-item.pop-up-tower.lore", "<gray>Four walls and a ladder, around you, at once.");
+        texts.put("setup.time-set", "<prefix><gray>Time: <white><cycle></white> <dark_gray>(<ticks>)");
+        texts.put("setup.time.moving", "the sun moves");
+        texts.put("setup.time.fixed", "held still");
+        texts.put("chest.not-yours", "<prefix><red>That chest belongs to <white><team></white><red>.");
+        texts.put("chest.deposited", "<prefix><gray>Stored <white><what></white> <gray>in your team chest.");
+        texts.put("chest.nothing-to-deposit", "<prefix><gray>You are not carrying anything to store.");
 
         texts.put("bed.own", "<prefix><red>That is your own bed.");
         texts.put("bed.nobody", "the game");

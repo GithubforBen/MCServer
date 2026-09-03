@@ -81,6 +81,7 @@ public class IngamePhase extends GamePhase {
         if (generators != null) generators.remove();
         if (game.getShopKeepers() != null) game.getShopKeepers().remove();
         if (game.getDragons() != null) game.getDragons().remove();
+        if (game.getWithers() != null) game.getWithers().remove();
     }
 
     /**
@@ -198,6 +199,7 @@ public class IngamePhase extends GamePhase {
         participant.setState(GamePlayer.State.ALIVE);
         player.setGameMode(GameMode.SURVIVAL);
         Equipment.reset(player, spawnOf(team));
+        Equipment.clearEnderChest(player);
         Equipment.giveStartingKit(player, team);
         Messages.send(player, "game.your-team", "team", team.getColor().getDisplayName());
     }
@@ -228,7 +230,8 @@ public class IngamePhase extends GamePhase {
         if (generators != null) generators.tick(game, ticks);
         if (game.getUpgrades() != null) game.getUpgrades().tick(game, ticks);
         if (game.getTraps() != null) game.getTraps().tick(game, ticks);
-        if (game.getDragons() != null) game.getDragons().tick(ticks);
+        if (game.getDragons() != null) game.getDragons().tick(game, ticks);
+        if (game.getWithers() != null) game.getWithers().tick(game, ticks);
         tickRespawns();
         tickVoid();
         // last of the per tick work: an event that ends the round leaves this phase, and nothing below

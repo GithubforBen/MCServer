@@ -37,9 +37,26 @@ public final class Rules {
      * @param features what is switched on
      */
     public static void applyTo(World world, @Nullable ArenaMap arena, FeatureSettings features) {
-        boolean daylight = features.is(Feature.DAYLIGHT_CYCLE);
+        applyTo(world, arena, features, false);
+    }
+
+    /**
+     * @param startClock whether the time of day is wound back to what the map asks for. True when the
+     *                   arena is loaded and false when a switch is flipped mid round: a running sun that
+     *                   jumps back to morning because somebody opened the admin menu is not a feature
+     */
+    public static void applyTo(World world, @Nullable ArenaMap arena, FeatureSettings features,
+                               boolean startClock) {
+        // both have to agree. The server switch is the master off - a round that must not run into the
+        // dark stays light whatever a map wants - and above it every map says for itself whether its sun
+        // moves. The map half of that was written into every map file and then read by nobody, which is
+        // why a night map came up at noon and a fixed time never held
+        boolean daylight = features.is(Feature.DAYLIGHT_CYCLE)
+                && (arena == null || arena.isDaylightCycle());
         rule(world, GameRule.DO_DAYLIGHT_CYCLE, daylight);
-        if (!daylight) world.setTime(arena == null ? 6000L : arena.getFixedTime());
+        // a held sky is set every time, because the switch may have just been turned off. A moving one is
+        // only set when the round begins - otherwise it starts at whatever o'clock the world was saved at
+        if (!daylight || startClock) world.setTime(arena == null ? 6000L : arena.getFixedTime());
         rule(world, GameRule.DO_WEATHER_CYCLE, false);
         rule(world, GameRule.DO_FIRE_TICK, false);
         // on: a ghast fireball counts as mob griefing, so with this off a bought fireball explodes
