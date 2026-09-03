@@ -5,8 +5,10 @@ import de.hems.communication.events.cosmetic.BuyCosmeticEvent;
 import de.hems.communication.events.cosmetic.CosmeticUpdatedEvent;
 import de.hems.communication.events.cosmetic.PlayerCosmeticsUpdatedEvent;
 import de.hems.communication.events.cosmetic.RequestCosmeticsEvent;
+import de.hems.communication.events.cosmetic.RequestPlayerCosmeticsEvent;
 import de.hems.communication.events.cosmetic.RespondCosmeticBuyEvent;
 import de.hems.communication.events.cosmetic.RespondCosmeticsEvent;
+import de.hems.communication.events.cosmetic.RespondPlayerCosmeticsEvent;
 import de.hems.communication.events.cosmetic.SaveCosmeticEvent;
 import de.hems.communication.events.cosmetic.SelectCosmeticEvent;
 import de.hems.communication.events.money.BalanceUpdatedEvent;
@@ -36,6 +38,8 @@ public class CosmeticEvents {
         this.cosmetics = cosmetics;
         this.money = money;
         ListenerAdapter.register(RequestCosmeticsEvent.class, event -> onRequest((RequestCosmeticsEvent) event));
+        ListenerAdapter.register(RequestPlayerCosmeticsEvent.class,
+                event -> onPlayerRequest((RequestPlayerCosmeticsEvent) event));
         ListenerAdapter.register(SaveCosmeticEvent.class, event -> onSave((SaveCosmeticEvent) event));
         ListenerAdapter.register(BuyCosmeticEvent.class, event -> onBuy((BuyCosmeticEvent) event));
         ListenerAdapter.register(SelectCosmeticEvent.class, event -> onSelect((SelectCosmeticEvent) event));
@@ -43,7 +47,17 @@ public class CosmeticEvents {
 
     private void onRequest(RequestCosmeticsEvent request) throws Exception {
         ListenerAdapter.sendListeners(new RespondCosmeticsEvent(
-                request.getSender(), cosmetics.snapshot(), request.getEventId()));
+                request.getSender(), cosmetics.snapshot(!request.isCatalogOnly()), request.getEventId()));
+    }
+
+    /**
+     * Answers what one player owns, which is what a game server asks when they walk in.
+     */
+    private void onPlayerRequest(RequestPlayerCosmeticsEvent request) throws Exception {
+        UUID player = request.getPlayerId();
+        if (player == null) return;
+        ListenerAdapter.sendListeners(new RespondPlayerCosmeticsEvent(
+                request.getSender(), cosmetics.snapshotOf(player), request.getEventId()));
     }
 
     private void onSave(SaveCosmeticEvent request) throws Exception {

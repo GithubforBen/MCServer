@@ -58,6 +58,14 @@ public final class CosmeticsUi {
             CosmeticService.refreshAsync();
             return;
         }
+        // what this player owns arrives on its own when they join, so this only happens to somebody who
+        // was already here when the server lost its connection - and drawing the menu without it would
+        // offer them things they have long paid for
+        if (!CosmeticService.knows(player.getUniqueId())) {
+            player.sendMessage(ChatColor.GRAY + "Deine Cosmetics werden geladen - gleich nochmal.");
+            CosmeticService.loadPlayerAsync(player.getUniqueId());
+            return;
+        }
         CustomInventory.show(player, build(player, type));
     }
 
@@ -112,6 +120,11 @@ public final class CosmeticsUi {
 
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.GRAY + cosmetic.getDescription());
+        // gadgets are the one kind that a server can be without, so somebody standing on such a server
+        // should read that here rather than work it out from a pearl that never comes back
+        if (cosmetic.getType() == CosmeticType.GADGET && !Gadgets.areEnabled()) {
+            lore.add(ChatColor.DARK_GRAY + "Hier wirkt es nicht - anlegen kannst du es trotzdem.");
+        }
         lore.add(" ");
         if (selected) {
             lore.add(ChatColor.GREEN + "Angelegt");

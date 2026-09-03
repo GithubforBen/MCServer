@@ -9,7 +9,7 @@ import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.EventService;
 import de.hems.paper.cosmetic.CosmeticService;
-import de.hems.paper.cosmetic.WinEffects;
+import de.hems.paper.cosmetic.CosmeticEffects;
 import de.hems.paper.round.RoundService;
 import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.BedwarsEventSettings;
@@ -142,7 +142,7 @@ public final class Bedwars extends JavaPlugin {
         new RulesListener(this);
         new de.schnorrenbergers.bedwars.round.RoundStateListener(this);
         // what a round ends with, and what players carry into it
-        WinEffects.init(this);
+        CosmeticEffects.init(this);
         new de.schnorrenbergers.bedwars.cosmetic.GadgetListener(this);
         if (gameSettings.isStatsEnabled()) {
             stats = new StatsTracker(this, new FileStatsRepository(
@@ -337,6 +337,10 @@ public final class Bedwars extends JavaPlugin {
         // registered before the connection is attempted, so a round without a launcher still has a way out
         register("warp", new WarpCommand());
         register("lobby", new LobbyCommand());
+        // the shop talks to the launcher and to nothing else, so it is registered with the rest of the
+        // network commands - and it is the whole reason somebody who only plays bedwars no longer has to
+        // travel to survival to put on what they bought
+        register("cosmetics", new de.hems.paper.commands.CosmeticsCommand());
         try {
             new ListenerAdapter(ServerIdentity.of(this, "BEDWARS"));
             new PlayerAdminHandler(this);

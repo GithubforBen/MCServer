@@ -566,15 +566,36 @@ gibt es `MoneyService.changeBlocking` - der Cosmetic-Kauf geht diesen Weg.
 
 ## Cosmetics
 
-Cosmetics sind netzwerkweit und werden mit Bits bezahlt. Zu kaufen gibt es sie im Marktplatz auf
-Survival (`/shop`, Knopf in der unteren Reihe) - dieselbe Oberfläche kauft, legt an und legt ab, je
-nachdem, wie man zu dem Cosmetic gerade steht.
+Cosmetics sind netzwerkweit und werden mit Bits bezahlt. Zu kaufen gibt es sie mit `/cosmetics` auf
+jedem Server - Lobby, Bedwars, Survival - und zusätzlich über den Knopf im Marktplatz auf Survival
+(`/shop`). Dieselbe Oberfläche kauft, legt an und legt ab, je nachdem, wie man zu dem Cosmetic
+gerade steht.
 
 | Cosmetic | Art | Was es macht |
 |----------|-----|--------------|
 | Raketen | Sieges-Effekt | Feuerwerk über den Gewinnern. Für alle gratis, das ist der Standard. |
 | Tinte | Sieges-Effekt | Von der Bauhöhe regnen Explosionen über die ganze Map - nur Optik, kein Schaden, kein Rückstoß |
+| Gewitter | Sieges-Effekt | Blitze um die Gewinner herum, ohne Feuer und ohne Schaden |
+| Lichtsäule | Sieges-Effekt | Eine Säule aus Licht aus jedem Gewinner heraus bis über die Map |
+| Blitzschlag | Kill-Effekt | Ein Blitz da, wo der Gegner gefallen ist |
+| Seelen | Kill-Effekt | Die Seele des Gegners steigt langsam auf |
+| Stichflamme | Kill-Effekt | Ein Ring aus Feuer um den Gefallenen |
+| Flammenspur | Partikelspur | Flammen hinter dem Träger, solange er läuft |
+| Sternenstaub | Partikelspur | Helle Funken, die langsam absinken |
+| Noten | Partikelspur | Bunte Noten über dem Kopf |
 | Endlos-Perle | Gadget | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden |
+| Enterhaken | Gadget | Angel, die den Träger dorthin zieht, wo der Haken gelandet ist |
+
+Es gibt vier Arten, und von jeder trägt man höchstens eine: Sieges-Effekt, Kill-Effekt,
+Partikelspur, Gadget. Die ersten drei sind Bilder und laufen auf jedem Server. Gadgets nicht: sie
+greifen ins Spiel ein, also schaltet jeder Spielmodus sie einzeln frei (`Gadgets.setGuard`). Heute
+tut das nur Bedwars, und dort nur für Spieler, die tatsächlich in der Runde sind - eine
+Endlos-Perle wäre auf Survival keine Optik mehr, sondern Wirtschaft. Wer ein Gadget auf einem
+Server anlegt, der keine hat, sieht das im Menü.
+
+Partikelspuren zeichnen nichts für Zuschauer und nichts für unsichtbare Spieler. Das Zweite ist
+kein Detail: eine gekaufte Spur, die einen unsichtbaren Bedwars-Spieler verrät, wäre eine, die
+niemand anlegt.
 
 Admins verwalten sie im selben Menü über "Verwalten": Linksklick schaltet ein Cosmetic von
 verkäuflich über nur besitzbar auf aus, Rechtsklick erhöht den Preis, Shift macht es für alle
@@ -586,8 +607,15 @@ an denen es auf halbem Weg schiefgehen kann, und auf halbem Weg heißt: bezahlt 
 
 Ein Cosmetic ist zwei Hälften, die sich über eine id treffen. Dem Launcher gehört die Hälfte, die
 eine Entscheidung ist (gibt es das, verkauft es sich, für wie viel), dem Spielserver die Hälfte, die
-Code ist. Ein neuer Effekt ist deshalb ein Eintrag in `de.hems.types.cosmetic.Cosmetics` und eine
-Klasse, die `WinEffect` implementiert - dazwischen darf jede Seite der anderen voraus sein.
+Code ist. Ein neuer Effekt ist deshalb ein Eintrag in `de.hems.types.cosmetic.Cosmetics`, eine
+Klasse, die `WinEffect`, `KillEffect`, `TrailEffect` oder `Gadget` implementiert, und eine Zeile in
+`CosmeticEffects.init` - dazwischen darf jede Seite der anderen voraus sein. Im Verwalten-Menü steht
+bei jedem Eintrag, ob dieser Server Code dafür hat.
+
+Den Katalog holt sich jeder Server alle fünf Minuten. Wem was gehört, holt er sich dagegen einzeln:
+beim Join des Spielers, und eine Minute nach dessen Quit wirft er es wieder weg. Vorher reiste der
+Besitz **aller** Spieler mit dem Katalog mit, was mit jedem Spieler wächst, der jemals etwas gekauft
+hat - für die zwanzig Leute, die gerade auf dem Server stehen.
 
 ## Discord-Verknüpfung
 

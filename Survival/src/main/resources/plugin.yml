@@ -3,6 +3,10 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.survival.Survival
 api-version: '26.2'
 commands:
+  cosmetics:
+    description: Cosmetics kaufen, anlegen und ablegen
+    usage: /cosmetics [win_effect|kill_effect|trail|gadget|neu|verwalten]
+    aliases: [cosmetic]
   debug:
     description: Testbefehle für Entwickler, öffnet Inventare und startet Animationen
     usage: /debug <animation|inv <name>>

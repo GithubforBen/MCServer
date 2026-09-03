@@ -3,6 +3,10 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.lobby.LobbyPlugin
 api-version: '26.2'
 commands:
+  cosmetics:
+    description: Cosmetics kaufen, anlegen und ablegen
+    usage: /cosmetics [win_effect|kill_effect|trail|gadget|neu|verwalten]
+    aliases: [cosmetic]
   servermanger:
     description: Server verwalten und neue Server erstellen
     usage: /servermanger [create|stop|restart|list]
