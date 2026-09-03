@@ -80,6 +80,9 @@ public final class Survival extends JavaPlugin {
         AdminStash.init(this);
         TeamService.init(this);
         new TeamSyncListener();
+        // claims are only worth having if somebody can see where they are: a title on crossing, the
+        // owner over the hotbar while standing on it, and /cteam grenze for the line itself
+        new de.schnorrenbergers.survival.featrues.team.ClaimDisplay(this);
         registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
         registerCommand("debug", new DebugCommand());
         registerCommand("cteam", new TeamCommand());

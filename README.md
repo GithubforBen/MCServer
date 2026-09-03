@@ -224,6 +224,26 @@ Danach wird die alte Datei als migriert markiert (nicht gelöscht).
 | `/cteam sethome` · `home` | Team-Home setzen und nutzen |
 | `/cteam info [team]` · `list` | Team-Infos, alle Teams im Netzwerk |
 | `/cteam claim` · `unclaim` · `chunks` | Chunks kaufen, freigeben, Karte anzeigen |
+| `/cteam grenze` | Zeichnet die Chunk-Grenzen um dich herum zehn Sekunden lang mit Partikeln |
+
+### Wem gehört der Boden hier
+
+Claims sind unterwegs sichtbar, nicht nur auf Befehl:
+
+- **Titel beim Betreten.** Wer die Grenze überschreitet, bekommt den Teamnamen in Teamfarbe
+  eingeblendet, darunter „Betreten" - beim Schritt zurück ins Freie steht dort „Wildnis" und
+  „Verlassen". Ausgelöst wird das vom Wechsel des **Besitzers**, nicht vom Chunkwechsel: quer über ein
+  Teamgebiet zu laufen überquert alle sechzehn Blöcke eine Chunkgrenze, und ein Titel bei jeder davon
+  wäre der Grund, das Ganze wieder abzuschalten.
+- **Actionbar währenddessen.** Solange jemand auf fremdem oder eigenem Boden steht, steht der
+  Teamname über der Hotbar, beim eigenen Team mit dem Zusatz „dein Team". In der Wildnis steht dort
+  nichts - eine leere Zeile ist dort die richtige Antwort und hält die Anzeige aus dem Weg.
+- **`/cteam grenze`.** Zeichnet die Kanten des eigenen Chunks und der angrenzenden Claims in
+  Teamfarbe, zehn Sekunden lang, und nur für den, der gefragt hat. Der Chunk, in dem man selbst
+  steht, ist immer dabei - weiß, wenn er noch frei ist.
+- **`/cteam chunks`.** Die Karte zeigt eine Farbe **pro Team** statt nur grün und rot, in der Mitte
+  einen Pfeil in Blickrichtung, und darunter eine Legende mit den Teams, die gerade zu sehen sind.
+  Norden ist oben. Der Mauszeiger über einem Feld nennt Team und Koordinaten.
 
 ### Einstellbar
 
