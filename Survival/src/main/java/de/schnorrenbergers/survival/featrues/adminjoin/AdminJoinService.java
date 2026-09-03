@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,6 +37,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * The idea is that nobody can tell who is standing there. So the chat is told they left, the name over
  * their head, in the tab list and in chat becomes the admin's, and the skin with it. Typing it again
  * turns it around: the admin leaves, the player joins, and their own things are back in their hands.
+ * <p>
+ * Where they stand is part of that. The two shapes keep their own places: the admin picks up where the
+ * admin last stood, the player where the player last stood, and neither of them ever appears exactly
+ * where the other just vanished. Without that the disguise gives itself away in one line of chat -
+ * somebody leaves, somebody arrives, and both of them at the same fence post.
  * <p>
  * What they carry while they are the admin is the admin stash - the same chest the website drops things
  * into. It is <em>taken</em> rather than copied: the stash is emptied on the launcher the moment somebody
@@ -200,6 +206,10 @@ public final class AdminJoinService implements Listener {
         realProfiles.put(player.getUniqueId(), player.getPlayerProfile().clone());
         disguised.put(player.getUniqueId(), realName);
 
+        // away from where the player was last seen, and to wherever the admin was last seen - or the
+        // spawn, which is where anybody arrives who has never been here before
+        player.teleport(remembered("admins." + player.getUniqueId() + ".location", player));
+
         player.getInventory().setContents(new ItemStack[player.getInventory().getSize()]);
         player.getInventory().setStorageContents(packed(stash));
         AdminIdentity.wear(player);
@@ -291,6 +301,10 @@ public final class AdminJoinService implements Listener {
         UUID id = player.getUniqueId();
         String realName = disguised.remove(id);
         PlayerProfile original = realProfiles.remove(id);
+        // the admin's place is kept for the next time, and it outlives the disguise on purpose: it is the
+        // one thing that has to still be there when the same admin comes back tomorrow
+        config.set("admins." + id + ".location", player.getLocation());
+        player.teleport(remembered("players." + id + ".player-location", player));
         player.getInventory().setContents(restore(player));
         clear(id);
         if (original != null) {
@@ -359,6 +373,7 @@ public final class AdminJoinService implements Listener {
         String path = "players." + player.getUniqueId();
         config.set(path + ".real-name", realName);
         config.set(path + ".inventory", Arrays.asList(player.getInventory().getContents()));
+        config.set(path + ".player-location", player.getLocation());
         save();
     }
 
@@ -375,6 +390,21 @@ public final class AdminJoinService implements Listener {
             if (stored.get(slot) instanceof ItemStack item) contents[slot] = item;
         }
         return contents;
+    }
+
+    /**
+     * Where one of the two shapes was last seen.
+     *
+     * @param path   where it is written down
+     * @param player whoever is being sent there
+     * @return that place, or the spawn when there is none - or when its world is gone, which is what a
+     *         deleted or renamed world looks like from here
+     */
+    private Location remembered(String path, Player player) {
+        Location stored = config.getLocation(path);
+        if (stored != null && stored.getWorld() != null) return stored;
+        return Bukkit.getWorlds().isEmpty()
+                ? player.getLocation() : Bukkit.getWorlds().get(0).getSpawnLocation();
     }
 
     private void clear(UUID id) {

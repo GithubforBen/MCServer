@@ -386,6 +386,13 @@ derselben Ablage in der Tasche wären zwei Mal dieselben Diamanten. Solange jema
 `/admin` das mit Namen, und ein zweiter Admin kann sich nicht verkleiden. Passen die Sachen nicht in
 36 Stapel, lehnt der Befehl ab, statt den Rest fallenzulassen.
 
+Auch der Ort gehört zur Tarnung. Beide Gestalten haben ihre eigene letzte Position: der Admin
+taucht dort auf, wo der Admin zuletzt stand, der Spieler dort, wo der Spieler zuletzt stand, und
+keiner von beiden erscheint da, wo der andere gerade verschwunden ist. Ohne das verrät sich die
+Verkleidung in einer Zeile Chat - einer geht, einer kommt, beide am selben Zaunpfahl. Gibt es für
+die Admin-Gestalt noch keinen Ort - beim ersten Mal -, ist es der Spawn, also genau das, was ein
+echter Join tut.
+
 Sein eigenes Inventar liegt so lange in `plugins/survival/admin-join.yml`, nicht im Speicher: ein
 Neustart mitten in der Verkleidung darf niemandem seine Sachen kosten. Nach dem Neustart ist er
 weiterhin der Admin und bekommt die Gestalt beim Join wieder aufgesetzt. Stirbt er in der

@@ -279,6 +279,8 @@ Offen:
 - [x] Das Admin-Inventar ist die Ablage, ausgeliehen statt kopiert: beim Launcher geleert, beim
       Zurückschalten zurückgeschrieben, revisionsgesichert wie das Ablagefenster
 - [x] Eigenes Inventar liegt auf Platte, nicht im Speicher; nach einem Neustart bleibt die Gestalt
+- [x] Beide Gestalten haben ihre eigene letzte Position, beim ersten Mal der Spawn - niemand
+      erscheint dort, wo der andere gerade verschwunden ist
 - [x] Adminabuse-Log und `/admin` melden den echten Namen, nicht die Gestalt
 
 Offen:
@@ -286,6 +288,8 @@ Offen:
       Inventar ist. Für mehrere bräuchte jeder eine eigene Ablage
 - [ ] Ob `setPlayerProfile` im laufenden Spiel wirklich alles umzieht (Name über dem Kopf, Skin,
       eigene Sicht in F5), ist ungeprüft. Wenn nicht, hilft nur ein Reconnect an der Stelle
+- [ ] Der Ort wird zurückgegeben, wie er gespeichert wurde. Ist dort inzwischen zugebaut worden,
+      steht man im Block - eine Suche nach sicherem Boden gibt es nicht
 - [ ] Passt die Ablage nicht in 36 Stapel, lehnt der Befehl ab. Eine Ablage mit 54 Slots ist damit
       nur zu tragen, wenn sie halb leer ist
 - [ ] Ein verkleideter Admin heißt für jeden Code, der `getName()` fragt, „Admin". Geprüft und
