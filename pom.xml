@@ -17,6 +17,7 @@
         <module>Bedwars</module>
         <module>BackpackPlugin</module>
         <module>RunPlugin</module>
+        <module>PokerPlugin</module>
         <module>VelocityPlugin</module>
     </modules>
 
