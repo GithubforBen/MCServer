@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class CasinoContext {
 
+    /** The night as it was read at startup, which is what the stakes come from. */
     private static volatile EventData event;
     private static volatile PokerEventSettings settings;
     private static volatile String serverName;
@@ -59,10 +60,20 @@ public final class CasinoContext {
     }
 
     /**
-     * @return the night being dealt, or {@code null} for a house table
+     * The night being dealt, as fresh as the network has it.
+     * <p>
+     * Read through {@link EventService} rather than out of the snapshot, so the name and the end time
+     * follow an admin correcting them mid-evening. The stakes deliberately do not follow: {@link #settings}
+     * stays as it was read at startup, because a buy-in that moves under a running night would make the
+     * ranking compare two different games, and the people who bought in at the old price would have played
+     * a different one.
+     *
+     * @return the night, or {@code null} for a house table
      */
     public static @Nullable EventData getEvent() {
-        return event;
+        if (event == null) return null;
+        EventData fresh = EventService.getEvent(event.getId());
+        return fresh == null ? event : fresh;
     }
 
     /**
@@ -91,18 +102,4 @@ public final class CasinoContext {
         return event == null ? "Haustisch" : event.getName();
     }
 
-    /**
-     * Takes over a change to the event that arrived from the launcher.
-     * <p>
-     * The stakes of a running night are not meant to move under the players - a raised buy-in halfway
-     * through would make the ranking compare two different games - so only the event itself is refreshed
-     * here, for the name and the end time. What the tables deal on stays as it was read at startup.
-     *
-     * @param updated the event as it now stands
-     */
-    public static void refresh(EventData updated) {
-        if (event == null || updated == null) return;
-        if (!event.getId().equals(updated.getId())) return;
-        event = updated;
-    }
 }

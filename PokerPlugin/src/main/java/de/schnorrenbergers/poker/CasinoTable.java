@@ -436,6 +436,13 @@ public final class CasinoTable implements TableEvents {
 
     @Override
     public void onSeatBroke(PokerTable table, PokerPlayer player) {
+        Tournament tournament = Casino.getTournament();
+        if (tournament != null) {
+            // out of chips in a tournament is out of the tournament. There is nothing to buy back in with
+            // and the place is recorded now, while it is still known
+            tournament.knockOut(player);
+            return;
+        }
         if (player.isBot()) return;
         Player online = Bukkit.getPlayer(player.getId());
         if (online == null) return;
@@ -447,6 +454,19 @@ public final class CasinoTable implements TableEvents {
     public void onPlayerLeft(PokerTable table, PokerPlayer player, int chips) {
         UUID account = player.getAccount();
         String name = player.isBot() ? nameOfOwner(player) : player.getName();
+        Tournament tournament = Casino.getTournament();
+        if (tournament != null) {
+            // tournament chips are a position in a race, not money. Standing up with a stack wins nothing
+            // and cashing it out would hand somebody bits nobody paid in
+            if (chips > 0) tournament.knockOut(player);
+            Player leaving = Bukkit.getPlayer(player.getId());
+            if (leaving != null) {
+                unsit(leaving);
+                TurnControls.clear(leaving);
+            }
+            view.redraw(table);
+            return;
+        }
         if (chips > 0) {
             Bank.cashOut(account, name, chips,
                     player.isBot() ? "Poker: Bot abgeräumt" : "Poker: Chips ausgezahlt");

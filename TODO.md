@@ -91,6 +91,22 @@ Offen:
       in der Actionbar
 - [x] Als `FileType.PLUGIN.RUN` registriert und im `EVENT`-Template installiert
 
+### 1.4b Pokernacht — steht
+
+- [x] Eventtyp `POKER` mit Format, Buy-in, Blinds, Hausanteil samt Deckel, Tischen,
+      Plätzen, Bots und den zwei Wertungsschwellen
+- [x] Lobby fährt das Casino hoch, kündigt es an und lässt die Leute selbst hingehen
+- [x] Chips sind Bits, eins zu eins; Einkauf wartet auf den Launcher, Auszahlen nicht
+- [x] Offene Stacks liegen beim Launcher — Absturz kostet den Abend, nicht das Geld
+- [x] Rangliste nach Verhältnis, Preise über das normale Preis-Menü
+- [x] Casino wird einmal gebaut und wandert danach über `./poker-world` mit
+- [x] Bots mit gemessener Balance (siehe `BotBalanceCheck`), Stack zahlt der Spawner
+- [x] Turnier auf einem Tisch: steigende Blinds, Plätze, Topf am Ende
+- [ ] **Am lebenden Server nachprüfen** (siehe Abschnitt 2)
+- [ ] Mehrtisch-Turnier: Tische brechen und Plätze ausgleichen, wenn es je gebraucht wird
+- [ ] Eigene Pokerrunden über `/runde`, so wie es sie für Bedwars gibt — die Engine und
+      die Bots stehen dafür schon, es fehlt der Weg über `RoundData`
+
 ### 1.5 Lobby
 - [x] Eventsystem in der Lobby verfügbar (`/events`, Kalender, Join-Hinweis)
 - [x] Events lassen sich direkt aus der Lobby heraus anlegen
@@ -111,6 +127,21 @@ Offen:
 ## 2. Am lebenden Server nachprüfen
 
 Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiziert.
+
+**Pokernacht** — die Regeln selbst sind geprüft (`HandCheck`, `TableCheck`, 104 Prüfungen plus
+Zufallsläufe), die Bots gemessen (`BotBalanceCheck`). Was nur auf einem echten Server geht:
+
+- [ ] Sieht der Tisch aus wie gedacht? Karten flach auf dem Filz, eigene nur für einen selbst
+      sichtbar, Chipstapel in Denominationen, der Kopf des Aktiven dreht schneller
+- [ ] Setzt man sich per Rechtsklick sauber auf den Stuhl, und steht man auch wieder auf?
+      (`CasinoTable.placeOnChair` reitet einen unsichtbaren ArmorStand)
+- [ ] Buy-in unter echter Last: zwei Leute klicken gleichzeitig auf denselben Stuhl — einer
+      bekommt sein Geld zurück statt eines Platzes
+- [ ] Logout mitten in der Hand: kommen die Chips wirklich als Bits zurück?
+- [ ] Casino-Server hart killen (`kill -9`), Event abrechnen lassen: zahlt der Launcher die
+      offenen Stacks aus, und **nur einmal**?
+- [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau wieder da?
+- [ ] Turnier: steigen die Blinds nur zwischen Händen, und stimmt die Auszahlung?
 
 - [ ] Bleibt nach mehreren Neustarts **genau ein** Villager pro Shop übrig?
       (`ShopkeeperChunkListener`, Spawn über `EntitiesLoadEvent`)

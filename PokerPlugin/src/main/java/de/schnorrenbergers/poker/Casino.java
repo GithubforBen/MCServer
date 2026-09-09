@@ -46,6 +46,18 @@ public final class Casino {
     private static final Map<Integer, Map<UUID, Integer>> stacksByTable = new HashMap<>();
     private static final Map<UUID, String> accountNames = new HashMap<>();
     private static boolean closed;
+    /** The tournament, or {@code null} when this night is a cash game. */
+    private static Tournament tournament;
+    /** When registration closes and the first hand is dealt, or {@code 0} while nobody has signed up. */
+    private static long startsAt;
+
+    /**
+     * How long registration stays open after the first person sits down.
+     * <p>
+     * A tournament that starts the moment two people are seated is a tournament nobody else gets into. Three
+     * minutes is long enough for a room that has just been told the casino is open to walk in.
+     */
+    private static final long REGISTRATION_MILLIS = 3L * 60_000L;
 
     private Casino() {
     }
@@ -66,15 +78,76 @@ public final class Casino {
             owner.getLogger().severe("There is no casino world - no table can be opened.");
             return;
         }
-        for (TableSpot spot : layout.getTables()) {
-            tables.add(new CasinoTable(owner, world, spot, settings));
+        boolean isTournament = !settings.getFormat().allowsCashOut();
+        if (isTournament) {
+            // a tournament is one table. Moving players between tables as seats empty is a system of its
+            // own - breaking tables, balancing seats, a bubble across four rooms - and half of it would be
+            // worse than none
+            tournament = new Tournament(owner, settings);
+            if (!layout.getTables().isEmpty()) {
+                tables.add(new CasinoTable(owner, world, layout.getTables().getFirst(), settings));
+            }
+        } else {
+            for (TableSpot spot : layout.getTables()) {
+                tables.add(new CasinoTable(owner, world, spot, settings));
+            }
         }
-        owner.getLogger().info("Opened " + tables.size() + " tables.");
+        owner.getLogger().info("Opened " + tables.size() + " table(s) as a "
+                + settings.getFormat().getTitle() + ".");
         Bukkit.getScheduler().runTaskTimer(owner, () -> {
             if (closed) return;
             long now = System.currentTimeMillis();
+            driveTournament(now);
             for (CasinoTable table : tables) table.tick(now);
         }, TICK_INTERVAL, TICK_INTERVAL);
+    }
+
+    /**
+     * @return the tournament, or {@code null} for a cash game
+     */
+    public static @Nullable Tournament getTournament() {
+        return tournament;
+    }
+
+    public static boolean isTournament() {
+        return tournament != null;
+    }
+
+    /**
+     * Runs registration, the start, the rising blinds and the end.
+     */
+    private static void driveTournament(long now) {
+        if (tournament == null || tables.isEmpty()) return;
+        CasinoTable table = tables.getFirst();
+
+        if (tournament.isOpen()) {
+            if (startsAt == 0L || tournament.getEntrantCount() < 2) return;
+            if (now < startsAt) return;
+            tournament.start(now);
+            // everybody was sat out while registration was open, which is what kept the table from
+            // dealing before the field was complete
+            for (PokerPlayer seat : table.getRules().getPlayers()) seat.setSittingOut(false);
+            return;
+        }
+        if (!tournament.isRunning()) return;
+
+        tournament.tick(table.getRules(), now);
+
+        // one player left with chips means it is over. Checked between hands, because during one there is
+        // always a moment where everybody but the aggressor has nothing in front of them
+        if (table.getRules().isHandRunning()) return;
+        List<PokerPlayer> withChips = new ArrayList<>();
+        for (PokerPlayer seat : table.getRules().getPlayers()) {
+            if (seat.getChips() > 0) withChips.add(seat);
+        }
+        if (withChips.size() > 1) return;
+        tournament.finish(withChips.isEmpty() ? null : withChips.getFirst());
+        for (PokerPlayer seat : new ArrayList<>(table.getRules().getPlayers())) {
+            // the chips are worthless now: the money was the pool and it has been divided
+            seat.setChips(0);
+            table.getRules().standUp(seat);
+        }
+        seatedAt.clear();
     }
 
     public static PokerEventSettings getSettings() {
@@ -143,6 +216,13 @@ public final class Casino {
             player.sendMessage(Component.text("Der Tisch ist voll.", NamedTextColor.RED));
             return;
         }
+        if (tournament != null && !tournament.isOpen()) {
+            player.sendMessage(Component.text(tournament.isFinished()
+                            ? "Das Turnier ist vorbei."
+                            : "Das Turnier läuft schon - später einsteigen geht nicht.",
+                    NamedTextColor.RED));
+            return;
+        }
         int buyIn = settings.getBuyIn();
         player.sendMessage(Component.text("Du kaufst dich für " + buyIn + " Bits ein ...",
                 NamedTextColor.GRAY));
@@ -158,6 +238,18 @@ public final class Casino {
                 return;
             }
             seatedAt.put(player.getUniqueId(), table);
+            if (tournament == null) return;
+            // in a tournament nobody is dealt in until registration closes, so the seat is sat out until
+            // then rather than the table starting a heads-up match while the room is still walking in
+            PokerPlayer seated = table.find(player.getUniqueId());
+            if (seated != null) seated.setSittingOut(true);
+            tournament.register(player);
+            if (startsAt == 0L) {
+                startsAt = System.currentTimeMillis() + REGISTRATION_MILLIS;
+            }
+            player.sendMessage(Component.text("Das Turnier startet in "
+                    + Math.max(1, (startsAt - System.currentTimeMillis() + 59_999L) / 60_000L)
+                    + " Minute(n).", NamedTextColor.GRAY));
         });
     }
 
@@ -233,6 +325,10 @@ public final class Casino {
     static void reportStacks(int tableIndex, Map<UUID, Integer> stacks, Map<UUID, String> names) {
         stacksByTable.put(tableIndex, new HashMap<>(stacks));
         accountNames.putAll(names);
+        // in a tournament the chips are not money, so reporting them as an open stack would make a crash
+        // pay everybody out their chip count. What is owed there is the entry, and the tournament reports
+        // that itself
+        if (tournament != null) return;
         Map<UUID, Integer> total = totals();
         for (Map.Entry<UUID, Integer> entry : total.entrySet()) {
             Bank.setOpenStack(entry.getKey(), accountNames.getOrDefault(entry.getKey(), "?"),
@@ -278,6 +374,16 @@ public final class Casino {
             table.close();
         }
         seatedAt.clear();
+        if (tournament != null && !tournament.isFinished()) {
+            // the night is being switched off with the tournament unfinished. There is no result, so the
+            // only honest thing to hand back is what people paid to be in it - which the launcher already
+            // holds as their open stack, so nothing is paid here and nothing is lost
+            plugin.getLogger().info("The tournament never finished - the host holds every entry and "
+                    + "hands them back when the night is settled.");
+            stacksByTable.clear();
+            tables.clear();
+            return;
+        }
         Map<UUID, Bank.StackEntry> left = new HashMap<>();
         for (Map.Entry<UUID, Integer> entry : totals().entrySet()) {
             left.put(entry.getKey(), new Bank.StackEntry(

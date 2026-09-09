@@ -94,6 +94,24 @@ public final class PokerCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("Am Tisch liegen: ", NamedTextColor.GRAY)
                     .append(Component.text(onTable + " Chips", NamedTextColor.GOLD)));
         }
+        de.schnorrenbergers.poker.Tournament tournament = Casino.getTournament();
+        if (tournament != null) {
+            player.sendMessage(Component.text("── Turnier ──", NamedTextColor.GOLD));
+            player.sendMessage(Component.text("Spieler: ", NamedTextColor.GRAY)
+                    .append(Component.text(String.valueOf(tournament.getEntrantCount()),
+                            NamedTextColor.WHITE))
+                    .append(Component.text(", im Topf: ", NamedTextColor.GRAY))
+                    .append(Component.text(tournament.getPrizePool() + " Bits", NamedTextColor.GOLD)));
+            if (tournament.isOpen()) {
+                player.sendMessage(Component.text("Anmeldung läuft noch.", NamedTextColor.GREEN));
+            } else if (tournament.isRunning()) {
+                player.sendMessage(Component.text("Level " + tournament.getLevel() + ", nächste "
+                        + "Erhöhung in " + (tournament.millisToNextLevel() / 60_000 + 1) + " Min",
+                        NamedTextColor.YELLOW));
+            } else {
+                player.sendMessage(Component.text("Vorbei.", NamedTextColor.GRAY));
+            }
+        }
         player.sendMessage(Component.text("Setz dich mit Rechtsklick auf einen Stuhl.",
                 NamedTextColor.AQUA));
     }
