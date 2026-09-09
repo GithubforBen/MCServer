@@ -43,11 +43,24 @@ public class EventSettlement {
     private final EventStore events;
     private final RunStore runs;
     private final AwardStore awards;
+    /**
+     * What closes a poker night, or {@code null} on a launcher that has none.
+     * <p>
+     * Kept as its own thing rather than as more methods here, because a poker night ends in a way no other
+     * event does: money is still lying on the tables and has to go back before anything else happens.
+     */
+    private final de.hems.utils.poker.PokerSettlement poker;
 
     public EventSettlement(EventStore events, RunStore runs, AwardStore awards) {
+        this(events, runs, awards, null);
+    }
+
+    public EventSettlement(EventStore events, RunStore runs, AwardStore awards,
+                           de.hems.utils.poker.PokerSettlement poker) {
         this.events = events;
         this.runs = runs;
         this.awards = awards;
+        this.poker = poker;
         Timer timer = new Timer("event-settlement", true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -184,6 +197,18 @@ public class EventSettlement {
      */
     public void settle(EventData event) {
         List<RunData> board = runs.getRunsOf(event.getId());
+
+        // a poker night carries money that is still on its tables, and that has to be handed back before
+        // the event is marked as applied - after that nobody comes past here again
+        if (poker != null && event.getType() == de.hems.types.event.EventType.POKER) {
+            try {
+                poker.settle(event);
+            } catch (Exception e) {
+                System.out.println("Could not settle the poker night " + event.getName()
+                        + ": " + e.getMessage() + " - it stays open and is tried again.");
+                return;
+            }
+        }
 
         // a cancelled event never really happened, so nobody is rewarded for it
         if (event.getState() != EventState.CANCELLED) {
@@ -363,6 +388,9 @@ public class EventSettlement {
      */
     public void discard(UUID eventId) {
         clearRuns(runs.getRunsOf(eventId));
+        // a deleted poker night still has money on its tables. The rows only go once it is back with the
+        // people it belongs to, so the delete button cannot quietly empty somebody's account
+        if (poker != null) poker.discard(eventId);
     }
 
     private static void announceEvent(UUID id, EventData event) {

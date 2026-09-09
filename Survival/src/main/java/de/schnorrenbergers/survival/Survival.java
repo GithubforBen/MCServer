@@ -112,6 +112,9 @@ public final class Survival extends JavaPlugin {
         new JoinListener();
         EventService.init(this);
         RunService.init(this);
+        // the calendar is open here as well, and a poker ranking that is empty everywhere but the lobby
+        // looks like a bug rather than like a server that was not asked
+        de.hems.paper.poker.PokerStatsService.init(this);
         // this server owns the economy, so it is the one that can pay out the money side of a prize
         AwardService.setMoneyGiver((player, amount) ->
                 MoneyHandler.addMoney(amount, player.getUniqueId()));

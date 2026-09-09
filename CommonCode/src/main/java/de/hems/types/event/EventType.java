@@ -25,7 +25,13 @@ public enum EventType implements Serializable {
      * A round of bedwars at a fixed time. The network puts a bedwars server up when it starts and takes
      * everybody who is in the lobby along; how big the teams are is a setting of the event.
      */
-    BEDWARS("Bedwars", false, false);
+    BEDWARS("Bedwars", false, false),
+    /**
+     * A poker night. The network puts a casino server up when it starts and takes everybody in the lobby
+     * along; the stakes are the bits of the network, and what the house keeps of every pot is a setting of
+     * the event.
+     */
+    POKER("Pokernacht", false, false);
 
     private final String title;
     private final boolean onlyOnce;

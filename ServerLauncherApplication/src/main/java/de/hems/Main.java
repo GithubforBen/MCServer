@@ -67,6 +67,7 @@ public class Main {
     private RoundStore roundStore;
     private CosmeticStore cosmeticStore;
     private AccountLinkStore accountLinkStore;
+    private de.hems.utils.poker.PokerStatsStore pokerStatsStore;
     private JDA jda;
     private WebServer webServer;
     private IdleServerWatchdog idleServerWatchdog;
@@ -119,7 +120,14 @@ public class Main {
         eventStore = new EventStore();
         runStore = new RunStore();
         awardStore = new AwardStore();
-        new EventEvents(eventStore, runStore, awardStore, new EventSettlement(eventStore, runStore, awardStore));
+        // the record of the poker nights, which is also the receipt for chips that are still on a table:
+        // a casino server that dies must not take anybody's buy-in with it
+        pokerStatsStore = new de.hems.utils.poker.PokerStatsStore();
+        de.hems.events.PokerEvents pokerEvents = new de.hems.events.PokerEvents(pokerStatsStore);
+        de.hems.utils.poker.PokerSettlement pokerSettlement =
+                new de.hems.utils.poker.PokerSettlement(pokerStatsStore, moneyStore, awardStore, pokerEvents);
+        new EventEvents(eventStore, runStore, awardStore,
+                new EventSettlement(eventStore, runStore, awardStore, pokerSettlement));
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         // what the machine has left, and which server is sitting on memory it never uses
@@ -305,6 +313,10 @@ public class Main {
 
     public CosmeticStore getCosmeticStore() {
         return cosmeticStore;
+    }
+
+    public de.hems.utils.poker.PokerStatsStore getPokerStatsStore() {
+        return pokerStatsStore;
     }
 
     public AccountLinkStore getAccountLinkStore() {

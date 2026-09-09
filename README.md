@@ -701,6 +701,212 @@ beim Join des Spielers, und eine Minute nach dessen Quit wirft er es wieder weg.
 Besitz **aller** Spieler mit dem Katalog mit, was mit jedem Spieler wächst, der jemals etwas gekauft
 hat - für die zwanzig Leute, die gerade auf dem Server stehen.
 
+## Pokernacht
+
+Ein Event-Typ, bei dem um die Bits des Netzwerks gepokert wird. Ein Admin legt ihn im Kalender an
+(`/events` → Neues Event → Typ `Pokernacht`), stellt Einsätze und Hausanteil ein, und ein paar Minuten
+vor der Zeit fährt die Lobby einen Casino-Server hoch und macht ihn auf. Niemand wird hinübergezogen:
+das Casino wird angekündigt, wer spielen will geht selbst hin. Eine Bedwars-Runde *startet*, eine
+Pokernacht *öffnet*.
+
+| Einstellung | Was sie macht |
+|-------------|---------------|
+| Format | Cash Game oder Turnier |
+| Buy-in | Was ein Einkauf kostet — **ein Bit ist ein Chip**, es gibt keinen Kurs |
+| Blinds | Small Blind, der Big Blind ist doppelt so groß |
+| Hausanteil | Was das Haus pro Pot behält, mit Deckel in Big Blinds |
+| Tische / Plätze | Wie viele Tische das Casino hat und wie viele Stühle pro Tisch |
+| Bots | Ob Spieler welche setzen dürfen, und was die Gebühr kostet |
+| Wertung | Wie viele Hände und wie viel Einsatz es für die Rangliste braucht |
+
+### Gespielt wird um echtes Geld
+
+Ein Chip ist ein Bit, eins zu eins, und zwar bewusst: bei einem Kurs muss jeder am Tisch rechnen, was
+eine Erhöhung ihn kostet, und beim ersten Rechenfehler ist echtes Geld weg.
+
+Der Weg zwischen Bits und Chips ist genau eine Klasse (`Bank`). Der Einkauf **wartet** auf die
+Bestätigung des Launchers, bevor Chips existieren — andersherum wäre ein Platz mit Chips, für die nie
+bezahlt wurde, und ein Absturz im falschen Moment macht daraus Geld aus dem Nichts. Die Auszahlung
+wartet nicht: eine Gutschrift kann nicht an fehlender Deckung scheitern.
+
+**Was ein Absturz kostet.** Den Abend, nie das Geld. Nach jeder Hand meldet der Casino-Server dem
+Launcher, wie viele Chips vor wem liegen. Stirbt er mitten im Spiel, zahlt der Launcher genau daraus
+zurück, wenn die Nacht abgerechnet wird. Dasselbe gilt, wenn ein Admin ein laufendes Event löscht: die
+Chips gehen zuerst zurück, die Zeilen erst danach.
+
+### Rangliste
+
+Gewertet wird, **was unterm Strich gewonnen wurde**: alles was vom Tisch kam, minus alles was drauf
+ging. Chips, die noch vor jemandem liegen, zählen mit — wer vorn liegt und weiterspielt, liegt vorn.
+
+Vorher war es das Verhältnis raus/rein, und das hatte ein Loch, das sich mit Schwellen nicht wirklich
+zumachen lässt: ein Verhältnis belohnt den kleinsten Einsatz, also gewinnt den Abend, wer möglichst
+wenig riskiert — das Gegenteil einer Pokernacht. Beim Gewinn gibt es das Loch nicht: oben steht, wer
+anderen Geld abgenommen hat, und das ist das Spiel.
+
+Der Preis dafür ist echt und soll hier stehen: es belohnt, größer zu spielen. Wer 5000 aus einem
+50000er Buy-in gewinnt, steht vor dem, der 4000 aus 1000 gewinnt, obwohl der Zweite den besseren Abend
+hatte. So rechnet ein Casino, und das Verhältnis steht auf dem Board daneben für den, der die andere
+Geschichte sehen will.
+
+Eine Schwelle bleibt: **Mindesthände**. Ein großer Pot ist ein echter Gewinn und trotzdem noch keine
+Pokernacht. Wer sie nicht hat, steht unter der Wertung mit der Angabe, was fehlt, statt einfach zu
+fehlen. Den Mindesteinsatz gibt es weiterhin als Einstellung, steht aber standardmäßig auf aus — er war
+nur für die Verhältnis-Wertung nötig. Preise für die Plätze 1–3 und für die Teilnahme werden wie bei
+jedem anderen Event über das Preis-Menü hinterlegt.
+
+### Am Tisch
+
+Setzen tut man sich mit Rechtsklick auf einen Stuhl. Entschieden wird über die Hotbar und nicht über
+ein Menü, damit man den Tisch dabei sieht — die Knöpfe tragen den Preis drauf ("Mitgehen 240"), weil
+"Call" etwas ist, das man drückt und hinterher erfährt.
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/poker` | Einsätze, Regeln, dein Konto, bei einem Turnier auch Level und Topf |
+| `/poker nachkaufen` | Noch ein Buy-in (im Turnier nicht) |
+| `/poker aufstehen` | Chips werden wieder Bits |
+| `/poker bot` · `/poker bot weg` | Einen Bot setzen oder die eigenen abräumen |
+| `/poker setup` | Tische und Eingang neu festlegen, nachdem umgebaut wurde (Op) |
+| `/poker karte speichern` | Die Welt für die nächste Nacht sichern (Op) |
+
+Auf dem Filz liegt alles, was passiert: die Gemeinschaftskarten in der Mitte, die eigenen zwei vor dem
+Stuhl — verdeckt für den Raum, offen für den Besitzer — ein Haufen Chips für jeden Einsatz, ein
+größerer in der Mitte für den Pot, und über jedem Stuhl ein Kopf mit Name und Stack. Der Kopf von dem,
+der dran ist, dreht sich schneller und schwebt höher; damit sieht man quer durch den Raum, wer
+überlegt, ohne eine Zeile Chat zu lesen.
+
+### Die Welt
+
+Das Casino wird **einmal** im Code gebaut und gehört danach dem, der darauf baut. Generierte
+Architektur sieht generiert aus, und ein Raum, der bei jedem Start neu entsteht, ist ein Raum, den
+niemand verbessern kann.
+
+Damit ein Umbau den Abend überlebt, liegt die Welt in `./poker-world` neben dem Launcher. Jeder neu
+erstellte Casino-Server bekommt sie kopiert; `/poker karte speichern` schreibt den aktuellen Stand
+zurück. Wo die Tische stehen, sagt `configs/poker/layout.yml` und nicht das Gebäude — man kann also
+einen Tisch versetzen, `/poker setup tisch 2` sagen, und Stühle, Karten, Chips und Köpfe ziehen mit.
+
+### Bots
+
+Bots gibt es, damit ein Tisch auch dann spielbar ist, wenn nur zwei Leute da sind — und für später,
+wenn Spieler sich eigene Runden aufmachen können.
+
+**Sie kosten Geld, und das ist keine Bremse, sondern Notwendigkeit.** Ein Bot hat kein Konto. Seine
+Chips müssen von jemandem kommen, und der einzige ehrliche Jemand ist der, der ihn gesetzt hat: er
+zahlt den Stack, er bekommt zurück was übrig ist, und wenn der Tisch den Bot auseinandernimmt, ist das
+Geld wirklich weg — aus seiner Tasche in die der Gewinner. Ohne das wäre ein Bot eine Maschine, die
+Bits herstellt. Dazu kommt eine Gebühr, die nicht zurückkommt; die macht aus "Tisch voll Bots" eine
+Entscheidung statt eines Hebels. Bots zählen aufs Konto ihres Besitzers, aber ihre **Hände** zählen
+nicht — sonst erspielt man sich die Wertungsschwelle, indem man drei Bots den Abend spielen lässt.
+
+**Wie sie spielen.** Nicht nach einer Tabelle, sondern nach denselben zwei Zahlen wie ein Mensch: wie
+oft die Hand von hier aus gewinnt (ein paar hundert Mal ausgespielt), und was der Pot dafür bietet.
+
+**Charakter statt Typen.** Jeder Bot bekommt beim Setzen ein Temperament, und es gibt keine Stufen und
+keine festen Werte — zwei fließende Achsen werden gezogen, alles andere folgt daraus:
+
+- **heat**: passiv bis aggressiv. Wie gern er der ist, der Geld reinlegt, statt der, der zahlt um zu sehen.
+- **care**: unbekümmert bis vorsichtig. Wie viel besser als der Preis die Hand sein muss. Das ist die
+  risikoscheue Achse.
+
+Wenig heat und viel care ist der Stille, der den Abend passt und mit den Nuts auftaucht. Viel heat und
+wenig care ist der Fröhliche, der jede Hand spielt und jedes Board setzt. Viel von beidem ist der, der
+selten drin ist und dich überrollt, wenn er es ist. Niemand hat entschieden, dass diese Typen
+existieren — sie fallen aus zwei Zahlen heraus. Bei 100 Ziehungen sind 82 verschiedene Werte dabei;
+feste Typen wären eine Handvoll.
+
+Ein neuer Bot wird gegen die gezogen, die schon am Tisch sitzen, und zwar absichtlich unähnlich: sechs
+unabhängige Ziehungen landen öfter dicht beieinander, als man denkt, und sechs Bots die gleich spielen
+sind ein Bot.
+
+**Warum man sie nicht lesen kann.** Drei Sachen, jede gegen eine andere Art von Muster:
+
+1. *Mischzone.* Eine harte Schwelle verrät sich — "callt über 34 %" findet man in zwei Händen. Knapp am
+   Preis entscheidet deshalb eine gewichtete Münze statt einer Linie, und wie breit die Zone ist, gehört
+   selbst zum Charakter. Bei Asse in derselben Situation 200 mal gefragt: 74 % Call, 26 % Erhöhen — und
+   bei jedem Bot anders. Eine Erhöhung sagt also nicht, was er hält.
+2. *Semi-Bluff.* Ein Bot, der nur erhöht wenn er vorn ist, ist in einem Satz lesbar: erhöht er, passt du.
+   Also erhöht er auch mal mit einem Draw. Das ist gleichzeitig besseres Spiel.
+3. *Drift.* Ein festes Temperament ist immer noch lernbar, es dauert nur länger. Also wandert es: ein
+   Bad Beat schiebt heat hoch und care runter, wie Tilt bei Menschen, und darunter wandern beide Achsen
+   jede Hand ein wenig. Nach 200 Händen verlangt derselbe Bot 6–8 % weniger Vorsprung als vorher — ein
+   Read von vor einer Stunde beschreibt einen anderen Gegner.
+
+Dazu die Denkzeit: sie hängt am Charakter und daran, ob die Entscheidung knapp ist. Ein Tisch, an dem
+jede schwierige Entscheidung nach genau einer Sekunde zurückkommt, ist ein Tisch, an dem man schwierige
+von einfachen Entscheidungen unterscheiden kann.
+
+Der Charakter wird **nie angezeigt**. Er steht beim Setzen einmal im Serverlog und sonst nirgends.
+
+Der Fehler, an dem naive Pokerbots sterben, ist die Annahme, der Gegner halte Zufallskarten. Wer
+dreimal erhöht hat, hält keine Zufallskarten, und gegen die Hand, die er wirklich hat, ist Top Pair
+nicht die 72 %, die die Simulation ausrechnet. Unkorrigiert redet ein Bot sich so jeden verlorenen Call
+ein. Hier wird deshalb die **Gegnerhand aus einer Range gezogen, die mit der Größe des Einsatzes enger
+wird**. Der Unterschied ist gemessen und steht in `BotBalanceCheck`:
+
+| Gegner | vor der Korrektur | danach |
+|--------|-------------------|--------|
+| Nit (nur Premiumhände) | −11,1 BB/Hand | **+0,7 BB/Hand** |
+| Maniac (immer All-In) | +75,2 BB/Hand | +52,1 BB/Hand |
+| Calling Station | +3,2 BB/Hand | +4,3 BB/Hand |
+
+Darüber stehen zwei harte Regeln, weil sie die zwei Ausfälle sind, die einen Bot-Tisch wertlos machen:
+eine führende Hand wird **nie** gepasst, und ein ganzer Stack geht **nie** auf eine hinterherlaufende
+Hand — All-In braucht entweder die Hand dafür oder einen Stack, der so kurz ist, dass es keinen
+Unterschied mehr macht.
+
+Absichtlich spielen sie etwas loser, als die Mathematik verlangt. Das Haus nimmt von jedem
+ausgespielten Pot seinen Anteil, also würde ein Bot, der gegen Menschen genau null spielt, den Tisch
+allein über den Rake leerlaufen lassen.
+
+### Turnier
+
+Ein Turnier ist kein Cash Game mit anderen Zahlen, sondern ein anderer Abend. Ein Buy-in pro Person,
+steigende Blinds (halb mehr pro Level), raus ist raus, am Ende teilen sich die vorderen Plätze den
+Topf (50/30/20 ab sieben Spielern, 70/30 ab vier, sonst nimmt der Sieger alles). Der Hausanteil wird
+einmal von den Buy-ins genommen statt von jedem Pot — bei Chips, die kein Geld sind, geht es gar nicht
+anders.
+
+**Chips sind hier kein Geld**, und das ändert die ganze Buchführung. Wer mit einem großen Stack
+aufsteht, hat nichts gewonnen; ausgezahlt wird erst am Ende aus dem Topf. Dem Launcher wird deshalb
+auch nicht der Stack als offener Betrag gemeldet, sondern das **Buy-in** — sonst würde ein Absturz
+allen ihren Chipstand als Bits auszahlen. Ein Turnier, das nie zu Ende gespielt wird, kostet also den
+Abend und niemanden Geld.
+
+Ein Turnier läuft auf **einem** Tisch. Spieler zwischen Tischen umzusetzen, wenn Plätze leer werden,
+ist ein eigenes System — Tische brechen, Plätze ausgleichen, eine Bubble über vier Räume — und die
+Hälfte davon wäre schlechter als nichts. Ein Cash Game benutzt alle Tische.
+
+### Geprüft
+
+Die Regeln (`de.schnorrenbergers.poker.game`) enthalten nichts aus Bukkit. Sie zeichnen nichts und
+verschicken nichts, sie melden über `TableEvents`, was passiert ist. Das ist kein Ordnungssinn: hier
+hängt echtes Geld dran, und Regeln, die man ohne Server laufen lassen kann, sind Regeln, die man
+nachprüfen kann. Vier Klassen mit `main` tun genau das:
+
+```bash
+./mvnw -q -pl PokerPlugin -am install -DskipTests
+CP=PokerPlugin/target/classes:PokerPlugin/target/test-classes
+java -cp $CP de.schnorrenbergers.poker.game.HandCheck        # 47 Prüfungen
+java -cp $CP de.schnorrenbergers.poker.game.TableCheck       # 57 Prüfungen
+java -cp $CP de.schnorrenbergers.poker.bot.BotBalanceCheck   # Bot gegen Maniac, Nit, Station
+java -cp $CP de.schnorrenbergers.poker.bot.BotTableCheck     # sechs Bots gegeneinander
+java -cp $CP de.schnorrenbergers.poker.bot.BotCharacterCheck # Spread, Mischung, Drift
+```
+
+`HandCheck` prüft den Hand-Evaluator gegen die Fälle, die man normalerweise falsch macht: das Wheel
+(A-2-3-4-5), drei Paare bei sieben Karten, Kicker, geteilte Pötte, dazu 5000 Zufallshände.
+`BotCharacterCheck` misst nicht das Spiel, sondern die Lesbarkeit: wie weit die gezogenen Charaktere
+auseinanderliegen, ob derselbe Bot in derselben Situation dieselbe Antwort gibt, und wie weit sein
+Temperament über einen Abend wandert.
+
+`TableCheck` fährt die Setzlogik durch die Regeln, die normalerweise falsch sind — heads-up ist der
+Button der Small Blind und zieht vor dem Flop zuerst, der Big Blind wird auch dann gefragt, wenn alle
+nur mitgegangen sind, ein All-In das kleiner als eine volle Erhöhung ist öffnet die Runde **nicht**
+neu, und wer all-in für weniger drin ist, kann nur gewinnen, was er verlieren konnte. Am Ende 400
+Zufallshände, in denen Chips nur wandern und nie entstehen.
+
 ## Discord-Verknüpfung
 
 Ein Minecraft-Name ist alles, was man von jemandem hat, wenn er auffällt. Die Verknüpfung macht daraus
@@ -746,5 +952,6 @@ Discord-Rolle.
 | `LobbyPlugin` | Lobby, Parkour, Server Manager, eigene Runden |
 | `Survival` | Survival Spielmodus |
 | `Bedwars` | Bedwars Minispiel |
+| `PokerPlugin` | Casino einer Pokernacht: Regeln, Tisch, Bots |
 | `BackpackPlugin` | Geteilter Team-Rucksack |
 | `VelocityPlugin` | Meldet neue Server am laufenden Proxy an |

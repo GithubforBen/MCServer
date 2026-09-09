@@ -65,6 +65,11 @@ public class PaperConfigurator extends ServerConfigurator {
         if (template == ServerTemplate.BEDWARS) {
             new CustomMaps().installInto(new File(this.directory));
         }
+        // the casino is built once and then belongs to whoever builds on it, so it travels from night to
+        // night in ./poker-world rather than being generated again on every fresh server
+        if (template == ServerTemplate.POKER) {
+            new CasinoMap().installInto(new File(this.directory));
+        }
 
         overwriteToFile("eula.txt", "eula=true", true);
         // written every time so that a server keeps working after it was given another port

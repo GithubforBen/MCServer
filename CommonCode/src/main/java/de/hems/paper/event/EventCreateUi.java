@@ -7,6 +7,7 @@ import de.hems.paper.util.ChatPrompt;
 import de.hems.types.event.BedwarsEventSettings;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
+import de.hems.types.event.PokerEventSettings;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -103,6 +104,24 @@ public final class EventCreateUi {
                         new BedwarsEventSettings(draft).setTeamSize(nextSize);
                         player.openInventory(build(player, draft, startOffsetMin, durationMin).getInventory());
                     }));
+        }
+
+        // a poker night has more knobs than fit here, so it gets a door to its own panel rather than six
+        // more buttons that only ever mean something on one of seven types
+        if (draft.getType() == EventType.POKER) {
+            PokerEventSettings poker = new PokerEventSettings(draft);
+            poker.applyDefaults();
+            ui.setItem(13, new ItemApi(Material.PLAYER_HEAD, ChatColor.GOLD + "Pokereinstellungen",
+                            List.of(ChatColor.GRAY + "Format: " + ChatColor.WHITE + poker.getFormat().getTitle(),
+                                    ChatColor.GRAY + "Buy-in: " + ChatColor.WHITE + poker.getBuyIn() + " Bits",
+                                    ChatColor.GRAY + "Blinds: " + ChatColor.WHITE + poker.getSmallBlind()
+                                            + "/" + poker.getBigBlind(),
+                                    ChatColor.GRAY + "Haus: " + ChatColor.WHITE + poker.getRakeText(),
+                                    ChatColor.GRAY + "Klicken zum Einstellen")).build(),
+                    new SimpleItemAction(click -> player.openInventory(PokerSettingsUi.build(player, draft,
+                            edited -> player.openInventory(
+                                    build(player, edited, startOffsetMin, durationMin).getInventory()))
+                            .getInventory())));
         }
 
         long nextStart = nextValue(START_OFFSETS_MINUTES, startOffsetMin);
