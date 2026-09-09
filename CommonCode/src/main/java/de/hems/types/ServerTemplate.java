@@ -34,6 +34,13 @@ public enum ServerTemplate implements Serializable {
             List.of(FileType.ASSET.BEDWARS_SPEEDWAY),
             FileType.PLUGIN.BEDWARS),
 
+    /**
+     * A casino for a poker night. Small on purpose: it holds a handful of tables and no terrain worth
+     * generating, so it needs a fraction of what a survival world does.
+     */
+    POKER(FileType.SERVER.PAPER, 1536, true,
+            FileType.PLUGIN.POKER),
+
     /** A plain paper server without a game mode - the base for custom events. */
     EVENT(FileType.SERVER.PAPER, 2048, true,
             FileType.PLUGIN.RUN);
@@ -132,6 +139,7 @@ public enum ServerTemplate implements Serializable {
             case LOBBY -> "Lobby";
             case SURVIVAL -> "Survival";
             case BEDWARS -> "Bedwars";
+            case POKER -> "Poker";
             case EVENT -> "Event (leer)";
         };
     }
@@ -142,6 +150,7 @@ public enum ServerTemplate implements Serializable {
             case LOBBY -> "Hub mit Parkour und Server Manager";
             case SURVIVAL -> "Survival mit Teams, Geld und Shops";
             case BEDWARS -> "Fertige Bedwars Runde";
+            case POKER -> "Casino mit Pokertischen";
             case EVENT -> "Leerer Paper Server fuer eigene Events";
         };
     }

@@ -138,6 +138,7 @@ public class FileType implements Serializable {
         SURVIVAL,
         LOBBY,
         BEDWARS,
+        POKER,
         BACKPACK,
         RUN,
         VELOCITY,
@@ -153,6 +154,7 @@ public class FileType implements Serializable {
                 case SURVIVAL -> "build:/survival-1.0.jar";
                 case LOBBY -> "build:/lobby-1.0.jar";
                 case BEDWARS -> "build:/bedwars-1.0.jar";
+                case POKER -> "build:/poker-1.0.jar";
                 case BACKPACK -> "build:/backpack-1.0.jar";
                 case RUN -> "build:/run-1.0.jar";
                 case VELOCITY -> "build:/velocityplugin-1.0.jar";
@@ -209,6 +211,7 @@ public class FileType implements Serializable {
                 case SURVIVAL -> "Survival";
                 case LOBBY -> "Lobby";
                 case BEDWARS -> "Bedwars";
+                case POKER -> "Poker";
                 case BACKPACK -> "Team-Rucksack";
                 case RUN -> "Event-Läufe";
                 case VELOCITY -> "Netzwerk Proxy Plugin";
@@ -229,6 +232,7 @@ public class FileType implements Serializable {
                 case SURVIVAL -> "Das komplette Survival Spielsystem";
                 case LOBBY -> "Lobby Features, Parkour und Server Manager";
                 case BEDWARS -> "Bedwars Minispiel";
+                case POKER -> "Pokertische mit Bits als Einsatz";
                 case BACKPACK -> "Geteilter Rucksack fuer jedes Team";
                 case RUN -> "Wertet Speedrun-Events aus und setzt den Server zurueck";
                 case VELOCITY -> "Verbindet den Proxy mit dem Netzwerk";

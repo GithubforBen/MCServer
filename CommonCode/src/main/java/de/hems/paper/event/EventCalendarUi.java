@@ -184,6 +184,7 @@ public final class EventCalendarUi {
             case UHC_BOSSES -> Material.NETHER_STAR;
             case UHC_DRAGON -> Material.DRAGON_HEAD;
             case BEDWARS -> Material.RED_BED;
+            case POKER -> Material.PLAYER_HEAD;
             case OTHER_WORLD -> Material.GRASS_BLOCK;
             case SIMPLE -> Material.PAPER;
         };

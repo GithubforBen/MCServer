@@ -6,6 +6,7 @@ import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventState;
 import de.hems.types.event.EventType;
+import de.hems.types.event.PokerEventSettings;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -53,6 +54,30 @@ public final class EventDetailUi {
                         player.closeInventory();
                         player.sendMessage(ChatColor.AQUA + BedwarsEventStarter.join(player, event));
                     }));
+        }
+
+        // a poker night is two doors: one into the casino, one onto the board. The board stays open after
+        // the night is over, because that is when people want to look at it
+        if (event.getType() == EventType.POKER) {
+            if (PokerEventStarter.serverOf(event) != null
+                    && (event.getState() == EventState.PLANNED || event.getState() == EventState.RUNNING)) {
+                PokerEventSettings poker = new PokerEventSettings(event);
+                ui.setItem(9, new ItemApi(Material.PLAYER_HEAD, ChatColor.GREEN + "Zum Casino",
+                        List.of(ChatColor.GRAY + "Buy-in: " + ChatColor.WHITE + poker.getBuyIn() + " Bits",
+                                ChatColor.GRAY + "Blinds: " + ChatColor.WHITE + poker.getSmallBlind()
+                                        + "/" + poker.getBigBlind(),
+                                ChatColor.GRAY + "Haus: " + ChatColor.WHITE + poker.getRakeText()
+                                        + ChatColor.GRAY + " pro Pot",
+                                ChatColor.DARK_GRAY + "Gespielt wird um echte Bits.")).build(),
+                        new SimpleItemAction(click -> {
+                            player.closeInventory();
+                            player.sendMessage(ChatColor.AQUA + PokerEventStarter.join(player, event));
+                        }));
+            }
+            ui.setItem(17, new ItemApi(Material.GOLD_INGOT, ChatColor.GOLD + "Rangliste",
+                    List.of(ChatColor.GRAY + "Wer hat aus seinem Einsatz am meisten gemacht")).build(),
+                    new SimpleItemAction(click ->
+                            player.openInventory(PokerRankingUi.build(player, event).getInventory())));
         }
 
         if (!event.getSettings().isEmpty()) {

@@ -605,6 +605,7 @@ public final class ServerManagerUi {
             case LOBBY -> Material.WHITE_WOOL;
             case SURVIVAL -> Material.GRASS_BLOCK;
             case BEDWARS -> Material.RED_BED;
+            case POKER -> Material.PLAYER_HEAD;
             case EVENT -> Material.CRAFTING_TABLE;
         };
     }

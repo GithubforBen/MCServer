@@ -68,6 +68,12 @@ public final class LobbyPlugin extends JavaPlugin {
         // the hub is where the players are, so it is the hub that puts a bedwars round up when a bedwars
         // event's time comes and takes everybody standing here along
         BedwarsEventStarter.init(this);
+        // and the same for a poker night, except that nobody is dragged across: the casino opens, and who
+        // wants to play walks through the door themselves
+        de.hems.paper.event.PokerEventStarter.init(this);
+        // the ranking board of a poker night is read here while the hand it describes is still being
+        // played on the casino server
+        de.hems.paper.poker.PokerStatsService.init(this);
         registerCommand("events", new EventCommand());
         // rounds players put up themselves
         RoundService.init(this);
