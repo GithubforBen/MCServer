@@ -61,8 +61,9 @@ public class PokerStatsData implements Serializable {
     /**
      * What somebody walked away with against what they brought.
      * <p>
-     * This is the ranking: two means the money doubled, half means half of it is gone. Higher is better.
-     * Somebody who never bought in has no ratio at all rather than a division by zero, and is sorted last.
+     * Shown next to the profit because it says something the profit does not - somebody who turned 500 into
+     * 900 played better than somebody who turned 50000 into 51000 - but it is not what the ranking is
+     * ordered by. See {@link #rankingOrder()} for why.
      *
      * @return the ratio, or {@code 0} for somebody who never put anything in
      */
@@ -72,21 +73,39 @@ public class PokerStatsData implements Serializable {
     }
 
     /**
-     * @return what is left over in bits, negative when the evening cost money
+     * What the evening was worth, in bits.
+     * <p>
+     * This is the ranking: everything that came off the tables minus everything that went onto them. Chips
+     * still sitting in front of somebody count, because a player who is up and still playing is up.
+     *
+     * @return the winnings, negative when the evening cost money
      */
     public int getProfit() {
         return cashedOut + openStack - boughtIn;
     }
 
     /**
+     * @return the winnings written for a board, with a sign so a loss reads as one
+     */
+    public String getProfitText() {
+        int profit = getProfit();
+        return (profit > 0 ? "+" : "") + profit;
+    }
+
+    /**
      * Whether this row is allowed into the ranking.
      * <p>
-     * Both bars exist for the same reason: a ratio rewards the smallest possible denominator. Without them
-     * the winner of every poker night is whoever bought in for the minimum, won one hand and left, and
-     * everybody who actually played the evening is behind them.
+     * One bar really matters here, and it is the hands. Somebody who sits down, is dealt aces once, wins a
+     * big pot and leaves has a real profit and has not played a poker night; the hand count is what tells
+     * the two apart.
+     * <p>
+     * The stake bar is the leftover of an earlier version that ranked by ratio, where it was load-bearing:
+     * a ratio rewards the smallest denominator, so without a minimum stake the winner was always whoever
+     * risked least. Ranking by winnings has no such hole - a big win off a big stake is simply a big win -
+     * so it defaults to zero and is left in only for an admin who wants a minimum stake to be counted.
      *
      * @param minHands  how many hands have to have been played
-     * @param minVolume how many bits have to have gone in
+     * @param minVolume how many bits have to have gone in, usually none
      * @return whether it counts
      */
     public boolean qualifies(int minHands, int minVolume) {
@@ -215,15 +234,26 @@ public class PokerStatsData implements Serializable {
     }
 
     /**
-     * The order a poker ranking is read in: best ratio first, and where two are equal the one who risked
-     * more is in front - the same ratio off a bigger stake is the harder thing to do.
+     * The order a poker ranking is read in: most won first.
+     * <p>
+     * Deliberately the plain number of bits rather than the ratio it used to be. A ratio has a hole that
+     * no amount of qualifying bars really closes - it rewards the smallest stake, so the way to win the
+     * evening is to risk as little as possible, which is the opposite of a poker night. Winnings have no
+     * such hole: the way to be top of the board is to take money off other people, which is the game.
+     * <p>
+     * The trade it makes is real and worth saying out loud: it rewards playing bigger. Somebody who wins
+     * 5000 off a 50000 buy-in is ahead of somebody who wins 4000 off 1000, even though the second played
+     * the better evening. That is how a casino counts, and the ratio is on the board next to it for
+     * anybody who wants to see the other story.
+     * <p>
+     * Ties go to whoever played more hands, because more hands is less luck.
      *
      * @return the comparator
      */
     public static java.util.Comparator<PokerStatsData> rankingOrder() {
-        return java.util.Comparator.comparingDouble(PokerStatsData::getRatio).reversed()
-                .thenComparing(java.util.Comparator.comparingInt(PokerStatsData::getBoughtIn).reversed())
-                .thenComparing(java.util.Comparator.comparingInt(PokerStatsData::getHands).reversed());
+        return java.util.Comparator.comparingInt(PokerStatsData::getProfit).reversed()
+                .thenComparing(java.util.Comparator.comparingInt(PokerStatsData::getHands).reversed())
+                .thenComparing(java.util.Comparator.comparingDouble(PokerStatsData::getRatio).reversed());
     }
 
     /**

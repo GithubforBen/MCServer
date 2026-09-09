@@ -736,14 +736,24 @@ Chips gehen zuerst zurück, die Zeilen erst danach.
 
 ### Rangliste
 
-Gewertet wird, **was rausgeht geteilt durch was reingeht**. 1000 rein und 2000 raus ist 2,00x, 1000
-rein und 500 raus ist 0,50x — höher ist besser. Was noch vor jemandem auf dem Tisch liegt, zählt mit.
+Gewertet wird, **was unterm Strich gewonnen wurde**: alles was vom Tisch kam, minus alles was drauf
+ging. Chips, die noch vor jemandem liegen, zählen mit — wer vorn liegt und weiterspielt, liegt vorn.
 
-Ein reines Verhältnis hat ein Loch: klein einsteigen, eine Hand treffen, aufhören, und man steht mit
-2,00x vor jemandem, der den ganzen Abend gespielt und wirklich gewonnen hat. Deshalb zwei Schwellen —
-Mindesthände **und** Mindesteinsatz. Wer sie nicht hat, steht unter der Wertung mit der Angabe, was
-ihm noch fehlt, statt einfach zu fehlen. Preise für die Plätze 1–3 und für die Teilnahme werden wie
-bei jedem anderen Event über das Preis-Menü hinterlegt.
+Vorher war es das Verhältnis raus/rein, und das hatte ein Loch, das sich mit Schwellen nicht wirklich
+zumachen lässt: ein Verhältnis belohnt den kleinsten Einsatz, also gewinnt den Abend, wer möglichst
+wenig riskiert — das Gegenteil einer Pokernacht. Beim Gewinn gibt es das Loch nicht: oben steht, wer
+anderen Geld abgenommen hat, und das ist das Spiel.
+
+Der Preis dafür ist echt und soll hier stehen: es belohnt, größer zu spielen. Wer 5000 aus einem
+50000er Buy-in gewinnt, steht vor dem, der 4000 aus 1000 gewinnt, obwohl der Zweite den besseren Abend
+hatte. So rechnet ein Casino, und das Verhältnis steht auf dem Board daneben für den, der die andere
+Geschichte sehen will.
+
+Eine Schwelle bleibt: **Mindesthände**. Ein großer Pot ist ein echter Gewinn und trotzdem noch keine
+Pokernacht. Wer sie nicht hat, steht unter der Wertung mit der Angabe, was fehlt, statt einfach zu
+fehlen. Den Mindesteinsatz gibt es weiterhin als Einstellung, steht aber standardmäßig auf aus — er war
+nur für die Verhältnis-Wertung nötig. Preise für die Plätze 1–3 und für die Teilnahme werden wie bei
+jedem anderen Event über das Preis-Menü hinterlegt.
 
 ### Am Tisch
 
@@ -792,8 +802,42 @@ nicht — sonst erspielt man sich die Wertungsschwelle, indem man drei Bots den 
 
 **Wie sie spielen.** Nicht nach einer Tabelle, sondern nach denselben zwei Zahlen wie ein Mensch: wie
 oft die Hand von hier aus gewinnt (ein paar hundert Mal ausgespielt), und was der Pot dafür bietet.
-Dazu ein Temperament pro Bot — etwas enger oder loser, etwas aggressiver oder passiver — damit ein
-Tisch nicht sechsmal derselbe Gegner ist.
+
+**Charakter statt Typen.** Jeder Bot bekommt beim Setzen ein Temperament, und es gibt keine Stufen und
+keine festen Werte — zwei fließende Achsen werden gezogen, alles andere folgt daraus:
+
+- **heat**: passiv bis aggressiv. Wie gern er der ist, der Geld reinlegt, statt der, der zahlt um zu sehen.
+- **care**: unbekümmert bis vorsichtig. Wie viel besser als der Preis die Hand sein muss. Das ist die
+  risikoscheue Achse.
+
+Wenig heat und viel care ist der Stille, der den Abend passt und mit den Nuts auftaucht. Viel heat und
+wenig care ist der Fröhliche, der jede Hand spielt und jedes Board setzt. Viel von beidem ist der, der
+selten drin ist und dich überrollt, wenn er es ist. Niemand hat entschieden, dass diese Typen
+existieren — sie fallen aus zwei Zahlen heraus. Bei 100 Ziehungen sind 82 verschiedene Werte dabei;
+feste Typen wären eine Handvoll.
+
+Ein neuer Bot wird gegen die gezogen, die schon am Tisch sitzen, und zwar absichtlich unähnlich: sechs
+unabhängige Ziehungen landen öfter dicht beieinander, als man denkt, und sechs Bots die gleich spielen
+sind ein Bot.
+
+**Warum man sie nicht lesen kann.** Drei Sachen, jede gegen eine andere Art von Muster:
+
+1. *Mischzone.* Eine harte Schwelle verrät sich — "callt über 34 %" findet man in zwei Händen. Knapp am
+   Preis entscheidet deshalb eine gewichtete Münze statt einer Linie, und wie breit die Zone ist, gehört
+   selbst zum Charakter. Bei Asse in derselben Situation 200 mal gefragt: 74 % Call, 26 % Erhöhen — und
+   bei jedem Bot anders. Eine Erhöhung sagt also nicht, was er hält.
+2. *Semi-Bluff.* Ein Bot, der nur erhöht wenn er vorn ist, ist in einem Satz lesbar: erhöht er, passt du.
+   Also erhöht er auch mal mit einem Draw. Das ist gleichzeitig besseres Spiel.
+3. *Drift.* Ein festes Temperament ist immer noch lernbar, es dauert nur länger. Also wandert es: ein
+   Bad Beat schiebt heat hoch und care runter, wie Tilt bei Menschen, und darunter wandern beide Achsen
+   jede Hand ein wenig. Nach 200 Händen verlangt derselbe Bot 6–8 % weniger Vorsprung als vorher — ein
+   Read von vor einer Stunde beschreibt einen anderen Gegner.
+
+Dazu die Denkzeit: sie hängt am Charakter und daran, ob die Entscheidung knapp ist. Ein Tisch, an dem
+jede schwierige Entscheidung nach genau einer Sekunde zurückkommt, ist ein Tisch, an dem man schwierige
+von einfachen Entscheidungen unterscheiden kann.
+
+Der Charakter wird **nie angezeigt**. Er steht beim Setzen einmal im Serverlog und sonst nirgends.
 
 Der Fehler, an dem naive Pokerbots sterben, ist die Annahme, der Gegner halte Zufallskarten. Wer
 dreimal erhöht hat, hält keine Zufallskarten, und gegen die Hand, die er wirklich hat, ist Top Pair
@@ -803,9 +847,9 @@ wird**. Der Unterschied ist gemessen und steht in `BotBalanceCheck`:
 
 | Gegner | vor der Korrektur | danach |
 |--------|-------------------|--------|
-| Nit (nur Premiumhände) | −11,1 BB/Hand | **+0,6 BB/Hand** |
-| Maniac (immer All-In) | +75,2 BB/Hand | +51,2 BB/Hand |
-| Calling Station | +3,2 BB/Hand | +3,2 BB/Hand |
+| Nit (nur Premiumhände) | −11,1 BB/Hand | **+0,7 BB/Hand** |
+| Maniac (immer All-In) | +75,2 BB/Hand | +52,1 BB/Hand |
+| Calling Station | +3,2 BB/Hand | +4,3 BB/Hand |
 
 Darüber stehen zwei harte Regeln, weil sie die zwei Ausfälle sind, die einen Bot-Tisch wertlos machen:
 eine führende Hand wird **nie** gepasst, und ein ganzer Stack geht **nie** auf eine hinterherlaufende
@@ -848,10 +892,15 @@ java -cp $CP de.schnorrenbergers.poker.game.HandCheck        # 47 Prüfungen
 java -cp $CP de.schnorrenbergers.poker.game.TableCheck       # 57 Prüfungen
 java -cp $CP de.schnorrenbergers.poker.bot.BotBalanceCheck   # Bot gegen Maniac, Nit, Station
 java -cp $CP de.schnorrenbergers.poker.bot.BotTableCheck     # sechs Bots gegeneinander
+java -cp $CP de.schnorrenbergers.poker.bot.BotCharacterCheck # Spread, Mischung, Drift
 ```
 
 `HandCheck` prüft den Hand-Evaluator gegen die Fälle, die man normalerweise falsch macht: das Wheel
 (A-2-3-4-5), drei Paare bei sieben Karten, Kicker, geteilte Pötte, dazu 5000 Zufallshände.
+`BotCharacterCheck` misst nicht das Spiel, sondern die Lesbarkeit: wie weit die gezogenen Charaktere
+auseinanderliegen, ob derselbe Bot in derselben Situation dieselbe Antwort gibt, und wie weit sein
+Temperament über einen Abend wandert.
+
 `TableCheck` fährt die Setzlogik durch die Regeln, die normalerweise falsch sind — heads-up ist der
 Button der Small Blind und zieht vor dem Flop zuerst, der Big Blind wird auch dann gefragt, wenn alle
 nur mitgegangen sind, ein All-In das kleiner als eine volle Erhöhung ist öffnet die Runde **nicht**

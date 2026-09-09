@@ -84,9 +84,10 @@ public final class PokerCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(Component.text("Nur aus Pots, um die wirklich gespielt wurde.",
                 NamedTextColor.DARK_GRAY));
         player.sendMessage(Component.text("Gewertet wird: ", NamedTextColor.GRAY)
-                .append(Component.text("was rausgeht geteilt durch was reingeht", NamedTextColor.WHITE)));
-        player.sendMessage(Component.text("Dafür brauchst du " + settings.getMinHands()
-                + " Hände und " + settings.getMinVolume() + " Bits Einsatz.", NamedTextColor.DARK_GRAY));
+                .append(Component.text("was du unterm Strich gewinnst", NamedTextColor.WHITE)));
+        player.sendMessage(Component.text("Dafür brauchst du " + settings.getMinHands() + " Hände"
+                + (settings.getMinVolume() > 0
+                ? " und " + settings.getMinVolume() + " Bits Einsatz." : "."), NamedTextColor.DARK_GRAY));
         player.sendMessage(Component.text("Auf deinem Konto: ", NamedTextColor.GRAY)
                 .append(Component.text(Bank.balanceOf(player) + " Bits", NamedTextColor.GREEN)));
         int onTable = Casino.stackOf(player.getUniqueId());

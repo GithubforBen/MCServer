@@ -63,11 +63,13 @@ public final class PokerRankingUi {
 
         if (!short_.isEmpty()) {
             ui.setItem(28, new ItemApi(Material.PAPER, ChatColor.YELLOW + "Noch nicht in der Wertung",
-                    List.of(ChatColor.GRAY + "Es fehlen " + ChatColor.WHITE + settings.getMinHands()
-                                    + ChatColor.GRAY + " Hände oder " + ChatColor.WHITE
-                                    + settings.getMinVolume() + " Bits" + ChatColor.GRAY + " Einsatz",
-                            ChatColor.DARK_GRAY + "Beides zusammen, sonst gewinnt die Rangliste,",
-                            ChatColor.DARK_GRAY + "wer einmal klein einsteigt und sofort aufhört")).build(),
+                    List.of(ChatColor.GRAY + "Gewertet wird ab " + ChatColor.WHITE
+                                    + settings.getMinHands() + ChatColor.GRAY + " Händen"
+                                    + (settings.getMinVolume() > 0
+                                    ? " und " + ChatColor.WHITE + settings.getMinVolume()
+                                    + ChatColor.GRAY + " Bits Einsatz" : ""),
+                            ChatColor.DARK_GRAY + "Ein großer Pot ist ein echter Gewinn und",
+                            ChatColor.DARK_GRAY + "trotzdem noch keine Pokernacht")).build(),
                     SimpleItemAction.display());
             for (int i = 0; i < short_.size() && i < 17; i++) {
                 ui.setItem(29 + i, row(short_.get(i), 0, player, settings), SimpleItemAction.display());
@@ -87,9 +89,9 @@ public final class PokerRankingUi {
      */
     private static ItemStack header(EventData event, PokerEventSettings settings, int ranked, int waiting) {
         List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GRAY + "Gewertet wird: " + ChatColor.WHITE + "raus geteilt durch rein");
-        lore.add(ChatColor.DARK_GRAY + "1000 eingezahlt, 2000 mitgenommen = 2,00x");
-        lore.add(ChatColor.DARK_GRAY + "1000 eingezahlt, 500 mitgenommen = 0,50x");
+        lore.add(ChatColor.GRAY + "Gewertet wird: " + ChatColor.WHITE + "was du unterm Strich gewonnen hast");
+        lore.add(ChatColor.DARK_GRAY + "Alles was vom Tisch kam, minus alles was drauf ging.");
+        lore.add(ChatColor.DARK_GRAY + "Chips, die noch vor dir liegen, zählen mit.");
         lore.add("");
         lore.add(ChatColor.GRAY + "In der Wertung: " + ChatColor.WHITE + ranked);
         lore.add(ChatColor.GRAY + "Noch nicht drin: " + ChatColor.WHITE + waiting);
@@ -113,15 +115,16 @@ public final class PokerRankingUi {
      */
     private static ItemStack row(PokerStatsData row, int place, Player viewer, PokerEventSettings settings) {
         List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GRAY + "Verhältnis: " + ratioColor(row) + row.getRatioText());
+        int profit = row.getProfit();
+        lore.add(ChatColor.GRAY + "Gewonnen: " + profitColor(row) + row.getProfitText() + " Bits");
         lore.add(ChatColor.GRAY + "Eingezahlt: " + ChatColor.WHITE + row.getBoughtIn() + " Bits");
         lore.add(ChatColor.GRAY + "Rausgegangen: " + ChatColor.WHITE + row.getCashedOut() + " Bits");
         if (row.getOpenStack() > 0) {
             lore.add(ChatColor.GRAY + "Noch am Tisch: " + ChatColor.WHITE + row.getOpenStack() + " Bits");
         }
-        int profit = row.getProfit();
-        lore.add(ChatColor.GRAY + "Unterm Strich: "
-                + (profit >= 0 ? ChatColor.GREEN + "+" : ChatColor.RED + "") + profit + " Bits");
+        // the ratio is not what the board is ordered by any more, but it is the other half of the story:
+        // the same win off a tenth of the stake was the better evening
+        lore.add(ChatColor.GRAY + "Verhältnis: " + ratioColor(row) + row.getRatioText());
         lore.add("");
         lore.add(ChatColor.GRAY + "Hände: " + ChatColor.WHITE + row.getHands()
                 + ChatColor.GRAY + ", davon gewonnen: " + ChatColor.WHITE + row.getHandsWon());
@@ -133,6 +136,9 @@ public final class PokerRankingUi {
             lore.add("");
             if (handsShort > 0) lore.add(ChatColor.YELLOW + "Noch " + handsShort + " Hände");
             if (volumeShort > 0) lore.add(ChatColor.YELLOW + "Noch " + volumeShort + " Bits Einsatz");
+            if (handsShort == 0 && volumeShort == 0) {
+                lore.add(ChatColor.YELLOW + "Zählt ab der nächsten Hand");
+            }
         }
 
         String title = (place > 0 ? placeColor(place) + "#" + place + " " : ChatColor.GRAY + "")
@@ -175,6 +181,13 @@ public final class PokerRankingUi {
             lore.add(ChatColor.DARK_GRAY + "die liegen auf dem Tisch.");
         }
         return new ItemApi(Material.CHEST, ChatColor.GOLD + "Preise", lore).build();
+    }
+
+    private static ChatColor profitColor(PokerStatsData row) {
+        int profit = row.getProfit();
+        if (profit > 0) return ChatColor.GREEN;
+        if (profit < 0) return ChatColor.RED;
+        return ChatColor.WHITE;
     }
 
     private static ChatColor ratioColor(PokerStatsData row) {

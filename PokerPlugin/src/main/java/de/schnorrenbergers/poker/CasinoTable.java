@@ -3,6 +3,7 @@ package de.schnorrenbergers.poker;
 import de.hems.types.event.PokerEventSettings;
 import de.schnorrenbergers.poker.bank.Bank;
 import de.schnorrenbergers.poker.bot.BotBrain;
+import de.schnorrenbergers.poker.bot.BotVibe;
 import de.schnorrenbergers.poker.game.Action;
 import de.schnorrenbergers.poker.game.Card;
 import de.schnorrenbergers.poker.game.HandValue;
@@ -213,8 +214,15 @@ public final class CasinoTable implements TableEvents {
         PokerPlayer bot = new PokerPlayer(UUID.randomUUID(), name, owner, true, chips);
         int seat = rules.sitDown(bot, -1);
         if (seat < 0) return false;
-        brains.put(bot, new BotBrain(new Random()));
+        // drawn against the bots already here rather than on its own: six independent draws land close
+        // together more often than people expect, and six bots that play alike are one bot
+        List<BotVibe> here = new ArrayList<>();
+        for (BotBrain existing : brains.values()) here.add(existing.getVibe());
+        BotBrain brain = new BotBrain(random, BotVibe.unlike(random, here));
+        brains.put(bot, brain);
         botOwners.put(bot, owner);
+        plugin.getLogger().info("A bot sat down at table " + (spot.getIndex() + 1)
+                + " for " + nameOfOwner(bot) + " (" + brain.getVibe() + ")");
         reportStacks();
         view.redraw(rules);
         return true;
@@ -321,8 +329,11 @@ public final class CasinoTable implements TableEvents {
         // already cleared the seats, and a record taken afterwards would be a record of nobody
         lastDealt.clear();
         lastWinners.clear();
+        stackAtHandStart.clear();
         for (PokerPlayer player : table.getPlayers()) {
-            if (player.isInHand()) lastDealt.add(player);
+            if (!player.isInHand()) continue;
+            lastDealt.add(player);
+            stackAtHandStart.put(player, player.getChips());
         }
         view.redraw(table);
         for (PokerPlayer player : table.getPlayers()) {
@@ -425,11 +436,21 @@ public final class CasinoTable implements TableEvents {
         // a bot's money belongs to its owner, its hands do not
         int pot = table.getLastPot();
         for (PokerPlayer player : lastDealt) {
-            if (player.isBot()) continue;
+            if (player.isBot()) {
+                // a bot's temperament moves with what the evening does to it: a hand that cost it a
+                // quarter of its stack pushes it, and the push fades over the next few hands
+                BotBrain brain = brains.get(player);
+                if (brain != null) {
+                    brain.afterHand(lastWinners.contains(player),
+                            stackAtHandStart.getOrDefault(player, player.getChips()), player.getChips());
+                }
+                continue;
+            }
             Bank.recordHand(player.getAccount(), player.getName(), lastWinners.contains(player), pot);
         }
         lastDealt.clear();
         lastWinners.clear();
+        stackAtHandStart.clear();
         reportStacks();
         view.redraw(table);
     }
@@ -501,6 +522,8 @@ public final class CasinoTable implements TableEvents {
     private final List<PokerPlayer> lastDealt = new ArrayList<>();
     /** And who won something out of it. */
     private final List<PokerPlayer> lastWinners = new ArrayList<>();
+    /** What everybody had when the hand was dealt, so a bot can be told what it just cost them. */
+    private final Map<PokerPlayer, Integer> stackAtHandStart = new HashMap<>();
 
     /**
      * Tells the launcher what everybody has in front of them.

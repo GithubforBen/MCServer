@@ -98,9 +98,12 @@ Offen:
 - [x] Lobby fährt das Casino hoch, kündigt es an und lässt die Leute selbst hingehen
 - [x] Chips sind Bits, eins zu eins; Einkauf wartet auf den Launcher, Auszahlen nicht
 - [x] Offene Stacks liegen beim Launcher — Absturz kostet den Abend, nicht das Geld
-- [x] Rangliste nach Verhältnis, Preise über das normale Preis-Menü
+- [x] Rangliste nach Gewinn (nicht nach Verhältnis - das belohnte den kleinsten Einsatz),
+      Verhältnis steht daneben, Preise über das normale Preis-Menü
 - [x] Casino wird einmal gebaut und wandert danach über `./poker-world` mit
 - [x] Bots mit gemessener Balance (siehe `BotBalanceCheck`), Stack zahlt der Spawner
+- [x] Bot-Charaktere auf fließenden Achsen statt festen Typen, mit Mischzone, Semi-Bluff
+      und Drift über den Abend - gemessen in `BotCharacterCheck`
 - [x] Turnier auf einem Tisch: steigende Blinds, Plätze, Topf am Ende
 - [ ] **Am lebenden Server nachprüfen** (siehe Abschnitt 2)
 - [ ] Mehrtisch-Turnier: Tische brechen und Plätze ausgleichen, wenn es je gebraucht wird
@@ -142,6 +145,8 @@ Zufallsläufe), die Bots gemessen (`BotBalanceCheck`). Was nur auf einem echten 
       offenen Stacks aus, und **nur einmal**?
 - [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau wieder da?
 - [ ] Turnier: steigen die Blinds nur zwischen Händen, und stimmt die Auszahlung?
+- [ ] Fühlen sich die Bots an einem echten Tisch verschieden an, oder nur in der Statistik?
+      Das ist die einzige Frage zu ihnen, die keine Messung beantwortet
 
 - [ ] Bleibt nach mehreren Neustarts **genau ein** Villager pro Shop übrig?
       (`ShopkeeperChunkListener`, Spawn über `EntitiesLoadEvent`)

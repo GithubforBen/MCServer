@@ -19,8 +19,13 @@ import java.util.Random;
  * <p>
  * What is here instead is a bot that decides on the same two numbers a person decides on: how often this
  * hand wins from here ({@link Equity}), and what the pot is offering to find out. Above that price it goes
- * on, below it it does not, and around the edges it is inconsistent on purpose - a table where every bot
- * plays the same way is a table you beat once and then beat forever.
+ * on, below it it does not.
+ * <p>
+ * Around the edges it is inconsistent on purpose, and that is {@link BotVibe}'s job. Every bot is drawn a
+ * temperament when it sits down - continuous, never one of a few types - and every threshold here is
+ * nudged by it and jittered again on each decision. A table where every bot plays the same way is a table
+ * you beat once and then beat forever; six different temperaments that also drift over the evening is a
+ * table where a read taken an hour ago is no longer worth much.
  * <p>
  * <b>Two hard rules sit above all of it</b>, because they are the two failures that make a bot table not
  * worth sitting at:
@@ -56,27 +61,48 @@ public final class BotBrain {
     private static final double MAX_RESPECT = 0.85d;
 
     private final Random random;
-    /** Above one it wants more than the pot offers before it calls, below one it wants less. */
-    private final double tightness;
-    /** How often it raises a hand that is worth raising. */
-    private final double aggression;
-    /** How often it bets a hand that is worth nothing. */
-    private final double bluff;
+    /** Who this one is. Never shown to anybody, and different for every bot. */
+    private final BotVibe vibe;
+    /** Whether the last decision was a near thing, so the thinking time can reflect it. */
+    private boolean lastWasClose;
 
     /**
      * Gives one bot its temperament.
-     * <p>
-     * Drawn once when it sits down and kept for as long as it is there, so it is a player with a way of
-     * playing rather than a coin flipped every hand. The ranges are narrow: this is the difference between
-     * two people at the same table, not between a rock and a maniac.
      *
      * @param random the source of everything random about it
      */
     public BotBrain(Random random) {
+        this(random, new BotVibe(random));
+    }
+
+    /**
+     * Gives one bot a temperament that was drawn for it - which is how a table gets a spread of characters
+     * rather than six draws that happen to land on top of each other.
+     *
+     * @param random the source of everything random about it
+     * @param vibe   who it is
+     */
+    public BotBrain(Random random, BotVibe vibe) {
         this.random = random;
-        this.tightness = 0.92d + random.nextDouble() * 0.22d;
-        this.aggression = 0.18d + random.nextDouble() * 0.24d;
-        this.bluff = 0.03d + random.nextDouble() * 0.07d;
+        this.vibe = vibe;
+    }
+
+    /**
+     * @return this bot's temperament, for the log and for nothing else
+     */
+    public BotVibe getVibe() {
+        return vibe;
+    }
+
+    /**
+     * Told after every hand, so the temperament moves with the evening.
+     *
+     * @param won         whether it took the pot
+     * @param chipsBefore what it had when the hand started
+     * @param chipsAfter  what it has now
+     */
+    public void afterHand(boolean won, int chipsBefore, int chipsAfter) {
+        vibe.afterHand(won, chipsBefore, chipsAfter);
     }
 
     /**
@@ -145,18 +171,25 @@ public final class BotBrain {
         int maxRaise = table.maxRaiseTo(me);
         if (minRaise <= 0 || minRaise > maxRaise) return Action.check();
 
-        boolean worthBetting = equity > 0.60d && random.nextDouble() < aggression * 2.2d;
+        boolean worthBetting = equity > 0.60d + vibe.jitter()
+                && random.nextDouble() < vibe.raiseRate() * 2.2d;
+        // and a hand that is only just short of worth betting is bet sometimes anyway, so the line between
+        // betting and checking is not one a person can find
+        if (!worthBetting && equity > 0.60d - vibe.mixBand()
+                && random.nextDouble() < vibe.raiseRate()) {
+            worthBetting = true;
+        }
         // a bluff is only worth anything where somebody can still be made to fold, and on the river
         // against four players that is nobody
         boolean worthBluffing = equity < 0.35d
                 && table.getStreet() != Street.PREFLOP
-                && random.nextDouble() < bluff;
+                && random.nextDouble() < vibe.bluffRate();
 
         if (!worthBetting && !worthBluffing) return Action.check();
 
         // half to two thirds of the pot is what a bet is for: enough that calling is a real decision,
         // small enough that being wrong costs one bet rather than the stack
-        double share = worthBluffing ? 0.4d : 0.45d + random.nextDouble() * 0.25d;
+        double share = worthBluffing ? 0.4d : vibe.betShare();
         int target = clamp((int) Math.round(pot * share), minRaise, maxRaise);
         return sized(table, me, target, equity, bigBlind);
     }
@@ -168,7 +201,9 @@ public final class BotBrain {
                                int bigBlind, int stack) {
         // what the pot is offering: call this much to win what is already there
         double priceOfStaying = (double) toCall / (pot + toCall);
-        double wanted = priceOfStaying * tightness * LOOSENESS;
+        // the jitter lives inside demandedEdge, so the same spot twice is not reliably the same answer
+        double wanted = priceOfStaying * vibe.demandedEdge() * LOOSENESS;
+        lastWasClose = Math.abs(equity - wanted) < 0.08d;
 
         boolean shortStack = stack <= SHORT_STACK_BB * bigBlind;
         int minRaise = table.minRaiseTo(me);
@@ -177,15 +212,24 @@ public final class BotBrain {
 
         // a hand that is winning is never thrown away, and a hand that is winning well gets raised
         if (equity >= NEVER_FOLD_ABOVE) {
-            if (canRaise && (equity > 0.80d || random.nextDouble() < aggression)) {
+            if (canRaise && (equity > 0.80d || random.nextDouble() < vibe.raiseRate())) {
                 return sized(table, me, raiseTo(table, pot), equity, bigBlind);
             }
             return Action.call(toCall);
         }
 
+        // a hand that is behind but going somewhere is worth putting pressure on with, sometimes. Without
+        // this the bot only ever raises when it is already ahead, which is a bot you can read in one
+        // sentence - if it raises, fold - and also a bot that never wins a pot it should not have won
+        if (canRaise && table.getStreet() != Street.PREFLOP
+                && equity > 0.40d && equity < 0.62d
+                && random.nextDouble() < vibe.semiBluffRate()) {
+            return sized(table, me, raiseTo(table, pot), equity, bigBlind);
+        }
+
         if (equity >= wanted) {
             // ahead of the price but not by much: mostly just pay it, sometimes put the pressure back
-            if (canRaise && equity > 0.58d && random.nextDouble() < aggression * 0.5d) {
+            if (canRaise && equity > 0.58d && random.nextDouble() < vibe.raiseRate() * 0.5d) {
                 return sized(table, me, raiseTo(table, pot), equity, bigBlind);
             }
             return Action.call(toCall);
@@ -195,6 +239,16 @@ public final class BotBrain {
         // worth the shove rather than the slow bleed of the blinds
         if (shortStack && equity > 0.45d && canRaise) {
             return Action.allIn(0);
+        }
+
+        // The mixing band. Just under the price is exactly where a hard threshold gives a bot away: the
+        // same spot answered the same way, every time, and two hands of watching finds the line. So the
+        // line is not a line here - the closer it is, the closer to a coin flip, and how wide the band is
+        // is itself part of the temperament.
+        double band = vibe.mixBand();
+        if (equity > wanted - band) {
+            double howClose = (equity - (wanted - band)) / band;
+            if (random.nextDouble() < howClose * 0.75d) return Action.call(toCall);
         }
 
         // a call that costs almost nothing is worth making on a hand that is nearly good enough, which is
@@ -229,7 +283,7 @@ public final class BotBrain {
             // than not betting, so it takes the free card or pays the price instead
             int toCall = table.toCall(me);
             if (toCall <= 0) return Action.check();
-            return equity >= (double) toCall / (table.getPot() + toCall) * tightness
+            return equity >= (double) toCall / (table.getPot() + toCall) * vibe.demandedEdge()
                     ? Action.call(toCall) : Action.fold();
         }
         // a raise past four fifths of the stack leaves a stub nobody can play with and nobody folds to, so
@@ -260,8 +314,7 @@ public final class BotBrain {
      */
     private int raiseTo(PokerTable table, int pot) {
         int bet = table.getCurrentBet();
-        double factor = 2.4d + random.nextDouble() * 0.7d;
-        int target = (int) Math.round(bet * factor);
+        int target = (int) Math.round(bet * vibe.raiseFactor());
         // against a token bet into a big pot, the pot is the better yardstick
         return Math.max(target, (int) Math.round(bet + pot * 0.5d));
     }
@@ -271,10 +324,16 @@ public final class BotBrain {
     }
 
     /**
-     * @return how long this bot takes to decide, in milliseconds - long enough to look like somebody
-     *         thinking and short enough not to hold a table up
+     * How long this bot takes over its turn.
+     * <p>
+     * Not a constant and not the same for every bot, because timing is a tell like anything else: a table
+     * where every difficult decision comes back in exactly one second is a table where you can tell a
+     * difficult decision from an easy one. A patient bot thinks longer, everybody thinks longer over a
+     * close call, and there is noise on top.
+     *
+     * @return the delay in milliseconds
      */
     public long thinkingTime() {
-        return 700L + random.nextInt(1800);
+        return vibe.thinkingTime(lastWasClose);
     }
 }

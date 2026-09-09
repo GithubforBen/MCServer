@@ -63,15 +63,20 @@ public final class PokerEventSettings {
     /**
      * How many hands count as having played, rather than having sat down once and got lucky.
      * <p>
-     * The ranking is a ratio, and a ratio has a hole in it: buy in for the minimum, win one hand, stand up,
-     * and you are on 2.0 while somebody who played all night for a real profit is on 1.4. Both bars below
-     * are what closes it. They are settings rather than constants because the right number depends on how
-     * long the evening runs.
+     * The ranking is what somebody won, and one big pot is a real win that is not a poker night. This is
+     * the bar that tells them apart. A setting rather than a constant, because the right number depends on
+     * how long the evening runs.
      */
     public static final int DEFAULT_MIN_HANDS = 20;
 
-    /** And how much had to go through their hands, as a multiple of one buy-in. */
-    public static final int DEFAULT_MIN_VOLUME_BUY_INS = 3;
+    /**
+     * How much has to have gone in before somebody counts, as a multiple of one buy-in.
+     * <p>
+     * Zero, and that is not an oversight. It mattered while the ranking was a ratio, where the way to win
+     * was to risk as little as possible and a minimum stake was the only thing stopping it. Ranking by
+     * winnings has no such hole, so the bar is off by default and left in for an admin who wants one.
+     */
+    public static final int DEFAULT_MIN_VOLUME_BUY_INS = 0;
 
     private final EventData event;
 

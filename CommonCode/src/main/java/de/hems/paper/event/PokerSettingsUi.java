@@ -163,8 +163,8 @@ public final class PokerSettingsUi {
         ui.setItem(22, new ItemApi(Material.WRITABLE_BOOK, ChatColor.GOLD + "Wertung: Mindesthände",
                         List.of(ChatColor.GRAY + "Aktuell: " + ChatColor.WHITE + settings.getMinHands()
                                         + " Hände",
-                                ChatColor.DARK_GRAY + "Ohne das gewinnt die Rangliste, wer einmal",
-                                ChatColor.DARK_GRAY + "klein einsteigt, eine Hand trifft und aufhört",
+                                ChatColor.DARK_GRAY + "Ein großer Pot ist ein echter Gewinn und",
+                                ChatColor.DARK_GRAY + "trotzdem noch keine Pokernacht",
                                 cycleHint())).build(),
                 new SimpleItemAction(click -> {
                     settings.setMinHands(step(MIN_HANDS, settings.getMinHands(), forward(click.getClick())));
@@ -172,11 +172,13 @@ public final class PokerSettingsUi {
                 }));
 
         ui.setItem(23, new ItemApi(Material.CHEST, ChatColor.GOLD + "Wertung: Mindesteinsatz",
-                        List.of(ChatColor.GRAY + "Aktuell: " + ChatColor.WHITE + settings.getMinVolume()
-                                        + " Bits insgesamt",
-                                ChatColor.DARK_GRAY + "Das sind "
+                        List.of(ChatColor.GRAY + "Aktuell: " + ChatColor.WHITE
+                                        + (settings.getMinVolume() == 0 ? "aus"
+                                        : settings.getMinVolume() + " Bits ("
                                         + (settings.getMinVolume() / Math.max(1, settings.getBuyIn()))
-                                        + " Buy-ins",
+                                        + " Buy-ins)"),
+                                ChatColor.DARK_GRAY + "Braucht man normalerweise nicht - gewertet",
+                                ChatColor.DARK_GRAY + "wird der Gewinn, nicht das Verhältnis",
                                 cycleHint())).build(),
                 new SimpleItemAction(click -> {
                     int buyIn = settings.getBuyIn();
@@ -226,11 +228,11 @@ public final class PokerSettingsUi {
                 + " × " + settings.getSeats() + " Plätze");
         lore.add(ChatColor.GRAY + "Bots: " + ChatColor.WHITE
                 + (settings.isBotsAllowed() ? settings.getBotFee() + " Bits Gebühr" : "aus"));
-        lore.add(ChatColor.GRAY + "Wertung ab: " + ChatColor.WHITE + settings.getMinHands()
-                + " Händen und " + settings.getMinVolume() + " Bits");
+        lore.add(ChatColor.GRAY + "Wertung ab: " + ChatColor.WHITE + settings.getMinHands() + " Händen"
+                + (settings.getMinVolume() > 0 ? " und " + settings.getMinVolume() + " Bits" : ""));
         lore.add("");
-        lore.add(ChatColor.DARK_GRAY + "Gewertet wird, was rauskommt geteilt durch");
-        lore.add(ChatColor.DARK_GRAY + "was reingeht. Höher ist besser.");
+        lore.add(ChatColor.DARK_GRAY + "Gewertet wird, was unterm Strich");
+        lore.add(ChatColor.DARK_GRAY + "gewonnen wurde. Mehr ist besser.");
         return new ItemApi(Material.PLAYER_HEAD, ChatColor.GOLD + "So sieht der Abend aus", lore).build();
     }
 
