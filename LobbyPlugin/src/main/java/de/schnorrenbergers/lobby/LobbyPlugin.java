@@ -10,7 +10,6 @@ import de.hems.paper.cosmetic.CosmeticEffects;
 import de.hems.paper.cosmetic.CosmeticService;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.money.MoneyService;
-import de.hems.paper.event.BedwarsEventStarter;
 import de.hems.paper.event.EventService;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.RunService;
@@ -65,13 +64,8 @@ public final class LobbyPlugin extends JavaPlugin {
         registerCommand("warp", new WarpCommand());
         EventService.init(this);
         RunService.init(this);
-        // the hub is where the players are, so it is the hub that puts a bedwars round up when a bedwars
-        // event's time comes and takes everybody standing here along
-        BedwarsEventStarter.init(this);
-        // and the same for a poker night, except that nobody is dragged across: the casino opens, and who
-        // wants to play walks through the door themselves
-        de.hems.paper.event.PokerEventStarter.init(this);
-        // every kind of event registered with the general starter - hunger games so far
+        // the hub is where the players are, so it is the hub that puts the server of an event up when its
+        // time comes - a bedwars round, a casino, an arena - and brings the people standing here along
         de.hems.paper.event.ServerEventStarter.init(this);
         // the ranking board of a poker night is read here while the hand it describes is still being
         // played on the casino server

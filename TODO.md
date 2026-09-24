@@ -124,8 +124,9 @@ Offen:
 - [x] Vorlage für neue Events: `EventSetting`, `EventDefinition(s)`, `ServerEventStarter`, `EventResultService`
 - [x] Bug: Einstellungen mit Punkt im Schlüssel waren nach einem Launcher-Neustart kaputt (`EventStore`)
 - [ ] Teams bei Hunger Games — `hg.team-size` ist vorbereitet, gespielt wird solo
-- [ ] Bedwars meldet keine Plätze an den Launcher, deshalb gibt es dort keine Belohnungen
-- [ ] Bedwars- und Poker-Starter laufen noch über ihren eigenen Code statt über `ServerEventStarter`
+- [x] Bedwars meldet Team-Plätze und Kills an den Launcher und bekommt Belohnungen
+- [x] Bedwars-, Poker- und Hunger-Games-Server laufen alle über `ServerEventStarter`
+- [x] Der Server einer Bedwars-Event-Runde wird beim Abrechnen gestoppt und gelöscht (lag vorher liegen)
 
 ### 1.5 Lobby
 - [x] Eventsystem in der Lobby verfügbar (`/events`, Kalender, Join-Hinweis)
@@ -158,6 +159,20 @@ Spielablauf lief auf einem echten Server:
 - [ ] Freeze im Countdown: kann man sich umsehen, aber nicht vom Startplatz laufen?
 - [ ] Schrumpft die Grenze in der eingestellten Zeit (`changeSize` in Ticks)?
 - [ ] Event abrechnen lassen: kommen die Belohnungen an, wird die Arena gestoppt und gelöscht?
+
+**Bedwars-Belohnungen und Starter-Umbau** — gebaut, nicht auf einem Server gelaufen:
+
+- [ ] Bedwars-Event mit drei Teams: bekommen die Teams die Plätze 3, 2, 1 in der Reihenfolge des
+      Ausscheidens, und steht das im Ergebnis-Panel des Events?
+- [ ] Zeitlimit-Ende: stimmen die Plätze mit dem Endbildschirm überein?
+- [ ] Spieler, der mitten in der Runde rausgeht: steht er noch im Ergebnis (Teilnahme)? Hängt daran, ob
+      `GameTeam.getMembers()` ihn behält
+- [ ] „ab X Kills“ bei Bedwars: kommen die Kills (inkl. Final Kills) richtig an?
+- [ ] Bedwars-Event: Server geht 5 Min vorher hoch, Einladung im Chat, zur Eventzeit werden alle
+      rübergeschickt, Nachzügler während des ganzen Events
+- [ ] Pokernacht: Casino geht hoch, Ankündigung mit Knopf, Erinnerung alle 15 Min, niemand wird gezogen
+- [ ] Event-Panel: Knopf „Zur Bedwars-Lobby“ / „Zum Casino“ / „Zur Arena“ an derselben Stelle
+- [ ] Nach dem Abrechnen: ist das Verzeichnis der Bedwars-Runde weg?
 
 **Pokernacht** — die Regeln selbst sind geprüft (`HandCheck`, `TableCheck`, 104 Prüfungen plus
 Zufallsläufe), die Bots gemessen (`BotBalanceCheck`). Was nur auf einem echten Server geht:

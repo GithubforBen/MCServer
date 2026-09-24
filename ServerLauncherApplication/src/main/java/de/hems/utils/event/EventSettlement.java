@@ -8,8 +8,6 @@ import de.hems.types.event.EventData;
 import de.hems.types.event.EventResultData;
 import de.hems.types.event.EventStanding;
 import de.hems.types.event.EventState;
-import de.hems.types.event.EventType;
-import de.hems.types.event.HungerGamesSettings;
 import de.hems.types.event.RunData;
 
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -222,8 +220,8 @@ public class EventSettlement {
         if (event.getState() != EventState.CANCELLED && event.getType().isTimed()) {
             RewardPayout.pay(awards, event, standingsOf(board));
         }
-        if (event.getType() == EventType.HUNGER_GAMES) {
-            settleHungerGames(event);
+        if (event.getType().reportsResults()) {
+            settleResults(event);
         }
         discardServers(board);
         clearRuns(board);
@@ -269,24 +267,26 @@ public class EventSettlement {
     }
 
     /**
-     * Pays out a hunger games event and clears up after it: the arena is switched off and thrown away, and
-     * the result lines go once they have been paid.
+     * Pays out an event that was settled from reported results - bedwars, hunger games - and clears up
+     * after it: its server is switched off and thrown away, and the result lines go once they have been
+     * paid.
      *
      * @param event the event
      */
-    private void settleHungerGames(EventData event) {
+    private void settleResults(EventData event) {
         if (results != null) {
             if (event.getState() != EventState.CANCELLED) {
                 List<EventStanding> standings = new ArrayList<>();
                 for (EventResultData row : results.getRowsOf(event.getId())) standings.add(row.toStanding());
                 int paid = RewardPayout.pay(awards, event, standings);
-                System.out.println("Hunger games " + event.getName() + ": " + standings.size()
+                System.out.println(event.getType().getTitle() + " " + event.getName() + ": " + standings.size()
                         + " players, " + paid + " rewards put aside.");
             }
             results.discard(event.getId());
         }
-        String server = new HungerGamesSettings(event).getServer();
-        if (server == null) return;
+        String key = event.getType().getServerKey();
+        String server = key == null ? null : event.getSetting(key, "");
+        if (server == null || server.isBlank()) return;
         Set<String> arena = new LinkedHashSet<>(List.of(server));
         stopServerNames(arena);
         new Timer("arena-cleanup", true).schedule(new TimerTask() {

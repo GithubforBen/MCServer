@@ -98,6 +98,8 @@ public final class Bedwars extends JavaPlugin {
     /** The event this round was ordered for, and when it begins. Both empty for a round nobody ordered. */
     private String eventName;
     private long eventStartsAt;
+    /** The event this round was ordered for, which its results are reported to. */
+    private java.util.UUID eventId;
 
     @Override
     public void onLoad() {
@@ -140,6 +142,8 @@ public final class Bedwars extends JavaPlugin {
         new SuddenDeathListener(this);
         new SpectatorListener(this);
         new RulesListener(this);
+        // the placings and kills of an event round go to the launcher, which pays the rewards out of them
+        new de.schnorrenbergers.bedwars.listener.EventResultReporter(this);
         new de.schnorrenbergers.bedwars.round.RoundStateListener(this);
         // what a round ends with, and what players carry into it
         CosmeticEffects.init(this);
@@ -244,6 +248,7 @@ public final class Bedwars extends JavaPlugin {
             if (!self.equalsIgnoreCase(settings.getServer())) continue;
             eventName = event.getName();
             eventStartsAt = event.getStartsAt();
+            eventId = event.getId();
             getLogger().info("This round belongs to the event '" + event.getName() + "': "
                     + settings.getTeamSize() + " players per team, starting at "
                     + new java.util.Date(eventStartsAt) + ".");
@@ -423,6 +428,13 @@ public final class Bedwars extends JavaPlugin {
         if (eventStartsAt <= 0L) return 0L;
         long left = eventStartsAt - System.currentTimeMillis();
         return left <= 0L ? 0L : (left + 999L) / 1000L;
+    }
+
+    /**
+     * @return the event this round was ordered for, or {@code null} for a round nobody ordered
+     */
+    public @org.jetbrains.annotations.Nullable java.util.UUID getEventId() {
+        return eventId;
     }
 
     /**

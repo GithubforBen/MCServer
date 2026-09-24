@@ -6,7 +6,6 @@ import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventState;
 import de.hems.types.event.EventType;
-import de.hems.types.event.PokerEventSettings;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -119,54 +118,27 @@ public final class EventDetailUi {
                             player.openInventory(UhcEventUi.build(player, event).getInventory())));
         }
 
-        // the round of a bedwars event goes up minutes before the event does, and its own waiting lobby
-        // is a better place to stand around in than the hub
-        if (event.getType() == EventType.BEDWARS && BedwarsEventStarter.serverOf(event) != null && open) {
-            ui.setItem(DOOR_SLOT, new ItemApi(Material.RED_BED, ChatColor.GREEN + "Zur Bedwars-Lobby",
-                            List.of(ChatColor.GRAY + "Die Runde wartet schon.",
-                                    ChatColor.GRAY + "Gestartet wird sie zur Eventzeit.")).build(),
+        // every kind that is played on a server of its own: the round, the casino, the arena
+        ServerEventStarter starter = ServerEventStarter.of(event.getType());
+        if (starter != null && starter.serverOf(event) != null && open) {
+            List<String> lore = new java.util.ArrayList<>();
+            for (String line : starter.describeDoor(event)) lore.add(ChatColor.GRAY + line);
+            lore.add(ChatColor.GREEN + "Klicken zum Hingehen");
+            ui.setItem(DOOR_SLOT, new ItemApi(EventDefinitions.of(event.getType()).getIcon(),
+                            ChatColor.GREEN + starter.getDoorTitle(), lore).build(),
                     new SimpleItemAction(click -> {
                         player.closeInventory();
-                        player.sendMessage(ChatColor.AQUA + BedwarsEventStarter.join(player, event));
+                        player.sendMessage(ChatColor.AQUA + starter.join(player, event));
                     }));
         }
 
-        // a poker night is two doors: one into the casino, one onto the board. The board stays open after
-        // the night is over, because that is when people want to look at it
+        // the board stays open after the event is over, because that is when people want to look at it
         if (event.getType() == EventType.POKER) {
-            if (PokerEventStarter.serverOf(event) != null && open) {
-                PokerEventSettings poker = new PokerEventSettings(event);
-                ui.setItem(DOOR_SLOT, new ItemApi(Material.PLAYER_HEAD, ChatColor.GREEN + "Zum Casino",
-                                List.of(ChatColor.GRAY + "Buy-in: " + ChatColor.WHITE + poker.getBuyIn() + " Bits",
-                                        ChatColor.GRAY + "Blinds: " + ChatColor.WHITE + poker.getSmallBlind()
-                                                + "/" + poker.getBigBlind(),
-                                        ChatColor.GRAY + "Haus: " + ChatColor.WHITE + poker.getRakeText()
-                                                + ChatColor.GRAY + " pro Pot",
-                                        ChatColor.DARK_GRAY + "Gespielt wird um echte Bits.")).build(),
-                        new SimpleItemAction(click -> {
-                            player.closeInventory();
-                            player.sendMessage(ChatColor.AQUA + PokerEventStarter.join(player, event));
-                        }));
-            }
             ui.setItem(RANKING_SLOT, new ItemApi(Material.GOLD_BLOCK, ChatColor.GOLD + "Rangliste",
                             List.of(ChatColor.GRAY + "Wer hat aus seinem Einsatz am meisten gemacht")).build(),
                     new SimpleItemAction(click ->
                             player.openInventory(PokerRankingUi.build(player, event).getInventory())));
-        }
-
-        // an event started through the general starter - hunger games and whatever comes after it
-        ServerEventStarter starter = ServerEventStarter.of(event.getType());
-        if (starter != null) {
-            if (starter.serverOf(event) != null && open) {
-                ui.setItem(DOOR_SLOT, new ItemApi(EventDefinitions.of(event.getType()).getIcon(),
-                                ChatColor.GREEN + starter.getDoorTitle(),
-                                List.of(ChatColor.GRAY + "Klicken zum Hingehen",
-                                        ChatColor.DARK_GRAY + "Wer nach dem Start kommt, schaut zu.")).build(),
-                        new SimpleItemAction(click -> {
-                            player.closeInventory();
-                            player.sendMessage(ChatColor.AQUA + starter.join(player, event));
-                        }));
-            }
+        } else if (event.getType().reportsResults()) {
             ui.setItem(RANKING_SLOT, new ItemApi(Material.GOLD_BLOCK, ChatColor.GOLD + "Ergebnis",
                             List.of(ChatColor.GRAY + "Platzierungen und Kills")).build(),
                     new SimpleItemAction(click -> EventResultUi.open(player, event)));

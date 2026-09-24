@@ -947,7 +947,15 @@ Welche Events überhaupt jemanden werten:
 | UHC (Bosse / Drache) | nach Zeit, das Team teilt sich den Platz | – |
 | Pokernacht | nach Gewinn, nur wer die Mindesthände hat | – |
 | Hunger Games | in der Reihenfolge, in der die Leute rausfliegen | ja |
-| Bedwars, Einfach, Andere Welt, End | – (die Runde meldet keine Plätze zurück) | – |
+| Bedwars | nach Team, in der Reihenfolge, in der die Teams ausscheiden; das Team teilt sich den Platz | ja, pro Spieler, Final Kills zählen mit |
+| Einfach, Andere Welt, End | – | – |
+
+**Bedwars im Detail:** Das zuerst ausgeschiedene Team bekommt den schlechtesten Platz, das letzte
+stehende Platz 1. Endet die Runde über das Zeitlimit, werden die noch stehenden Teams nach derselben
+Punktetabelle geordnet, mit der das Zeitlimit den Sieger bestimmt; bei einem Unentschieden an der Spitze
+entscheidet die Reihenfolge der Tabelle. Beendet ein Op die Runde (`STOPPED`) oder läuft sie leer,
+bleiben die stehenden Teams ohne Platz: Kills und Teilnahme zählen, ein Platz nicht. Private Runden über
+`/runde` melden nichts.
 
 Gespeichert werden Belohnungen als `reward.<n>` in den Einstellungen des Events, z.B.
 `who=place:4:10;money=100;items=DIAMOND:2`. Events von vorher mit `prize.place.1..3` und
@@ -970,8 +978,10 @@ Was ein neuer Eventtyp braucht, von oben nach unten — die meisten brauchen nur
 3. **Definition**: eine Zeile in `EventDefinitions`:
    `register(EventDefinition.of(EventType.X, Material.BOW).settings(XSettings.SETTINGS));`
 4. **Eigener Server** (falls das Event auf einem läuft): eine `ServerTemplate`, ein
-   `FileType.PLUGIN`, und eine Zeile in `ServerEventStarter` — der fährt den Server fünf Minuten vorher
-   hoch, schreibt seinen Namen ins Event und holt die Lobby rüber. Der Server findet sein Event über den
+   `FileType.PLUGIN`, der Einstellungs-Schlüssel des Servers in `EventType`, und eine
+   `ServerEventStarter.define(...)`-Kette — der fährt den Server fünf Minuten vorher hoch, schreibt
+   seinen Namen ins Event und holt die Lobby rüber (`warpFor`) oder lädt nur ein (`walkIn`, wie die
+   Pokernacht). Bedwars, Pokernacht und Hunger Games laufen alle darüber. Der Server findet sein Event über den
    eigenen Namen (siehe `ArenaContext`).
 5. **Wertung**: der Spielserver meldet `EventResultData` (Platz, Kills) über
    `EventResultService.report(...)`. Der Launcher hebt sie in `results.yml` auf und zahlt beim Abrechnen
