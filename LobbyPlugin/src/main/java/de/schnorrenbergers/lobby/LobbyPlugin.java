@@ -71,6 +71,8 @@ public final class LobbyPlugin extends JavaPlugin {
         // and the same for a poker night, except that nobody is dragged across: the casino opens, and who
         // wants to play walks through the door themselves
         de.hems.paper.event.PokerEventStarter.init(this);
+        // every kind of event registered with the general starter - hunger games so far
+        de.hems.paper.event.ServerEventStarter.init(this);
         // the ranking board of a poker night is read here while the hand it describes is still being
         // played on the casino server
         de.hems.paper.poker.PokerStatsService.init(this);

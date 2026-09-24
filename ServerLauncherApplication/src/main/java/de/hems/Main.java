@@ -126,8 +126,10 @@ public class Main {
         de.hems.events.PokerEvents pokerEvents = new de.hems.events.PokerEvents(pokerStatsStore);
         de.hems.utils.poker.PokerSettlement pokerSettlement =
                 new de.hems.utils.poker.PokerSettlement(pokerStatsStore, moneyStore, awardStore, pokerEvents);
+        de.hems.utils.event.EventResultStore resultStore = new de.hems.utils.event.EventResultStore();
+        new de.hems.events.EventResultEvents(resultStore);
         new EventEvents(eventStore, runStore, awardStore,
-                new EventSettlement(eventStore, runStore, awardStore, pokerSettlement));
+                new EventSettlement(eventStore, runStore, awardStore, pokerSettlement, resultStore));
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         // what the machine has left, and which server is sitting on memory it never uses

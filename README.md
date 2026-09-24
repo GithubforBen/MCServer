@@ -752,8 +752,9 @@ Geschichte sehen will.
 Eine Schwelle bleibt: **Mindesthände**. Ein großer Pot ist ein echter Gewinn und trotzdem noch keine
 Pokernacht. Wer sie nicht hat, steht unter der Wertung mit der Angabe, was fehlt, statt einfach zu
 fehlen. Den Mindesteinsatz gibt es weiterhin als Einstellung, steht aber standardmäßig auf aus — er war
-nur für die Verhältnis-Wertung nötig. Preise für die Plätze 1–3 und für die Teilnahme werden wie bei
-jedem anderen Event über das Preis-Menü hinterlegt.
+nur für die Verhältnis-Wertung nötig. Belohnungen werden wie bei jedem anderen Event über den Knopf
+**Belohnungen** hinterlegt (siehe [Belohnungen](#belohnungen)). Platz 1 ist der größte Gewinn; wer unter
+den Mindesthänden bleibt, hat weder einen Platz noch zählt er als Teilnehmer.
 
 ### Am Tisch
 
@@ -907,6 +908,141 @@ nur mitgegangen sind, ein All-In das kleiner als eine volle Erhöhung ist öffne
 neu, und wer all-in für weniger drin ist, kann nur gewinnen, was er verlieren konnte. Am Ende 400
 Zufallshände, in denen Chips nur wandern und nie entstehen.
 
+## Events anlegen
+
+`/events` → **Neues Event**. Name, Beschreibung, Typ, Start und Dauer stehen oben, darunter zwei Knöpfe,
+die bei **jedem** Eventtyp an derselben Stelle sitzen:
+
+| Knopf | Was dahinter ist |
+|-------|------------------|
+| Einstellungen (Komparator, links) | Alle Regeln des Typs — Schalter und Zahlen zum Durchklicken |
+| Belohnungen (Goldbarren, rechts) | Wer was bekommt |
+
+Das Event-Panel eines bestehenden Events hat dieselben zwei Knöpfe an denselben Plätzen. Dort wird jede
+Änderung sofort gespeichert, beim Anlegen erst mit **Anlegen**. Spieler sehen beide Knöpfe auch, können
+sie aber nicht ändern — so sieht jeder, worum gespielt wird.
+
+### Belohnungen
+
+Eine Belohnung ist: **was** (Bits und Items) und **wer** sie bekommt. Angelegt wird sie in dieser
+Reihenfolge — Neue Belohnung, Geld durchklicken und Items aus der Hand dazulegen, dann wählen, wer:
+
+| Auswahl | Wer sie bekommt |
+|---------|-----------------|
+| `#1`, `#2`, `#3` | Genau dieser Platz |
+| Top 10 | Platz 1 bis 10 |
+| ab Platz 10 | Platz 10 bis zum letzten |
+| Von/Bis von Hand | Jeder beliebige Bereich, z.B. Platz 4–10 |
+| ab X Kills | Wer mindestens so viele Kills hat — nur bei Events, die Kills zählen |
+| Teilnahme | Jeder, der mitgemacht hat |
+
+**Jede Belohnung, die passt, wird ausgezahlt.** Wer Platz 1 und 5 Kills hat, bekommt die Belohnung für
+`#1` und die für „ab 5 Kills“. Ausgezahlt wird beim Abrechnen des Events; wer offline ist, bekommt sie
+beim nächsten Join (Geld nur auf einem Server mit Wirtschaft, wie bisher).
+
+Welche Events überhaupt jemanden werten:
+
+| Typ | Platz | Kills |
+|-----|-------|-------|
+| UHC (Bosse / Drache) | nach Zeit, das Team teilt sich den Platz | – |
+| Pokernacht | nach Gewinn, nur wer die Mindesthände hat | – |
+| Hunger Games | in der Reihenfolge, in der die Leute rausfliegen | ja |
+| Bedwars, Einfach, Andere Welt, End | – (die Runde meldet keine Plätze zurück) | – |
+
+Gespeichert werden Belohnungen als `reward.<n>` in den Einstellungen des Events, z.B.
+`who=place:4:10;money=100;items=DIAMOND:2`. Events von vorher mit `prize.place.1..3` und
+`prize.participation` werden als die Regeln gelesen, die sie meinten, und beim ersten Speichern
+umgeschrieben.
+
+**Behoben dabei:** Der Launcher hat Einstellungen mit Punkt im Schlüssel (`poker.buy-in`,
+`prize.place.1`) als verschachteltes YAML geschrieben, aber flach zurückgelesen. Nach einem Neustart des
+Launchers waren dadurch alle Preise und alle Poker-Einstellungen eines Events kaputt. `EventStore` liest
+sie jetzt vollständig zurück (geprüft in `RewardCheck`).
+
+### Ein neues Event bauen (Vorlage)
+
+Was ein neuer Eventtyp braucht, von oben nach unten — die meisten brauchen nur die ersten drei Schritte:
+
+1. **Typ**: Eintrag in `EventType` mit Titel und ob er Plätze (`ranked`) und Kills (`kills`) kennt.
+2. **Einstellungen**: eine Klasse wie `HungerGamesSettings` mit Schlüsseln, Gettern und einer Liste
+   `SETTINGS` aus `EventSetting.toggle(...)` / `EventSetting.choice(...)`. Das Einstellungs-Menü wird
+   daraus gebaut, niemand muss ein Inventar schreiben.
+3. **Definition**: eine Zeile in `EventDefinitions`:
+   `register(EventDefinition.of(EventType.X, Material.BOW).settings(XSettings.SETTINGS));`
+4. **Eigener Server** (falls das Event auf einem läuft): eine `ServerTemplate`, ein
+   `FileType.PLUGIN`, und eine Zeile in `ServerEventStarter` — der fährt den Server fünf Minuten vorher
+   hoch, schreibt seinen Namen ins Event und holt die Lobby rüber. Der Server findet sein Event über den
+   eigenen Namen (siehe `ArenaContext`).
+5. **Wertung**: der Spielserver meldet `EventResultData` (Platz, Kills) über
+   `EventResultService.report(...)`. Der Launcher hebt sie in `results.yml` auf und zahlt beim Abrechnen
+   über `RewardPayout` aus — die Belohnungsregeln gelten dann ohne weiteren Code. Für die Anzeige gibt es
+   `EventResultUi`.
+
+## Hunger Games
+
+Alle in eine Welt, in der Mitte das Füllhorn mit gutem Loot, über die Karte fallen Supply Drops, am Ende
+zieht sich die Weltgrenze zusammen bis zum Showdown. Nether und End sind aus.
+
+Ablauf: Fünf Minuten vor dem Event fährt die Lobby die Arena hoch (`HUNGER_GAMES_<id>`) und lädt ein;
+zur Eventzeit schickt sie alle rüber, zwei Minuten lang auch Nachzügler. In der Arena wird gewartet, bis
+die Eventzeit da ist **und** genug Spieler da sind, dann 30 Sekunden Countdown — die letzten zehn steht
+jeder eingefroren auf seinem Startplatz im Ring ums Füllhorn. Danach Schutzzeit, freies Spiel, Grenze
+schrumpft, Showdown. Wer stirbt oder den Server verlässt, ist raus und schaut zu; wer nach dem Start
+kommt, schaut zu. Der Letzte gewinnt, 20 Sekunden später geht es zurück in die Lobby.
+
+| Einstellung | Standard | Was sie macht |
+|-------------|----------|---------------|
+| Mindestens Spieler | 2 | Vorher startet nichts, auch wenn die Zeit da ist |
+| Schutzzeit | 1 Min | Niemand kann einem anderen Spieler schaden |
+| Grenze am Anfang | 500 | Durchmesser der Welt beim Start |
+| Grenze beim Showdown | 20 | So klein wird sie am Ende |
+| Grenze schrumpft ab | 10 Min | Nach dem Start |
+| Schrumpfdauer | 10 Min | Bis zur Showdown-Größe |
+| Supply Drops | 4 Min | Abstand zwischen zwei Paketen, `aus` möglich |
+| Leuchten im Showdown | an | Wer im Showdown lebt, leuchtet |
+
+Die Teamgröße ist als Schlüssel (`hg.team-size`) vorbereitet, gespielt wird aber immer solo: Teams
+brauchen eigene Plätze und Friendly-Fire-Regeln, die gibt es noch nicht.
+
+**Plätze** ergeben sich aus der Reihenfolge des Rausfliegens. Läuft die Eventzeit ab, bevor einer übrig
+ist, werden die Lebenden nach Kills gewertet (gleiche Kills = gleicher Platz). Die Dauer des Events
+sollte also länger sein als „schrumpft ab“ + „Schrumpfdauer“ plus Wartezeit. `/hg stop` beendet ohne
+Wertung der Lebenden.
+
+**Die Karte.** Liegt eine Welt in `./hungergames-world` beim Launcher (Ordner mit `level.dat`), wird sie
+auf jede neue Arena kopiert. Ohne Karte gibt es eine frisch generierte Welt. Optional liegt in der Karte
+eine `hungergames.yml`:
+
+```yaml
+center: {x: 0, z: 0}   # Standard: der Weltspawn
+cornucopia-radius: 12  # Kisten so nah an der Mitte sind das Füllhorn
+spawn-radius: 22       # Radius des Startrings
+spawns: ["10,70,-4"]   # feste Startplätze statt des Rings, optional
+```
+
+`/hg mitte` schreibt die Mitte von dort, wo man steht — auch in die Karte beim Launcher, gilt also ab
+der nächsten Arena. Steht keine Kiste in der Nähe der Mitte, baut die Arena ein kleines Füllhorn
+(Steinplatte, goldenes Horn, zwölf Kisten). Kisten auf der Karte werden beim ersten Öffnen gefüllt, wenn
+sie leer sind; was der Kartenbauer hineingelegt hat, bleibt.
+
+**Loot** steht in `./hungergames-loot.yml` beim Launcher (wird beim ersten Start mit den Standards
+geschrieben): drei Tabellen `normal`, `cornucopia`, `supply` mit Material, Anzahl, Gewicht und optional
+Verzauberungen.
+
+**Supply Drops** fallen als Kiste aus 40 Blöcken Höhe irgendwo in die inneren 80 % der aktuellen Grenze,
+mit Koordinaten im Chat und einer Lichtsäule. Landet eine auf einer Fackel oder in einem nicht geladenen
+Chunk, wird sie nach 20 Sekunden einfach hingestellt.
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/hg` | Stand des Spiels |
+| `/hg start` | Sofort starten (Op). Alleine läuft es als Test, bis `/hg stop` |
+| `/hg stop` | Ohne Sieger beenden (Op) |
+| `/hg mitte` | Mitte der Karte setzen (Op) |
+
+Beim Abrechnen des Events zahlt der Launcher die Belohnungen aus `results.yml` aus, stoppt die Arena und
+löscht ihr Verzeichnis.
+
 ## Discord-Verknüpfung
 
 Ein Minecraft-Name ist alles, was man von jemandem hat, wenn er auffällt. Die Verknüpfung macht daraus
@@ -953,5 +1089,6 @@ Discord-Rolle.
 | `Survival` | Survival Spielmodus |
 | `Bedwars` | Bedwars Minispiel |
 | `PokerPlugin` | Casino einer Pokernacht: Regeln, Tisch, Bots |
+| `HungerGamesPlugin` | Arena eines Hunger-Games-Events: Füllhorn, Supply Drops, Grenze, Wertung |
 | `BackpackPlugin` | Geteilter Team-Rucksack |
 | `VelocityPlugin` | Meldet neue Server am laufenden Proxy an |

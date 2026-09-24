@@ -110,6 +110,23 @@ Offen:
 - [ ] Eigene Pokerrunden über `/runde`, so wie es sie für Bedwars gibt — die Engine und
       die Bots stehen dafür schon, es fehlt der Weg über `RoundData`
 
+### 1.4c Hunger Games und einheitliche Event-Einstellungen — steht
+
+- [x] Eventtyp `HUNGER_GAMES`, eigenes Modul `HungerGamesPlugin`, Vorlage `HUNGER_GAMES`
+- [x] Füllhorn in der Mitte (vorhandene Kisten der Karte oder gebaut), Startring, Countdown mit Freeze
+- [x] Supply Drops als fallende Kiste mit Koordinaten und Lichtsäule
+- [x] Schutzzeit, schrumpfende Weltgrenze, Showdown mit Leuchten; Nether und End aus
+- [x] Vorbereitete Karte aus `./hungergames-world`, sonst frische Welt; Loot in `./hungergames-loot.yml`
+- [x] Platz und Kills gehen laufend an den Launcher (`results.yml`), Abrechnung beim Eventende
+- [x] Einstellungen und Belohnungen für **jedes** Event an denselben zwei Knöpfen, beim Anlegen und danach
+- [x] Belohnungen als Regeln: `#1`, Platzbereich, ab Platz X, ab X Kills, Teilnahme — alle passenden zahlen
+- [x] UHC und Pokernacht zahlen über dieselben Regeln aus; alte `prize.*`-Einträge werden übernommen
+- [x] Vorlage für neue Events: `EventSetting`, `EventDefinition(s)`, `ServerEventStarter`, `EventResultService`
+- [x] Bug: Einstellungen mit Punkt im Schlüssel waren nach einem Launcher-Neustart kaputt (`EventStore`)
+- [ ] Teams bei Hunger Games — `hg.team-size` ist vorbereitet, gespielt wird solo
+- [ ] Bedwars meldet keine Plätze an den Launcher, deshalb gibt es dort keine Belohnungen
+- [ ] Bedwars- und Poker-Starter laufen noch über ihren eigenen Code statt über `ServerEventStarter`
+
 ### 1.5 Lobby
 - [x] Eventsystem in der Lobby verfügbar (`/events`, Kalender, Join-Hinweis)
 - [x] Events lassen sich direkt aus der Lobby heraus anlegen
@@ -130,6 +147,17 @@ Offen:
 ## 2. Am lebenden Server nachprüfen
 
 Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiziert.
+
+**Hunger Games** — `RewardCheck` prüft Regeln, Einstellungen und Speicher (46 Prüfungen). Nichts vom
+Spielablauf lief auf einem echten Server:
+
+- [ ] Kommt die Karte aus `./hungergames-world` richtig an? 26.2 legt Welten anders ab
+      (`dimensions/...`); gelesen wird `hungergames.yml` neben der `level.dat`
+- [ ] Sind Nether und End wirklich aus (`allow-nether=false`, `bukkit.yml settings.allow-end`)?
+- [ ] Landet der Supply Drop als gefüllte Kiste, und steht die Lichtsäule?
+- [ ] Freeze im Countdown: kann man sich umsehen, aber nicht vom Startplatz laufen?
+- [ ] Schrumpft die Grenze in der eingestellten Zeit (`changeSize` in Ticks)?
+- [ ] Event abrechnen lassen: kommen die Belohnungen an, wird die Arena gestoppt und gelöscht?
 
 **Pokernacht** — die Regeln selbst sind geprüft (`HandCheck`, `TableCheck`, 104 Prüfungen plus
 Zufallsläufe), die Bots gemessen (`BotBalanceCheck`). Was nur auf einem echten Server geht:

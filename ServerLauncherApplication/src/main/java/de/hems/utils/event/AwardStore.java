@@ -75,6 +75,7 @@ public class AwardStore {
         }
         award.setEventName(entry.getString("event-name", "Event"));
         award.setPlace(entry.getInt("place", AwardData.PARTICIPATION));
+        award.setTitle(entry.getString("title"));
         award.setPrize(PrizeData.parse(entry.getString("prize")));
         award.setAwardedAt(entry.getLong("awarded-at"));
         award.setClaimed(entry.getBoolean("claimed", false));
@@ -87,6 +88,7 @@ public class AwardStore {
         config.set(path + ".event", award.getEventId() == null ? null : award.getEventId().toString());
         config.set(path + ".event-name", award.getEventName());
         config.set(path + ".place", award.getPlace());
+        config.set(path + ".title", award.getTitle());
         config.set(path + ".prize", award.getPrize().serialize());
         config.set(path + ".awarded-at", award.getAwardedAt());
         config.set(path + ".claimed", award.isClaimed());

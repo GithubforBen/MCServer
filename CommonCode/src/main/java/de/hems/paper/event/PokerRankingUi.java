@@ -6,7 +6,6 @@ import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.paper.poker.PokerStatsService;
 import de.hems.types.event.EventData;
 import de.hems.types.event.PokerEventSettings;
-import de.hems.types.event.PrizeData;
 import de.hems.types.poker.PokerStatsData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -160,27 +159,12 @@ public final class PokerRankingUi {
      * @return what the places pay out, so people know what they are playing for
      */
     private static ItemStack prizes(EventData event) {
-        List<String> lore = new ArrayList<>();
-        boolean any = false;
-        for (int place = 1; place <= PrizeData.PLACES; place++) {
-            PrizeData prize = PrizeData.ofPlace(event, place);
-            if (prize.isEmpty()) continue;
-            any = true;
-            lore.add(placeColor(place) + "#" + place + ChatColor.GRAY + ": "
-                    + ChatColor.WHITE + String.join(", ", prize.describe()));
-        }
-        PrizeData participation = PrizeData.ofParticipation(event);
-        if (!participation.isEmpty()) {
-            any = true;
-            lore.add(ChatColor.GRAY + "Teilnahme: " + ChatColor.WHITE
-                    + String.join(", ", participation.describe()));
-        }
-        if (!any) {
-            lore.add(ChatColor.GRAY + "Für diese Nacht sind keine Preise hinterlegt.");
+        List<String> lore = new ArrayList<>(RewardUi.describe(event));
+        if (de.hems.types.event.EventRewards.of(event).isEmpty()) {
             lore.add(ChatColor.DARK_GRAY + "Gespielt wird trotzdem um echte Bits -");
             lore.add(ChatColor.DARK_GRAY + "die liegen auf dem Tisch.");
         }
-        return new ItemApi(Material.CHEST, ChatColor.GOLD + "Preise", lore).build();
+        return new ItemApi(Material.CHEST, ChatColor.GOLD + "Belohnungen", lore).build();
     }
 
     private static ChatColor profitColor(PokerStatsData row) {

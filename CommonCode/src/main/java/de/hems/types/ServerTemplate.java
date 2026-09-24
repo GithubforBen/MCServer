@@ -41,6 +41,13 @@ public enum ServerTemplate implements Serializable {
     POKER(FileType.SERVER.PAPER, 1536, true,
             FileType.PLUGIN.POKER),
 
+    /**
+     * An arena for hunger games. Played on a prepared map when one lies in {@code ./hungergames-world},
+     * otherwise on a fresh world. No nether and no end - the game is the one world and its border.
+     */
+    HUNGER_GAMES(FileType.SERVER.PAPER, 3072, true,
+            FileType.PLUGIN.HUNGER_GAMES),
+
     /** A plain paper server without a game mode - the base for custom events. */
     EVENT(FileType.SERVER.PAPER, 2048, true,
             FileType.PLUGIN.RUN);
@@ -140,6 +147,7 @@ public enum ServerTemplate implements Serializable {
             case SURVIVAL -> "Survival";
             case BEDWARS -> "Bedwars";
             case POKER -> "Poker";
+            case HUNGER_GAMES -> "Hunger Games";
             case EVENT -> "Event (leer)";
         };
     }
@@ -151,6 +159,7 @@ public enum ServerTemplate implements Serializable {
             case SURVIVAL -> "Survival mit Teams, Geld und Shops";
             case BEDWARS -> "Fertige Bedwars Runde";
             case POKER -> "Casino mit Pokertischen";
+            case HUNGER_GAMES -> "Arena für ein Hunger-Games-Event";
             case EVENT -> "Leerer Paper Server fuer eigene Events";
         };
     }

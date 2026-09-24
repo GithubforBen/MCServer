@@ -18,6 +18,7 @@
         <module>BackpackPlugin</module>
         <module>RunPlugin</module>
         <module>PokerPlugin</module>
+        <module>HungerGamesPlugin</module>
         <module>VelocityPlugin</module>
     </modules>
 

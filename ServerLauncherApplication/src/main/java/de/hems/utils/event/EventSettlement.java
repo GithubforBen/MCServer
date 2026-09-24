@@ -4,10 +4,12 @@ import de.hems.Main;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.event.EventUpdatedEvent;
 import de.hems.communication.events.event.RunUpdatedEvent;
-import de.hems.types.event.AwardData;
 import de.hems.types.event.EventData;
+import de.hems.types.event.EventResultData;
+import de.hems.types.event.EventStanding;
 import de.hems.types.event.EventState;
-import de.hems.types.event.PrizeData;
+import de.hems.types.event.EventType;
+import de.hems.types.event.HungerGamesSettings;
 import de.hems.types.event.RunData;
 
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -16,9 +18,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -50,17 +55,20 @@ public class EventSettlement {
      * event does: money is still lying on the tables and has to go back before anything else happens.
      */
     private final de.hems.utils.poker.PokerSettlement poker;
+    /** The lines of the events that rank by where people finished, or {@code null} on a launcher without. */
+    private final EventResultStore results;
 
     public EventSettlement(EventStore events, RunStore runs, AwardStore awards) {
-        this(events, runs, awards, null);
+        this(events, runs, awards, null, null);
     }
 
     public EventSettlement(EventStore events, RunStore runs, AwardStore awards,
-                           de.hems.utils.poker.PokerSettlement poker) {
+                           de.hems.utils.poker.PokerSettlement poker, EventResultStore results) {
         this.events = events;
         this.runs = runs;
         this.awards = awards;
         this.poker = poker;
+        this.results = results;
         Timer timer = new Timer("event-settlement", true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -211,9 +219,11 @@ public class EventSettlement {
         }
 
         // a cancelled event never really happened, so nobody is rewarded for it
-        if (event.getState() != EventState.CANCELLED) {
-            awardPlaces(event, board);
-            awardParticipation(event, board);
+        if (event.getState() != EventState.CANCELLED && event.getType().isTimed()) {
+            RewardPayout.pay(awards, event, standingsOf(board));
+        }
+        if (event.getType() == EventType.HUNGER_GAMES) {
+            settleHungerGames(event);
         }
         discardServers(board);
         clearRuns(board);
@@ -228,40 +238,63 @@ public class EventSettlement {
     }
 
     /**
-     * Gives the first three finished runs their prize. Everybody on a winning run gets it, so a team of
-     * four takes home four first prizes rather than a quarter each.
+     * Turns the runs of a race into standings.
+     * <p>
+     * The finished runs are ranked fastest first, and everybody on a run shares its placing - a team of four
+     * that wins takes home four first prizes rather than a quarter each. Somebody who ran more than once
+     * keeps their best placing, and somebody who never finished is still there, unranked, for the rewards
+     * that are only for taking part.
      *
-     * @param event the event
-     * @param board its runs, fastest first
+     * @param board the runs, fastest first
+     * @return one standing per player
      */
-    private void awardPlaces(EventData event, List<RunData> board) {
+    private static List<EventStanding> standingsOf(List<RunData> board) {
+        Map<UUID, Integer> best = new LinkedHashMap<>();
         int place = 0;
         for (RunData run : board) {
-            if (!run.isRanked()) continue;
-            place++;
-            if (place > PrizeData.PLACES) break;
-            PrizeData prize = PrizeData.ofPlace(event, place);
-            if (prize.isEmpty()) continue;
+            int placing = EventStanding.UNRANKED;
+            if (run.isRanked()) placing = ++place;
             for (UUID member : run.getParticipants()) {
-                awards.put(new AwardData(member, event, place, prize));
+                int known = best.getOrDefault(member, EventStanding.UNRANKED);
+                boolean better = known == EventStanding.UNRANKED
+                        || (placing != EventStanding.UNRANKED && placing < known);
+                if (!best.containsKey(member) || better) best.put(member, placing);
             }
         }
+        List<EventStanding> standings = new ArrayList<>();
+        for (Map.Entry<UUID, Integer> entry : best.entrySet()) {
+            standings.add(new EventStanding(entry.getKey(), entry.getValue(), 0));
+        }
+        return standings;
     }
 
     /**
-     * Gives everybody who took part their prize, once, no matter how often they ran.
+     * Pays out a hunger games event and clears up after it: the arena is switched off and thrown away, and
+     * the result lines go once they have been paid.
      *
      * @param event the event
-     * @param board its runs
      */
-    private void awardParticipation(EventData event, List<RunData> board) {
-        PrizeData prize = PrizeData.ofParticipation(event);
-        if (prize.isEmpty()) return;
-        Set<UUID> everybody = new LinkedHashSet<>();
-        for (RunData run : board) everybody.addAll(run.getParticipants());
-        for (UUID member : everybody) {
-            awards.put(new AwardData(member, event, AwardData.PARTICIPATION, prize));
+    private void settleHungerGames(EventData event) {
+        if (results != null) {
+            if (event.getState() != EventState.CANCELLED) {
+                List<EventStanding> standings = new ArrayList<>();
+                for (EventResultData row : results.getRowsOf(event.getId())) standings.add(row.toStanding());
+                int paid = RewardPayout.pay(awards, event, standings);
+                System.out.println("Hunger games " + event.getName() + ": " + standings.size()
+                        + " players, " + paid + " rewards put aside.");
+            }
+            results.discard(event.getId());
         }
+        String server = new HungerGamesSettings(event).getServer();
+        if (server == null) return;
+        Set<String> arena = new LinkedHashSet<>(List.of(server));
+        stopServerNames(arena);
+        new Timer("arena-cleanup", true).schedule(new TimerTask() {
+            @Override
+            public void run() {
+                discardServer(server);
+            }
+        }, SHUTDOWN_GRACE_MS);
     }
 
     /** How long a run server is given to shut down before its directory is removed. */
@@ -303,6 +336,16 @@ public class EventSettlement {
         for (RunData run : board) {
             if (run.getServerName() != null) servers.add(run.getServerName());
         }
+        stopServerNames(servers);
+        return servers;
+    }
+
+    /**
+     * Switches servers off by name, leaving their files alone.
+     *
+     * @param servers the servers to stop
+     */
+    private static void stopServerNames(Set<String> servers) {
         for (String server : servers) {
             try {
                 ListenerAdapter.ServerName name = ListenerAdapter.ServerName.valueOf(server);
@@ -313,7 +356,6 @@ public class EventSettlement {
                 System.out.println("Could not stop the run server " + server + ": " + e.getMessage());
             }
         }
-        return servers;
     }
 
     /**
@@ -391,6 +433,7 @@ public class EventSettlement {
         // a deleted poker night still has money on its tables. The rows only go once it is back with the
         // people it belongs to, so the delete button cannot quietly empty somebody's account
         if (poker != null) poker.discard(eventId);
+        if (results != null) results.discard(eventId);
     }
 
     private static void announceEvent(UUID id, EventData event) {

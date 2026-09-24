@@ -139,6 +139,7 @@ public class FileType implements Serializable {
         LOBBY,
         BEDWARS,
         POKER,
+        HUNGER_GAMES,
         BACKPACK,
         RUN,
         VELOCITY,
@@ -155,6 +156,7 @@ public class FileType implements Serializable {
                 case LOBBY -> "build:/lobby-1.0.jar";
                 case BEDWARS -> "build:/bedwars-1.0.jar";
                 case POKER -> "build:/poker-1.0.jar";
+                case HUNGER_GAMES -> "build:/hungergames-1.0.jar";
                 case BACKPACK -> "build:/backpack-1.0.jar";
                 case RUN -> "build:/run-1.0.jar";
                 case VELOCITY -> "build:/velocityplugin-1.0.jar";
@@ -212,6 +214,7 @@ public class FileType implements Serializable {
                 case LOBBY -> "Lobby";
                 case BEDWARS -> "Bedwars";
                 case POKER -> "Poker";
+                case HUNGER_GAMES -> "Hunger Games";
                 case BACKPACK -> "Team-Rucksack";
                 case RUN -> "Event-Läufe";
                 case VELOCITY -> "Netzwerk Proxy Plugin";
@@ -233,6 +236,7 @@ public class FileType implements Serializable {
                 case LOBBY -> "Lobby Features, Parkour und Server Manager";
                 case BEDWARS -> "Bedwars Minispiel";
                 case POKER -> "Pokertische mit Bits als Einsatz";
+                case HUNGER_GAMES -> "Arena mit Füllhorn, Supply Drops und schrumpfender Grenze";
                 case BACKPACK -> "Geteilter Rucksack fuer jedes Team";
                 case RUN -> "Wertet Speedrun-Events aus und setzt den Server zurueck";
                 case VELOCITY -> "Verbindet den Proxy mit dem Netzwerk";

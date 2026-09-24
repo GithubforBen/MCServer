@@ -1,0 +1,24 @@
+name: HungerGamesPlugin
+version: '1.0-SNAPSHOT'
+main: de.schnorrenbergers.hungergames.HungerGamesPlugin
+api-version: '26.2'
+commands:
+  hg:
+    description: Hunger Games steuern und die Karte einrichten
+    usage: /hg [status|start|stop|mitte]
+  events:
+    description: Den Eventkalender öffnen
+    usage: /events
+  warp:
+    description: Auf einen anderen Server springen
+    usage: /warp [server]
+  lobby:
+    description: Zurück in die Lobby
+    usage: /lobby
+    aliases: [hub, leave]
+  servermanger:
+    description: Server verwalten und neue Server erstellen
+permissions:
+  network.warp.always:
+    description: Darf jeden Server jederzeit verlassen
+    default: op

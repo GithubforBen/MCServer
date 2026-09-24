@@ -4,7 +4,6 @@ import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.types.event.EventData;
-import de.hems.types.event.PrizeData;
 import de.hems.types.event.RunData;
 import de.hems.types.event.UhcObjective;
 import de.hems.types.event.UhcSettings;
@@ -66,25 +65,18 @@ public final class UhcEventUi {
                 new SimpleItemAction(click -> player.openInventory(
                         EventCalendarUi.build(player, EventCalendarUi.Filter.ALL).getInventory())));
 
-        List<String> prizeLore = new ArrayList<>();
-        for (int place = 1; place <= PrizeData.PLACES; place++) {
-            PrizeData prize = PrizeData.ofPlace(event, place);
-            prizeLore.add(ChatColor.GOLD + "" + place + ". Platz: " + ChatColor.WHITE
-                    + String.join(", ", prize.describe()));
-        }
-        prizeLore.add(ChatColor.GRAY + "Teilnahme: " + ChatColor.WHITE
-                + String.join(", ", PrizeData.ofParticipation(event).describe()));
-        ui.setItem(8, new ItemApi(Material.GOLD_INGOT, ChatColor.GOLD + "Preise", prizeLore).build(),
-                player.isOp()
-                        ? new SimpleItemAction(click ->
-                                player.openInventory(PrizeUi.build(player, event).getInventory()))
-                        : SimpleItemAction.display());
+        // the same two buttons as on the event panel, leading to the same two panels
+        EventEdit edit = EventEdit.live(event, back -> {
+            EventData current = EventService.getEvent(event.getId());
+            back.openInventory(build(back, current == null ? event : current).getInventory());
+        });
+        ui.setItem(8, RewardUi.icon(event, player.isOp()), player.isOp()
+                ? new SimpleItemAction(click -> RewardUi.open(player, edit))
+                : SimpleItemAction.display());
 
         if (player.isOp()) {
-            ui.setItem(53, new ItemApi(Material.WRITABLE_BOOK, ChatColor.GREEN + "Einstellungen",
-                    List.of(ChatColor.GRAY + "Regeln dieses Events ändern")).build(),
-                    new SimpleItemAction(click ->
-                            player.openInventory(UhcSettingsUi.build(player, event).getInventory())));
+            ui.setItem(53, EventSettingsUi.icon(event, true),
+                    new SimpleItemAction(click -> EventSettingsUi.open(player, edit)));
         }
         return ui;
     }

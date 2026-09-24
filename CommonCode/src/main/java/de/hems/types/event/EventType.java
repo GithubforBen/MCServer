@@ -12,35 +12,47 @@ import java.io.Serializable;
 public enum EventType implements Serializable {
 
     /** Just an announcement with a time frame. No mechanics attached. */
-    SIMPLE("Einfaches Event", false, false),
+    SIMPLE("Einfaches Event", false, false, false, false),
     /** Everyone moves to another world for a while. */
-    OTHER_WORLD("Andere Welt", false, false),
+    OTHER_WORLD("Andere Welt", false, false, false, false),
     /** Opens the End for good. Happens exactly once. */
-    END("Das End öffnet", true, false),
+    END("Das End öffnet", true, false, false, false),
     /** Ultra hardcore: kill every boss as fast as possible. */
-    UHC_BOSSES("Alle Bosse (UHC)", false, true),
+    UHC_BOSSES("Alle Bosse (UHC)", false, true, true, false),
     /** Ultra hardcore: kill the dragon as fast as possible. */
-    UHC_DRAGON("Enderdrache (UHC)", false, true),
+    UHC_DRAGON("Enderdrache (UHC)", false, true, true, false),
     /**
      * A round of bedwars at a fixed time. The network puts a bedwars server up when it starts and takes
      * everybody who is in the lobby along; how big the teams are is a setting of the event.
+     * <p>
+     * Not ranked: the round does not report who finished where back to the launcher yet, so a reward on it
+     * would never pay anybody.
      */
-    BEDWARS("Bedwars", false, false),
+    BEDWARS("Bedwars", false, false, false, false),
     /**
      * A poker night. The network puts a casino server up when it starts and takes everybody in the lobby
      * along; the stakes are the bits of the network, and what the house keeps of every pot is a setting of
      * the event.
      */
-    POKER("Pokernacht", false, false);
+    POKER("Pokernacht", false, false, true, false),
+    /**
+     * Hunger games: everybody into one prepared world, loot in the middle, supply drops over the map, and a
+     * border that closes in until only one is left.
+     */
+    HUNGER_GAMES("Hunger Games", false, false, true, true);
 
     private final String title;
     private final boolean onlyOnce;
     private final boolean timed;
+    private final boolean ranked;
+    private final boolean kills;
 
-    EventType(String title, boolean onlyOnce, boolean timed) {
+    EventType(String title, boolean onlyOnce, boolean timed, boolean ranked, boolean kills) {
         this.title = title;
         this.onlyOnce = onlyOnce;
         this.timed = timed;
+        this.ranked = ranked;
+        this.kills = kills;
     }
 
     public String getTitle() {
@@ -60,6 +72,23 @@ public enum EventType implements Serializable {
      */
     public boolean isTimed() {
         return timed;
+    }
+
+    /**
+     * Whether the event finds out who did how well, which is what rewards are handed out by. An event that
+     * ranks nobody can only be announced, not won.
+     *
+     * @return whether rewards mean anything on this type
+     */
+    public boolean isRanked() {
+        return ranked;
+    }
+
+    /**
+     * @return whether the event counts kills, which is what makes a reward "from five kills on" possible
+     */
+    public boolean countsKills() {
+        return kills;
     }
 
     /**

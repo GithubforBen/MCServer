@@ -179,15 +179,7 @@ public final class EventCalendarUi {
      */
     private static Material material(EventData event) {
         if (event.getState() == EventState.CANCELLED) return Material.BARRIER;
-        return switch (event.getType()) {
-            case END -> Material.END_PORTAL_FRAME;
-            case UHC_BOSSES -> Material.NETHER_STAR;
-            case UHC_DRAGON -> Material.DRAGON_HEAD;
-            case BEDWARS -> Material.RED_BED;
-            case POKER -> Material.PLAYER_HEAD;
-            case OTHER_WORLD -> Material.GRASS_BLOCK;
-            case SIMPLE -> Material.PAPER;
-        };
+        return EventDefinitions.of(event.getType()).getIcon();
     }
 
     /**
