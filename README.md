@@ -5,21 +5,42 @@ Ein Minecraft Netzwerk aus einem Velocity Proxy und beliebig vielen Paper Server
 
 ## Versionen
 
-Alles läuft auf **Minecraft 26.2**:
+Alles läuft auf **Minecraft 26.3** (Stand 2026-09-24, jeweils die neueste Version):
 
-| Teil | Version |
-|------|---------|
-| Paper | 26.2 (build 112) |
-| Velocity | 3.5.1 (build 615) |
-| WorldEdit | 7.4.5 |
-| WorldGuard | 7.0.18 |
-| CoreProtect | 24.0 |
-| Chunky | 1.5.3 |
-| Simple Voicechat | 2.6.21 (Paper) / 2.6.18 (Velocity) |
+| Teil | Version | Status |
+|------|---------|--------|
+| Paper | 26.3 (build 40) | **ALPHA** — für 26.3 gibt es noch keinen stabilen Build |
+| Velocity | 4.2.0 (build 30) | stabil, neue Hauptversion (Config 2.9, API 4) |
+| WorldEdit | 7.4.6-beta-02 | **Beta** — das einzige WorldEdit für 26.3 |
+| WorldGuard | 7.0.19 | Release, für 26.3 freigegeben |
+| CoreProtect | 24.1 | Release, aber **nur bis 26.2** — schaltet sich auf 26.3 selbst ab |
+| Chunky | 1.5.3 | Release, für 26.3 freigegeben |
+| Simple Voicechat | 2.6.24 (Paper) / 2.6.18 (Velocity) | Release / neuestes Proxy-Plugin |
 
-Paper 26.2 braucht **Java 25** - sowohl zum Bauen als auch zum Starten. Die Downloads stehen alle in
+**CoreProtect läuft auf 26.3 nicht.** Es prüft die Version selbst und meldet „Minecraft 26.3 is not
+supported“. Bis es eine Version für 26.3 gibt, loggt niemand Blöcke und es gibt kein Rollback; die
+CoreProtect-Abfrage der Admin-Website sagt dann „CoreProtect ist nicht verfügbar“. Sobald eine neue
+Version erscheint, ist das eine Zeile in `FileType` (plus `coreprotect` in `CommonCode/pom.xml` und
+`Survival/pom.xml`).
+
+Paper braucht **Java 25** - sowohl zum Bauen als auch zum Starten. Die Downloads stehen alle in
 `CommonCode/src/main/java/de/hems/types/FileType.java`, ein Update ist also ein Update dieser einen Datei
 (plus `paper-api` in den poms und `api-version` in den `plugin.yml`).
+
+### Backup vor einem Versionswechsel
+
+Eine neue Minecraft-Version wandelt jede Welt beim ersten Laden um, und zurück geht es nicht. Der Launcher
+erkennt den Wechsel am alten Paper-Jar im Serververzeichnis (`paper-26.2-…` → `paper-26.3-…`) und kopiert
+**vor dem Start** jeden Weltordner dieses Servers nach
+`./backups/<SERVER>/<alte Version>-<Zeitstempel>/`. Schlägt das fehl, startet der Server nicht. Ein neuer
+Build derselben Version löst kein Backup aus. Die Backups werden nie automatisch gelöscht — bei großen
+Welten auf den Plattenplatz achten.
+
+### Velocity 4
+
+Velocity 4 hat das Format der `velocity.toml` geändert (`config-version = "2.9"`, `ping-passthrough`
+ist jetzt eine Tabelle). Der Launcher schreibt die Datei in diesem Format; geprüft durch einen Start des
+echten Velocity-4.2.0-Jars mit der erzeugten Datei.
 
 ## Bauen und starten
 
@@ -479,7 +500,7 @@ selbst, mitsamt Kommentaren zu jedem Wert.
 | `maps/<name>.yml` | Alles, was zu einer Map gehört |
 
 Maps liegen als Weltordner unter `maps/<name>/`. Beim Start wird eine Kopie geladen, gespielt wird in
-der Kopie. **Achtung bei 26.2:** eine Zusatzwelt liegt nicht mehr neben der Hauptwelt, sondern als
+der Kopie. **Achtung seit 26.1:** eine Zusatzwelt liegt nicht mehr neben der Hauptwelt, sondern als
 Dimension darin (`world/dimensions/minecraft/arena_<name>`) - der Server verschiebt sie beim Import
 selbst dorthin.
 
@@ -1018,6 +1039,10 @@ brauchen eigene Plätze und Friendly-Fire-Regeln, die gibt es noch nicht.
 ist, werden die Lebenden nach Kills gewertet (gleiche Kills = gleicher Platz). Die Dauer des Events
 sollte also länger sein als „schrumpft ab“ + „Schrumpfdauer“ plus Wartezeit. `/hg stop` beendet ohne
 Wertung der Lebenden.
+
+**Nether und End:** `allow-end` in der `bukkit.yml` wirkt, `allow-nether=false` hält den Nether auf 26.3
+aber nicht mehr vom Laden ab. Die Arena entlädt ihn deshalb nach dem Start selbst, und Portale werden
+ohnehin abgelehnt.
 
 **Die Karte.** Liegt eine Welt in `./hungergames-world` beim Launcher (Ordner mit `level.dat`), wird sie
 auf jede neue Arena kopiert. Ohne Karte gibt es eine frisch generierte Welt. Optional liegt in der Karte

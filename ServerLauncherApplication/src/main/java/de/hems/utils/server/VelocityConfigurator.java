@@ -51,7 +51,7 @@ public class VelocityConfigurator extends ServerConfigurator {
         if (toml.exists()) {toml.delete();}
         writeToFile("velocity.toml", "bind = \"" + Main.getInstance().getIp() + ":" + port + "\"", true);
         writeToFile("velocity.toml", "player-info-forwarding-mode = \"modern\"", true);
-        writeToFile("velocity.toml", "config-version = \"2.8\"", true);
+        writeToFile("velocity.toml", "config-version = \"2.9\"", true);
         if (Main.getInstance().getConfiguration().getConfig().contains("serversecret")) {
             overwriteToFile("forwarding.secret", Main.getInstance().getConfiguration().getConfig().getString("serversecret"), true);
             writeToFile("velocity.toml", "forwarding-secret-file = \"forwarding.secret\"", true);
@@ -79,7 +79,7 @@ public class VelocityConfigurator extends ServerConfigurator {
                 "# Announce whether or not your server supports Forge. If you run a modded server, we\n" +
                 "# suggest turning this on.\n" +
                 "# \n" +
-                "# If your network runs one modpack consistently, consider using ping-passthrough = \"mods\"\n" +
+                "# If your network runs one modpack consistently, consider using ping-passthrough.modinfo = true\n" +
                 "# instead for a nicer display in the server list.\n" +
                 "announce-forge = false\n" +
                 "\n" +
@@ -87,28 +87,23 @@ public class VelocityConfigurator extends ServerConfigurator {
                 "# any existing player who is online if a duplicate connection attempt is made.\n" +
                 "kick-existing-players = false\n" +
                 "\n" +
-                "# Should Velocity pass server list ping requests to a backend server?\n" +
-                "# Available options:\n" +
-                "# - \"disabled\":    No pass-through will be done. The velocity.toml and server-icon.png\n" +
-                "#                  will determine the initial server list ping response.\n" +
-                "# - \"mods\":        Passes only the mod list from your backend server into the response.\n" +
-                "#                  The first server in your try list (or forced host) with a mod list will be\n" +
-                "#                  used. If no backend servers can be contacted, Velocity won't display any\n" +
-                "#                  mod information.\n" +
-                "# - \"description\": Uses the description and mod list from the backend server. The first\n" +
-                "#                  server in the try (or forced host) list that responds is used for the\n" +
-                "#                  description and mod list.\n" +
-                "# - \"all\":         Uses the backend server's response as the proxy response. The Velocity\n" +
-                "#                  configuration is used if no servers could be contacted.\n" +
-                "ping-passthrough = \"DISABLED\"\n" +
-                "\n" +
+
                 "# If enabled (default is false), then a sample of the online players on the proxy will be visible\n" +
                 "# when hovering over the player count in the server list.\n" +
                 "# This doesn't have any effect when ping passthrough is set to either \"description\" or \"all\".\n" +
                 "sample-players-in-ping = false\n" +
                 "\n" +
                 "# If not enabled (default is true) player IP addresses will be replaced by <ip address withheld> in logs\n" +
-                "enable-player-address-logging = true", true);
+                "enable-player-address-logging = true\n" +
+                "\n" +
+                "# Velocity 4 (config 2.9): what is passed through from a backend server on a server list ping.\n" +
+                "# Everything off is what \"DISABLED\" meant on Velocity 3 - the proxy answers on its own.\n" +
+                "[ping-passthrough]\n" +
+                "version = false\n" +
+                "players = false\n" +
+                "description = false\n" +
+                "favicon = false\n" +
+                "modinfo = false", true);
         // every server that is known when the proxy boots. Servers that are created later are registered at
         // runtime by the velocity plugin, so warping works without touching this file again.
         writeToFile("velocity.toml", "[servers]", true);

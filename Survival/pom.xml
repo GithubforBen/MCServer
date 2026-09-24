@@ -78,13 +78,13 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>26.2.build.112-stable</version>
+            <version>26.3.build.40-alpha</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.coreprotect</groupId>
             <artifactId>coreprotect</artifactId>
-            <version>24.0</version>
+            <version>24.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

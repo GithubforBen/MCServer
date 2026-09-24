@@ -50,6 +50,9 @@ public class PaperConfigurator extends ServerConfigurator {
     public void configure() throws Exception {
         String jarName = FileType.SERVER.getFileName(FileType.SERVER.PAPER);
         File jar = new File(this.directory + "/" + jarName);
+        // a new Minecraft version converts the worlds for good, so they are copied away first - before the
+        // old jar is removed, because that jar is how the old version is recognised
+        WorldBackup.beforeUpgrade(new File(this.directory), jarName);
         File jarFile = new FileHandler().provideFile(FileType.SERVER.PAPER);
         Files.copy(jarFile.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         removeStaleServerJars(jarName);

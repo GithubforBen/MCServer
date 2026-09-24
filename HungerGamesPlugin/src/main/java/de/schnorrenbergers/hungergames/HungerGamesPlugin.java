@@ -60,6 +60,19 @@ public final class HungerGamesPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new GameListener(this, game), this);
         registerCommand("hg", new HgCommand(game));
         game.start();
+        // on 26.3 allow-nether=false no longer keeps the nether from loading; nobody can get there (the
+        // portals are refused), but it holds memory the arena needs. So it is unloaded once the server is up
+        getServer().getScheduler().runTask(this, this::unloadOtherDimensions);
+    }
+
+    private void unloadOtherDimensions() {
+        org.bukkit.World main = getServer().getWorlds().getFirst();
+        for (org.bukkit.World world : new java.util.ArrayList<>(getServer().getWorlds())) {
+            if (world.equals(main) || world.getEnvironment() == org.bukkit.World.Environment.NORMAL) continue;
+            boolean unloaded = getServer().unloadWorld(world, false);
+            getLogger().info((unloaded ? "Unloaded " : "Could not unload ") + world.getName()
+                    + " - the arena is the one world.");
+        }
     }
 
     @Override

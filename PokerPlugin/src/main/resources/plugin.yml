@@ -1,7 +1,7 @@
 name: PokerPlugin
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.poker.PokerPlugin
-api-version: '26.2'
+api-version: '26.3'
 commands:
   poker:
     description: Einsätze, nachkaufen, aufstehen, Bots und die Karte

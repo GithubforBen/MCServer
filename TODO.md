@@ -128,6 +128,24 @@ Offen:
 - [x] Bedwars-, Poker- und Hunger-Games-Server laufen alle über `ServerEventStarter`
 - [x] Der Server einer Bedwars-Event-Runde wird beim Abrechnen gestoppt und gelöscht (lag vorher liegen)
 
+### 1.4d Update auf Minecraft 26.3 — steht
+
+- [x] Paper 26.3 (build 40, ALPHA), Velocity 4.2.0, WorldEdit 7.4.6-beta-02, WorldGuard 7.0.19,
+      CoreProtect 24.1, Chunky 1.5.3, Voicechat 2.6.24 / 2.6.18
+- [x] Alle Plugins bauen gegen paper-api 26.3 und velocity-api 4.2.0, keine Warnung zu entfernten APIs
+- [x] `velocity.toml` im Format von Velocity 4 (config 2.9); mit dem echten Jar gestartet
+- [x] Automatisches Welt-Backup nach `./backups/` vor dem ersten Start auf einer neuen Version (`WorldBackupCheck`)
+- [x] Echter Paper-26.3-Server mit allen Plugins: startet ohne Exception, die Arena baut ihr Füllhorn
+- [x] Bug (schon vor dem Update): `/poker karte speichern` und der Export nach dem Bau haben nie funktioniert,
+      weil die Casino-Welt seit 26.1 unter `world/dimensions/...` liegt. Dazu lag das Layout auf dem
+      Casino-Server selbst, so dass jede Nacht das Casino neu gebaut hätte. Jetzt wandern Welt und Layout
+      über `./poker-world` — mit zwei 26.3-Servern nacheinander geprüft
+- [x] Hunger Games: eine 26.1-Karte als `./hungergames-world` wird auf 26.3 hochgestuft, `hungergames.yml`
+      gefunden; der Nether wird entladen, weil `allow-nether=false` ihn auf 26.3 nicht mehr aufhält
+- [ ] **CoreProtect gibt es nicht für 26.3** — es schaltet sich ab. Neue Version eintragen, sobald sie da ist
+- [ ] Auf Paper 26.3 stable und WorldEdit 7.4.6 (Release) wechseln, sobald es sie gibt
+- [ ] Die `backups/` werden nie aufgeräumt
+
 ### 1.5 Lobby
 - [x] Eventsystem in der Lobby verfügbar (`/events`, Kalender, Join-Hinweis)
 - [x] Events lassen sich direkt aus der Lobby heraus anlegen
@@ -159,6 +177,20 @@ Spielablauf lief auf einem echten Server:
 - [ ] Freeze im Countdown: kann man sich umsehen, aber nicht vom Startplatz laufen?
 - [ ] Schrumpft die Grenze in der eingestellten Zeit (`changeSize` in Ticks)?
 - [ ] Event abrechnen lassen: kommen die Belohnungen an, wird die Arena gestoppt und gelöscht?
+
+**Update auf 26.3** — gebaut und auf einem nackten 26.3-Server gestartet, aber nicht im Netzwerk:
+
+- [ ] Launcher-Start nach dem Update: legt er für SURVIVAL und LOBBY ein Backup in `./backups/` an, bevor
+      die Server starten? Liegt die Welt darin vollständig (inkl. `dimensions/`)?
+- [ ] Proxy mit Velocity 4.2.0: verbinden sich Spieler, klappt `/warp`, meldet das VelocityPlugin neue
+      Server an?
+- [ ] Simple Voicechat über den Proxy: das Velocity-Plugin 2.6.18 ist für Velocity 3 gebaut — funktioniert
+      es unter Velocity 4?
+- [ ] Survival-Welt nach der Umwandlung: Claims (WorldGuard), Shops, Teams noch da?
+- [ ] WorldEdit-Beta: laufen die Befehle, die ihr nutzt?
+- [ ] Bedwars-Maps aus `./bedwars-maps` und die Lobby-Vorlage aus `./lobby-world`: werden sie auf 26.3
+      hochgestuft und korrekt geladen?
+- [ ] Pokernacht: Casino bauen, `/poker karte speichern`, nächste Pokernacht steht im selben Raum
 
 **Bedwars-Belohnungen und Starter-Umbau** — gebaut, nicht auf einem Server gelaufen:
 

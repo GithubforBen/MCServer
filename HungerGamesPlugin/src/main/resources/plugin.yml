@@ -1,7 +1,7 @@
 name: HungerGamesPlugin
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.hungergames.HungerGamesPlugin
-api-version: '26.2'
+api-version: '26.3'
 commands:
   hg:
     description: Hunger Games steuern und die Karte einrichten

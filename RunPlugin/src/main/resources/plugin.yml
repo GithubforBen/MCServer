@@ -1,7 +1,7 @@
 name: RunPlugin
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.run.RunPlugin
-api-version: '26.2'
+api-version: '26.3'
 commands:
   reset:
     description: Setzt diesen Event-Server zurück

@@ -13,9 +13,9 @@ public class FileType implements Serializable {
     private static final long serialVersionUID = 100L;
 
     /** The minecraft version the whole network is built and configured for. */
-    public static final String MINECRAFT_VERSION = "26.2";
+    public static final String MINECRAFT_VERSION = "26.3";
     /** The value plugins have to declare as {@code api-version} in their plugin.yml. */
-    public static final String API_VERSION = "26.2";
+    public static final String API_VERSION = "26.3";
 
     public enum SERVER {
         PAPER,
@@ -23,12 +23,12 @@ public class FileType implements Serializable {
 
         public static String getFileURL(SERVER type) {
             return switch (type) {
-                // Paper 26.2 build 112 (stable)
+                // Paper 26.3 build 40 - the newest there is, and still ALPHA at the time of writing
                 case SERVER.PAPER ->
-                        "https://fill-data.papermc.io/v1/objects/bd3a58cf96874e5ea6643f5f6fe9b4f5bf9e34b795fa078c2f0ee8b98b2f907e/paper-26.2-112.jar";
-                // Velocity 3.5.1 build 615 (recommended, speaks the 26.2 protocol)
+                        "https://fill-data.papermc.io/v1/objects/49399919246cbf443efc8507447dc948eb7477c41be560b0e87e2a455aff824a/paper-26.3-40.jar";
+                // Velocity 4.2.0 build 30 (stable)
                 case SERVER.VELOCITY ->
-                        "https://fill-data.papermc.io/v1/objects/b4e3164df5377346854dc6cb9e6a78022b1946ff69e89676313f5f6f1c6f0fb3/velocity-3.5.1-615.jar";
+                        "https://fill-data.papermc.io/v1/objects/35a5596a5468a035d8a32c8de5ebb0dc6b8d8f0cc3ff5169d514aca762af8aa8/velocity-4.2.0-30.jar";
             };
         }
 
@@ -161,15 +161,15 @@ public class FileType implements Serializable {
                 case RUN -> "build:/run-1.0.jar";
                 case VELOCITY -> "build:/velocityplugin-1.0.jar";
                 case WORLDEDIT ->
-                        "https://cdn.modrinth.com/data/1u6JkXh5/versions/F5ea2ov3/worldedit-bukkit-7.4.5.jar";
+                        "https://cdn.modrinth.com/data/1u6JkXh5/versions/J1eeOh6C/worldedit-bukkit-7.4.6-beta-02.jar";
                 case WORLD_GUARD ->
-                        "https://cdn.modrinth.com/data/DKY9btbd/versions/btHBavWa/worldguard-bukkit-7.0.18.jar";
+                        "https://cdn.modrinth.com/data/DKY9btbd/versions/TtfwTyi6/worldguard-bukkit-7.0.19.jar";
                 case CORE_PROTECT ->
-                        "https://cdn.modrinth.com/data/Lu3KuzdV/versions/Kma0kBsY/CoreProtect-CE-24.0.jar";
+                        "https://cdn.modrinth.com/data/Lu3KuzdV/versions/3sehX6Sg/CoreProtect-CE-24.1.jar";
                 case CHUNKY ->
                         "https://cdn.modrinth.com/data/fALzjamp/versions/MdY6JATr/Chunky-Bukkit-1.5.3.jar";
                 case SIMPLE_VOICECHAT_PAPER ->
-                        "https://cdn.modrinth.com/data/9eGKb6K1/versions/62MVmInV/voicechat-bukkit-2.6.21.jar";
+                        "https://cdn.modrinth.com/data/9eGKb6K1/versions/EJth3OAr/voicechat-bukkit-2.6.24.jar";
                 case SIMPLE_VOICECHAT_VELOCITY ->
                         "https://cdn.modrinth.com/data/9eGKb6K1/versions/ES87t4lm/voicechat-velocity-2.6.18.jar";
             };
