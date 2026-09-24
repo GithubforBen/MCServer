@@ -85,7 +85,11 @@ public class EventStore {
         event.setRevision(entry.getLong("revision", 0L));
         ConfigurationSection settings = entry.getConfigurationSection("settings");
         if (settings != null) {
-            for (String settingKey : settings.getKeys(false)) {
+            // a key like "poker.buy-in" is written as a path, so it comes back as nested sections. Walking
+            // them deep and keeping only the leaves gives the dotted keys back - reading only the top level
+            // used to turn every such setting into the text of a section after a restart
+            for (String settingKey : settings.getKeys(true)) {
+                if (settings.isConfigurationSection(settingKey)) continue;
                 event.setSetting(settingKey, String.valueOf(settings.get(settingKey)));
             }
         }
