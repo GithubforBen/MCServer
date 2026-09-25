@@ -170,6 +170,7 @@ Passwörter liegen als PBKDF2-Hash in der `main-config.yml`, nie im Klartext. Di
 |-------|-------------|
 | Server | Zeigt welche Server an sind, und schaltet sie an, aus oder neu |
 | Paying Player | Trägt zahlende Spieler per Minecraft-Name oder UUID ein und aus |
+| Tickets | Liest und beantwortet Tickets, übernimmt, schließt und öffnet sie wieder (siehe [Tickets](#tickets)) |
 | Konsole | Zeigt die Ausgabe eines Servers live an und schickt Befehle an ihn |
 
 ### Live-Konsole
@@ -1156,6 +1157,41 @@ Wer der Besitzer ist, steht unter `discord-owner-id` in der `main-config.yml`. D
 im Code von `/payingplayer` verdrahtet; er ist jetzt an einer Stelle und änderbar, ohne neu zu bauen.
 Operator ist jedes Recht, das es gibt — deshalb hängt das bewusst am Besitzer und nicht an einer
 Discord-Rolle.
+
+## Tickets
+
+Ein Ticket ist ein Gespräch zwischen einem Spieler und den Admins. Es läuft so lange hin und her, bis
+jemand es schließt, und jeder kann es danach wieder öffnen. Wo geschrieben wird, ist egal: Es gibt einen
+Stand, und der landet überall.
+
+| Wo | Spieler | Admins |
+|----|---------|--------|
+| Discord | Knopf „Ticket schreiben“ im Ticket-Kanal; Antworten und Schließen über die Knöpfe in der DM | Ein Thread pro Ticket im Admin-Kanal: Jede Nachricht dort geht an den Spieler, außer sie beginnt mit `//`. Knöpfe zum Übernehmen, Schließen und Wieder-Öffnen |
+| Im Spiel | `/ticket`, `/ticket neu`, `/ticket <nr>`, `/ticket <nr> antworten [text]`, `/ticket <nr> schliessen\|oeffnen` | dazu `/ticket offen` und `/ticket <nr> uebernehmen` (Op oder `network.tickets`) |
+| Website | – | Panel „Tickets“ |
+
+Wer antwortet, bekommt das Ticket automatisch zugeteilt, sofern es noch niemand hat. Ein Spieler bekommt
+Antworten per DM, wenn sein Discord bekannt ist, und im Spiel, wenn er online ist. War er offline, sieht
+er sie beim nächsten Join. Mit einer [Discord-Verknüpfung](#discord-verknüpfung) ist er an beiden Stellen
+erreichbar. Ohne Verknüpfung nur dort, wo er das Ticket geschrieben hat. Admins im Spiel erfahren von neuen
+Tickets und Antworten. Ist ein Ticket übernommen und der Bearbeiter online, erfährt es nur er.
+
+Unter jeder Admin-Aktion im Logging-Kanal steht ein Knopf, der ein Ticket zu genau dieser Aktion öffnet.
+Die Aktion steht dann im Ticket unter „Bezieht sich auf“.
+
+**Einrichten** (Discord, Administrator):
+- `/setticketchannel` im Kanal, in dem Spieler Tickets schreiben. Der Bot legt dort seine Nachricht mit
+  dem Knopf an, falls sie in den letzten 25 Nachrichten fehlt. Gelöscht wird nichts.
+- `/setticketstaffchannel` im Kanal, in dem die Admins arbeiten. Ohne ihn gibt es keine Threads.
+  Tickets laufen dann nur über DM, Spiel und Website.
+
+Die Tickets liegen in `tickets.yml` beim Launcher. Die alten Tickets aus der `main-config.yml`
+(`tickets`, `ticket-N`) werden beim ersten Start einmal dorthin übernommen, mit derselben Nummer, und
+danach aus der `main-config.yml` entfernt. Ist der Discord-Account des alten Autors verknüpft, bekommen
+sie auch seinen Minecraft-Namen.
+
+Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
+steht in der Klasse, aus einem leeren Verzeichnis starten).
 
 ## Module
 

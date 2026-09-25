@@ -3,6 +3,10 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.run.RunPlugin
 api-version: '26.3'
 commands:
+  ticket:
+    description: Tickets schreiben, lesen und beantworten - dieselben wie auf Discord
+    usage: /ticket [neu|offen|<nr> [antworten|schliessen|oeffnen|uebernehmen]]
+    aliases: [tickets]
   neustart:
     description: Das ganze Netzwerk zu einer Zeit neu starten, mit oder ohne Update
     usage: /neustart <minuten> [update|aus] | /neustart abbrechen
@@ -23,6 +27,9 @@ commands:
   servermanger:
     description: Server verwalten und neue Server erstellen
 permissions:
+  network.tickets:
+    description: Tickets aller Spieler sehen, beantworten und übernehmen
+    default: op
   network.restart:
     description: Das Netzwerk neu starten
     default: op

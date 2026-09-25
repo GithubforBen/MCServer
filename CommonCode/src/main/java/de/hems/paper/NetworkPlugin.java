@@ -26,7 +26,8 @@ import java.util.function.Supplier;
  *     <li>the menus and the connection to the proxy, and the ways out ({@code /warp}, {@code /lobby},
  *     {@code /servermanger}) - set up <em>before</em> the network, so a server without one is not a trap</li>
  *     <li>the network itself</li>
- *     <li>then what needs it: the admin tools, ops, the event calendar and {@code /events}</li>
+ *     <li>then what needs it: the admin tools, ops, the event calendar and {@code /events}, the restart
+ *     countdown and {@code /neustart}, and tickets with {@code /ticket}</li>
  * </ul>
  * A command is only hooked up when the plugin declares it, so the lobby, which has no {@code /lobby}, is not
  * warned about it.
@@ -72,6 +73,11 @@ public final class NetworkPlugin {
         de.hems.paper.restart.RestartService.init(plugin);
         if (plugin.getCommand("neustart") != null) {
             PluginCommands.register(plugin, "neustart", new de.hems.paper.restart.RestartCommand());
+        }
+        // tickets: answers reach their author on whichever server they are, and /ticket works everywhere
+        de.hems.paper.ticket.TicketClient.init(plugin);
+        if (plugin.getCommand("ticket") != null) {
+            PluginCommands.register(plugin, "ticket", new de.hems.paper.ticket.TicketCommand());
         }
         return true;
     }

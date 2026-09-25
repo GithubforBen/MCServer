@@ -273,6 +273,21 @@ steht in 2.2.
 - [ ] Ein Server, der während des Countdowns startet, zeigt denselben Countdown
 - [ ] `/neustart 1 aus`: alles bleibt aus, `run.sh` beendet sich
 
+**Tickets** (braucht Discord auf dem Rechner, mit Admin-Rechten auf dem Server)
+- [ ] Erster Start mit alten Tickets in der `main-config.yml`: stehen sie in `tickets.yml` und im
+      Website-Panel, und sind `tickets`/`ticket-N` aus der `main-config.yml` verschwunden?
+- [ ] `/setticketchannel` zweimal: steht die Knopf-Nachricht danach genau einmal da, und ist nichts
+      gelöscht?
+- [ ] `/setticketstaffchannel`, dann ein Ticket über Discord: Thread erscheint mit Kopf und Knöpfen,
+      DM mit „Antworten“ kommt an
+- [ ] Nachricht im Thread geht per DM raus (✅ am Thread-Post), eine mit `//` nicht
+- [ ] Ticket schließen, ein paar Tage warten (Thread archiviert), dann im Spiel antworten: taucht die
+      Antwort im alten Thread auf, oder gibt es einen neuen?
+- [ ] Knopf unter einer Admin-Aktion im Logging-Kanal: Formular steht auf „Frage zu einer
+      Admin-Aktion“, das Ticket hat „Bezieht sich auf“
+- [ ] Website: antworten, übernehmen, schließen. Kommt es im Thread und in der DM an? Bleibt der
+      angefangene Text beim Auto-Refresh stehen?
+
 **Survival: Shops und Marktplatz**
 - [ ] Nach mehreren Neustarts **genau ein** Villager pro Shop
       (`ShopkeeperChunkListener`, Spawn über `EntitiesLoadEvent`)
@@ -321,6 +336,15 @@ andere handelt. Für einen Kill heißt das: der eine greift an, der andere wehrt
 **Pokernacht**
 - [ ] Die eigenen Karten sind nur für einen selbst sichtbar (Screenshots beider Clients vergleichen)
 
+**Tickets** (ein Op-Account, ein normaler, der normale mit `/verify` verknüpft)
+- [ ] `/ticket neu` mit dem normalen Account: der Op bekommt „Neues Ticket“ im Chat, egal auf
+      welchem Server er steht
+- [ ] `/ticket <nr> antworten ...` als Op: der normale bekommt die Antwort im Chat und per DM
+- [ ] Normaler Account offline, Op antwortet, normaler joint: „Neue Antwort“ nach dem Join, nach
+      `/ticket <nr>` nicht mehr
+- [ ] Normaler Account versucht `/ticket <nr>` auf ein fremdes Ticket: abgewiesen
+- [ ] Op übernimmt ein Ticket, der Spieler antwortet: nur der Bearbeiter bekommt die Nachricht
+
 **Runden und Admin**
 - [ ] Rundenadmin kickt den zweiten Account, der danach wieder joinen will
 - [ ] Private Runde: der zweite Account warpt ohne Einladung direkt auf den Servernamen
@@ -343,6 +367,8 @@ liefert.
 - [ ] Kauf-Transaktion unter echter Last: Rollback bei vollem Inventar, Erstattung, Ware landet nicht
       doppelt (`Shopkeeper.buyItem()`)
 - [ ] Tinte auf einer vollen Runde: kostet es TPS?
+- [ ] Tickets im Alltag: Sind die Hinweise im Spiel für Admins zu viele? Ist `/ticket neu` mit Titel
+      und Text im Chat verständlich genug für jemanden, der es zum ersten Mal benutzt?
 
 ---
 
@@ -535,6 +561,23 @@ Offen:
       die Anzeige nicht — beim nächsten Verknüpfen wird der Name aktualisiert
 - [ ] Die Verknüpfung steht nirgends in der Admin-Website, nur im Spiel
 - [ ] Nachprüfen: `/op` auf einem laufenden Server (steht in Abschnitt 2.1)
+
+### 5.7 Ticket-System neu — erledigt
+- [x] Ein Stand für Discord, Spiel (`/ticket`) und Website, als Gespräch mit Status und Bearbeiter
+- [x] Ein Thread pro Ticket im Admin-Kanal statt einer DM an jedes Mitglied mit Nachrichtenrechten
+- [x] Nummern mit eigenem Zähler: vorher zählte die Nummer die Tickets, zwei gleichzeitige Tickets
+      bekamen dieselbe, und das zweite überschrieb das erste
+- [x] Kein Massenlöschen im Ticket-Kanal beim Start mehr. Discord lehnt das für Nachrichten über
+      14 Tage ab, der Start warf dann
+- [x] Eine Antwort schließt das Ticket nicht mehr, und Knöpfe auf gelöschte Tickets werfen keine NPE
+- [x] Alte Tickets werden aus der `main-config.yml` übernommen
+
+Offen:
+- [ ] Ein Thread, der nicht mehr zu finden ist (gelöscht, oder unter den archivierten nicht unter
+      den letzten 200), wird neu angelegt. Der alte Verlauf steht dann im neuen, aber zwei Threads
+      zum selben Ticket sind möglich
+- [ ] Anhänge (Screenshots) aus Discord-Threads werden nicht weitergegeben, nur der Text
+- [ ] Nachprüfen: Abschnitte 2.1 und 2.1b
 
 ---
 

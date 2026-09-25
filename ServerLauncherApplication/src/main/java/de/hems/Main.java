@@ -21,9 +21,11 @@ import de.hems.utils.team.BackpackStore;
 import de.hems.utils.team.TeamStore;
 import de.hems.utils.bot.adminabuse.*;
 import de.hems.utils.bot.payingplayer.PayingPlayerCommand;
-import de.hems.utils.bot.tickets.TicketListener;
-import de.hems.utils.bot.tickets.SetTicketChannelListener;
-import de.hems.utils.bot.tickets.Tickets;
+import de.hems.utils.bot.tickets.DiscordTickets;
+import de.hems.utils.ticket.TicketEvents;
+import de.hems.utils.ticket.TicketMigration;
+import de.hems.utils.ticket.TicketService;
+import de.hems.utils.ticket.TicketStore;
 import de.hems.utils.bot.verification.OnAccountVerifyCommand;
 import de.hems.utils.server.IdleServerWatchdog;
 import de.hems.utils.server.MemoryWatch;
@@ -69,6 +71,8 @@ public class Main {
     private RoundStore roundStore;
     private CosmeticStore cosmeticStore;
     private AccountLinkStore accountLinkStore;
+    private TicketService ticketService;
+    private DiscordTickets discordTickets;
     private de.hems.utils.poker.PokerStatsStore pokerStatsStore;
     private JDA jda;
     private WebServer webServer;
@@ -147,6 +151,12 @@ public class Main {
         // who is who: a minecraft name is all anybody has when somebody has to be written to
         accountLinkStore = new AccountLinkStore();
         new AccountLinkEvents(accountLinkStore);
+        // tickets from discord, the game and the website - one conversation, wherever it is answered
+        TicketStore ticketStore = new TicketStore();
+        TicketMigration.run(configuration, ticketStore, accountLinkStore);
+        ticketService = new TicketService(ticketStore, accountLinkStore);
+        new TicketEvents(ticketService);
+        discordTickets = new DiscordTickets(ticketService, accountLinkStore, configuration);
         new StartServerEvent();
         new RestartServerEvent();
         new StopServerEvent();
@@ -158,8 +168,7 @@ public class Main {
             jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                     .addEventListeners(
-                            new SetTicketChannelListener(),
-                            new TicketListener(),
+                            discordTickets,
                             new OnAccountVerifyCommand(accountLinkStore),
                             new de.hems.utils.bot.verification.OpCommand(accountLinkStore),
                             new PayingPlayerCommand(),
@@ -169,7 +178,10 @@ public class Main {
             jda.awaitReady();
             jda.updateCommands().addCommands(Commands.slash("payingplayer", "Schreibe auf, dass ein spieler für den Server zahlt!").addOption(OptionType.STRING, "minecraftname", "Den Minecraft name hier einfügen.", true))
                     .addCommands(
-                            Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
+                            Commands.slash("setticketchannel", "Setzt den Kanal, in dem Spieler Tickets schreiben").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
+                            ))
+                    .addCommands(
+                            Commands.slash("setticketstaffchannel", "Setzt den Kanal, in dem die Admins Tickets bearbeiten").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
                             ))
                     .addCommands(
                             Commands.slash("setloggingchannel", "Set the channel for admin abuse logging").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
@@ -200,7 +212,7 @@ public class Main {
         // servers created for an event are nobody's job to clean up, so the launcher does it
         idleServerWatchdog = new IdleServerWatchdog(serverHandler);
         startWebServer();
-        if (jda != null) Tickets.updateTicketChannel();
+        if (jda != null) discordTickets.ensurePanel();
     }
 
     /**
@@ -335,6 +347,10 @@ public class Main {
 
     public AccountLinkStore getAccountLinkStore() {
         return accountLinkStore;
+    }
+
+    public TicketService getTicketService() {
+        return ticketService;
     }
 
     /**
