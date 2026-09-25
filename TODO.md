@@ -283,41 +283,55 @@ steht in 2.2.
       (braucht den Discord-Besitzer-Account auf dem Rechner)
 - [ ] Gemessene Speicherspitzen plausibel: Server-Manager-Panel gegen RSS aus `/proc` (Faktor 1,4)
 
-### 2.2 Muss von Spielern getestet werden
+### 2.1b Testbar von Claude mit zwei Accounts
 
-Braucht mehrere Accounts gleichzeitig, echte Last, Ton, schnelle Reaktionen oder ein Urteil, das keine
-Messung liefert.
+Zwei Minecraft-Clients nebeneinander auf demselben Rechner (z.B. zwei Instanzen im Launcher, beide im
+Fenstermodus), Claude wechselt zwischen den Fenstern. Zusätzlich zu den Voraussetzungen oben: genug
+Arbeitsspeicher für zwei Clients, beide Accounts dürfen aufs Netzwerk (Whitelist).
 
-**Hunger Games (mindestens 3 Spieler)**
-- [ ] Ein ganzes Spiel: Schutzzeit hält, Plätze in der Reihenfolge des Rausfliegens, Kills zählen,
-      Showdown-Leuchten, Sieger-Feuerwerk, alle nach 20 s zurück in die Lobby
-- [ ] Belohnungen nach Platz und „ab X Kills“ kommen bei den richtigen Leuten an
-- [ ] Event läuft über seine Zeit: „Verlängerung“ im Kalender, Abrechnung erst nach dem Sieg
+Grenzen: Claude handelt nacheinander, nicht im selben Moment - ein Spieler steht still, während der
+andere handelt. Für einen Kill heißt das: der eine greift an, der andere wehrt sich nicht.
 
-**Bedwars-Belohnungen (mindestens 3 Teams)**
-- [ ] Die Teams bekommen die Plätze 3, 2, 1 in der Reihenfolge des Ausscheidens, und das steht im
-      Ergebnis-Panel des Events
-- [ ] Event, das über seine Zeit hinaus läuft: „Verlängerung“ im Kalender, Abrechnung erst nach dem
-      Rundenende, Plätze stimmen
-- [ ] Zeitlimit-Ende: stimmen die Plätze mit dem Endbildschirm überein?
-- [ ] Spieler, der mitten in der Runde rausgeht: steht er noch im Ergebnis (Teilnahme)?
+**Hunger Games (Mindestens Spieler: 2)**
+- [ ] Ein ganzes Spiel zu zweit: Schutzzeit hält (kein Schaden), danach zählt ein Treffer, der Kill
+      wird gezählt, Platz 2 und 1 stimmen, Sieger-Feuerwerk, beide nach 20 s zurück in die Lobby
+- [ ] Belohnungen für `#1`, `#2` und „ab 1 Kill“ kommen beim richtigen Account an
+- [ ] Event läuft über seine Zeit (kurze Dauer, späte Schrumpfzeit): „Verlängerung“ im Kalender,
+      Abrechnung erst nach dem Sieg
+
+**Bedwars-Belohnungen (Solo, zwei Teams)**
+- [ ] Bett zerstören, Final Kill: Platz 1 und 2 stimmen und stehen im Ergebnis-Panel des Events
 - [ ] „ab X Kills“: kommen die Kills (inkl. Final Kills) richtig an?
+- [ ] Event, das über seine Zeit hinaus läuft: „Verlängerung“ im Kalender, Abrechnung erst nach dem
+      Rundenende
+- [ ] Zeitlimit-Ende (kurzes Limit): stimmen die Plätze mit dem Endbildschirm überein?
+- [ ] Ein Account verlässt die Runde mittendrin: steht er noch im Ergebnis (Teilnahme)?
 
 **Pokernacht**
-- [ ] Die eigenen Karten sind nur für einen selbst sichtbar (braucht einen zweiten Blick)
-- [ ] Zwei Leute klicken gleichzeitig auf denselben Stuhl: einer bekommt sein Geld zurück statt eines Platzes
-- [ ] Fühlen sich die Bots an einem echten Tisch verschieden an, oder nur in der Statistik?
+- [ ] Die eigenen Karten sind nur für einen selbst sichtbar (Screenshots beider Clients vergleichen)
 
-**Netzwerk, Runden, Shops**
-- [ ] Simple Voicechat über den Proxy: das Velocity-Plugin 2.6.18 ist für Velocity 3 gebaut — hört man
+**Runden und Admin**
+- [ ] Rundenadmin kickt den zweiten Account, der danach wieder joinen will
+- [ ] Private Runde: der zweite Account warpt ohne Einladung direkt auf den Servernamen
+- [ ] `/admin join`: sieht der zweite Account Name über dem Kopf, Skin und Tabliste der Admin-Gestalt?
+
+### 2.2 Muss von Spielern getestet werden
+
+Braucht drei oder mehr Spieler, echte Gleichzeitigkeit, Last, Ton oder ein Urteil, das keine Messung
+liefert.
+
+- [ ] Bedwars mit drei Teams: bekommen sie die Plätze 3, 2, 1 in der Reihenfolge des Ausscheidens?
+- [ ] Hunger Games mit mindestens drei Spielern: Plätze in der Reihenfolge des Rausfliegens,
+      Showdown-Leuchten im Endkampf
+- [ ] Pokernacht: zwei Leute klicken im selben Moment auf denselben Stuhl - einer bekommt sein Geld
+      zurück statt eines Platzes
+- [ ] Pokernacht: fühlen sich die Bots an einem echten Tisch verschieden an, oder nur in der Statistik?
+- [ ] Simple Voicechat über den Proxy: das Velocity-Plugin 2.6.18 ist für Velocity 3 gebaut - hört man
       sich unter Velocity 4?
-- [ ] Zwei Spieler starten gleichzeitig eine Runde, wenn nur noch für eine Platz ist
-- [ ] Rundenadmin kickt jemanden, der danach wieder joinen will
-- [ ] Eine private Runde: jemand ohne Einladung warpt direkt auf den Servernamen
+- [ ] Zwei Spieler starten im selben Moment eine Runde, wenn nur noch für eine Platz ist
 - [ ] Kauf-Transaktion unter echter Last: Rollback bei vollem Inventar, Erstattung, Ware landet nicht
       doppelt (`Shopkeeper.buyItem()`)
 - [ ] Tinte auf einer vollen Runde: kostet es TPS?
-- [ ] `/admin join`: sehen **die anderen** Name über dem Kopf, Skin und Tabliste der Admin-Gestalt?
 
 ---
 
