@@ -177,10 +177,10 @@ Gefunden, bewusst nicht geändert — **Entscheidung nötig**:
 - [x] Der Launcher prüft neue Teamnamen selbst (bestehende Namen bleiben, wie sie sind)
 - [x] Die Lobby merkt sich über einen Neustart hinweg, wen sie zu welchem Event geschickt hat
       (`plugins/<Lobby>/event-sent.yml`)
-- [ ] Noch doppelt, nicht zusammengeführt: das Cache-Muster der Services (`EventService`, `RunService`,
-      `RoundService`, `TeamService`, `CosmeticService`, `PokerStatsService` …: init, Nachladen,
-      Update anwenden) und der Netzwerk-Start in den sechs Plugins. Beides unterscheidet sich im Detail
-      mehr als die Fälle oben; ein gemeinsamer Unterbau lohnt, ist aber ein größerer Umbau
+- [x] `NetworkSync` — Lebenszyklus der acht Services mit Launcher-Kopie (laden, bis zum Erfolg
+      wiederholen, regelmäßig nachladen); vier davon leerten ihre Kopie beim Nachladen kurz komplett
+- [x] `NetworkPlugin.connect` — Netzwerk-Start der sechs Plugins. Dabei: Op-Änderungen aus Discord gelten
+      jetzt auch auf Bedwars-, Casino-, Arena- und Run-Servern sofort; `/rs` hing noch an der alten Falle
 - [ ] Die Doku sagt `TableCheck` hat 57 Prüfungen, er meldet 41
 
 ### 1.5 Lobby

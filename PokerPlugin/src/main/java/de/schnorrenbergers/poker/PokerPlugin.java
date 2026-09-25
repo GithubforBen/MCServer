@@ -1,18 +1,11 @@
 package de.schnorrenbergers.poker;
 
+import de.hems.paper.NetworkPlugin;
 import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.ServerIdentity;
-import de.hems.paper.admin.PlayerAdminHandler;
-import de.hems.paper.commands.EventCommand;
-import de.hems.paper.commands.LobbyCommand;
-import de.hems.paper.commands.ServerManagerCommand;
-import de.hems.paper.commands.WarpCommand;
-import de.hems.paper.customInventory.CustomInventoryListener;
-import de.hems.paper.event.EventService;
 import de.hems.paper.money.MoneyService;
 import de.hems.paper.poker.PokerStatsService;
-import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.PokerEventSettings;
 import de.schnorrenbergers.poker.command.PokerCommand;
 import de.schnorrenbergers.poker.listener.TableListener;
@@ -48,30 +41,15 @@ public final class PokerPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        new CustomInventoryListener(this);
-        ServerConnector.register(this);
-        // the way out has to work even when nothing else does
-        PluginCommands.register(this, "warp", new WarpCommand());
-        PluginCommands.register(this, "lobby", new LobbyCommand());
-        PluginCommands.register(this, "servermanger", new ServerManagerCommand());
-
-        String self;
-        try {
-            self = ServerIdentity.of(this, "POKER").toString();
-            new ListenerAdapter(ServerIdentity.of(this, "POKER"));
-        } catch (Exception e) {
+        String self = ServerIdentity.of(this, "POKER").toString();
+        if (!NetworkPlugin.connect(this, "POKER")) {
             // without the network there is no money, and a poker table without money is a table where
             // somebody is going to be told their bits vanished. Better to have no table
-            getLogger().severe("No network connection (" + e.getMessage()
-                    + "). No table is opened - poker is played for real bits and those live on the host.");
+            getLogger().severe("No table is opened - poker is played for real bits and those live on the host.");
             return;
         }
-
-        new PlayerAdminHandler(this);
-        EventService.init(this);
         MoneyService.init(this);
         PokerStatsService.init(this);
-        PluginCommands.register(this, "events", new EventCommand());
 
         // which night this is, and what it is played for. Blocking on purpose: the stakes have to be known
         // before the first player can sit down

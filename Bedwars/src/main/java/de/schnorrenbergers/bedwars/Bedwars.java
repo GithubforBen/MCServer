@@ -1,18 +1,14 @@
 package de.schnorrenbergers.bedwars;
 
+import de.hems.paper.NetworkPlugin;
 import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.ServerIdentity;
-import de.hems.paper.admin.PlayerAdminHandler;
-import de.hems.paper.commands.LobbyCommand;
-import de.hems.paper.commands.WarpCommand;
-import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.EventService;
 import de.hems.paper.cosmetic.CosmeticService;
 import de.hems.paper.cosmetic.CosmeticEffects;
 import de.hems.paper.round.RoundService;
-import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.BedwarsEventSettings;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
@@ -334,26 +330,19 @@ public final class Bedwars extends JavaPlugin {
      * without a launcher would make that impossible.
      */
     private void connectToNetwork() {
-        new CustomInventoryListener(this);
-        ServerConnector.register(this);
-        // registered before the connection is attempted, so a round without a launcher still has a way out
-        PluginCommands.register(this, "warp", new WarpCommand());
-        PluginCommands.register(this, "lobby", new LobbyCommand());
         // the shop talks to the launcher and to nothing else, so it is registered with the rest of the
         // network commands - and it is the whole reason somebody who only plays bedwars no longer has to
         // travel to survival to put on what they bought
         PluginCommands.register(this, "cosmetics", new de.hems.paper.commands.CosmeticsCommand());
-        try {
-            new ListenerAdapter(ServerIdentity.of(this, "BEDWARS"));
-            new PlayerAdminHandler(this);
-            EventService.init(this);
-            RoundService.init(this);
-            CosmeticService.init(this);
-            networked = true;
-        } catch (Exception e) {
-            getLogger().warning("No network connection (" + e.getMessage()
-                    + "). The round runs, but it cannot be started by an event or send anybody home.");
+        // the ways out are set up before the connection is attempted, so a round without a launcher is
+        // not a trap
+        if (!NetworkPlugin.connect(this, "BEDWARS")) {
+            getLogger().warning("The round runs, but it cannot be started by an event or send anybody home.");
+            return;
         }
+        RoundService.init(this);
+        CosmeticService.init(this);
+        networked = true;
     }
 
     /**

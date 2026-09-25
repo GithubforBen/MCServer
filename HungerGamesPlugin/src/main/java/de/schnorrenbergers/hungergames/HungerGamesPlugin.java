@@ -1,16 +1,9 @@
 package de.schnorrenbergers.hungergames;
 
+import de.hems.paper.NetworkPlugin;
 import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.ServerIdentity;
-import de.hems.paper.admin.PlayerAdminHandler;
-import de.hems.paper.commands.EventCommand;
-import de.hems.paper.commands.LobbyCommand;
-import de.hems.paper.commands.ServerManagerCommand;
-import de.hems.paper.commands.WarpCommand;
-import de.hems.paper.customInventory.CustomInventoryListener;
-import de.hems.paper.event.EventService;
-import de.hems.paper.warp.ServerConnector;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -29,25 +22,10 @@ public final class HungerGamesPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        new CustomInventoryListener(this);
-        ServerConnector.register(this);
-        // the way out has to work even when nothing else does
-        PluginCommands.register(this, "warp", new WarpCommand());
-        PluginCommands.register(this, "lobby", new LobbyCommand());
-        PluginCommands.register(this, "servermanger", new ServerManagerCommand());
-
-        String self;
-        try {
-            self = ServerIdentity.of(this, "HUNGER_GAMES").toString();
-            new ListenerAdapter(ServerIdentity.of(this, "HUNGER_GAMES"));
-            new PlayerAdminHandler(this);
-            EventService.init(this);
-            PluginCommands.register(this, "events", new EventCommand());
-        } catch (Exception e) {
+        String self = ServerIdentity.of(this, "HUNGER_GAMES").toString();
+        if (!NetworkPlugin.connect(this, "HUNGER_GAMES")) {
             // without the network the game can still be played, it just counts for nothing
-            getLogger().warning("No network connection (" + e.getMessage()
-                    + "). The game can be played, but nothing is reported.");
-            self = "HUNGER_GAMES";
+            getLogger().warning("The game can be played, but nothing is reported.");
         }
 
         ArenaContext.load(self);
