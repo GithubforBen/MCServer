@@ -70,6 +70,10 @@ public final class LobbyPlugin extends JavaPlugin {
         new de.schnorrenbergers.lobby.cosmetic.GadgetListener(this);
         PluginCommands.register(this, "cosmetics", new CosmeticsCommand());
         PluginCommands.register(this, "bwdebug", new BedwarsDebugCommand());
+        // the lotto stand: the villager and its sign go up here, the slip itself is the same on every server
+        de.schnorrenbergers.lobby.lotto.LottoStand stand = new de.schnorrenbergers.lobby.lotto.LottoStand(this);
+        PluginCommands.register(this, "lotto", new de.hems.paper.lotto.LottoCommand(java.util.Map.of(
+                "stand", stand::place, "standweg", stand::remove)));
         new LobbyJoinListener();
         new LobbyProtectionListener(this);
     }

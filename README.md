@@ -1193,6 +1193,46 @@ sie auch seinen Minecraft-Namen.
 Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
 steht in der Klasse, aus einem leeren Verzeichnis starten).
 
+## Lotto
+
+4 aus 15, bezahlt mit Bits. Jeder Tipp kostet gleich viel (Standard 100 Bits, also einen Diamanten an
+der Bank), und man kann so oft tippen, wie man will. Jede Woche zur selben Zeit (Standard: Sonntag
+20:00, Zeitzone Berlin) zieht der Launcher vier Zahlen. Wer alle vier getroffen hat, bekommt den
+ganzen Topf.
+
+- **Der ganze Einsatz geht in den Topf.** Das Haus behält nichts.
+- **Trifft niemand**, bleibt der Topf und wächst in der nächsten Runde weiter.
+- **Treffen mehrere**, wird pro Gewinnertipp geteilt: Wer zwei richtige Tipps hat, bekommt zwei
+  Anteile. Was sich nicht glatt teilen lässt, bleibt im Topf.
+- **Der Gewinn geht direkt aufs Konto**, auch an Spieler, die gerade offline sind.
+- **Chance:** 1 zu 1365 pro Tipp.
+- **Eine Runde ohne Tipps** wird nicht gezogen, der Termin rückt einfach eine Woche weiter.
+- **War der Launcher zur Ziehung aus**, wird gezogen, sobald er wieder läuft.
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/lotto` | Öffnet den Tippschein: Zahlen anklicken, zufällig ausfüllen, 5 Quicktipps, eigene Tipps |
+| `/lotto tipp 3 7 11 14` | Ein Tipp direkt |
+| `/lotto quick [anzahl]` | 1 bis 20 zufällige Tipps |
+| `/lotto info` · `/lotto meine` | Topf, Termin, letzte Zahlen · eigene Tipps dieser Runde |
+| `/lotto ziehen` | Admin: jetzt ziehen |
+| `/lotto termin sonntag 20:00` | Admin: Wochentag und Uhrzeit der Ziehung |
+| `/lotto preis 100` | Admin: Preis pro Tipp, gilt ab dann |
+| `/lotto stand` · `/lotto standweg` | Admin, nur Lobby: Lotto-Stand an die eigene Position stellen oder entfernen |
+
+Admin heißt Op oder `network.lotto.admin`. `/lotto` gibt es auf jedem Server. Die Ziehung wird überall
+im Chat und als Titel angesagt, und wer gewonnen hat, sieht „Gewonnen!“.
+
+Der Stand in der Lobby ist ein Villager. Ein Klick auf ihn öffnet den Tippschein, und über ihm stehen
+Topf, Zeit bis zur Ziehung und die letzten Zahlen. Er wird nicht mit der Welt gespeichert, sondern bei
+jedem Start und nach dem Entladen seines Chunks neu hingestellt. Sein Platz steht in
+`plugins/LobbyPlugin/lotto-stand.yml`.
+
+Alles andere liegt in `lotto.yml` beim Launcher: Preis, Termin, Zeitzone (`settings.zone`), der Topf,
+die Tipps der laufenden Runde und die letzten 20 Ziehungen. Gezogen wird mit `SecureRandom`.
+
+Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/lotto/LottoCheck.java`.
+
 ## Module
 
 | Modul | Inhalt |

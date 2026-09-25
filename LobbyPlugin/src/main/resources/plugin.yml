@@ -3,6 +3,9 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.lobby.LobbyPlugin
 api-version: '26.3'
 commands:
+  lotto:
+    description: Lotto 4 aus 15 - mit Bits tippen, wer alle vier trifft, bekommt den Topf
+    usage: /lotto [tipp <a> <b> <c> <d>|quick [anzahl]|info|meine]
   ticket:
     description: Tickets schreiben, lesen und beantworten - dieselben wie auf Discord
     usage: /ticket [neu|offen|<nr> [antworten|schliessen|oeffnen|uebernehmen]]
@@ -38,6 +41,9 @@ commands:
     description: Die Sprungstrecken der Lobby laufen und bauen
     usage: /parkour [list|start <strecke>|leave|top <strecke>|setup <strecke> start|checkpoint|undo|finish|board|name|delete]
 permissions:
+  network.lotto.admin:
+    description: Das Lotto ziehen und Preis und Termin einstellen
+    default: op
   network.tickets:
     description: Tickets aller Spieler sehen, beantworten und übernehmen
     default: op

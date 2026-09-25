@@ -72,6 +72,7 @@ public class Main {
     private CosmeticStore cosmeticStore;
     private AccountLinkStore accountLinkStore;
     private TicketService ticketService;
+    private de.hems.utils.lotto.LottoService lottoService;
     private DiscordTickets discordTickets;
     private de.hems.utils.poker.PokerStatsStore pokerStatsStore;
     private JDA jda;
@@ -123,6 +124,10 @@ public class Main {
         // ownership all live here, so a purchase is one step and not three that can fail halfway
         cosmeticStore = new CosmeticStore();
         new CosmeticEvents(cosmeticStore, moneyStore);
+        // the lotto is paid in bits and drawn here, since this is the part of the network that is always on
+        lottoService = new de.hems.utils.lotto.LottoService(new de.hems.utils.lotto.LottoStore(), moneyStore);
+        new de.hems.utils.lotto.LottoEvents(lottoService);
+        lottoService.start();
         eventStore = new EventStore();
         runStore = new RunStore();
         awardStore = new AwardStore();
@@ -351,6 +356,10 @@ public class Main {
 
     public TicketService getTicketService() {
         return ticketService;
+    }
+
+    public de.hems.utils.lotto.LottoService getLottoService() {
+        return lottoService;
     }
 
     /**

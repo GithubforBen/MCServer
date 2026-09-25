@@ -3,6 +3,9 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.hungergames.HungerGamesPlugin
 api-version: '26.3'
 commands:
+  lotto:
+    description: Lotto 4 aus 15 - mit Bits tippen, wer alle vier trifft, bekommt den Topf
+    usage: /lotto [tipp <a> <b> <c> <d>|quick [anzahl]|info|meine]
   ticket:
     description: Tickets schreiben, lesen und beantworten - dieselben wie auf Discord
     usage: /ticket [neu|offen|<nr> [antworten|schliessen|oeffnen|uebernehmen]]
@@ -27,6 +30,9 @@ commands:
   servermanger:
     description: Server verwalten und neue Server erstellen
 permissions:
+  network.lotto.admin:
+    description: Das Lotto ziehen und Preis und Termin einstellen
+    default: op
   network.tickets:
     description: Tickets aller Spieler sehen, beantworten und übernehmen
     default: op

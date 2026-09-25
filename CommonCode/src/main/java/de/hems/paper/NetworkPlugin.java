@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  *     {@code /servermanger}) - set up <em>before</em> the network, so a server without one is not a trap</li>
  *     <li>the network itself</li>
  *     <li>then what needs it: the admin tools, ops, the event calendar and {@code /events}, the restart
- *     countdown and {@code /neustart}, and tickets with {@code /ticket}</li>
+ *     countdown and {@code /neustart}, tickets with {@code /ticket} and the lotto with {@code /lotto}</li>
  * </ul>
  * A command is only hooked up when the plugin declares it, so the lobby, which has no {@code /lobby}, is not
  * warned about it.
@@ -78,6 +78,11 @@ public final class NetworkPlugin {
         de.hems.paper.ticket.TicketClient.init(plugin);
         if (plugin.getCommand("ticket") != null) {
             PluginCommands.register(plugin, "ticket", new de.hems.paper.ticket.TicketCommand());
+        }
+        // the lotto: tip on any server, and every server announces the draw
+        de.hems.paper.lotto.LottoClient.init(plugin);
+        if (plugin.getCommand("lotto") != null) {
+            PluginCommands.register(plugin, "lotto", new de.hems.paper.lotto.LottoCommand());
         }
         return true;
     }

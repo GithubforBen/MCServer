@@ -273,6 +273,17 @@ steht in 2.2.
 - [ ] Ein Server, der während des Countdowns startet, zeigt denselben Countdown
 - [ ] `/neustart 1 aus`: alles bleibt aus, `run.sh` beendet sich
 
+**Lotto**
+- [ ] `/lotto stand` in der Lobby: Villager und Schild stehen, Rechtsklick öffnet den Tippschein statt
+      des Handelsmenüs, Schlagen tut ihm nichts
+- [ ] Lobby neu starten: genau ein Villager, nicht zwei
+- [ ] Tippschein: 4 Zahlen wählen, 5. wird abgelehnt, „Tippen“ zieht die Bits ab, Topf auf dem
+      Schild steigt sofort
+- [ ] Zu wenig Bits: Kauf abgelehnt, nichts abgezogen
+- [ ] `/lotto termin <heute> <in 2 Minuten>`: Ziehung kommt von allein, auf Lobby und Survival
+      angesagt
+- [ ] `/lotto ziehen` ohne Tipps: abgelehnt
+
 **Tickets** (braucht Discord auf dem Rechner, mit Admin-Rechten auf dem Server)
 - [ ] Erster Start mit alten Tickets in der `main-config.yml`: stehen sie in `tickets.yml` und im
       Website-Panel, und sind `tickets`/`ticket-N` aus der `main-config.yml` verschwunden?
@@ -344,6 +355,11 @@ andere handelt. Für einen Kill heißt das: der eine greift an, der andere wehrt
       `/ticket <nr>` nicht mehr
 - [ ] Normaler Account versucht `/ticket <nr>` auf ein fremdes Ticket: abgewiesen
 - [ ] Op übernimmt ein Ticket, der Spieler antwortet: nur der Bearbeiter bekommt die Nachricht
+
+**Lotto**
+- [ ] Beide Accounts tippen denselben Tipp, `/lotto ziehen` so oft, bis er fällt (oder mit wenigen
+      Zahlen in `/lotto quick 20` Glück haben): Topf wird geteilt, beide sehen „Gewonnen!“
+- [ ] Ein Gewinner ist offline: das Geld ist nach dem Join da
 
 **Runden und Admin**
 - [ ] Rundenadmin kickt den zweiten Account, der danach wieder joinen will
@@ -561,6 +577,19 @@ Offen:
       die Anzeige nicht — beim nächsten Verknüpfen wird der Name aktualisiert
 - [ ] Die Verknüpfung steht nirgends in der Admin-Website, nur im Spiel
 - [ ] Nachprüfen: `/op` auf einem laufenden Server (steht in Abschnitt 2.1)
+
+### 5.8 Lotto — steht
+- [x] 4 aus 15 mit Bits, beliebig viele Tipps, Ziehung zu einstellbarem Wochentermin
+- [x] Nur alle vier Richtigen gewinnen, sonst wächst der Topf weiter. Mehrere Gewinner teilen
+- [x] `/lotto` mit Tippschein auf allen Servern, Stand mit Schild in der Lobby
+- [x] `LottoCheck` für Kauf, Ziehung, Teilung, Übertrag und Termin
+
+Offen:
+- [ ] Die Admin-Website zeigt das Lotto nicht (war nicht gewünscht, wäre ein kleines Panel)
+- [ ] Discord-Ansage der Ziehung (ebenso)
+- [ ] Bei wenig Spielern dauert es lange bis zum ersten Gewinner (1:1365 pro Tipp). Falls es zäh
+      wird: auf 4 aus 12 (1:495) gehen, oder ab einer Anzahl leerer Runden an die meisten Treffer
+      auszahlen
 
 ### 5.7 Ticket-System neu — erledigt
 - [x] Ein Stand für Discord, Spiel (`/ticket`) und Website, als Gespräch mit Status und Bearbeiter
