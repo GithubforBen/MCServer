@@ -1,11 +1,11 @@
 package de.hems.utils.money;
 
+import de.hems.utils.YamlFiles;
 import de.hems.types.money.BalanceResult;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,17 +36,7 @@ public class MoneyStore {
 
     public MoneyStore(File file, File legacy) {
         this.file = file;
-        boolean fresh = !file.exists();
-        if (fresh) {
-            File parent = file.getParentFile();
-            if (parent != null) parent.mkdirs();
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        this.config = YamlConfiguration.loadConfiguration(file);
+        this.config = YamlFiles.load(file);
         load();
         // only ever on the first start: importing again later would resurrect balances that were spent
         if (balances.isEmpty() && legacy != null && legacy.isFile()) importLegacy(legacy);
@@ -93,11 +83,7 @@ public class MoneyStore {
     }
 
     public synchronized void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            System.out.println("Could not save " + file.getName() + ": " + e.getMessage());
-        }
+        YamlFiles.saveOrLog(config, file);
     }
 
     /**

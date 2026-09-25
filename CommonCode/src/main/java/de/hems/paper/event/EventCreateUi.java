@@ -1,5 +1,6 @@
 package de.hems.paper.event;
 
+import de.hems.types.Presets;
 import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
@@ -107,7 +108,7 @@ public final class EventCreateUi {
                 ? new SimpleItemAction(click -> RewardUi.open(player, edit))
                 : SimpleItemAction.display());
 
-        long nextStart = nextValue(START_OFFSETS_MINUTES, startOffsetMin);
+        long nextStart = Presets.step(START_OFFSETS_MINUTES, startOffsetMin, true);
         ui.setItem(14, new ItemApi(Material.CLOCK, ChatColor.GOLD + "Start",
                 List.of(ChatColor.GRAY + "Beginnt: " + ChatColor.WHITE
                                 + WHEN.format(Instant.ofEpochMilli(draft.getStartsAt())),
@@ -118,7 +119,7 @@ public final class EventCreateUi {
                     player.openInventory(build(player, draft, nextStart, durationMin).getInventory());
                 }));
 
-        long nextDuration = nextValue(DURATIONS_MINUTES, durationMin);
+        long nextDuration = Presets.step(DURATIONS_MINUTES, durationMin, true);
         ui.setItem(15, new ItemApi(Material.REPEATER, ChatColor.GOLD + "Dauer",
                 List.of(ChatColor.GRAY + "Läuft: " + ChatColor.WHITE + describe(durationMin),
                         ChatColor.GRAY + "Endet: " + ChatColor.WHITE
@@ -177,18 +178,6 @@ public final class EventCreateUi {
         long start = System.currentTimeMillis() + Duration.ofMinutes(startOffsetMin).toMillis();
         draft.setStartsAt(start);
         draft.setEndsAt(start + Duration.ofMinutes(durationMin).toMillis());
-    }
-
-    /**
-     * @param values  the presets to cycle through
-     * @param current where we are now
-     * @return the next preset, wrapping around
-     */
-    private static long nextValue(long[] values, long current) {
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] == current) return values[(i + 1) % values.length];
-        }
-        return values[0];
     }
 
     /**

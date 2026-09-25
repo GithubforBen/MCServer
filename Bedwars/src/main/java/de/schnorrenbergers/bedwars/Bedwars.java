@@ -1,5 +1,6 @@
 package de.schnorrenbergers.bedwars;
 
+import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.ServerIdentity;
 import de.hems.paper.admin.PlayerAdminHandler;
@@ -60,15 +61,11 @@ import de.schnorrenbergers.bedwars.spectator.SpectatorListener;
 import de.schnorrenbergers.bedwars.stats.FileStatsRepository;
 import de.schnorrenbergers.bedwars.stats.StatsTracker;
 import de.schnorrenbergers.bedwars.util.Messages;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * The bedwars server.
@@ -152,7 +149,7 @@ public final class Bedwars extends JavaPlugin {
             stats = new StatsTracker(this, new FileStatsRepository(
                     new File(gameSettings.getStatsDirectory())));
         }
-        register("bw", new BedwarsCommand());
+        PluginCommands.register(this, "bw", new BedwarsCommand());
         getLogger().info("Hosting " + game.getMode()
                 + (game.getArena() == null ? " with no map yet" : " on " + game.getArena().getName())
                 + (networked ? "" : ", without a network connection"));
@@ -340,12 +337,12 @@ public final class Bedwars extends JavaPlugin {
         new CustomInventoryListener(this);
         ServerConnector.register(this);
         // registered before the connection is attempted, so a round without a launcher still has a way out
-        register("warp", new WarpCommand());
-        register("lobby", new LobbyCommand());
+        PluginCommands.register(this, "warp", new WarpCommand());
+        PluginCommands.register(this, "lobby", new LobbyCommand());
         // the shop talks to the launcher and to nothing else, so it is registered with the rest of the
         // network commands - and it is the whole reason somebody who only plays bedwars no longer has to
         // travel to survival to put on what they bought
-        register("cosmetics", new de.hems.paper.commands.CosmeticsCommand());
+        PluginCommands.register(this, "cosmetics", new de.hems.paper.commands.CosmeticsCommand());
         try {
             new ListenerAdapter(ServerIdentity.of(this, "BEDWARS"));
             new PlayerAdminHandler(this);
@@ -357,16 +354,6 @@ public final class Bedwars extends JavaPlugin {
             getLogger().warning("No network connection (" + e.getMessage()
                     + "). The round runs, but it cannot be started by an event or send anybody home.");
         }
-    }
-
-    private void register(String name, Object command) {
-        PluginCommand registered = getCommand(name);
-        if (registered == null) {
-            getLogger().warning("The command /" + name + " is missing from plugin.yml");
-            return;
-        }
-        registered.setExecutor((CommandExecutor) command);
-        if (command instanceof TabCompleter completer) registered.setTabCompleter(completer);
     }
 
     /**

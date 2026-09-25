@@ -1,5 +1,6 @@
 package de.schnorrenbergers.lobby;
 
+import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.admin.PlayerAdminHandler;
 import de.hems.paper.commands.CosmeticsCommand;
@@ -24,8 +25,6 @@ import de.schnorrenbergers.lobby.parkour.ParkourCommand;
 import de.schnorrenbergers.lobby.parkour.ParkourService;
 import de.schnorrenbergers.lobby.parkour.ParkourStore;
 import de.schnorrenbergers.lobby.rounds.RoundCommand;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -54,14 +53,14 @@ public final class LobbyPlugin extends JavaPlugin {
         new PlayerAdminHandler(this);
         parkour = new ParkourService(new ParkourStore(new File(getDataFolder(), "parkour.yml"), getLogger()));
         new CheckpointListener(this, parkour);
-        registerCommand("parkour", new ParkourCommand(parkour));
+        PluginCommands.register(this, "parkour", new ParkourCommand(parkour));
         // after the world is loaded, and once: the text hangs in the lobby world and is not persistent,
         // so every start has to put it back up
         parkour.getHolograms().refresh();
         // and the rings around the checkpoints, which are what makes a course visible from the ground
         parkour.getMarkers().start(this);
-        registerCommand("servermanger", new ServerManagerCommand());
-        registerCommand("warp", new WarpCommand());
+        PluginCommands.register(this, "servermanger", new ServerManagerCommand());
+        PluginCommands.register(this, "warp", new WarpCommand());
         EventService.init(this);
         RunService.init(this);
         // the hub is where the players are, so it is the hub that puts the server of an event up when its
@@ -70,14 +69,14 @@ public final class LobbyPlugin extends JavaPlugin {
         // the ranking board of a poker night is read here while the hand it describes is still being
         // played on the casino server
         de.hems.paper.poker.PokerStatsService.init(this);
-        registerCommand("events", new EventCommand());
+        PluginCommands.register(this, "events", new EventCommand());
         // rounds players put up themselves
         RoundService.init(this);
-        registerCommand("runde", new RoundCommand());
+        PluginCommands.register(this, "runde", new RoundCommand());
         // who is who on discord: the link is confirmed here and looked up here
         AccountLinkService.init(this);
         NetworkOps.init(this);
-        registerCommand("verify", new VerifyCommand());
+        PluginCommands.register(this, "verify", new VerifyCommand());
         // the hub is where people stand around, so it is where they put their cosmetics on. The bits are
         // needed with them: the shop shows what somebody can afford before they click
         MoneyService.init(this);
@@ -85,17 +84,12 @@ public final class LobbyPlugin extends JavaPlugin {
         CosmeticEffects.init(this);
         // and the gadgets: the effects are the same everywhere, the answer to who may use one here is not
         new de.schnorrenbergers.lobby.cosmetic.GadgetListener(this);
-        registerCommand("cosmetics", new CosmeticsCommand());
-        registerCommand("bwdebug", new BedwarsDebugCommand());
+        PluginCommands.register(this, "cosmetics", new CosmeticsCommand());
+        PluginCommands.register(this, "bwdebug", new BedwarsDebugCommand());
         new LobbyJoinListener();
         new LobbyProtectionListener(this);
     }
 
-
-    private void registerCommand(String commandName, Object command) {
-        getCommand(commandName).setExecutor((CommandExecutor) command);
-        getCommand(commandName).setTabCompleter((TabCompleter) command);
-    }
 
     @Override
     public void onDisable() {

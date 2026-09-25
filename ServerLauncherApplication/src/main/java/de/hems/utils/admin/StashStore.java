@@ -1,14 +1,13 @@
 package de.hems.utils.admin;
 
+import de.hems.utils.YamlFiles;
 import de.hems.types.admin.ItemData;
 import de.hems.types.admin.StashData;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -39,16 +38,7 @@ public class StashStore {
 
     public StashStore(File file) {
         this.file = file;
-        if (!file.exists()) {
-            File parent = file.getParentFile();
-            if (parent != null) parent.mkdirs();
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        this.config = YamlConfiguration.loadConfiguration(file);
+        this.config = YamlFiles.load(file);
         load();
     }
 
@@ -67,11 +57,7 @@ public class StashStore {
     }
 
     private void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            System.out.println("Could not save " + file.getName() + ": " + e.getMessage());
-        }
+        YamlFiles.saveOrLog(config, file);
     }
 
     /**

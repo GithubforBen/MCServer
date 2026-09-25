@@ -1,5 +1,6 @@
 package de.schnorrenbergers.run;
 
+import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.ServerIdentity;
 import de.hems.paper.admin.PlayerAdminHandler;
@@ -11,9 +12,6 @@ import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.event.EventService;
 import de.hems.paper.event.RunService;
 import de.hems.paper.warp.ServerConnector;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -38,9 +36,9 @@ public final class RunPlugin extends JavaPlugin {
         ServerConnector.register(this);
         // the way out has to exist even when nothing else does: a player stuck on an event server with no
         // network and no /warp has no way back to the lobby other than logging off
-        registerCommand("warp", new WarpCommand());
-        registerCommand("lobby", new LobbyCommand());
-        registerCommand("servermanger", new ServerManagerCommand());
+        PluginCommands.register(this, "warp", new WarpCommand());
+        PluginCommands.register(this, "lobby", new LobbyCommand());
+        PluginCommands.register(this, "servermanger", new ServerManagerCommand());
         try {
             new ListenerAdapter(ServerIdentity.of(this, "EVENT"));
         } catch (Exception e) {
@@ -52,8 +50,8 @@ public final class RunPlugin extends JavaPlugin {
         EventService.init(this);
         RunService.init(this);
         new RunTracker(this);
-        registerCommand("reset", new ResetCommand());
-        registerCommand("events", new EventCommand());
+        PluginCommands.register(this, "reset", new ResetCommand());
+        PluginCommands.register(this, "events", new EventCommand());
     }
 
     @Override
@@ -61,16 +59,6 @@ public final class RunPlugin extends JavaPlugin {
         // while the jar is still open: closing the cluster connection from a jvm shutdown hook is too
         // late, see ListenerAdapter.disconnect()
         ListenerAdapter.disconnect();
-    }
-
-    private void registerCommand(String commandName, Object command) {
-        PluginCommand registered = getCommand(commandName);
-        if (registered == null) {
-            getLogger().warning("The command /" + commandName + " is not declared in plugin.yml.");
-            return;
-        }
-        registered.setExecutor((CommandExecutor) command);
-        if (command instanceof TabCompleter completer) registered.setTabCompleter(completer);
     }
 
     public static RunPlugin getInstance() {

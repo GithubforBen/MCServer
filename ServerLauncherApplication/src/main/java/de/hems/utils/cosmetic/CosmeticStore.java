@@ -1,5 +1,6 @@
 package de.hems.utils.cosmetic;
 
+import de.hems.utils.YamlFiles;
 import de.hems.types.cosmetic.CosmeticData;
 import de.hems.types.cosmetic.CosmeticSnapshot;
 import de.hems.types.cosmetic.CosmeticType;
@@ -10,7 +11,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -43,16 +43,7 @@ public class CosmeticStore {
 
     public CosmeticStore(File file) {
         this.file = file;
-        if (!file.exists()) {
-            File parent = file.getParentFile();
-            if (parent != null) parent.mkdirs();
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        this.config = YamlConfiguration.loadConfiguration(file);
+        this.config = YamlFiles.load(file);
         load();
         seed();
     }
@@ -164,11 +155,7 @@ public class CosmeticStore {
     }
 
     public synchronized void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            System.out.println("Could not save " + file.getName() + ": " + e.getMessage());
-        }
+        YamlFiles.saveOrLog(config, file);
     }
 
     private static String key(String id) {

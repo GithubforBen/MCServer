@@ -1,5 +1,6 @@
 package de.schnorrenbergers.survival;
 
+import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.admin.NetworkOps;
 import de.hems.paper.cosmetic.CosmeticService;
@@ -37,10 +38,6 @@ import de.schnorrenbergers.survival.utils.configs.ShopConfig;
 import de.schnorrenbergers.survival.utils.configs.TeamConfig;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.schnorrenbergers.survival.utils.events.RequestPlayerMoneyEventHandler;
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Survival extends JavaPlugin {
@@ -87,18 +84,18 @@ public final class Survival extends JavaPlugin {
         // claims are only worth having if somebody can see where they are: a title on crossing, the
         // owner over the hotbar while standing on it, and /cteam grenze for the line itself
         new de.schnorrenbergers.survival.featrues.team.ClaimDisplay(this);
-        registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
-        registerCommand("debug", new DebugCommand());
-        registerCommand("cteam", new TeamCommand());
+        PluginCommands.register(this, "admin", new de.schnorrenbergers.survival.commands.AdminCommand());
+        PluginCommands.register(this, "debug", new DebugCommand());
+        PluginCommands.register(this, "cteam", new TeamCommand());
         getCommand("rs").setExecutor(new RestartCommand());
-        registerCommand("servermanger", new ServerManagerCommand());
-        registerCommand("warp", new de.hems.paper.commands.WarpCommand());
-        registerCommand("shopkeeper", new ShopkeeperCommand());
-        registerCommand("shop", new de.schnorrenbergers.survival.commands.ShopCommand());
-        registerCommand("banane", new BanCommand());
-        registerCommand("legitimize", new LegitimizeCommand());
-        registerCommand("verify", new de.hems.paper.commands.VerifyCommand());
-        registerCommand("cosmetics", new de.hems.paper.commands.CosmeticsCommand());
+        PluginCommands.register(this, "servermanger", new ServerManagerCommand());
+        PluginCommands.register(this, "warp", new de.hems.paper.commands.WarpCommand());
+        PluginCommands.register(this, "shopkeeper", new ShopkeeperCommand());
+        PluginCommands.register(this, "shop", new de.schnorrenbergers.survival.commands.ShopCommand());
+        PluginCommands.register(this, "banane", new BanCommand());
+        PluginCommands.register(this, "legitimize", new LegitimizeCommand());
+        PluginCommands.register(this, "verify", new de.hems.paper.commands.VerifyCommand());
+        PluginCommands.register(this, "cosmetics", new de.hems.paper.commands.CosmeticsCommand());
         new Tablist();
         new CustomInventoryListener(this);
         de.hems.paper.warp.ServerConnector.register(this);
@@ -118,16 +115,11 @@ public final class Survival extends JavaPlugin {
         // this server owns the economy, so it is the one that can pay out the money side of a prize
         AwardService.setMoneyGiver((player, amount) ->
                 MoneyHandler.addMoney(amount, player.getUniqueId()));
-        registerCommand("events", new de.hems.paper.commands.EventCommand());
+        PluginCommands.register(this, "events", new de.hems.paper.commands.EventCommand());
         new FlightListener();
         new CommandListener();
         new AntiEndListener();
         new EndListener();
-    }
-
-    private void registerCommand(String commandName, Object command) {
-        getCommand(commandName).setExecutor((CommandExecutor) command);
-        getCommand(commandName).setTabCompleter((TabCompleter) command);
     }
 
     @Override

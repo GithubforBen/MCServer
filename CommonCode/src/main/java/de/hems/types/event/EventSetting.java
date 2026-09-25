@@ -1,5 +1,6 @@
 package de.hems.types.event;
 
+import de.hems.types.Presets;
 import java.io.Serializable;
 import java.util.List;
 
@@ -115,30 +116,11 @@ public final class EventSetting implements Serializable {
             write(event, current == 1 ? 0 : 1);
             return;
         }
-        write(event, next(current, forward));
+        write(event, Presets.step(choices, current, forward));
     }
 
     private void write(EventData event, int value) {
         event.setSetting(key, kind == Kind.TOGGLE ? String.valueOf(value == 1) : String.valueOf(value));
-    }
-
-    /**
-     * @return the preset after the current one, wrapping around - and the nearest one when the current
-     *         value is not a preset at all, which is what a value edited on the website looks like
-     */
-    private int next(int current, boolean forward) {
-        for (int i = 0; i < choices.length; i++) {
-            if (choices[i] != current) continue;
-            int next = forward ? i + 1 : i - 1;
-            if (next >= choices.length) next = 0;
-            if (next < 0) next = choices.length - 1;
-            return choices[next];
-        }
-        int nearest = choices[0];
-        for (int choice : choices) {
-            if (Math.abs(choice - current) < Math.abs(nearest - current)) nearest = choice;
-        }
-        return nearest;
     }
 
     /**

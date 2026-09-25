@@ -1,5 +1,6 @@
 package de.hems.paper.event;
 
+import de.hems.types.Presets;
 import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
@@ -163,7 +164,7 @@ public final class RewardUi {
         ui.setItem(11, new ItemApi(Material.GOLD_NUGGET, ChatColor.GOLD + "Geld: " + rule.getPrize().getMoney()
                         + " Bits", List.of(ChatColor.GRAY + "Links: mehr · Rechts: weniger")).build(),
                 new SimpleItemAction(click -> change.accept(edited ->
-                        edited.getPrize().setMoney(step(MONEY_STEPS, edited.getPrize().getMoney(),
+                        edited.getPrize().setMoney(Presets.step(MONEY_STEPS, edited.getPrize().getMoney(),
                                 !click.isRightClick())))));
         ui.setItem(12, new ItemApi(Material.CHEST, ChatColor.GOLD + "Item aus der Hand",
                         List.of(ChatColor.GRAY + "Legt das Item in deiner Hand",
@@ -240,7 +241,7 @@ public final class RewardUi {
             ui.setItem(30, new ItemApi(Material.IRON_SWORD, ChatColor.GOLD + "Ab " + rule.getKills() + " Kills",
                             List.of(ChatColor.GRAY + "Links: mehr · Rechts: weniger")).build(),
                     new SimpleItemAction(click -> change.accept(edited ->
-                            edited.setKills(step(KILL_STEPS, edited.getKills(), !click.isRightClick())))));
+                            edited.setKills(Presets.step(KILL_STEPS, edited.getKills(), !click.isRightClick())))));
         } else {
             ui.setItem(30, new ItemApi(Material.PAPER, ChatColor.GRAY + "Nichts einzustellen",
                     List.of(ChatColor.GRAY + "Jeder, der mitgemacht hat, bekommt sie.")).build(),
@@ -287,21 +288,6 @@ public final class RewardUi {
                 default -> Material.COAL;
             };
         };
-    }
-
-    private static int step(int[] values, int current, boolean forward) {
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] != current) continue;
-            int next = forward ? i + 1 : i - 1;
-            if (next >= values.length) next = 0;
-            if (next < 0) next = values.length - 1;
-            return values[next];
-        }
-        int nearest = values[0];
-        for (int value : values) {
-            if (Math.abs(value - current) < Math.abs(nearest - current)) nearest = value;
-        }
-        return nearest;
     }
 
     /* ------------------------------------------------------------------------------- for other panels */

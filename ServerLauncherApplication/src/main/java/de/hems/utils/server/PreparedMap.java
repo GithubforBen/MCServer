@@ -1,12 +1,8 @@
 package de.hems.utils.server;
 
+import de.hems.files.FileTrees;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
-import java.util.stream.Stream;
 
 /**
  * A world somebody prepared by hand, copied onto every new server of one kind.
@@ -51,14 +47,10 @@ public class PreparedMap {
         File world = new File(serverDirectory, target);
         if (new File(world, "level.dat").isFile()) return false;
         try {
-            copyTree(source.toPath(), world.toPath());
+            FileTrees.copy(source.toPath(), world.toPath(), FileTrees.WORLD_IDENTITY);
             // a copied world that brings its lock and its player data along argues with the server it lands
             // in, and the players of the last game have no business in this one
-            new File(world, "session.lock").delete();
-            new File(world, "uid.dat").delete();
-            deleteQuietly(new File(world, "playerdata"));
-            deleteQuietly(new File(world, "stats"));
-            deleteQuietly(new File(world, "advancements"));
+            FileTrees.stripPlayers(world);
             System.out.println("Installed the map " + source.getPath() + " on " + serverDirectory.getName() + ".");
             return true;
         } catch (IOException e) {
@@ -68,28 +60,4 @@ public class PreparedMap {
         }
     }
 
-    private static void deleteQuietly(File file) {
-        if (!file.exists()) return;
-        try (Stream<Path> paths = Files.walk(file.toPath())) {
-            for (Path entry : paths.sorted(Comparator.reverseOrder()).toList()) Files.deleteIfExists(entry);
-        } catch (IOException ignored) {
-            // leftover player data in a copy is untidy, not broken
-        }
-    }
-
-    private static void copyTree(Path from, Path to) throws IOException {
-        try (Stream<Path> paths = Files.walk(from)) {
-            for (Path path : paths.toList()) {
-                String relative = from.relativize(path).toString();
-                if (relative.equals("session.lock")) continue;
-                Path destination = to.resolve(relative);
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                    continue;
-                }
-                Files.createDirectories(destination.getParent());
-                Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-    }
 }

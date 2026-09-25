@@ -1,5 +1,6 @@
 package de.schnorrenbergers.poker.world;
 
+import de.hems.files.FileTrees;
 import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
 import org.bukkit.GameRule;
@@ -15,11 +16,8 @@ import org.bukkit.plugin.Plugin;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
 import java.util.Random;
-import java.util.stream.Stream;
 
 /**
  * The one world the casino stands in.
@@ -70,7 +68,7 @@ public final class CasinoWorld {
             if (source != null) {
                 plugin.getLogger().info("Bringing the casino in from " + source.getPath() + ".");
                 try {
-                    copyTree(source.toPath(), new File(name).toPath());
+                    FileTrees.copy(source.toPath(), new File(name).toPath(), FileTrees.WORLD_IDENTITY);
                 } catch (IOException e) {
                     plugin.getLogger().warning("The casino could not be copied in ("
                             + e.getMessage() + ") - a fresh one is built instead.");
@@ -123,10 +121,10 @@ public final class CasinoWorld {
         world.save();
         File target = new File(SHARED_SOURCE);
         try {
-            if (target.exists()) deleteTree(target.toPath());
+            FileTrees.delete(target.toPath());
             // since 26.2 an extra world lives as a dimension inside the main world, not in a folder of its
             // own name - the server says where, and that is the only place worth asking
-            copyTree(world.getWorldFolder().toPath(), target.toPath());
+            FileTrees.copy(world.getWorldFolder().toPath(), target.toPath(), FileTrees.WORLD_IDENTITY);
             // a dimension folder has no level.dat, and without one the copy is not a world that the next
             // casino can import. The main world's stands in; the generator is set in code anyway
             File layout = new File("configs/poker/layout.yml");
@@ -151,11 +149,7 @@ public final class CasinoWorld {
             }
             // a copied world that keeps its session lock and its player data is a world that argues with
             // the server it is copied into
-            new File(target, "session.lock").delete();
-            new File(target, "uid.dat").delete();
-            deleteQuietly(new File(target, "playerdata"));
-            deleteQuietly(new File(target, "stats"));
-            deleteQuietly(new File(target, "advancements"));
+            FileTrees.stripPlayers(target);
             plugin.getLogger().info("The casino was written to " + target.getPath() + ".");
             return "Die Casino-Welt liegt jetzt in " + target.getPath()
                     + " - die nächste Pokernacht spielt darin.";
@@ -215,41 +209,6 @@ public final class CasinoWorld {
             if (candidate != null && new File(candidate, "level.dat").isFile()) return candidate;
         }
         return null;
-    }
-
-    private static void deleteQuietly(File file) {
-        if (!file.exists()) return;
-        try {
-            deleteTree(file.toPath());
-        } catch (IOException ignored) {
-            // leftover player data in the copy is untidy, not broken
-        }
-    }
-
-    private static void copyTree(Path from, Path to) throws IOException {
-        try (Stream<Path> paths = Files.walk(from)) {
-            for (Path path : paths.toList()) {
-                String relative = from.relativize(path).toString();
-                // a live world holds its lock file open, and copying it is what makes the copy refuse to load
-                if (relative.equals("session.lock")) continue;
-                Path destination = to.resolve(relative);
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                    continue;
-                }
-                Files.createDirectories(destination.getParent());
-                Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-    }
-
-    private static void deleteTree(Path path) throws IOException {
-        if (!Files.exists(path)) return;
-        try (Stream<Path> paths = Files.walk(path)) {
-            for (Path entry : paths.sorted(Comparator.reverseOrder()).toList()) {
-                Files.deleteIfExists(entry);
-            }
-        }
     }
 
     /**

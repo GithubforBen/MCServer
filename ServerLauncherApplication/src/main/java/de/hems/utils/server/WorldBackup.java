@@ -1,17 +1,14 @@
 package de.hems.utils.server;
 
+import de.hems.files.FileTrees;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * Copies the worlds of a server away before it is started on a new Minecraft version.
@@ -72,7 +69,7 @@ public final class WorldBackup {
         System.out.println("Server " + serverDirectory.getName() + " moves from Minecraft " + oldVersion + " to "
                 + newVersion + " - backing up " + worlds.size() + " world(s) to " + target.getPath() + " first.");
         for (File world : worlds) {
-            copyTree(world.toPath(), new File(target, world.getName()).toPath());
+            FileTrees.copy(world.toPath(), new File(target, world.getName()).toPath(), FileTrees.LOCK_ONLY);
         }
         System.out.println("Backup of " + serverDirectory.getName() + " done.");
         return target;
@@ -92,20 +89,4 @@ public final class WorldBackup {
         return worlds;
     }
 
-    private static void copyTree(Path from, Path to) throws IOException {
-        try (Stream<Path> paths = Files.walk(from)) {
-            for (Path path : paths.toList()) {
-                String relative = from.relativize(path).toString();
-                // the lock belongs to a running server and is the one file a copy must not carry
-                if (relative.equals("session.lock")) continue;
-                Path destination = to.resolve(relative);
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                    continue;
-                }
-                Files.createDirectories(destination.getParent());
-                Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-    }
 }

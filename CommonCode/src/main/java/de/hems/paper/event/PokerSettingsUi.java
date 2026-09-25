@@ -1,5 +1,6 @@
 package de.hems.paper.event;
 
+import de.hems.types.Presets;
 import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
@@ -71,7 +72,7 @@ public final class PokerSettingsUi {
                                 ChatColor.DARK_GRAY + "So viele Chips bekommt man dafür - eins zu eins",
                                 cycleHint())).build(),
                 new SimpleItemAction(click -> {
-                    settings.setBuyIn(step(BUY_INS, settings.getBuyIn(), forward(click.getClick())));
+                    settings.setBuyIn(Presets.step(BUY_INS, settings.getBuyIn(), forward(click.getClick())));
                     // the qualifying volume was set as a multiple of the buy-in, so it follows it along
                     // rather than quietly staying at a number that no longer means anything
                     settings.setMinVolume(PokerEventSettings.DEFAULT_MIN_VOLUME_BUY_INS * settings.getBuyIn());
@@ -85,7 +86,7 @@ public final class PokerSettingsUi {
                                         + (settings.getBuyIn() / settings.getBigBlind()) + " Big Blinds",
                                 cycleHint())).build(),
                 new SimpleItemAction(click -> {
-                    settings.setSmallBlind(step(SMALL_BLINDS, settings.getSmallBlind(), forward(click.getClick())));
+                    settings.setSmallBlind(Presets.step(SMALL_BLINDS, settings.getSmallBlind(), forward(click.getClick())));
                     reopen.run();
                 }));
 
@@ -95,7 +96,7 @@ public final class PokerSettingsUi {
                                 ChatColor.DARK_GRAY + "Nur aus Pots, um die wirklich gespielt wurde",
                                 cycleHint())).build(),
                 new SimpleItemAction(click -> {
-                    settings.setRakePermille(step(RAKES_PERMILLE, settings.getRakePermille(),
+                    settings.setRakePermille(Presets.step(RAKES_PERMILLE, settings.getRakePermille(),
                             forward(click.getClick())));
                     reopen.run();
                 }));
@@ -109,7 +110,7 @@ public final class PokerSettingsUi {
                                 ChatColor.DARK_GRAY + "als der ganze restliche Abend",
                                 cycleHint())).build(),
                 new SimpleItemAction(click -> {
-                    settings.setRakeCapBigBlinds(step(RAKE_CAPS_BB, cap, forward(click.getClick())));
+                    settings.setRakeCapBigBlinds(Presets.step(RAKE_CAPS_BB, cap, forward(click.getClick())));
                     reopen.run();
                 }));
 
@@ -156,7 +157,7 @@ public final class PokerSettingsUi {
                                 ChatColor.DARK_GRAY + "voller Bots eine Entscheidung und kein Hebel",
                                 cycleHint())).build(),
                 new SimpleItemAction(click -> {
-                    settings.setBotFee(step(BOT_FEES, settings.getBotFee(), forward(click.getClick())));
+                    settings.setBotFee(Presets.step(BOT_FEES, settings.getBotFee(), forward(click.getClick())));
                     reopen.run();
                 }));
 
@@ -167,7 +168,7 @@ public final class PokerSettingsUi {
                                 ChatColor.DARK_GRAY + "trotzdem noch keine Pokernacht",
                                 cycleHint())).build(),
                 new SimpleItemAction(click -> {
-                    settings.setMinHands(step(MIN_HANDS, settings.getMinHands(), forward(click.getClick())));
+                    settings.setMinHands(Presets.step(MIN_HANDS, settings.getMinHands(), forward(click.getClick())));
                     reopen.run();
                 }));
 
@@ -197,7 +198,7 @@ public final class PokerSettingsUi {
                                     ChatColor.DARK_GRAY + "Nur im Turnier",
                                     cycleHint())).build(),
                     new SimpleItemAction(click -> {
-                        settings.setBlindUpMinutes(step(BLIND_UPS, settings.getBlindUpMinutes(),
+                        settings.setBlindUpMinutes(Presets.step(BLIND_UPS, settings.getBlindUpMinutes(),
                                 forward(click.getClick())));
                         reopen.run();
                     }));
@@ -244,25 +245,4 @@ public final class PokerSettingsUi {
         return !click.isRightClick();
     }
 
-    /**
-     * @param values  the presets
-     * @param current where we are now
-     * @param forward whether to go up or down
-     * @return the next preset, wrapping around, and the nearest one when the current value is not in the
-     *         list at all - which happens to a night that was edited on the website
-     */
-    private static int step(int[] values, int current, boolean forward) {
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] != current) continue;
-            int next = forward ? i + 1 : i - 1;
-            if (next >= values.length) next = 0;
-            if (next < 0) next = values.length - 1;
-            return values[next];
-        }
-        int nearest = values[0];
-        for (int value : values) {
-            if (Math.abs(value - current) < Math.abs(nearest - current)) nearest = value;
-        }
-        return nearest;
-    }
 }

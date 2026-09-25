@@ -1,5 +1,6 @@
 package de.schnorrenbergers.bedwars.map;
 
+import de.hems.files.FileTrees;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -8,13 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * Brings a map into the server as a world, and puts it back when it was set up.
@@ -31,9 +27,6 @@ import java.util.stream.Stream;
  * only honest answer, and it is what writing a map back reads from.
  */
 public final class MapLoader {
-
-    /** Files that belong to one running world and must never be copied into another. */
-    private static final Set<String> NOT_COPIED = Set.of("uid.dat", "session.lock");
 
     /** The folders that hold the world itself, replaced wholesale when a map is written back. */
     private static final List<String> DATA_FOLDERS = List.of("region", "entities", "poi", "data");
@@ -73,9 +66,9 @@ public final class MapLoader {
             // both places the world could still be lying around from an earlier run: the folder the copy
             // goes into, and wherever the server moved the last one to. A leftover would be loaded instead
             // of the map, which looks exactly like the map having the wrong blocks in it
-            delete(dropOff.toPath());
-            delete(dimensionFolder(arena).toPath());
-            copy(repository.worldFolder(name).toPath(), dropOff.toPath());
+            FileTrees.delete(dropOff.toPath());
+            FileTrees.delete(dimensionFolder(arena).toPath());
+            FileTrees.copy(repository.worldFolder(name).toPath(), dropOff.toPath(), FileTrees.WORLD_IDENTITY);
         } catch (IOException e) {
             Bukkit.getLogger().warning("[Bedwars] Could not copy the map " + name + ": " + e.getMessage());
             return null;
@@ -107,9 +100,9 @@ public final class MapLoader {
         Path target = repository.worldFolder(name).toPath();
         try {
             for (String folder : DATA_FOLDERS) {
-                delete(target.resolve(folder));
+                FileTrees.delete(target.resolve(folder));
             }
-            copy(source, target);
+            FileTrees.copy(source, target, FileTrees.WORLD_IDENTITY);
             return true;
         } catch (IOException e) {
             Bukkit.getLogger().warning("[Bedwars] Could not write the map " + name + " back: " + e.getMessage());
@@ -133,40 +126,4 @@ public final class MapLoader {
         return beside == null ? new File(Bukkit.getWorldContainer(), arena) : new File(beside, arena);
     }
 
-    /**
-     * Copies a world folder, leaving out the files that belong to the world it was copied from.
-     * <p>
-     * {@code uid.dat} is the one that matters: two worlds carrying the same id confuse the server about
-     * which one it is looking at, and the symptom turns up much later than the copy.
-     *
-     * @param source where the world is
-     * @param target where it should be
-     */
-    private static void copy(Path source, Path target) throws IOException {
-        if (!Files.exists(source)) return;
-        try (Stream<Path> entries = Files.walk(source)) {
-            for (Path path : entries.toList()) {
-                if (NOT_COPIED.contains(path.getFileName().toString())) continue;
-                Path destination = target.resolve(source.relativize(path).toString());
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                } else {
-                    Files.createDirectories(destination.getParent());
-                    Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-                }
-            }
-        }
-    }
-
-    /**
-     * @param path the folder to remove, deepest entry first
-     */
-    private static void delete(Path path) throws IOException {
-        if (!Files.exists(path)) return;
-        try (Stream<Path> entries = Files.walk(path)) {
-            for (Path entry : entries.sorted(Comparator.reverseOrder()).toList()) {
-                Files.deleteIfExists(entry);
-            }
-        }
-    }
 }

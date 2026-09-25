@@ -1,5 +1,6 @@
 package de.hems.utils.event;
 
+import de.hems.files.FileTrees;
 import de.hems.Main;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.event.EventUpdatedEvent;
@@ -13,11 +14,7 @@ import de.hems.types.event.RunData;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,7 +23,6 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 /**
  * Closes events that have run their course.
@@ -371,7 +367,7 @@ public class EventSettlement {
                 return;
             }
             File directory = new File("./servers/" + server + "/");
-            if (directory.exists() && !delete(directory)) {
+            if (directory.exists() && !FileTrees.deleteQuietly(directory)) {
                 System.out.println("Could not remove the directory of " + server);
                 return;
             }
@@ -383,27 +379,6 @@ public class EventSettlement {
         } catch (Exception e) {
             System.out.println("Could not discard the run server " + server + ": " + e.getMessage());
         }
-    }
-
-    /**
-     * @param folder the directory to remove, with everything in it
-     * @return whether it is gone
-     */
-    private static boolean delete(File folder) {
-        try (Stream<Path> paths = Files.walk(folder.toPath())) {
-            // deepest first, a directory can only go once it is empty
-            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
-                try {
-                    Files.delete(path);
-                } catch (IOException e) {
-                    System.out.println("Could not delete " + path + ": " + e.getMessage());
-                }
-            });
-        } catch (IOException e) {
-            System.out.println("Could not walk " + folder + ": " + e.getMessage());
-            return false;
-        }
-        return !folder.exists();
     }
 
     /**

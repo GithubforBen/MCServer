@@ -1,5 +1,6 @@
 package de.schnorrenbergers.hungergames;
 
+import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.ServerIdentity;
 import de.hems.paper.admin.PlayerAdminHandler;
@@ -10,9 +11,6 @@ import de.hems.paper.commands.WarpCommand;
 import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.event.EventService;
 import de.hems.paper.warp.ServerConnector;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -34,9 +32,9 @@ public final class HungerGamesPlugin extends JavaPlugin {
         new CustomInventoryListener(this);
         ServerConnector.register(this);
         // the way out has to work even when nothing else does
-        registerCommand("warp", new WarpCommand());
-        registerCommand("lobby", new LobbyCommand());
-        registerCommand("servermanger", new ServerManagerCommand());
+        PluginCommands.register(this, "warp", new WarpCommand());
+        PluginCommands.register(this, "lobby", new LobbyCommand());
+        PluginCommands.register(this, "servermanger", new ServerManagerCommand());
 
         String self;
         try {
@@ -44,7 +42,7 @@ public final class HungerGamesPlugin extends JavaPlugin {
             new ListenerAdapter(ServerIdentity.of(this, "HUNGER_GAMES"));
             new PlayerAdminHandler(this);
             EventService.init(this);
-            registerCommand("events", new EventCommand());
+            PluginCommands.register(this, "events", new EventCommand());
         } catch (Exception e) {
             // without the network the game can still be played, it just counts for nothing
             getLogger().warning("No network connection (" + e.getMessage()
@@ -58,7 +56,7 @@ public final class HungerGamesPlugin extends JavaPlugin {
 
         game = new Game(this, map, ArenaContext.getSettings());
         getServer().getPluginManager().registerEvents(new GameListener(this, game), this);
-        registerCommand("hg", new HgCommand(game));
+        PluginCommands.register(this, "hg", new HgCommand(game));
         game.start();
         // on 26.3 allow-nether=false no longer keeps the nether from loading; nobody can get there (the
         // portals are refused), but it holds memory the arena needs. So it is unloaded once the server is up
@@ -82,13 +80,4 @@ public final class HungerGamesPlugin extends JavaPlugin {
         ListenerAdapter.disconnect();
     }
 
-    private void registerCommand(String commandName, Object command) {
-        PluginCommand registered = getCommand(commandName);
-        if (registered == null) {
-            getLogger().warning("The command /" + commandName + " is not declared in plugin.yml.");
-            return;
-        }
-        registered.setExecutor((CommandExecutor) command);
-        if (command instanceof TabCompleter completer) registered.setTabCompleter(completer);
-    }
 }

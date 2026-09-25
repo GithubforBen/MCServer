@@ -1,5 +1,6 @@
 package de.schnorrenbergers.poker;
 
+import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.ServerIdentity;
 import de.hems.paper.admin.PlayerAdminHandler;
@@ -18,9 +19,6 @@ import de.schnorrenbergers.poker.listener.TableListener;
 import de.schnorrenbergers.poker.world.CasinoLayout;
 import de.schnorrenbergers.poker.world.CasinoWorld;
 import org.bukkit.World;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -53,9 +51,9 @@ public final class PokerPlugin extends JavaPlugin {
         new CustomInventoryListener(this);
         ServerConnector.register(this);
         // the way out has to work even when nothing else does
-        registerCommand("warp", new WarpCommand());
-        registerCommand("lobby", new LobbyCommand());
-        registerCommand("servermanger", new ServerManagerCommand());
+        PluginCommands.register(this, "warp", new WarpCommand());
+        PluginCommands.register(this, "lobby", new LobbyCommand());
+        PluginCommands.register(this, "servermanger", new ServerManagerCommand());
 
         String self;
         try {
@@ -73,7 +71,7 @@ public final class PokerPlugin extends JavaPlugin {
         EventService.init(this);
         MoneyService.init(this);
         PokerStatsService.init(this);
-        registerCommand("events", new EventCommand());
+        PluginCommands.register(this, "events", new EventCommand());
 
         // which night this is, and what it is played for. Blocking on purpose: the stakes have to be known
         // before the first player can sit down
@@ -89,7 +87,7 @@ public final class PokerPlugin extends JavaPlugin {
 
         Casino.open(this, layout, settings);
         new TableListener(this, layout);
-        registerCommand("poker", new PokerCommand(this));
+        PluginCommands.register(this, "poker", new PokerCommand(this));
 
         getLogger().info("The casino is open: " + settings.getTables() + " tables, "
                 + settings.getSeats() + " seats each, buy-in " + settings.getBuyIn()
@@ -110,16 +108,6 @@ public final class PokerPlugin extends JavaPlugin {
         if (layout != null) layout.save();
         // while the jar is still open, see ListenerAdapter.disconnect()
         ListenerAdapter.disconnect();
-    }
-
-    private void registerCommand(String commandName, Object command) {
-        PluginCommand registered = getCommand(commandName);
-        if (registered == null) {
-            getLogger().warning("The command /" + commandName + " is not declared in plugin.yml.");
-            return;
-        }
-        registered.setExecutor((CommandExecutor) command);
-        if (command instanceof TabCompleter completer) registered.setTabCompleter(completer);
     }
 
     public static PokerPlugin getInstance() {

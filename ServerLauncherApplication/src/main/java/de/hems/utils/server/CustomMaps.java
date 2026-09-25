@@ -1,15 +1,13 @@
 package de.hems.utils.server;
 
+import de.hems.files.FileTrees;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Stream;
 
 /**
  * Bedwars maps that were not shipped with the launcher.
@@ -87,7 +85,7 @@ public class CustomMaps {
     private void install(String map, File target) throws IOException {
         File world = new File(target, map);
         if (!world.exists()) {
-            copyTree(new File(directory, map).toPath(), world.toPath());
+            FileTrees.copy(new File(directory, map).toPath(), world.toPath());
             System.out.println("Installed the map " + map + " on " + target.getParentFile().getName());
         }
         File definition = new File(directory, map + ".yml");
@@ -97,23 +95,4 @@ public class CustomMaps {
         }
     }
 
-    /**
-     * Copies a whole directory, keeping its shape.
-     *
-     * @param from where it is
-     * @param to   where it should be
-     */
-    private static void copyTree(Path from, Path to) throws IOException {
-        try (Stream<Path> paths = Files.walk(from)) {
-            for (Path path : paths.toList()) {
-                Path destination = to.resolve(from.relativize(path).toString());
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                    continue;
-                }
-                Files.createDirectories(destination.getParent());
-                Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-    }
 }
