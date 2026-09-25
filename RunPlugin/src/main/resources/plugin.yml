@@ -3,6 +3,10 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.run.RunPlugin
 api-version: '26.3'
 commands:
+  neustart:
+    description: Das ganze Netzwerk zu einer Zeit neu starten, mit oder ohne Update
+    usage: /neustart <minuten> [update|aus] | /neustart abbrechen
+    permission: network.restart
   reset:
     description: Setzt diesen Event-Server zurück
     usage: /reset
@@ -19,6 +23,9 @@ commands:
   servermanger:
     description: Server verwalten und neue Server erstellen
 permissions:
+  network.restart:
+    description: Das Netzwerk neu starten
+    default: op
   network.warp.always:
     description: Darf jeden Server jederzeit verlassen
     default: op

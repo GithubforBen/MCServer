@@ -3,6 +3,10 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.bedwars.Bedwars
 api-version: '26.3'
 commands:
+  neustart:
+    description: Das ganze Netzwerk zu einer Zeit neu starten, mit oder ohne Update
+    usage: /neustart <minuten> [update|aus] | /neustart abbrechen
+    permission: network.restart
   cosmetics:
     description: Cosmetics kaufen, anlegen und ablegen
     usage: /cosmetics [win_effect|kill_effect|trail|gadget|neu|verwalten]
@@ -19,6 +23,9 @@ commands:
     usage: /lobby
     aliases: [hub, leave]
 permissions:
+  network.restart:
+    description: Das Netzwerk neu starten
+    default: op
   bedwars.admin:
     description: Darf die Runde und die Addons verwalten
     default: op

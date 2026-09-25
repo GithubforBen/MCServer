@@ -62,6 +62,7 @@ public class Main {
     private StashStore stashStore;
     private EventStore eventStore;
     private EventSettlement eventSettlement;
+    private de.hems.utils.restart.RestartScheduler restartScheduler;
     private RunStore runStore;
     private AwardStore awardStore;
     private MoneyStore moneyStore;
@@ -131,6 +132,8 @@ public class Main {
         new de.hems.events.EventResultEvents(resultStore, eventStore);
         eventSettlement = new EventSettlement(eventStore, runStore, awardStore, pokerSettlement, resultStore);
         new EventEvents(eventStore, runStore, awardStore, eventSettlement);
+        // /neustart on any server lands here: countdown, save, stop, and run.sh does the rest
+        restartScheduler = new de.hems.utils.restart.RestartScheduler();
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         // what the machine has left, and which server is sitting on memory it never uses
@@ -288,6 +291,10 @@ public class Main {
 
     public BackpackStore getBackpackStore() {
         return backpackStore;
+    }
+
+    public de.hems.utils.restart.RestartScheduler getRestartScheduler() {
+        return restartScheduler;
     }
 
     public EventSettlement getEventSettlement() {

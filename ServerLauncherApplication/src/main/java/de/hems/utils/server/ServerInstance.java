@@ -232,6 +232,48 @@ public class ServerInstance {
         process = pb.start();
     }
 
+    /**
+     * Whether the java process of this server is still there - which is not the same as {@link #isAlive()}.
+     * <p>
+     * A stopping server closes its port first and saves its worlds after that, so a closed port says the
+     * server stopped taking players, not that it is done. The server runs in a shell inside its tmux
+     * session; as long as that shell has a child, the server is still busy.
+     *
+     * @return whether the process is still running
+     */
+    public boolean isProcessRunning() {
+        try {
+            Process panes = new ProcessBuilder("tmux", "list-panes", "-t", session(), "-F", "#{pane_pid}")
+                    .redirectErrorStream(true).start();
+            String output = new String(panes.getInputStream().readAllBytes()).trim();
+            if (panes.waitFor() != 0 || output.isEmpty()) return false;
+            for (String shell : output.split("\\s+")) {
+                Process children = new ProcessBuilder("pgrep", "-P", shell.trim()).start();
+                if (children.waitFor() == 0) return true;
+            }
+            return false;
+        } catch (IOException e) {
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return true;
+        }
+    }
+
+    /**
+     * Ends the server the hard way: its tmux session goes, and with it the process. Only for a server
+     * that did not stop on its own in time - it saves what its shutdown hook still manages to save.
+     */
+    public void kill() {
+        try {
+            new ProcessBuilder("tmux", "kill-session", "-t", session()).start().waitFor();
+        } catch (IOException e) {
+            System.out.println("Could not kill " + name + ": " + e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     public ListenerAdapter.ServerName getName() {
         return name;
     }

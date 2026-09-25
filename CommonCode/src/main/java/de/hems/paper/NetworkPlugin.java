@@ -68,6 +68,11 @@ public final class NetworkPlugin {
         NetworkOps.init(plugin);
         EventService.init(plugin);
         if (plugin.getCommand("events") != null) PluginCommands.register(plugin, "events", new EventCommand());
+        // a scheduled restart counts down on every server, and can be scheduled from every one of them
+        de.hems.paper.restart.RestartService.init(plugin);
+        if (plugin.getCommand("neustart") != null) {
+            PluginCommands.register(plugin, "neustart", new de.hems.paper.restart.RestartCommand());
+        }
         return true;
     }
 

@@ -3,6 +3,10 @@ version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.lobby.LobbyPlugin
 api-version: '26.3'
 commands:
+  neustart:
+    description: Das ganze Netzwerk zu einer Zeit neu starten, mit oder ohne Update
+    usage: /neustart <minuten> [update|aus] | /neustart abbrechen
+    permission: network.restart
   cosmetics:
     description: Cosmetics kaufen, anlegen und ablegen
     usage: /cosmetics [win_effect|kill_effect|trail|gadget|neu|verwalten]
@@ -30,6 +34,9 @@ commands:
     description: Die Sprungstrecken der Lobby laufen und bauen
     usage: /parkour [list|start <strecke>|leave|top <strecke>|setup <strecke> start|checkpoint|undo|finish|board|name|delete]
 permissions:
+  network.restart:
+    description: Das Netzwerk neu starten
+    default: op
   network.warp.always:
     description: Darf jeden Server jederzeit verlassen
     default: op

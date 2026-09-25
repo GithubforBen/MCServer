@@ -262,6 +262,17 @@ steht in 2.2.
 - [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau im selben Raum?
 - [ ] Turnier gegen Bots: Blinds steigen nur zwischen Händen, Auszahlung am Ende stimmt
 
+**Neustart und Updates**
+- [ ] `/neustart 2`: Countdown im Chat auf allen Servern, Bossbar, Titel; nach dem Kick sind alle
+      Server-Prozesse weg (Konsole: „Every server is down“), das Netzwerk kommt von selbst wieder
+- [ ] `/neustart 2 update` mit einem neuen Commit auf dem Branch: läuft danach der neue Stand, steht
+      „Update … erfolgreich“ unter `/neustart`?
+- [ ] `/neustart 2 update` mit einem Commit, der nicht baut: kommt das Netzwerk auf dem alten Stand
+      wieder, und steht das unter `/neustart`?
+- [ ] `/neustart 5`, dann `/neustart abbrechen`: Bossbar weg, Absage im Chat
+- [ ] Ein Server, der während des Countdowns startet, zeigt denselben Countdown
+- [ ] `/neustart 1 aus`: alles bleibt aus, `run.sh` beendet sich
+
 **Survival: Shops und Marktplatz**
 - [ ] Nach mehreren Neustarts **genau ein** Villager pro Shop
       (`ShopkeeperChunkListener`, Spawn über `EntitiesLoadEvent`)

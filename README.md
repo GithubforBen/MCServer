@@ -52,6 +52,43 @@ echten Velocity-4.2.0-Jars mit der erzeugten Datei.
 Der Launcher startet zuerst den Proxy und danach die Server aus `autostart` in der `main-config.yml`
 (Standard: `LOBBY` und `SURVIVAL`).
 
+## Neustart und Updates
+
+`/neustart` startet das ganze Netzwerk zu einer festen Zeit neu - von jedem Server aus, nur für Ops.
+
+| Befehl | Was passiert |
+|--------|--------------|
+| `/neustart` | Zeigt, was geplant ist, und wie das letzte Update lief |
+| `/neustart 10` | In 10 Minuten neu starten, auf dem Code, der da ist |
+| `/neustart 10 update` | In 10 Minuten: `git pull`, bauen, neu starten |
+| `/neustart 10 aus` | In 10 Minuten herunterfahren, danach bleibt alles aus |
+| `/neustart abbrechen` | Den geplanten Neustart absagen |
+
+Ein neuer `/neustart` ersetzt einen geplanten. Jeder Server zählt selbst herunter: Chat bei 10, 5, 3, 2
+und 1 Minute und 30 Sekunden, eine Bossbar in den letzten 5 Minuten, ein Titel in den letzten 10
+Sekunden.
+
+**Wenn es so weit ist:** alle Spieler werden mit Hinweis gekickt, Spieler und Welten gespeichert, jeder
+Server gestoppt - und der Launcher **wartet, bis jeder Java-Prozess wirklich weg ist**. Ein Server
+schließt beim Stoppen zuerst seinen Port und speichert danach; wer auf den Port schaut, startet das
+Netzwerk auf halb geschriebene Welten. Nach drei Minuten wird ein hängender Server hart beendet. Dann
+beendet sich der Launcher mit einem Code, den `run.sh` liest:
+
+| Code | `run.sh` macht |
+|------|----------------|
+| 10 | Launcher wieder starten |
+| 11 | `git pull --ff-only`, bauen, Launcher starten |
+| sonst | nichts - das Netzwerk bleibt aus (0 nach `/neustart … aus`, alles andere ist ein Absturz) |
+
+**Ein Update kann das Netzwerk nicht ausgeschaltet lassen.** Scheitert `git pull`, startet der alte
+Stand. Baut der neue Stand nicht, setzt `run.sh` auf den vorigen Commit zurück, baut den und startet ihn.
+Liegen im Arbeitsverzeichnis eingecheckte Dateien mit lokalen Änderungen, wird gar nicht gepullt - ein
+Zurücksetzen würde sie sonst wegwerfen. Was passiert ist, steht in `update-result.txt` und unter
+`/neustart`.
+
+`start.sh` startet `run.sh` in der tmux-Sitzung `server`. **Einmalig:** eine Sitzung, die noch mit dem
+alten `start.sh` läuft, muss einmal von Hand beendet und neu gestartet werden, damit `run.sh` läuft.
+
 ## Server
 
 Es gibt keine feste Liste von Servern mehr. Jeder Name kann gestartet werden: unbekannte Namen werden
