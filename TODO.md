@@ -202,77 +202,122 @@ Gefunden, bewusst nicht geändert — **Entscheidung nötig**:
 
 ## 2. Am lebenden Server nachprüfen
 
-Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiziert.
+Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiziert. Aufgeteilt danach,
+wer es testen kann.
 
-**Hunger Games** — `RewardCheck` prüft Regeln, Einstellungen und Speicher (46 Prüfungen). Nichts vom
-Spielablauf lief auf einem echten Server:
+### 2.1 Testbar von Claude per Computer Use
 
-- [ ] Kommt die Karte aus `./hungergames-world` richtig an? 26.2 legt Welten anders ab
-      (`dimensions/...`); gelesen wird `hungergames.yml` neben der `level.dat`
-- [ ] Sind Nether und End wirklich aus (`allow-nether=false`, `bukkit.yml settings.allow-end`)?
-- [ ] Landet der Supply Drop als gefüllte Kiste, und steht die Lichtsäule?
-- [ ] Freeze im Countdown: kann man sich umsehen, aber nicht vom Startplatz laufen?
-- [ ] Schrumpft die Grenze in der eingestellten Zeit (`changeSize` in Ticks)?
-- [ ] Event abrechnen lassen: kommen die Belohnungen an, wird die Arena gestoppt und gelöscht?
+Claude steuert dabei deinen Rechner (Screenshots, Klicks, Tippen) über die Claude-Desktop-App.
 
-**Update auf 26.3** — gebaut und auf einem nackten 26.3-Server gestartet, aber nicht im Netzwerk:
+**Voraussetzungen**, sonst fällt der Test in 2.2:
+- Computer Use ist in der Desktop-App eingeschaltet
+- Minecraft-Client läuft auf dem Rechner, eingeloggt mit **einem Op-Account**
+- Zugriff auf die Konsole des Launchers bzw. der Server (Terminal/SSH oder die Admin-Website) und auf
+  die Dateien neben dem Launcher
+- Für Event-Tests: Einstellungen mit kurzen Zeiten (Schrumpfen ab 3 Min, Drops alle 2 Min, Event in
+  wenigen Minuten), damit ein Test nicht eine Stunde dauert
 
-- [ ] Launcher-Start nach dem Update: legt er für SURVIVAL und LOBBY ein Backup in `./backups/` an, bevor
-      die Server starten? Liegt die Welt darin vollständig (inkl. `dimensions/`)?
-- [ ] Proxy mit Velocity 4.2.0: verbinden sich Spieler, klappt `/warp`, meldet das VelocityPlugin neue
-      Server an?
-- [ ] Simple Voicechat über den Proxy: das Velocity-Plugin 2.6.18 ist für Velocity 3 gebaut — funktioniert
-      es unter Velocity 4?
-- [ ] Survival-Welt nach der Umwandlung: Claims (WorldGuard), Shops, Teams noch da?
-- [ ] WorldEdit-Beta: laufen die Befehle, die ihr nutzt?
-- [ ] Bedwars-Maps aus `./bedwars-maps` und die Lobby-Vorlage aus `./lobby-world`: werden sie auf 26.3
-      hochgestuft und korrekt geladen?
-- [ ] Pokernacht: Casino bauen, `/poker karte speichern`, nächste Pokernacht steht im selben Raum
+Grenze: ein Account heißt ein Spieler. Alles, wofür es Plätze, Gegner oder einen zweiten Blick braucht,
+steht in 2.2.
 
-**Bedwars-Belohnungen und Starter-Umbau** — gebaut, nicht auf einem Server gelaufen:
+**Update auf 26.3**
+- [ ] Launcher-Start nach dem Update: liegt für SURVIVAL und LOBBY ein Backup in `./backups/`, bevor die
+      Server starten, und ist die Welt darin vollständig (inkl. `dimensions/`)?
+- [ ] Proxy mit Velocity 4.2.0: verbinden, `/warp` auf jeden Server, ein neu erstellter Server taucht
+      ohne Proxy-Neustart in `/warp` auf
+- [ ] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
+- [ ] Survival nach der Umwandlung: eigene Claims (WorldGuard), Shops und Teams noch da?
+- [ ] WorldEdit-Beta: die Befehle, die ihr nutzt (`//wand`, `//set`, `//copy`, `//paste`, `//undo`)
+- [ ] Bedwars-Maps aus `./bedwars-maps` und die Lobby-Vorlage aus `./lobby-world`: auf 26.3 hochgestuft,
+      korrekt geladen, Map steht im Lobby-Menü
+- [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers (Konsole + `money.yml`)
 
-- [ ] Bedwars-Event, das über seine Zeit hinaus läuft: steht „Verlängerung“ im Kalender, wird erst nach
-      dem Rundenende abgerechnet, und stimmen die Plätze?
-- [ ] Lobby während eines Bedwars-Events neu starten: wird niemand ein zweites Mal rübergeschickt?
-
-- [ ] Bedwars-Event mit drei Teams: bekommen die Teams die Plätze 3, 2, 1 in der Reihenfolge des
-      Ausscheidens, und steht das im Ergebnis-Panel des Events?
-- [ ] Zeitlimit-Ende: stimmen die Plätze mit dem Endbildschirm überein?
-- [ ] Spieler, der mitten in der Runde rausgeht: steht er noch im Ergebnis (Teilnahme)? Hängt daran, ob
-      `GameTeam.getMembers()` ihn behält
-- [ ] „ab X Kills“ bei Bedwars: kommen die Kills (inkl. Final Kills) richtig an?
-- [ ] Bedwars-Event: Server geht 5 Min vorher hoch, Einladung im Chat, zur Eventzeit werden alle
-      rübergeschickt, Nachzügler während des ganzen Events
+**Event-Starter und Event-Panel**
+- [ ] Bedwars-Event: Server geht 5 Min vorher hoch, Einladung im Chat, zur Eventzeit wird man
+      rübergeschickt; nach `/lobby` während des Events wird man wieder geholt (Nachzügler-Logik)
+- [ ] Lobby während eines Bedwars-Events neu starten: wird man danach **nicht** ein zweites Mal geholt?
 - [ ] Pokernacht: Casino geht hoch, Ankündigung mit Knopf, Erinnerung alle 15 Min, niemand wird gezogen
-- [ ] Event-Panel: Knopf „Zur Bedwars-Lobby“ / „Zum Casino“ / „Zur Arena“ an derselben Stelle
-- [ ] Nach dem Abrechnen: ist das Verzeichnis der Bedwars-Runde weg?
+- [ ] Event-Panel: „Zur Bedwars-Lobby“ / „Zum Casino“ / „Zur Arena“ an derselben Stelle,
+      Einstellungen und Belohnungen in denselben zwei Slots wie beim Anlegen
+- [ ] Ein abgesagtes Event wieder aktivieren: sind seine Läufe noch da?
+- [ ] Event abrechnen lassen (Server stoppen oder Runde beenden): Verzeichnis der Bedwars-Runde bzw.
+      der Arena ist danach weg
 
-**Pokernacht** — die Regeln selbst sind geprüft (`HandCheck`, `TableCheck`, 104 Prüfungen plus
-Zufallsläufe), die Bots gemessen (`BotBalanceCheck`). Was nur auf einem echten Server geht:
+**Hunger Games (allein, mit `/hg start`)**
+- [ ] Karte aus `./hungergames-world` kommt an, `hungergames.yml` wird gelesen (Mitte laut Konsole)
+- [ ] Nether und End sind aus: Konsole meldet „Unloaded world_nether“, ein Portal bringt einen nirgendwohin
+- [ ] Freeze im Countdown: umsehen geht, vom Startplatz laufen nicht
+- [ ] Supply Drop landet als gefüllte Kiste, Koordinaten im Chat, Lichtsäule steht
+- [ ] Grenze schrumpft in der eingestellten Zeit (`/worldborder get` vorher und nachher)
+- [ ] `/hg stop` bei einem Event: Arena meldet „fertig“, Event wird abgerechnet, die
+      **Teilnahme**-Belohnung kommt beim nächsten Join an, Arena ist danach gestoppt und gelöscht
 
-- [ ] Sieht der Tisch aus wie gedacht? Karten flach auf dem Filz, eigene nur für einen selbst
-      sichtbar, Chipstapel in Denominationen, der Kopf des Aktiven dreht schneller
-- [ ] Setzt man sich per Rechtsklick sauber auf den Stuhl, und steht man auch wieder auf?
-      (`CasinoTable.placeOnChair` reitet einen unsichtbaren ArmorStand)
-- [ ] Buy-in unter echter Last: zwei Leute klicken gleichzeitig auf denselben Stuhl — einer
-      bekommt sein Geld zurück statt eines Platzes
-- [ ] Logout mitten in der Hand: kommen die Chips wirklich als Bits zurück?
-- [ ] Casino-Server hart killen (`kill -9`), Event abrechnen lassen: zahlt der Launcher die
-      offenen Stacks aus, und **nur einmal**?
-- [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau wieder da?
-- [ ] Turnier: steigen die Blinds nur zwischen Händen, und stimmt die Auszahlung?
-- [ ] Fühlen sich die Bots an einem echten Tisch verschieden an, oder nur in der Statistik?
-      Das ist die einzige Frage zu ihnen, die keine Messung beantwortet
+**Pokernacht (allein mit Bots)**
+- [ ] Tisch sieht aus wie gedacht: Karten flach auf dem Filz, Chipstapel in Denominationen, der Kopf
+      des Aktiven dreht schneller (Screenshots)
+- [ ] Per Rechtsklick auf den Stuhl setzen und wieder aufstehen
+- [ ] Logout mitten in der Hand: kommen die Chips als Bits zurück?
+- [ ] Casino-Server hart killen (`kill -9`), Event abrechnen lassen: offene Stacks werden ausgezahlt,
+      und **nur einmal** (Kontostand vorher/nachher)
+- [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau im selben Raum?
+- [ ] Turnier gegen Bots: Blinds steigen nur zwischen Händen, Auszahlung am Ende stimmt
 
-- [ ] Bleibt nach mehreren Neustarts **genau ein** Villager pro Shop übrig?
+**Survival: Shops und Marktplatz**
+- [ ] Nach mehreren Neustarts **genau ein** Villager pro Shop
       (`ShopkeeperChunkListener`, Spawn über `EntitiesLoadEvent`)
-- [ ] Feuert `ChunkUnloadEvent` in Paper 26.2 früh genug, dass `getState()` noch die
-      echten Kisteninhalte liefert? (`Shopkeeper.refreshStock()`)
-- [ ] Kauf-Transaktion unter echter Last: Rollback bei vollem Inventar, Erstattung,
-      Ware landet nicht doppelt (`Shopkeeper.buyItem()`)
+- [ ] Kiste füllen, weglaufen bis der Chunk entlädt, zurück: stimmt der Bestand
+      (`ChunkUnloadEvent` früh genug für `getState()`, `Shopkeeper.refreshStock()`)
 - [ ] Marktplatz-Oberfläche: Reiter, Sortierung, Toggles, Rechtsklick-Anbieterliste
-- [ ] BUILDING/MISC-Aufteilung — hängt an `Material.isBlock()` und ist deshalb nur auf
-      dem Server testbar (die expliziten Regeln sind abgedeckt)
+- [ ] BUILDING/MISC-Aufteilung stimmt für eine Handvoll Stichproben (`Material.isBlock()`)
+
+**Cosmetics, Gadgets, Admin**
+- [ ] Mit Lobby-Gadget nach Survival und zurück warpen: kein Item, kein Tier, kein Ballon bleibt
+      zurück, das Survival-Gadget ist noch angelegt
+- [ ] Wenn der Op-Account vor dem Update ein Gadget trug: trägt er es in allen drei Slots, und legt das
+      erste Umlegen nur einen davon um?
+- [ ] Erntehelfer in einer fremden Claim oder WorldGuard-Region erntet nicht (braucht eine Claim, die
+      nicht dem Test-Account gehört, z.B. von einem Admin-Team)
+- [ ] Reittier/Haustier/Ballon draußen, Server hart killen: steht danach nichts mehr herum?
+- [ ] `/admin join`: eigene Sicht in F5 zeigt die Admin-Gestalt
+- [ ] `/op` über Discord auf einem laufenden Server: gilt sofort, steht nach einem Neustart in `ops.json`
+      (braucht den Discord-Besitzer-Account auf dem Rechner)
+- [ ] Gemessene Speicherspitzen plausibel: Server-Manager-Panel gegen RSS aus `/proc` (Faktor 1,4)
+
+### 2.2 Muss von Spielern getestet werden
+
+Braucht mehrere Accounts gleichzeitig, echte Last, Ton, schnelle Reaktionen oder ein Urteil, das keine
+Messung liefert.
+
+**Hunger Games (mindestens 3 Spieler)**
+- [ ] Ein ganzes Spiel: Schutzzeit hält, Plätze in der Reihenfolge des Rausfliegens, Kills zählen,
+      Showdown-Leuchten, Sieger-Feuerwerk, alle nach 20 s zurück in die Lobby
+- [ ] Belohnungen nach Platz und „ab X Kills“ kommen bei den richtigen Leuten an
+- [ ] Event läuft über seine Zeit: „Verlängerung“ im Kalender, Abrechnung erst nach dem Sieg
+
+**Bedwars-Belohnungen (mindestens 3 Teams)**
+- [ ] Die Teams bekommen die Plätze 3, 2, 1 in der Reihenfolge des Ausscheidens, und das steht im
+      Ergebnis-Panel des Events
+- [ ] Event, das über seine Zeit hinaus läuft: „Verlängerung“ im Kalender, Abrechnung erst nach dem
+      Rundenende, Plätze stimmen
+- [ ] Zeitlimit-Ende: stimmen die Plätze mit dem Endbildschirm überein?
+- [ ] Spieler, der mitten in der Runde rausgeht: steht er noch im Ergebnis (Teilnahme)?
+- [ ] „ab X Kills“: kommen die Kills (inkl. Final Kills) richtig an?
+
+**Pokernacht**
+- [ ] Die eigenen Karten sind nur für einen selbst sichtbar (braucht einen zweiten Blick)
+- [ ] Zwei Leute klicken gleichzeitig auf denselben Stuhl: einer bekommt sein Geld zurück statt eines Platzes
+- [ ] Fühlen sich die Bots an einem echten Tisch verschieden an, oder nur in der Statistik?
+
+**Netzwerk, Runden, Shops**
+- [ ] Simple Voicechat über den Proxy: das Velocity-Plugin 2.6.18 ist für Velocity 3 gebaut — hört man
+      sich unter Velocity 4?
+- [ ] Zwei Spieler starten gleichzeitig eine Runde, wenn nur noch für eine Platz ist
+- [ ] Rundenadmin kickt jemanden, der danach wieder joinen will
+- [ ] Eine private Runde: jemand ohne Einladung warpt direkt auf den Servernamen
+- [ ] Kauf-Transaktion unter echter Last: Rollback bei vollem Inventar, Erstattung, Ware landet nicht
+      doppelt (`Shopkeeper.buyItem()`)
+- [ ] Tinte auf einer vollen Runde: kostet es TPS?
+- [ ] `/admin join`: sehen **die anderen** Name über dem Kopf, Skin und Tabliste der Admin-Gestalt?
 
 ---
 
@@ -448,22 +493,7 @@ Offen:
       umgebogen ist das Adminabuse-Log; andere Stellen wurden nicht durchgesehen
 
 ### 5.5 Am lebenden Server nachprüfen
-- [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers
-- [ ] Zwei Spieler starten gleichzeitig eine Runde, wenn nur noch für eine Platz ist
-- [ ] Die gemessenen Spitzen sind plausibel (RSS ist mehr als der Heap — der Vorschlag rechnet mit
-      Faktor 1,4 auf die Spitze, das sollte an echten Zahlen geprüft werden)
-- [ ] Tinte auf einer vollen Runde: kostet es TPS?
-- [ ] Ein Spieler mit Lobby-Gadget warpt nach Survival und zurück: bleibt kein Item, kein Tier und
-      kein Ballon zurück, und ist das Survival-Gadget noch angelegt?
-- [ ] Jemand, der vor dem Update ein Gadget anhatte: trägt er es nach dem Update in allen drei
-      Slots, und legt das erste Umlegen nur einen davon um?
-- [ ] Der Erntehelfer in einer fremden Claim oder WorldGuard-Region: erntet er dort nicht
-- [ ] Rundenadmin kickt jemanden, der danach wieder joinen will
-- [ ] Eine private Runde: jemand ohne Einladung warpt direkt auf den Servernamen
-- [ ] Eine Welt nach `./bedwars-maps` legen und prüfen, dass sie auf dem nächsten Rundenserver
-      liegt und im Lobby-Menü steht
-- [ ] Ein abgesagtes Event wieder aktivieren und prüfen, dass seine Läufe noch da sind
-- [ ] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
+Steht jetzt gesammelt in Abschnitt 2, aufgeteilt nach Claude und Spielern.
 
 ### 5.6 Discord-Verknüpfung und Ops — erledigt
 - [x] `/verify <minecraftname>` im Discord gibt einen Code (6 Zeichen, 10 Minuten, ephemeral)
@@ -479,8 +509,7 @@ Offen:
 - [ ] Ein Spieler, der sich umbenennt, behält den alten Namen in `links.yml`. Die UUID stimmt,
       die Anzeige nicht — beim nächsten Verknüpfen wird der Name aktualisiert
 - [ ] Die Verknüpfung steht nirgends in der Admin-Website, nur im Spiel
-- [ ] Nachprüfen: `/op` auf einem laufenden Server — bekommt der Spieler die Rechte wirklich
-      sofort und stehen sie nach einem Neustart noch in der `ops.json`?
+- [ ] Nachprüfen: `/op` auf einem laufenden Server (steht in Abschnitt 2.1)
 
 ---
 
