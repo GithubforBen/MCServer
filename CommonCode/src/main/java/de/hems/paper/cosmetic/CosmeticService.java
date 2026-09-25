@@ -194,23 +194,12 @@ public final class CosmeticService {
      * @return what the launcher made of it
      */
     public static CosmeticPurchase buyBlocking(UUID player, String id) {
-        try {
-            if (!ListenerAdapter.isInitialized()) {
-                return CosmeticPurchase.failed(id, 0, "Keine Verbindung zum Netzwerk.");
-            }
-            BuyCosmeticEvent request = new BuyCosmeticEvent(player, id);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof CosmeticPurchase purchase)) {
-                return CosmeticPurchase.failed(id, 0, "Der Host antwortet nicht.");
-            }
-            return purchase;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return CosmeticPurchase.failed(id, 0, "Unterbrochen.");
-        } catch (Exception e) {
-            return CosmeticPurchase.failed(id, 0, e.getMessage());
+        BuyCosmeticEvent request = new BuyCosmeticEvent(player, id);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof CosmeticPurchase purchase)) {
+            return CosmeticPurchase.failed(id, 0, "Der Host antwortet nicht.");
         }
+        return purchase;
     }
 
     /**
@@ -298,25 +287,17 @@ public final class CosmeticService {
      * happens to carry players anyway - an older launcher - is taken as well rather than thrown away.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestCosmeticsEvent request = new RequestCosmeticsEvent(true);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof CosmeticSnapshot snapshot)) return;
-            Map<String, CosmeticData> freshCatalog = new ConcurrentHashMap<>();
-            for (CosmeticData cosmetic : snapshot.getCatalog()) {
-                if (cosmetic.getId() != null) freshCatalog.put(key(cosmetic.getId()), cosmetic);
-            }
-            catalog.keySet().retainAll(freshCatalog.keySet());
-            catalog.putAll(freshCatalog);
-            players.putAll(snapshot.getPlayers());
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the cosmetics: " + e.getMessage());
+        RequestCosmeticsEvent request = new RequestCosmeticsEvent(true);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof CosmeticSnapshot snapshot)) return;
+        Map<String, CosmeticData> freshCatalog = new ConcurrentHashMap<>();
+        for (CosmeticData cosmetic : snapshot.getCatalog()) {
+            if (cosmetic.getId() != null) freshCatalog.put(key(cosmetic.getId()), cosmetic);
         }
+        catalog.keySet().retainAll(freshCatalog.keySet());
+        catalog.putAll(freshCatalog);
+        players.putAll(snapshot.getPlayers());
+        loaded = true;
     }
 
     /**
@@ -345,22 +326,12 @@ public final class CosmeticService {
      */
     public static @Nullable PlayerCosmetics loadPlayerBlocking(UUID player) {
         if (player == null) return null;
-        try {
-            if (!ListenerAdapter.isInitialized()) return null;
-            RequestPlayerCosmeticsEvent request = new RequestPlayerCosmeticsEvent(player);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof PlayerCosmetics owned)) return null;
-            if (owned.getPlayer() == null) owned.setPlayer(player);
-            players.put(player, owned);
-            return owned;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the cosmetics of " + player + ": " + e.getMessage());
-            return null;
-        }
+        RequestPlayerCosmeticsEvent request = new RequestPlayerCosmeticsEvent(player);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof PlayerCosmetics owned)) return null;
+        if (owned.getPlayer() == null) owned.setPlayer(player);
+        players.put(player, owned);
+        return owned;
     }
 
     /**

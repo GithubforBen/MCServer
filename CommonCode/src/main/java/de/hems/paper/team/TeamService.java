@@ -146,25 +146,17 @@ public final class TeamService {
      * Fetches the full list. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestTeamsEvent request = new RequestTeamsEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof List<?> list)) return;
-            Map<String, TeamData> fresh = new ConcurrentHashMap<>();
-            for (Object entry : list) {
-                if (!(entry instanceof TeamData team) || team.getName() == null) continue;
-                fresh.put(key(team.getName()), team);
-            }
-            teams.clear();
-            teams.putAll(fresh);
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the teams: " + e.getMessage());
+        RequestTeamsEvent request = new RequestTeamsEvent();
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof List<?> list)) return;
+        Map<String, TeamData> fresh = new ConcurrentHashMap<>();
+        for (Object entry : list) {
+            if (!(entry instanceof TeamData team) || team.getName() == null) continue;
+            fresh.put(key(team.getName()), team);
         }
+        teams.clear();
+        teams.putAll(fresh);
+        loaded = true;
     }
 
     /**
@@ -221,25 +213,17 @@ public final class TeamService {
      * @return what the launcher made of it
      */
     public static Result saveBlocking(TeamData team, boolean createIfMissing, String renameFrom) {
-        try {
-            SaveTeamEvent request = new SaveTeamEvent(team, createIfMissing, renameFrom);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (!(response instanceof RespondTeamSaveEvent saved)) {
-                return new Result(false, "Der Hauptserver hat nicht geantwortet.", null);
-            }
-            if (saved.isSuccessful() && saved.getData() instanceof TeamData stored) {
-                if (renameFrom != null) teams.remove(key(renameFrom));
-                teams.put(key(stored.getName()), stored);
-                return new Result(true, saved.getMessage(), stored);
-            }
-            return new Result(false, saved.getMessage(), null);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new Result(false, "Unterbrochen.", null);
-        } catch (Exception e) {
-            return new Result(false, "Konnte nicht gespeichert werden: " + e.getMessage(), null);
+        SaveTeamEvent request = new SaveTeamEvent(team, createIfMissing, renameFrom);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondTeamSaveEvent saved)) {
+            return new Result(false, "Der Hauptserver hat nicht geantwortet.", null);
         }
+        if (saved.isSuccessful() && saved.getData() instanceof TeamData stored) {
+            if (renameFrom != null) teams.remove(key(renameFrom));
+            teams.put(key(stored.getName()), stored);
+            return new Result(true, saved.getMessage(), stored);
+        }
+        return new Result(false, saved.getMessage(), null);
     }
 
     /**

@@ -61,6 +61,7 @@ public class Main {
     private BackpackStore backpackStore;
     private StashStore stashStore;
     private EventStore eventStore;
+    private EventSettlement eventSettlement;
     private RunStore runStore;
     private AwardStore awardStore;
     private MoneyStore moneyStore;
@@ -127,9 +128,9 @@ public class Main {
         de.hems.utils.poker.PokerSettlement pokerSettlement =
                 new de.hems.utils.poker.PokerSettlement(pokerStatsStore, moneyStore, awardStore, pokerEvents);
         de.hems.utils.event.EventResultStore resultStore = new de.hems.utils.event.EventResultStore();
-        new de.hems.events.EventResultEvents(resultStore);
-        new EventEvents(eventStore, runStore, awardStore,
-                new EventSettlement(eventStore, runStore, awardStore, pokerSettlement, resultStore));
+        new de.hems.events.EventResultEvents(resultStore, eventStore);
+        eventSettlement = new EventSettlement(eventStore, runStore, awardStore, pokerSettlement, resultStore);
+        new EventEvents(eventStore, runStore, awardStore, eventSettlement);
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         // what the machine has left, and which server is sitting on memory it never uses
@@ -287,6 +288,10 @@ public class Main {
 
     public BackpackStore getBackpackStore() {
         return backpackStore;
+    }
+
+    public EventSettlement getEventSettlement() {
+        return eventSettlement;
     }
 
     public EventStore getEventStore() {

@@ -192,21 +192,11 @@ public final class RoundService {
      */
     public static boolean saveBlocking(RoundData round) {
         if (round == null) return false;
-        try {
-            if (!ListenerAdapter.isInitialized()) return false;
-            SaveRoundEvent request = new SaveRoundEvent(round);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (!(response instanceof RespondRoundSaveEvent saved) || !saved.isSuccessful()) return false;
-            if (response.getData() instanceof RoundData stored) rounds.put(stored.getId(), stored);
-            return true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not store the round: " + e.getMessage());
-            return false;
-        }
+        SaveRoundEvent request = new SaveRoundEvent(round);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondRoundSaveEvent saved) || !saved.isSuccessful()) return false;
+        if (response.getData() instanceof RoundData stored) rounds.put(stored.getId(), stored);
+        return true;
     }
 
     /**
@@ -281,25 +271,17 @@ public final class RoundService {
      * Fetches the whole list. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestRoundsEvent request = new RequestRoundsEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof RoundSnapshot snapshot)) return;
-            Map<UUID, RoundData> fresh = new ConcurrentHashMap<>();
-            for (RoundData round : snapshot.getRounds()) {
-                if (round.getId() != null) fresh.put(round.getId(), round);
-            }
-            rounds.keySet().retainAll(fresh.keySet());
-            rounds.putAll(fresh);
-            policy = snapshot.getPolicy();
-            maps = List.copyOf(snapshot.getMaps());
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the rounds: " + e.getMessage());
+        RequestRoundsEvent request = new RequestRoundsEvent();
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof RoundSnapshot snapshot)) return;
+        Map<UUID, RoundData> fresh = new ConcurrentHashMap<>();
+        for (RoundData round : snapshot.getRounds()) {
+            if (round.getId() != null) fresh.put(round.getId(), round);
         }
+        rounds.keySet().retainAll(fresh.keySet());
+        rounds.putAll(fresh);
+        policy = snapshot.getPolicy();
+        maps = List.copyOf(snapshot.getMaps());
+        loaded = true;
     }
 }

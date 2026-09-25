@@ -166,26 +166,18 @@ public final class PokerStatsService {
      * Fetches every row. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestPokerStatsEvent request = new RequestPokerStatsEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof List<?> list)) return;
-            Map<UUID, Map<UUID, PokerStatsData>> fresh = new ConcurrentHashMap<>();
-            for (Object entry : list) {
-                if (!(entry instanceof PokerStatsData row)) continue;
-                if (row.getEventId() == null || row.getPlayerId() == null) continue;
-                fresh.computeIfAbsent(row.getEventId(), key -> new ConcurrentHashMap<>())
-                        .put(row.getPlayerId(), row);
-            }
-            rows.clear();
-            rows.putAll(fresh);
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the poker rows: " + e.getMessage());
+        RequestPokerStatsEvent request = new RequestPokerStatsEvent();
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof List<?> list)) return;
+        Map<UUID, Map<UUID, PokerStatsData>> fresh = new ConcurrentHashMap<>();
+        for (Object entry : list) {
+            if (!(entry instanceof PokerStatsData row)) continue;
+            if (row.getEventId() == null || row.getPlayerId() == null) continue;
+            fresh.computeIfAbsent(row.getEventId(), key -> new ConcurrentHashMap<>())
+                    .put(row.getPlayerId(), row);
         }
+        rows.clear();
+        rows.putAll(fresh);
+        loaded = true;
     }
 }

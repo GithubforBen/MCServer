@@ -64,18 +64,10 @@ public final class BackpackService {
      * @return the backpack, or {@code null} if the launcher did not answer or the team is unknown there
      */
     public static BackpackData loadBlocking(String teamName, int wantedSize) {
-        try {
-            RequestBackpackEvent request = new RequestBackpackEvent(teamName, wantedSize);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null) return null;
-            return response.getData() instanceof BackpackData backpack ? backpack : null;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
+        RequestBackpackEvent request = new RequestBackpackEvent(teamName, wantedSize);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null) return null;
+        return response.getData() instanceof BackpackData backpack ? backpack : null;
     }
 
     /**
@@ -99,20 +91,12 @@ public final class BackpackService {
      * @return what the launcher made of it
      */
     public static Result saveBlocking(BackpackData backpack) {
-        try {
-            SaveBackpackEvent request = new SaveBackpackEvent(backpack);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (!(response instanceof RespondBackpackSaveEvent saved)) {
-                return new Result(false, "Der Hauptserver hat nicht geantwortet - der Rucksack wurde nicht gespeichert.");
-            }
-            return new Result(saved.isSuccessful(), String.valueOf(saved.getData()));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new Result(false, "Unterbrochen.");
-        } catch (Exception e) {
-            return new Result(false, "Konnte nicht gespeichert werden: " + e.getMessage());
+        SaveBackpackEvent request = new SaveBackpackEvent(backpack);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondBackpackSaveEvent saved)) {
+            return new Result(false, "Der Hauptserver hat nicht geantwortet - der Rucksack wurde nicht gespeichert.");
         }
+        return new Result(saved.isSuccessful(), String.valueOf(saved.getData()));
     }
 
     /**

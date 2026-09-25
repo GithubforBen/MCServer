@@ -25,6 +25,12 @@ public class AwardStore {
     private final File file;
     private final YamlConfiguration config;
     private final Map<UUID, AwardData> awards = new ConcurrentHashMap<>();
+    /**
+     * Which server holds the reservation of a prize. Only that one may give it back - otherwise a server
+     * whose answer timed out could release a prize another server has just handed over. Kept in memory:
+     * after a restart nobody can release, which leaves a prize reserved rather than handed out twice.
+     */
+    private final Map<UUID, String> claimants = new ConcurrentHashMap<>();
 
     public AwardStore() {
         this(new File("./awards.yml"));
@@ -116,18 +122,44 @@ public class AwardStore {
     }
 
     /**
-     * Marks a prize as collected. Only called once the game server confirms the player has it.
+     * Reserves a prize for handing over. Only the first call for a prize answers yes.
      *
      * @param id the prize
      * @return whether it was still open
      */
     public synchronized boolean claim(UUID id) {
+        return claim(id, null);
+    }
+
+    /**
+     * @param id     the prize
+     * @param server who reserves it, and may give it back
+     * @return whether it was still open
+     */
+    public synchronized boolean claim(UUID id, String server) {
         AwardData award = id == null ? null : awards.get(id);
         if (award == null || award.isClaimed()) return false;
         award.setClaimed(true);
+        if (server != null) claimants.put(id, server);
         write(award);
         save();
         return true;
+    }
+
+    /**
+     * Gives a reservation back: the game server said yes to the prize but could not hand it over after all.
+     *
+     * @param id     the prize
+     * @param server the server giving it back - only the one holding the reservation may
+     */
+    public synchronized void release(UUID id, String server) {
+        AwardData award = id == null ? null : awards.get(id);
+        if (award == null || !award.isClaimed()) return;
+        if (server == null || !server.equals(claimants.get(id))) return;
+        claimants.remove(id);
+        award.setClaimed(false);
+        write(award);
+        save();
     }
 
     /**

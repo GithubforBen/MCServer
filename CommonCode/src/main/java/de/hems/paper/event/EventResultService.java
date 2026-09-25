@@ -64,23 +64,13 @@ public final class EventResultService {
      * @return its lines, empty if the launcher did not answer. Blocks.
      */
     public static List<EventResultData> fetchBlocking(UUID eventId) {
-        try {
-            if (!ListenerAdapter.isInitialized()) return List.of();
-            RequestEventResultsEvent request = new RequestEventResultsEvent(eventId);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof List<?> list)) return List.of();
-            List<EventResultData> rows = new ArrayList<>();
-            for (Object entry : list) {
-                if (entry instanceof EventResultData row) rows.add(row);
-            }
-            return rows;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return List.of();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the results: " + e.getMessage());
-            return List.of();
+        RequestEventResultsEvent request = new RequestEventResultsEvent(eventId);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof List<?> list)) return List.of();
+        List<EventResultData> rows = new ArrayList<>();
+        for (Object entry : list) {
+            if (entry instanceof EventResultData row) rows.add(row);
         }
+        return rows;
     }
 }

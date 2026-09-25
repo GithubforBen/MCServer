@@ -146,6 +146,44 @@ Offen:
 - [ ] Auf Paper 26.3 stable und WorldEdit 7.4.6 (Release) wechseln, sobald es sie gibt
 - [ ] Die `backups/` werden nie aufgeräumt
 
+### 1.4e Review 2026-09-25 — Duplikate und Bugs
+
+Zusammengeführt (vorher mehrfach geschrieben):
+- [x] `FileTrees` — Ordner kopieren/löschen (9×)
+- [x] `YamlFiles` — Laden/Speichern der Launcher-Stores (12× + main-config + capacity)
+- [x] `ListenerAdapter.ask` — Anfrage senden und auf Antwort warten (22×)
+- [x] `PluginCommands.register` — Befehle registrieren (6×)
+- [x] `Presets.step` — Voreinstellungen durchklicken (4×)
+
+Behoben:
+- [x] Preise konnten doppelt ausgezahlt werden (aushändigen, dann ohne Antwort „abgeholt“ melden) —
+      jetzt erst beim Launcher reservieren, dann aushändigen; zurückgeben darf nur, wer reserviert hat
+- [x] Website-Löschen eines Events lief an der Aufräumlogik vorbei — bei einer laufenden Pokernacht
+      gingen die Chips auf den Tischen nie an die Spieler zurück. Beide Wege gehen jetzt durch
+      `EventSettlement.delete`, das auch den Server eines Bedwars-/Hunger-Games-Events wegräumt
+- [x] Launcher-Dateien: nicht atomar geschrieben, und eine unlesbare Datei wurde als leer gelesen und
+      überschrieben (bei `money.yml` mit erneutem Import der alten Stände)
+- [x] Ergebnisse, die in der Sekunde des Eventendes ankommen, gingen bei der Abrechnung verloren und
+      blieben verwaist in `results.yml` — 2 Minuten Frist, späte Zeilen werden verworfen
+- [x] `/legitimize`: ohne Berechtigung für jeden nutzbar, blockierte bei jedem Tab den Main-Thread,
+      stürzte ohne Anführungszeichen ab
+- [x] Kopierte Welten nahmen seit 26.1 die Spielerdaten mit (`players/` wurde nicht entfernt)
+- [x] Lobby und Survival hätten beim ersten Befehl ohne TabCompleter `onEnable` abgebrochen
+
+Gefunden, bewusst nicht geändert — **Entscheidung nötig**:
+- [ ] Endet die Eventzeit, während eine Bedwars-Runde noch läuft, wird sie beim Abrechnen gestoppt; die
+      Teams, die noch stehen, bekommen keinen Platz. Hunger Games wertet dann nach Kills. Soll Bedwars
+      die stehenden Teams nach Punkten werten, oder soll die Abrechnung warten, bis die Runde vorbei ist?
+- [ ] Der Launcher prüft Teamnamen nicht selbst (nur Survival). Ein Punkt im Namen würde die `teams.yml`
+      zerbrechen wie früher die Event-Einstellungen
+- [ ] Startet die Lobby während eines Bedwars-Events neu, vergisst sie, wen sie schon rübergeschickt hat,
+      und schickt alle in der Lobby noch einmal
+- [ ] Noch doppelt, nicht zusammengeführt: das Cache-Muster der Services (`EventService`, `RunService`,
+      `RoundService`, `TeamService`, `CosmeticService`, `PokerStatsService` …: init, Nachladen,
+      Update anwenden) und der Netzwerk-Start in den sechs Plugins. Beides unterscheidet sich im Detail
+      mehr als die Fälle oben; ein gemeinsamer Unterbau lohnt, ist aber ein größerer Umbau
+- [ ] Die Doku sagt `TableCheck` hat 57 Prüfungen, er meldet 41
+
 ### 1.5 Lobby
 - [x] Eventsystem in der Lobby verfügbar (`/events`, Kalender, Join-Hinweis)
 - [x] Events lassen sich direkt aus der Lobby heraus anlegen

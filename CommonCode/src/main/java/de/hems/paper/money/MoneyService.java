@@ -158,24 +158,13 @@ public final class MoneyService {
      */
     public static BalanceResult changeBlocking(String holder, int delta, boolean requireCover, String reason) {
         if (holder == null) return BalanceResult.failed(null, 0, "Kein Konto angegeben.");
-        try {
-            if (!ListenerAdapter.isInitialized()) {
-                return BalanceResult.failed(holder, get(holder), "Keine Verbindung zum Netzwerk.");
-            }
-            ChangeBalanceEvent request = new ChangeBalanceEvent(holder, delta, requireCover, reason);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof BalanceResult result)) {
-                return BalanceResult.failed(holder, get(holder), "Der Host antwortet nicht.");
-            }
-            balances.put(holder, result.getBalance());
-            return result;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return BalanceResult.failed(holder, get(holder), "Unterbrochen.");
-        } catch (Exception e) {
-            return BalanceResult.failed(holder, get(holder), e.getMessage());
+        ChangeBalanceEvent request = new ChangeBalanceEvent(holder, delta, requireCover, reason);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof BalanceResult result)) {
+            return BalanceResult.failed(holder, get(holder), "Der Host antwortet nicht.");
         }
+        balances.put(holder, result.getBalance());
+        return result;
     }
 
     /**
@@ -245,25 +234,17 @@ public final class MoneyService {
      * Fetches every balance. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestBalancesEvent request = new RequestBalancesEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof Map<?, ?> map)) return;
-            Map<String, Integer> fresh = new HashMap<>();
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (entry.getKey() instanceof String holder && entry.getValue() instanceof Integer amount) {
-                    fresh.put(holder, amount);
-                }
+        RequestBalancesEvent request = new RequestBalancesEvent();
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof Map<?, ?> map)) return;
+        Map<String, Integer> fresh = new HashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (entry.getKey() instanceof String holder && entry.getValue() instanceof Integer amount) {
+                fresh.put(holder, amount);
             }
-            balances.keySet().retainAll(fresh.keySet());
-            balances.putAll(fresh);
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the balances: " + e.getMessage());
         }
+        balances.keySet().retainAll(fresh.keySet());
+        balances.putAll(fresh);
+        loaded = true;
     }
 }

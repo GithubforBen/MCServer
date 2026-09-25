@@ -164,25 +164,17 @@ public final class EventService {
      * Fetches the full list. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestEventsEvent request = new RequestEventsEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof List<?> list)) return;
-            Map<UUID, EventData> fresh = new ConcurrentHashMap<>();
-            for (Object entry : list) {
-                if (!(entry instanceof EventData event) || event.getId() == null) continue;
-                fresh.put(event.getId(), event);
-            }
-            events.clear();
-            events.putAll(fresh);
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the events: " + e.getMessage());
+        RequestEventsEvent request = new RequestEventsEvent();
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof List<?> list)) return;
+        Map<UUID, EventData> fresh = new ConcurrentHashMap<>();
+        for (Object entry : list) {
+            if (!(entry instanceof EventData event) || event.getId() == null) continue;
+            fresh.put(event.getId(), event);
         }
+        events.clear();
+        events.putAll(fresh);
+        loaded = true;
     }
 
     /**
@@ -209,24 +201,16 @@ public final class EventService {
      * @return what the launcher made of it
      */
     public static Result saveBlocking(EventData event, boolean createIfMissing) {
-        try {
-            SaveEventEvent request = new SaveEventEvent(event, createIfMissing);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (!(response instanceof RespondEventSaveEvent saved)) {
-                return new Result(false, "Der Hauptserver hat nicht geantwortet.", null);
-            }
-            if (saved.isSuccessful() && saved.getData() instanceof EventData stored) {
-                events.put(stored.getId(), stored);
-                return new Result(true, saved.getMessage(), stored);
-            }
-            return new Result(false, saved.getMessage(), null);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new Result(false, "Unterbrochen.", null);
-        } catch (Exception e) {
-            return new Result(false, "Konnte nicht gespeichert werden: " + e.getMessage(), null);
+        SaveEventEvent request = new SaveEventEvent(event, createIfMissing);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondEventSaveEvent saved)) {
+            return new Result(false, "Der Hauptserver hat nicht geantwortet.", null);
         }
+        if (saved.isSuccessful() && saved.getData() instanceof EventData stored) {
+            events.put(stored.getId(), stored);
+            return new Result(true, saved.getMessage(), stored);
+        }
+        return new Result(false, saved.getMessage(), null);
     }
 
     /**

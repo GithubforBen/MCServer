@@ -42,6 +42,7 @@ public final class RewardCheck {
         settings();
         storeKeepsDottedKeys();
         payoutAndResults();
+        claimOnce();
         System.out.println(passed + " passed, " + failed + " failed");
         if (failed > 0) System.exit(1);
     }
@@ -198,6 +199,22 @@ public final class RewardCheck {
                 new EventResultStore(resultsFile).getRowsOf(event.getId()).size(), 0);
         awardsFile.delete();
         resultsFile.delete();
+    }
+
+    private static void claimOnce() throws Exception {
+        File file = File.createTempFile("claims", ".yml");
+        file.delete();
+        AwardStore awards = new AwardStore(file);
+        EventData event = new EventData("E", EventType.HUNGER_GAMES, 0, 1);
+        AwardData award = new AwardData(UUID.randomUUID(), event, 1, new PrizeData(100));
+        awards.put(award);
+        check("the first server gets the prize", awards.claim(award.getId(), "SURVIVAL"), true);
+        check("the second does not", awards.claim(award.getId(), "LOBBY"), false);
+        awards.release(award.getId(), "LOBBY");
+        check("a server that did not reserve cannot give it back", awards.claim(award.getId(), "LOBBY"), false);
+        awards.release(award.getId(), "SURVIVAL");
+        check("the one that did can", awards.claim(award.getId(), "LOBBY"), true);
+        file.delete();
     }
 
     private static int count(List<EventRewards.Earned> earned, UUID player) {

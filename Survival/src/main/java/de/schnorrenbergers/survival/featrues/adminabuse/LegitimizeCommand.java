@@ -4,6 +4,8 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.adminabuse.LegitamiseAdminAbuseEvent;
 import de.hems.communication.events.adminabuse.RequestToLegitimizeEvent;
 import de.hems.communication.events.adminabuse.RespondToLegitimizeEvent;
+import de.hems.communication.events.types.RespondDataEvent;
+import de.hems.paper.PaperContext;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -12,96 +14,127 @@ import org.bukkit.command.TabCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-/*
-This class ads the command /legitimize
-It is used to legitimize a command which was executed as an admin.
-Arguments:
-[0] = UUID of action, @allMine, @allAdmins
-@allMine Sets the reason to all Commands of the sender
-@allAdmins Sets the reason to all Commands awaiting reasoning
-[1] = "Reason"
-The Reason should be surrounded by '"'
+/**
+ * {@code /legitimize <uuid|@all> "<reason>"}: gives an admin action its reason after the fact.
+ * <p>
+ * Only for operators. The admin abuse log exists to hold admins to account, and a command anybody can use
+ * to write "fine" next to every entry would make it worthless.
+ * <p>
+ * Nothing here waits on the main thread: the open entries are fetched in the background, and tab completion
+ * answers from the last list it fetched - asking the launcher on every keystroke used to freeze the server
+ * for as long as the launcher took to answer.
  */
 public class LegitimizeCommand implements TabCompleter, CommandExecutor {
+
+    private static final Duration TIMEOUT = Duration.ofSeconds(5);
+
+    /** The open entries as last fetched, for tab completion. */
+    private volatile List<String> knownOpen = List.of();
+
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length < 2) {
-            sender.sendMessage(usage());
-            return false;
-        }
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String arg : args) {
-            stringBuilder.append(arg + " ");
-        }
-        String[] split = stringBuilder.toString().split("\"");
-        if (args[0].equals("@all")) {
-            RequestToLegitimizeEvent requestToLegitimizeEvent = new RequestToLegitimizeEvent(ListenerAdapter.ServerName.HOST);
-            try {
-                ListenerAdapter.sendListeners(requestToLegitimizeEvent);
-                RespondToLegitimizeEvent respondToLegitimizeEvent = (RespondToLegitimizeEvent) ListenerAdapter.waitForEvent(requestToLegitimizeEvent.getEventId());
-                List<Runnable> runnables = new ArrayList<>();
-                Collections.synchronizedMap(respondToLegitimizeEvent.getToLegitimize()).forEach((x, y) -> {
-                        runnables.add(() -> {
-                            try {
-                                ListenerAdapter.sendListeners(new LegitamiseAdminAbuseEvent(ListenerAdapter.ServerName.HOST, x, split[1]));
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-                });
-                runnables.forEach(Runnable::run);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+                             @NotNull String[] args) {
+        if (!sender.isOp()) {
+            sender.sendMessage(ChatColor.RED + "Das dürfen nur Admins.");
             return true;
         }
-        UUID uuid;
-        try {
-            uuid = UUID.fromString(args[0]);
-        } catch (Exception e) {
+        String reason = reasonOf(args);
+        if (args.length < 2 || reason == null) {
             sender.sendMessage(usage());
-            return false;
+            return true;
         }
-        if (split.length != 3) {
-            sender.sendMessage(usage());
-            return false;
+        if (args[0].equalsIgnoreCase("@all")) {
+            PaperContext.async(() -> {
+                Map<UUID, String> open = fetchOpen();
+                if (open == null) {
+                    PaperContext.sync(() -> sender.sendMessage(ChatColor.RED + "Der Hauptserver antwortet nicht."));
+                    return;
+                }
+                int sent = 0;
+                for (UUID action : open.keySet()) {
+                    if (send(action, reason)) sent++;
+                }
+                int count = sent;
+                PaperContext.sync(() -> sender.sendMessage(ChatColor.GREEN + "✓ " + count + " Aktion"
+                        + (count == 1 ? "" : "en") + " begründet."));
+            });
+            return true;
         }
+        UUID action;
         try {
-            ListenerAdapter.sendListeners(new LegitamiseAdminAbuseEvent(ListenerAdapter.ServerName.HOST, uuid, split[1]));
+            action = UUID.fromString(args[0]);
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage(usage());
+            return true;
+        }
+        PaperContext.async(() -> {
+            boolean ok = send(action, reason);
+            PaperContext.sync(() -> sender.sendMessage(ok
+                    ? ChatColor.GREEN + "✓ Begründet."
+                    : ChatColor.RED + "Konnte nicht gesendet werden."));
+        });
+        return true;
+    }
+
+    /**
+     * @param args the words typed
+     * @return the text between the first and the last quote, or {@code null} if there is none
+     */
+    private static String reasonOf(String[] args) {
+        String joined = String.join(" ", args);
+        int first = joined.indexOf('"');
+        int last = joined.lastIndexOf('"');
+        if (first < 0 || last <= first + 1) return null;
+        String reason = joined.substring(first + 1, last).trim();
+        return reason.isEmpty() ? null : reason;
+    }
+
+    /**
+     * @return the open entries, or {@code null} when the launcher did not answer. Blocks.
+     */
+    private Map<UUID, String> fetchOpen() {
+        RespondDataEvent response = ListenerAdapter.ask(
+                new RequestToLegitimizeEvent(ListenerAdapter.ServerName.HOST), TIMEOUT);
+        if (!(response instanceof RespondToLegitimizeEvent open)) return null;
+        Map<UUID, String> entries = open.getToLegitimize();
+        List<String> ids = new ArrayList<>();
+        for (UUID id : entries.keySet()) ids.add(id.toString());
+        knownOpen = List.copyOf(ids);
+        return entries;
+    }
+
+    private static boolean send(UUID action, String reason) {
+        try {
+            ListenerAdapter.sendListeners(new LegitamiseAdminAbuseEvent(ListenerAdapter.ServerName.HOST, action, reason));
             return true;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return false;
         }
     }
 
     public String usage() {
-        return ChatColor.GRAY + "/legitimize UUID \"Begründung\"";
+        return ChatColor.GRAY + "/legitimize <UUID|@all> \"Begründung\"";
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        List<String> list = new ArrayList<>();
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                                @NotNull String label, @NotNull String[] args) {
+        if (!sender.isOp()) return List.of();
         if (args.length == 1) {
-            list.clear();
+            // answered from the last list; the next one is fetched in the background for the next keystroke
+            PaperContext.async(this::fetchOpen);
+            List<String> list = new ArrayList<>();
             list.add("@all");
-            RequestToLegitimizeEvent requestToLegitimizeEvent = new RequestToLegitimizeEvent(ListenerAdapter.ServerName.HOST);
-            try {
-                ListenerAdapter.sendListeners(requestToLegitimizeEvent);
-                RespondToLegitimizeEvent respondToLegitimizeEvent = (RespondToLegitimizeEvent) ListenerAdapter.waitForEvent(requestToLegitimizeEvent.getEventId());
-                list.addAll(respondToLegitimizeEvent.getToLegitimize().keySet().stream().map(UUID::toString).toList());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else if (args.length == 2) {
-            list.clear();
-            list.add("\"{Begründung}\"");
+            list.addAll(knownOpen);
+            return list;
         }
-        return list;
+        if (args.length == 2) return List.of("\"Begründung\"");
+        return List.of();
     }
 }
-

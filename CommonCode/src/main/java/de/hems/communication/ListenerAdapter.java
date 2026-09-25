@@ -104,6 +104,32 @@ public class ListenerAdapter implements Receiver {
     }
 
     /**
+     * Sends a request and waits for its answer - the round trip every service on every server makes.
+     * <p>
+     * Never throws. Not being connected, no answer in time, being interrupted and a send that fails all
+     * come back as {@code null}; a failed send is logged, an interrupt is passed on. This used to be written
+     * out, try and catch and all, in some thirty places. Blocks, so never on the main thread.
+     *
+     * @param request what to ask
+     * @param timeout how long to wait for the answer
+     * @return the answer, or {@code null} when there is none
+     */
+    public static RespondDataEvent ask(EventFoundationData request, Duration timeout) {
+        if (!isInitialized) return null;
+        try {
+            sendListeners(request);
+            return waitForEvent(request.getEventId(), timeout);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception e) {
+            System.out.println("[Network] " + request.getClass().getSimpleName() + " could not be sent: "
+                    + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Waits until the response belonging to the given request arrives.
      * <p>
      * This blocks the calling thread, so it must never be called from the main server thread.

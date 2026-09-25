@@ -182,24 +182,16 @@ public final class RunService {
      * Fetches the full list. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestRunsEvent request = new RequestRunsEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof List<?> list)) return;
-            Map<UUID, RunData> fresh = new ConcurrentHashMap<>();
-            for (Object entry : list) {
-                if (!(entry instanceof RunData run) || run.getId() == null) continue;
-                fresh.put(run.getId(), run);
-            }
-            runs.clear();
-            runs.putAll(fresh);
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the runs: " + e.getMessage());
+        RequestRunsEvent request = new RequestRunsEvent();
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof List<?> list)) return;
+        Map<UUID, RunData> fresh = new ConcurrentHashMap<>();
+        for (Object entry : list) {
+            if (!(entry instanceof RunData run) || run.getId() == null) continue;
+            fresh.put(run.getId(), run);
         }
+        runs.clear();
+        runs.putAll(fresh);
+        loaded = true;
     }
 }

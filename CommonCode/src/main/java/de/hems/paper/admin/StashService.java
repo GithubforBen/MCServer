@@ -48,18 +48,10 @@ public final class StashService {
      * @return it, or {@code null} if the launcher did not answer
      */
     public static StashData loadBlocking(String stashId) {
-        try {
-            RequestStashEvent request = new RequestStashEvent(stashId);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null) return null;
-            return response.getData() instanceof StashData stash ? stash : null;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
+        RequestStashEvent request = new RequestStashEvent(stashId);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null) return null;
+        return response.getData() instanceof StashData stash ? stash : null;
     }
 
     /**
@@ -85,20 +77,12 @@ public final class StashService {
      * @return what the launcher made of it
      */
     public static Result saveBlocking(StashData stash, String editor) {
-        try {
-            SaveStashEvent request = new SaveStashEvent(stash, editor);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (!(response instanceof RespondStashSaveEvent saved)) {
-                return new Result(false, "Der Hauptserver hat nicht geantwortet - nichts gespeichert.");
-            }
-            return new Result(saved.isSuccessful(), String.valueOf(saved.getData()));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new Result(false, "Unterbrochen.");
-        } catch (Exception e) {
-            return new Result(false, "Konnte nicht gespeichert werden: " + e.getMessage());
+        SaveStashEvent request = new SaveStashEvent(stash, editor);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondStashSaveEvent saved)) {
+            return new Result(false, "Der Hauptserver hat nicht geantwortet - nichts gespeichert.");
         }
+        return new Result(saved.isSuccessful(), String.valueOf(saved.getData()));
     }
 
     /**

@@ -31,6 +31,7 @@ commands:
   legitimize:
     description: Begründet Admin-Aktionen nachträglich
     usage: /legitimize <uuid|@all> "<grund>"
+    permission: network.adminabuse.legitimize
   events:
     description: Den Eventkalender öffnen
     usage: /events
@@ -44,6 +45,9 @@ commands:
     description: Deinen Discord-Account verknüpfen und nachschauen, wer wer ist
     usage: /verify <code> | /verify wer <spieler>
 permissions:
+  network.adminabuse.legitimize:
+    description: Admin-Aktionen nachträglich begründen
+    default: op
   network.warp.always:
     description: Darf jeden Server jederzeit verlassen
     default: op

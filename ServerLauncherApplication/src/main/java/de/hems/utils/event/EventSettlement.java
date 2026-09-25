@@ -34,6 +34,8 @@ import java.util.UUID;
  */
 public class EventSettlement {
 
+    /** How long after its end an event with reported results waits for the last of them. */
+    private static final long RESULT_GRACE_MS = 2 * 60_000L;
     /** How often to look for events that have ended. */
     private static final long CHECK_INTERVAL_MS = 60_000L;
     /** How long a run may lie untouched before it is given up on, unless the config says otherwise. */
@@ -100,6 +102,9 @@ public class EventSettlement {
                 continue;
             }
             if (state != EventState.FINISHED && state != EventState.CANCELLED) continue;
+            // the game server reports the last placings in the second the event ends - by the same clock
+            // this checks. Settling in that second would pay out before they arrived
+            if (event.getType().reportsResults() && now < event.getEndsAt() + RESULT_GRACE_MS) continue;
             settle(event);
         }
     }
@@ -280,17 +285,7 @@ public class EventSettlement {
             }
             results.discard(event.getId());
         }
-        String key = event.getType().getServerKey();
-        String server = key == null ? null : event.getSetting(key, "");
-        if (server == null || server.isBlank()) return;
-        Set<String> arena = new LinkedHashSet<>(List.of(server));
-        stopServerNames(arena);
-        new Timer("arena-cleanup", true).schedule(new TimerTask() {
-            @Override
-            public void run() {
-                discardServer(server);
-            }
-        }, SHUTDOWN_GRACE_MS);
+        discardEventServer(event);
     }
 
     /** How long a run server is given to shut down before its directory is removed. */
@@ -404,11 +399,59 @@ public class EventSettlement {
      * @param eventId the event that is gone
      */
     public void discard(UUID eventId) {
+        discard(eventId, null);
+    }
+
+    /**
+     * Removes everything belonging to an event that was deleted outright - its runs, its results, the money
+     * still on its tables, and the server it was being played on.
+     *
+     * @param eventId the event that is gone
+     * @param event   the event as it was, for its server, or {@code null} if it is not known any more
+     */
+    private void discard(UUID eventId, EventData event) {
         clearRuns(runs.getRunsOf(eventId));
         // a deleted poker night still has money on its tables. The rows only go once it is back with the
         // people it belongs to, so the delete button cannot quietly empty somebody's account
         if (poker != null) poker.discard(eventId);
         if (results != null) results.discard(eventId);
+        // a round or an arena of a deleted event would otherwise keep running until it idles out, and its
+        // directory would never be removed
+        if (event != null && event.getType().reportsResults()) discardEventServer(event);
+    }
+
+    /**
+     * Switches off the server an event was played on and throws its directory away after a grace period.
+     *
+     * @param event the event
+     */
+    private void discardEventServer(EventData event) {
+        String key = event.getType().getServerKey();
+        String server = key == null ? null : event.getSetting(key, "");
+        if (server == null || server.isBlank()) return;
+        Set<String> arena = new LinkedHashSet<>(List.of(server));
+        stopServerNames(arena);
+        new Timer("arena-cleanup", true).schedule(new TimerTask() {
+            @Override
+            public void run() {
+                discardServer(server);
+            }
+        }, SHUTDOWN_GRACE_MS);
+    }
+
+    /**
+     * Deletes an event, the one way to do it - the game servers and the website both come through here, so
+     * deleting on the website cleans up exactly what deleting in the game does.
+     *
+     * @param eventId the event
+     * @return whether it existed
+     */
+    public boolean delete(UUID eventId) {
+        EventData event = events.getEvent(eventId);
+        if (!events.delete(eventId)) return false;
+        discard(eventId, event);
+        announceEvent(eventId, null);
+        return true;
     }
 
     private static void announceEvent(UUID id, EventData event) {
