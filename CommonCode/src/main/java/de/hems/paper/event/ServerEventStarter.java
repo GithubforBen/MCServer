@@ -55,6 +55,18 @@ public final class ServerEventStarter {
 
     private static final Map<EventType, ServerEventStarter> starters = new EnumMap<>(EventType.class);
     private static boolean initialized;
+    /**
+     * Who has already been sent to which event, shared by all kinds and kept on disk.
+     * <p>
+     * In memory alone a restart of the hub forgot it, and a bedwars event - which takes late comers along
+     * for as long as it runs - then dragged everybody in the hub across again, including the people who had
+     * come back on purpose.
+     */
+    private static final Map<UUID, Set<UUID>> sent = new HashMap<>();
+    private static java.io.File sentFile;
+    private static Plugin owner;
+    private static final Object SENT_WRITE = new Object();
+    private static volatile String latestSent = "";
 
     static {
         define(EventType.BEDWARS, ServerTemplate.BEDWARS, "BEDWARS")
@@ -104,8 +116,6 @@ public final class ServerEventStarter {
 
     /** The events this server has already acted on, so a slow write is not started twice. */
     private final Set<UUID> started = new HashSet<>();
-    /** Who has already been sent to which event, so nobody is dragged back every fifteen seconds. */
-    private final Map<UUID, Set<UUID>> sent = new HashMap<>();
     /** When the room was last told about a walk-in event, so the reminder does not become spam. */
     private final Map<UUID, Long> reminded = new HashMap<>();
 
@@ -267,6 +277,9 @@ public final class ServerEventStarter {
     public static synchronized void init(Plugin plugin) {
         if (initialized) return;
         initialized = true;
+        owner = plugin;
+        sentFile = new java.io.File(plugin.getDataFolder(), "event-sent.yml");
+        loadSent();
         Bukkit.getScheduler().runTaskTimer(plugin, ServerEventStarter::checkAll,
                 CHECK_INTERVAL_TICKS, CHECK_INTERVAL_TICKS);
     }
@@ -344,7 +357,7 @@ public final class ServerEventStarter {
         if (event.getState() != EventState.PLANNED && event.getState() != EventState.RUNNING) {
             return "Dieses Event läuft nicht mehr.";
         }
-        sent.computeIfAbsent(event.getId(), key -> new HashSet<>()).add(player.getUniqueId());
+        if (sent.computeIfAbsent(event.getId(), key -> new HashSet<>()).add(player.getUniqueId())) saveSent();
         ServerStartup.warpWhenReady(player, server);
         return joinText != null ? joinText : "Du wirst zu " + event.getName() + " verbunden.";
     }
@@ -455,12 +468,64 @@ public final class ServerEventStarter {
                         + " · Haus " + settings.getRakeText(), NamedTextColor.GRAY));
     }
 
-    private List<Player> remember(EventData event, Collection<? extends Player> online) {
+    private static List<Player> remember(EventData event, Collection<? extends Player> online) {
         Set<UUID> already = sent.computeIfAbsent(event.getId(), key -> new HashSet<>());
         List<Player> fresh = new ArrayList<>();
         for (Player player : online) {
             if (already.add(player.getUniqueId())) fresh.add(player);
         }
+        if (!fresh.isEmpty()) saveSent();
         return fresh;
+    }
+
+    /**
+     * Reads who was sent where before the last restart, keeping only events that are still on.
+     */
+    private static void loadSent() {
+        if (sentFile == null || !sentFile.isFile()) return;
+        org.bukkit.configuration.file.YamlConfiguration config =
+                org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(sentFile);
+        for (String eventKey : config.getKeys(false)) {
+            try {
+                UUID eventId = UUID.fromString(eventKey);
+                Set<UUID> players = new HashSet<>();
+                for (String player : config.getStringList(eventKey)) players.add(UUID.fromString(player));
+                sent.put(eventId, players);
+            } catch (IllegalArgumentException ignored) {
+                // a line nobody can read sends nobody anywhere
+            }
+        }
+    }
+
+    /**
+     * Writes who was sent where, off the main thread. Events that are over are left out, so the file does
+     * not grow with every event there ever was.
+     */
+    private static void saveSent() {
+        if (sentFile == null || owner == null) return;
+        org.bukkit.configuration.file.YamlConfiguration config = new org.bukkit.configuration.file.YamlConfiguration();
+        for (Map.Entry<UUID, Set<UUID>> entry : sent.entrySet()) {
+            EventData event = EventService.getEvent(entry.getKey());
+            if (event != null && event.getState() != EventState.PLANNED && event.getState() != EventState.RUNNING) {
+                continue;
+            }
+            List<String> players = new ArrayList<>();
+            for (UUID player : entry.getValue()) players.add(player.toString());
+            config.set(entry.getKey().toString(), players);
+        }
+        latestSent = config.saveToString();
+        java.io.File file = sentFile;
+        Bukkit.getScheduler().runTaskAsynchronously(owner, () -> {
+            // two writes can overtake each other; each writes whatever is newest, so the last one to run
+            // leaves the newest state behind
+            synchronized (SENT_WRITE) {
+                try {
+                    file.getParentFile().mkdirs();
+                    java.nio.file.Files.writeString(file.toPath(), latestSent);
+                } catch (java.io.IOException e) {
+                    Bukkit.getLogger().warning("Could not write " + file.getName() + ": " + e.getMessage());
+                }
+            }
+        });
     }
 }

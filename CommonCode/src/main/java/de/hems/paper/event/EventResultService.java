@@ -47,6 +47,28 @@ public final class EventResultService {
     }
 
     /**
+     * Tells the launcher the game of an event is over, with its last lines. Until this arrives - or the
+     * game server is gone - the launcher does not settle the event, however late it gets: an event ends
+     * when its game does, not when its clock runs out.
+     *
+     * @param eventId the event
+     * @param rows    the last lines, may be empty
+     */
+    public static void finish(UUID eventId, List<EventResultData> rows) {
+        if (eventId == null || !PaperContext.hasPlugin()) return;
+        List<EventResultData> copy = new ArrayList<>(rows);
+        PaperContext.async(() -> {
+            try {
+                if (!ListenerAdapter.isInitialized()) return;
+                ListenerAdapter.sendListeners(new SaveEventResultsEvent(copy, eventId));
+            } catch (Exception e) {
+                Bukkit.getLogger().warning("Could not report the end of the game: " + e.getMessage()
+                        + " - the event is settled once this server is gone.");
+            }
+        });
+    }
+
+    /**
      * Reads the lines of one event and hands them over on the main thread.
      *
      * @param eventId the event

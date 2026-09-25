@@ -154,6 +154,12 @@ public final class EventCalendarUi {
         switch (event.getState()) {
             case PLANNED -> lore.add(ChatColor.YELLOW + "Startet in " + EventData.format(event.getTimeUntilStart()));
             case RUNNING -> lore.add(ChatColor.GREEN + "Noch " + EventData.format(event.getTimeUntilEnd()));
+            // the clock is out but the game is not: it is played to the end and settled after that
+            case FINISHED -> {
+                if (!event.isApplied() && event.getType().reportsResults()) {
+                    lore.add(ChatColor.GOLD + "Verlängerung - die Runde läuft noch zu Ende");
+                }
+            }
             default -> {
             }
         }

@@ -99,6 +99,7 @@ public final class Game {
     private int countdown;
     private long startedAt;
     private long lastDropAt;
+    private boolean reportedFinished;
     private boolean graceOver;
     private boolean graceAnnounced;
     private boolean shrinking;
@@ -154,6 +155,8 @@ public final class Game {
         boolean due = forced || (event != null && event.getState() == EventState.RUNNING);
         if (event != null && (event.getState() == EventState.FINISHED || event.getState() == EventState.CANCELLED)) {
             bar.name(Component.text(ArenaContext.getTitle() + " findet nicht mehr statt", NamedTextColor.RED));
+            // no game was ever played, so there is nothing the launcher has to wait for
+            reportFinished();
             return;
         }
         int needed = forced ? 1 : settings.getMinPlayers();
@@ -242,9 +245,7 @@ public final class Game {
             player.sendActionBar(Component.text("Kills: " + line.getKills(), NamedTextColor.GRAY));
         }
 
-        // the event's clock ran out before one was left - the ones still standing are ranked among themselves
-        EventData event = ArenaContext.getEvent();
-        if (event != null && event.getState() == EventState.FINISHED) endByTime();
+        // the event's clock is not what ends a game: it runs until one is left, and the launcher waits
     }
 
     private void tickEnded() {
@@ -416,29 +417,7 @@ public final class Game {
         if (winner != null) celebrate(winner);
         playToAll(Sound.UI_TOAST_CHALLENGE_COMPLETE);
         map.getWorld().getWorldBorder().setSize(map.getWorld().getWorldBorder().getSize());
-    }
-
-    /**
-     * Ends a game the event's time ran out on. The ones still standing are ranked among themselves by their
-     * kills; the same number of kills is the same placing.
-     */
-    private void endByTime() {
-        List<EventResultData> standing = new ArrayList<>();
-        for (UUID id : alive) standing.add(lines.get(id));
-        standing.sort((a, b) -> Integer.compare(b.getKills(), a.getKills()));
-        int place = 0;
-        int previousKills = -1;
-        for (int i = 0; i < standing.size(); i++) {
-            EventResultData line = standing.get(i);
-            if (line.getKills() != previousKills) place = i + 1;
-            previousKills = line.getKills();
-            line.setPlace(place);
-        }
-        report(standing);
-        alive.clear();
-        broadcast(Component.text("Die Eventzeit ist um - wer noch lebt, wird nach Kills gewertet.",
-                NamedTextColor.GOLD));
-        state = State.ENDED;
+        reportFinished();
     }
 
     /**
@@ -451,6 +430,7 @@ public final class Game {
         state = State.ENDED;
         alive.clear();
         broadcast(Component.text("Das Spiel wurde von einem Admin beendet.", NamedTextColor.RED));
+        reportFinished();
         return "Beendet.";
     }
 
@@ -536,6 +516,16 @@ public final class Game {
                 firework.setFireworkMeta(meta);
             }, i * 15L);
         }
+    }
+
+    /**
+     * Tells the launcher the game is over, once, so it settles the event now rather than waiting for this
+     * server to go away.
+     */
+    private void reportFinished() {
+        if (reportedFinished || !ArenaContext.hasEvent()) return;
+        reportedFinished = true;
+        EventResultService.finish(ArenaContext.getEvent().getId(), new ArrayList<>(lines.values()));
     }
 
     private void report(Collection<EventResultData> changed) {

@@ -96,7 +96,8 @@ public final class EventResultReporter implements Listener {
             if (team.isEmpty()) continue;
             all.addAll(linesOf(team));
         }
-        report(all);
+        // the round is over - which is what ends the event, not its clock: the launcher waits for this
+        EventResultService.finish(plugin.getEventId(), all);
     }
 
     /**

@@ -971,6 +971,12 @@ Welche Events überhaupt jemanden werten:
 | Bedwars | nach Team, in der Reihenfolge, in der die Teams ausscheiden; das Team teilt sich den Platz | ja, pro Spieler, Final Kills zählen mit |
 | Einfach, Andere Welt, End | – | – |
 
+**Ein Event endet mit seinem Spiel, nicht mit seiner Uhr.** Bei Bedwars und Hunger Games geht ein
+Event, dessen Zeit abläuft, während noch gespielt wird, in die Verlängerung („Verlängerung“ im
+Kalender). Abgerechnet wird, sobald der Spielserver meldet, dass die Runde vorbei ist. Ohne diese Meldung
+rechnet der Launcher ab, wenn der Server nicht mehr läuft (Absturz, niemand kam), und spätestens nach
+sechs Stunden Verlängerung.
+
 **Bedwars im Detail:** Das zuerst ausgeschiedene Team bekommt den schlechtesten Platz, das letzte
 stehende Platz 1. Endet die Runde über das Zeitlimit, werden die noch stehenden Teams nach derselben
 Punktetabelle geordnet, mit der das Zeitlimit den Sieger bestimmt; bei einem Unentschieden an der Spitze
@@ -1035,10 +1041,10 @@ kommt, schaut zu. Der Letzte gewinnt, 20 Sekunden später geht es zurück in die
 Die Teamgröße ist als Schlüssel (`hg.team-size`) vorbereitet, gespielt wird aber immer solo: Teams
 brauchen eigene Plätze und Friendly-Fire-Regeln, die gibt es noch nicht.
 
-**Plätze** ergeben sich aus der Reihenfolge des Rausfliegens. Läuft die Eventzeit ab, bevor einer übrig
-ist, werden die Lebenden nach Kills gewertet (gleiche Kills = gleicher Platz). Die Dauer des Events
-sollte also länger sein als „schrumpft ab“ + „Schrumpfdauer“ plus Wartezeit. `/hg stop` beendet ohne
-Wertung der Lebenden.
+**Plätze** ergeben sich aus der Reihenfolge des Rausfliegens. **Das Spiel endet, wenn einer übrig ist —
+nicht, wenn die Eventzeit abläuft.** Läuft die Zeit ab, geht das Event in die Verlängerung (so steht es
+auch im Kalender) und wird erst abgerechnet, wenn die Arena meldet, dass das Spiel vorbei ist.
+`/hg stop` beendet ohne Wertung der Lebenden.
 
 **Nether und End:** `allow-end` in der `bukkit.yml` wirkt, `allow-nether=false` hält den Nether auf 26.3
 aber nicht mehr vom Laden ab. Die Arena entlädt ihn deshalb nach dem Start selbst, und Portale werden

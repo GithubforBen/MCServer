@@ -20,13 +20,31 @@ public class SaveEventResultsEvent extends EventFoundationData implements Event,
     private static final long serialVersionUID = 4344L;
 
     private ArrayList<EventResultData> rows;
+    /** Set when the game is over, so the launcher knows it may settle the event now. */
+    private java.util.UUID finishedEvent;
 
     public SaveEventResultsEvent(List<EventResultData> rows) {
+        this(rows, null);
+    }
+
+    /**
+     * @param rows          the lines that changed, may be empty
+     * @param finishedEvent the event whose game is over with this, or {@code null} while it still runs
+     */
+    public SaveEventResultsEvent(List<EventResultData> rows, java.util.UUID finishedEvent) {
         super(ListenerAdapter.ServerName.HOST);
         this.rows = new ArrayList<>(rows);
+        this.finishedEvent = finishedEvent;
     }
 
     public SaveEventResultsEvent() {
+    }
+
+    /**
+     * @return the event whose game is over, or {@code null}
+     */
+    public java.util.UUID getFinishedEvent() {
+        return finishedEvent;
     }
 
     public List<EventResultData> getRows() {

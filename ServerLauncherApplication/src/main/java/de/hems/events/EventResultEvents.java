@@ -11,6 +11,7 @@ import de.hems.utils.event.EventStore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Serves the results of the events that rank people by where they finished.
@@ -45,6 +46,12 @@ public class EventResultEvents {
                     + " result lines for events that are settled or gone.");
         }
         results.put(accepted);
+        UUID over = request.getFinishedEvent();
+        EventData finishedEvent = over == null ? null : events.getEvent(over);
+        if (finishedEvent != null && !finishedEvent.isApplied()) {
+            results.markFinished(over);
+            System.out.println("The game of " + finishedEvent.getName() + " is over - it is settled next.");
+        }
     }
 
     private void onRequest(RequestEventResultsEvent request) throws Exception {

@@ -24,6 +24,8 @@ public class EventResultStore {
     private final YamlConfiguration config;
     /** Event to player to line. */
     private final Map<UUID, Map<UUID, EventResultData>> results = new ConcurrentHashMap<>();
+    /** Events whose game has reported that it is over. */
+    private final java.util.Set<UUID> finished = ConcurrentHashMap.newKeySet();
 
     public EventResultStore() {
         this(new File("./results.yml"));
@@ -59,6 +61,13 @@ public class EventResultStore {
                 }
             }
         }
+        for (String id : config.getStringList("finished")) {
+            try {
+                finished.add(UUID.fromString(id));
+            } catch (IllegalArgumentException ignored) {
+                // an id nobody can read belongs to no event
+            }
+        }
         System.out.println("Loaded " + count + " result lines from " + file.getName());
     }
 
@@ -86,6 +95,31 @@ public class EventResultStore {
     }
 
     /**
+     * Notes that the game of an event is over, so it can be settled.
+     *
+     * @param eventId the event
+     */
+    public synchronized void markFinished(UUID eventId) {
+        if (eventId == null || !finished.add(eventId)) return;
+        writeFinished();
+        save();
+    }
+
+    /**
+     * @param eventId the event
+     * @return whether its game has said it is over
+     */
+    public boolean isFinished(UUID eventId) {
+        return eventId != null && finished.contains(eventId);
+    }
+
+    private void writeFinished() {
+        List<String> ids = new ArrayList<>();
+        for (UUID id : finished) ids.add(id.toString());
+        config.set("finished", ids);
+    }
+
+    /**
      * @param eventId the event
      * @return its lines, in no particular order
      */
@@ -101,9 +135,14 @@ public class EventResultStore {
      * @return how many lines went
      */
     public synchronized int discard(UUID eventId) {
-        Map<UUID, EventResultData> removed = eventId == null ? null : results.remove(eventId);
-        if (removed == null) return 0;
+        if (eventId == null) return 0;
+        Map<UUID, EventResultData> removed = results.remove(eventId);
+        if (finished.remove(eventId)) writeFinished();
         config.set("results." + eventId, null);
+        if (removed == null) {
+            save();
+            return 0;
+        }
         save();
         return removed.size();
     }

@@ -171,13 +171,12 @@ Behoben:
 - [x] Lobby und Survival hätten beim ersten Befehl ohne TabCompleter `onEnable` abgebrochen
 
 Gefunden, bewusst nicht geändert — **Entscheidung nötig**:
-- [ ] Endet die Eventzeit, während eine Bedwars-Runde noch läuft, wird sie beim Abrechnen gestoppt; die
-      Teams, die noch stehen, bekommen keinen Platz. Hunger Games wertet dann nach Kills. Soll Bedwars
-      die stehenden Teams nach Punkten werten, oder soll die Abrechnung warten, bis die Runde vorbei ist?
-- [ ] Der Launcher prüft Teamnamen nicht selbst (nur Survival). Ein Punkt im Namen würde die `teams.yml`
-      zerbrechen wie früher die Event-Einstellungen
-- [ ] Startet die Lobby während eines Bedwars-Events neu, vergisst sie, wen sie schon rübergeschickt hat,
-      und schickt alle in der Lobby noch einmal
+- [x] Ein Event endet mit seinem Spiel, nicht mit seiner Uhr: Bedwars und Hunger Games gehen in die
+      Verlängerung und werden abgerechnet, wenn die Runde „fertig“ meldet (sonst: Server weg, oder nach
+      6 Stunden). Hunger Games wertet nicht mehr nach Kills, wenn die Zeit abläuft
+- [x] Der Launcher prüft neue Teamnamen selbst (bestehende Namen bleiben, wie sie sind)
+- [x] Die Lobby merkt sich über einen Neustart hinweg, wen sie zu welchem Event geschickt hat
+      (`plugins/<Lobby>/event-sent.yml`)
 - [ ] Noch doppelt, nicht zusammengeführt: das Cache-Muster der Services (`EventService`, `RunService`,
       `RoundService`, `TeamService`, `CosmeticService`, `PokerStatsService` …: init, Nachladen,
       Update anwenden) und der Netzwerk-Start in den sechs Plugins. Beides unterscheidet sich im Detail
@@ -231,6 +230,10 @@ Spielablauf lief auf einem echten Server:
 - [ ] Pokernacht: Casino bauen, `/poker karte speichern`, nächste Pokernacht steht im selben Raum
 
 **Bedwars-Belohnungen und Starter-Umbau** — gebaut, nicht auf einem Server gelaufen:
+
+- [ ] Bedwars-Event, das über seine Zeit hinaus läuft: steht „Verlängerung“ im Kalender, wird erst nach
+      dem Rundenende abgerechnet, und stimmen die Plätze?
+- [ ] Lobby während eines Bedwars-Events neu starten: wird niemand ein zweites Mal rübergeschickt?
 
 - [ ] Bedwars-Event mit drei Teams: bekommen die Teams die Plätze 3, 2, 1 in der Reihenfolge des
       Ausscheidens, und steht das im Ergebnis-Panel des Events?

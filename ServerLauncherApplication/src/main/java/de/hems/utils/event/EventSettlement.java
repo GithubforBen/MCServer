@@ -34,8 +34,10 @@ import java.util.UUID;
  */
 public class EventSettlement {
 
-    /** How long after its end an event with reported results waits for the last of them. */
+    /** How long after its end an event with reported results waits at least, for the last of them. */
     private static final long RESULT_GRACE_MS = 2 * 60_000L;
+    /** How long a game may run past its event before it is settled anyway. */
+    private static final long MAX_OVERTIME_MS = 6 * 60 * 60_000L;
     /** How often to look for events that have ended. */
     private static final long CHECK_INTERVAL_MS = 60_000L;
     /** How long a run may lie untouched before it is given up on, unless the config says otherwise. */
@@ -102,10 +104,43 @@ public class EventSettlement {
                 continue;
             }
             if (state != EventState.FINISHED && state != EventState.CANCELLED) continue;
-            // the game server reports the last placings in the second the event ends - by the same clock
-            // this checks. Settling in that second would pay out before they arrived
-            if (event.getType().reportsResults() && now < event.getEndsAt() + RESULT_GRACE_MS) continue;
+            if (state == EventState.FINISHED && event.getType().reportsResults() && stillPlaying(event, now)) {
+                continue;
+            }
             settle(event);
+        }
+    }
+
+    /**
+     * Whether the game of an event whose time is up is still being played.
+     * <p>
+     * An event ends when its game does, not when its clock runs out - a bedwars round that is decided in
+     * the last minute is not cut off and paid out half way. So an event whose game reports results waits
+     * until the game says it is over. Two things end the wait anyway: the game server is gone (it crashed,
+     * or it was never needed because nobody came), or the game has run six hours past the event, which is
+     * not a game any more but a server somebody forgot.
+     *
+     * @param event an event whose time is up
+     * @param now   the current time
+     * @return whether to wait with the settlement
+     */
+    private boolean stillPlaying(EventData event, long now) {
+        // the last placings arrive in the second the game ends - a short wait in any case
+        if (now < event.getEndsAt() + RESULT_GRACE_MS) return true;
+        if (results != null && results.isFinished(event.getId())) return false;
+        if (now > event.getEndsAt() + MAX_OVERTIME_MS) {
+            System.out.println(event.getName() + " is settled after six hours of overtime without its game "
+                    + "reporting that it is over.");
+            return false;
+        }
+        String key = event.getType().getServerKey();
+        String server = key == null ? null : event.getSetting(key, "");
+        if (server == null || server.isBlank()) return false;
+        try {
+            return Main.getInstance().getServerHandler()
+                    .doesInstanceExist(ListenerAdapter.ServerName.valueOf(server));
+        } catch (Exception e) {
+            return false;
         }
     }
 

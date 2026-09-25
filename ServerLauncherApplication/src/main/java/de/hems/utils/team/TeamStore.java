@@ -177,6 +177,12 @@ public class TeamStore {
         if (existing == null && !createIfMissing) {
             return Result.failed("Das Team '" + team.getName() + "' gibt es nicht.");
         }
+        // the name is the path the team is stored under, so a dot in it would split it into sections and the
+        // team would come back broken after a restart. Survival checks the same rule; this is the one place
+        // every new name goes through, whoever chose it. A team that already has its name keeps it
+        if ((existing == null || renaming) && !team.getName().matches("[A-Za-z0-9_-]+")) {
+            return Result.failed("Der Teamname darf nur Buchstaben, Zahlen, _ und - enthalten.");
+        }
         if (renaming) {
             if (existing == null) {
                 return Result.failed("Das Team '" + renameFrom + "' gibt es nicht.");

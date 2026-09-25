@@ -194,7 +194,12 @@ public final class RewardCheck {
                 || won.get(0).getPlaceTitle().equals("2 Kills"), true);
         check("the loser has nothing", awards.getUnclaimed(b).size(), 0);
 
+        check("a game is not over until it says so", results.isFinished(event.getId()), false);
+        results.markFinished(event.getId());
+        check("that it is over survives a restart",
+                new EventResultStore(resultsFile).isFinished(event.getId()), true);
         results.discard(event.getId());
+        check("and goes with the event", new EventResultStore(resultsFile).isFinished(event.getId()), false);
         check("discarded lines are gone after a restart",
                 new EventResultStore(resultsFile).getRowsOf(event.getId()).size(), 0);
         awardsFile.delete();
