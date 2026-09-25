@@ -1,5 +1,6 @@
 package de.hems.paper.money;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.money.BalanceUpdatedEvent;
 import de.hems.communication.events.money.ChangeBalanceEvent;
@@ -44,8 +45,6 @@ public final class MoneyService {
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     /** How often the whole list is refreshed as a safety net, in ticks. */
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
-    /** How often to retry while the list has never arrived, in ticks. */
-    private static final long STARTUP_RETRY_TICKS = 40L;
     /** How often a change is offered to the launcher before it is written off as lost. */
     private static final int SEND_ATTEMPTS = 3;
     /** How long to wait between those attempts, multiplied by the attempt number. */
@@ -68,16 +67,7 @@ public final class MoneyService {
         initialized = true;
         PaperContext.setPlugin(plugin);
         ListenerAdapter.register(BalanceUpdatedEvent.class, event -> apply((BalanceUpdatedEvent) event));
-        refreshAsync();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, MoneyService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, MoneyService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     private static void apply(BalanceUpdatedEvent event) {
@@ -243,8 +233,7 @@ public final class MoneyService {
                 fresh.put(holder, amount);
             }
         }
-        balances.keySet().retainAll(fresh.keySet());
-        balances.putAll(fresh);
+        NetworkSync.replace(balances, fresh);
         loaded = true;
     }
 }

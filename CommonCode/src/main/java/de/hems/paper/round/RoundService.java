@@ -1,5 +1,6 @@
 package de.hems.paper.round;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.round.DeleteRoundEvent;
 import de.hems.communication.events.round.RequestRoundsEvent;
@@ -39,7 +40,6 @@ public final class RoundService {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final long REFRESH_INTERVAL_TICKS = 20L * 60L;
-    private static final long STARTUP_RETRY_TICKS = 40L;
 
     private static final Map<UUID, RoundData> rounds = new ConcurrentHashMap<>();
     private static volatile RoundPolicy policy = new RoundPolicy();
@@ -64,16 +64,7 @@ public final class RoundService {
             RoundPolicy updated = ((RoundPolicyUpdatedEvent) event).getPolicy();
             if (updated != null) policy = updated;
         });
-        refreshAsync();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, RoundService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, RoundService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     private static void apply(RoundUpdatedEvent event) {
@@ -278,8 +269,7 @@ public final class RoundService {
         for (RoundData round : snapshot.getRounds()) {
             if (round.getId() != null) fresh.put(round.getId(), round);
         }
-        rounds.keySet().retainAll(fresh.keySet());
-        rounds.putAll(fresh);
+        NetworkSync.replace(rounds, fresh);
         policy = snapshot.getPolicy();
         maps = List.copyOf(snapshot.getMaps());
         loaded = true;

@@ -1,9 +1,9 @@
 package de.hems.paper.event;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.result.RequestEventResultsEvent;
 import de.hems.communication.events.result.SaveEventResultsEvent;
-import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.paper.PaperContext;
 import de.hems.types.event.EventResultData;
 import org.bukkit.Bukkit;
@@ -87,12 +87,8 @@ public final class EventResultService {
      */
     public static List<EventResultData> fetchBlocking(UUID eventId) {
         RequestEventResultsEvent request = new RequestEventResultsEvent(eventId);
-        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
-        if (response == null || !(response.getData() instanceof List<?> list)) return List.of();
-        List<EventResultData> rows = new ArrayList<>();
-        for (Object entry : list) {
-            if (entry instanceof EventResultData row) rows.add(row);
-        }
-        return rows;
+        List<EventResultData> list = NetworkSync.fetchList(request, TIMEOUT, EventResultData.class);
+        if (list == null) return List.of();
+        return list;
     }
 }

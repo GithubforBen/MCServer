@@ -1,5 +1,6 @@
 package de.hems.paper.event;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.event.DeleteEventEvent;
 import de.hems.communication.events.event.EventUpdatedEvent;
@@ -36,8 +37,6 @@ public final class EventService {
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     /** How often the whole list is refreshed as a safety net, in ticks. */
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
-    /** How often to retry while the list has never arrived, in ticks. */
-    private static final long STARTUP_RETRY_TICKS = 40L;
 
     private static final Map<UUID, EventData> events = new ConcurrentHashMap<>();
     private static volatile boolean loaded = false;
@@ -56,17 +55,7 @@ public final class EventService {
         initialized = true;
         PaperContext.setPlugin(plugin);
         ListenerAdapter.register(EventUpdatedEvent.class, event -> apply((EventUpdatedEvent) event));
-        refreshAsync();
-        // the network may not be connected yet when this plugin loads, so try again quickly until it is
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, EventService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, EventService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     /**
@@ -165,15 +154,14 @@ public final class EventService {
      */
     public static void refreshBlocking() {
         RequestEventsEvent request = new RequestEventsEvent();
-        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
-        if (response == null || !(response.getData() instanceof List<?> list)) return;
+        List<EventData> list = NetworkSync.fetchList(request, TIMEOUT, EventData.class);
+        if (list == null) return;
         Map<UUID, EventData> fresh = new ConcurrentHashMap<>();
-        for (Object entry : list) {
-            if (!(entry instanceof EventData event) || event.getId() == null) continue;
+        for (EventData event : list) {
+            if (event.getId() == null) continue;
             fresh.put(event.getId(), event);
         }
-        events.clear();
-        events.putAll(fresh);
+        NetworkSync.replace(events, fresh);
         loaded = true;
     }
 

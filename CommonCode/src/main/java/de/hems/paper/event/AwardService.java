@@ -1,5 +1,6 @@
 package de.hems.paper.event;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.event.ClaimAwardEvent;
 import de.hems.communication.events.event.RequestAwardsEvent;
@@ -80,13 +81,9 @@ public final class AwardService {
      */
     private static List<AwardData> fetch(Player player) {
         RequestAwardsEvent request = new RequestAwardsEvent(player.getUniqueId());
-        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
-        if (response == null || !(response.getData() instanceof List<?> list)) return List.of();
-        List<AwardData> awards = new ArrayList<>();
-        for (Object entry : list) {
-            if (entry instanceof AwardData award) awards.add(award);
-        }
-        return awards;
+        List<AwardData> list = NetworkSync.fetchList(request, TIMEOUT, AwardData.class);
+        if (list == null) return List.of();
+        return list;
     }
 
     /**

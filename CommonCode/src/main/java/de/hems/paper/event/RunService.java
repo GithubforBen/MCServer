@@ -1,10 +1,10 @@
 package de.hems.paper.event;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.event.RequestRunsEvent;
 import de.hems.communication.events.event.RunUpdatedEvent;
 import de.hems.communication.events.event.SaveRunEvent;
-import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.paper.PaperContext;
 import de.hems.types.event.EventData;
 import de.hems.types.event.RunData;
@@ -31,7 +31,6 @@ public final class RunService {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
-    private static final long STARTUP_RETRY_TICKS = 40L;
 
     private static final Map<UUID, RunData> runs = new ConcurrentHashMap<>();
     private static volatile boolean loaded = false;
@@ -50,16 +49,7 @@ public final class RunService {
         initialized = true;
         PaperContext.setPlugin(plugin);
         ListenerAdapter.register(RunUpdatedEvent.class, event -> apply((RunUpdatedEvent) event));
-        refreshAsync();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, RunService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, RunService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     private static void apply(RunUpdatedEvent event) {
@@ -183,15 +173,14 @@ public final class RunService {
      */
     public static void refreshBlocking() {
         RequestRunsEvent request = new RequestRunsEvent();
-        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
-        if (response == null || !(response.getData() instanceof List<?> list)) return;
+        List<RunData> list = NetworkSync.fetchList(request, TIMEOUT, RunData.class);
+        if (list == null) return;
         Map<UUID, RunData> fresh = new ConcurrentHashMap<>();
-        for (Object entry : list) {
-            if (!(entry instanceof RunData run) || run.getId() == null) continue;
+        for (RunData run : list) {
+            if (run.getId() == null) continue;
             fresh.put(run.getId(), run);
         }
-        runs.clear();
-        runs.putAll(fresh);
+        NetworkSync.replace(runs, fresh);
         loaded = true;
     }
 }

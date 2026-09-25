@@ -1,5 +1,6 @@
 package de.hems.paper.discord;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.discord.AccountLinkUpdatedEvent;
 import de.hems.communication.events.discord.ConfirmAccountLinkEvent;
@@ -8,7 +9,6 @@ import de.hems.communication.events.discord.RespondAccountLinkEvent;
 import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.paper.PaperContext;
 import de.hems.types.discord.AccountLink;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,6 @@ public final class AccountLinkService {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
-    private static final long STARTUP_RETRY_TICKS = 40L;
 
     private static final Map<UUID, AccountLink> links = new ConcurrentHashMap<>();
     private static volatile boolean loaded = false;
@@ -59,16 +58,7 @@ public final class AccountLinkService {
             }
             links.put(updated.getMinecraftId(), updated.getLink());
         });
-        refreshAsync();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, AccountLinkService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, AccountLinkService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     public static boolean isLoaded() {
@@ -164,16 +154,15 @@ public final class AccountLinkService {
      */
     public static void refreshBlocking() {
         RequestAccountLinksEvent request = new RequestAccountLinksEvent();
-        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
-        if (response == null || !(response.getData() instanceof List<?> list)) return;
+        List<AccountLink> list = NetworkSync.fetchList(request, TIMEOUT, AccountLink.class);
+        if (list == null) return;
         Map<UUID, AccountLink> fresh = new ConcurrentHashMap<>();
-        for (Object entry : list) {
-            if (entry instanceof AccountLink link && link.getMinecraftId() != null) {
+        for (AccountLink link : list) {
+            if (link.getMinecraftId() != null) {
                 fresh.put(link.getMinecraftId(), link);
             }
         }
-        links.keySet().retainAll(fresh.keySet());
-        links.putAll(fresh);
+        NetworkSync.replace(links, fresh);
         loaded = true;
     }
 }

@@ -1,10 +1,10 @@
 package de.hems.paper.poker;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.poker.PokerStatsUpdatedEvent;
 import de.hems.communication.events.poker.RequestPokerStatsEvent;
 import de.hems.communication.events.poker.SavePokerStatsEvent;
-import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.paper.PaperContext;
 import de.hems.types.event.EventData;
 import de.hems.types.event.PokerEventSettings;
@@ -30,7 +30,6 @@ public final class PokerStatsService {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
-    private static final long STARTUP_RETRY_TICKS = 40L;
 
     /** Rows by event, then by player. */
     private static final Map<UUID, Map<UUID, PokerStatsData>> rows = new ConcurrentHashMap<>();
@@ -50,16 +49,7 @@ public final class PokerStatsService {
         initialized = true;
         PaperContext.setPlugin(plugin);
         ListenerAdapter.register(PokerStatsUpdatedEvent.class, event -> apply((PokerStatsUpdatedEvent) event));
-        refreshAsync();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, PokerStatsService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, PokerStatsService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     private static void apply(PokerStatsUpdatedEvent event) {
@@ -167,17 +157,15 @@ public final class PokerStatsService {
      */
     public static void refreshBlocking() {
         RequestPokerStatsEvent request = new RequestPokerStatsEvent();
-        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
-        if (response == null || !(response.getData() instanceof List<?> list)) return;
+        List<PokerStatsData> list = NetworkSync.fetchList(request, TIMEOUT, PokerStatsData.class);
+        if (list == null) return;
         Map<UUID, Map<UUID, PokerStatsData>> fresh = new ConcurrentHashMap<>();
-        for (Object entry : list) {
-            if (!(entry instanceof PokerStatsData row)) continue;
+        for (PokerStatsData row : list) {
             if (row.getEventId() == null || row.getPlayerId() == null) continue;
             fresh.computeIfAbsent(row.getEventId(), key -> new ConcurrentHashMap<>())
                     .put(row.getPlayerId(), row);
         }
-        rows.clear();
-        rows.putAll(fresh);
+        NetworkSync.replace(rows, fresh);
         loaded = true;
     }
 }

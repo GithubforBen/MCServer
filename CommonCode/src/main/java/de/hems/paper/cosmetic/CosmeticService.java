@@ -1,5 +1,6 @@
 package de.hems.paper.cosmetic;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.cosmetic.BuyCosmeticEvent;
 import de.hems.communication.events.cosmetic.CosmeticUpdatedEvent;
@@ -46,7 +47,6 @@ public final class CosmeticService {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
-    private static final long STARTUP_RETRY_TICKS = 40L;
     /** How long somebody's cosmetics are kept after they leave, in ticks. */
     private static final long FORGET_DELAY_TICKS = 20L * 60L;
 
@@ -86,16 +86,7 @@ public final class CosmeticService {
         for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
             loadPlayerAsync(online.getUniqueId());
         }
-        refreshAsync();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, CosmeticService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, CosmeticService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     private static String key(String id) {
@@ -294,8 +285,7 @@ public final class CosmeticService {
         for (CosmeticData cosmetic : snapshot.getCatalog()) {
             if (cosmetic.getId() != null) freshCatalog.put(key(cosmetic.getId()), cosmetic);
         }
-        catalog.keySet().retainAll(freshCatalog.keySet());
-        catalog.putAll(freshCatalog);
+        NetworkSync.replace(catalog, freshCatalog);
         players.putAll(snapshot.getPlayers());
         loaded = true;
     }
