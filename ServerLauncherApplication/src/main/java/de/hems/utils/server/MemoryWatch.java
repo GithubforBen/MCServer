@@ -7,7 +7,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -91,11 +90,7 @@ public class MemoryWatch {
         }
         config.set("refused-at", new ArrayList<>(refusals));
         config.set("refused-total", refusedTotal);
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            System.out.println("Could not save " + file.getName() + ": " + e.getMessage());
-        }
+        de.hems.utils.YamlFiles.saveOrLog(config, file);
     }
 
     /**

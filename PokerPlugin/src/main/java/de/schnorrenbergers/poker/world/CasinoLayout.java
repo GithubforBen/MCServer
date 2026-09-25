@@ -45,6 +45,21 @@ public final class CasinoLayout {
         this.file = new File(FILE);
         File parent = file.getParentFile();
         if (parent != null) parent.mkdirs();
+        // every poker night is a fresh server, so the layout of the casino that is carried from night to
+        // night lies next to its world in ./poker-world - without it the room would be built again on top
+        // of itself every evening
+        File carried = new File(CasinoWorld.SHARED_SOURCE, CasinoWorld.LAYOUT_FILE);
+        // only together with a world that can be brought in: a layout that says "built" over an empty room
+        // is worse than building a new one
+        boolean world = new File(CasinoWorld.SHARED_SOURCE, "level.dat").isFile();
+        if (!file.isFile() && carried.isFile() && world) {
+            try {
+                java.nio.file.Files.copy(carried.toPath(), file.toPath());
+                plugin.getLogger().info("Took the casino layout over from " + carried.getPath() + ".");
+            } catch (java.io.IOException e) {
+                plugin.getLogger().warning("Could not take the casino layout over: " + e.getMessage());
+            }
+        }
         this.config = YamlConfiguration.loadConfiguration(file);
         load();
     }

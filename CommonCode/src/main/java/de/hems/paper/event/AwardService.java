@@ -1,5 +1,6 @@
 package de.hems.paper.event;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.event.ClaimAwardEvent;
 import de.hems.communication.events.event.RequestAwardsEvent;
@@ -79,49 +80,67 @@ public final class AwardService {
      * @return what they still have to collect
      */
     private static List<AwardData> fetch(Player player) {
-        try {
-            if (!ListenerAdapter.isInitialized()) return List.of();
-            RequestAwardsEvent request = new RequestAwardsEvent(player.getUniqueId());
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof List<?> list)) return List.of();
-            List<AwardData> awards = new ArrayList<>();
-            for (Object entry : list) {
-                if (entry instanceof AwardData award) awards.add(award);
-            }
-            return awards;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return List.of();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the awards: " + e.getMessage());
-            return List.of();
-        }
+        RequestAwardsEvent request = new RequestAwardsEvent(player.getUniqueId());
+        List<AwardData> list = NetworkSync.fetchList(request, TIMEOUT, AwardData.class);
+        if (list == null) return List.of();
+        return list;
     }
 
     /**
-     * Hands over everything that fits, on the main thread.
+     * Hands over everything that fits, one prize after the other, on the main thread.
      *
      * @param player  who is collecting
      * @param pending what they have waiting
      */
     private static void deliver(Player player, List<AwardData> pending) {
-        for (AwardData award : pending) {
-            if (!player.isOnline()) return;
-            // a prize with money in it waits for a server that has an economy rather than losing the money
-            if (!canPay(award.getPrize())) continue;
-            if (!hand(player, award)) {
-                player.sendMessage(Component.text("Du hast noch einen Preis offen ("
-                        + award.getEventName() + ") - mach Platz im Inventar.", NamedTextColor.YELLOW));
-                return;
-            }
-            claim(award);
-            player.sendMessage(Component.text("★ " + award.getPlaceTitle() + " bei "
-                    + award.getEventName(), NamedTextColor.GOLD));
-            for (String line : award.getPrize().describe()) {
-                player.sendMessage(Component.text("  " + line, NamedTextColor.GRAY));
-            }
+        deliverFrom(player, pending, 0);
+    }
+
+    /**
+     * Hands over one prize and moves on to the next.
+     * <p>
+     * The prize is reserved on the launcher first and handed over only when the launcher says yes - so a
+     * player who is collecting on two servers at once, or whose confirmation got lost, cannot get it twice.
+     * If it cannot be handed over after all, the reservation is given back.
+     */
+    private static void deliverFrom(Player player, List<AwardData> pending, int index) {
+        if (index >= pending.size() || !player.isOnline()) return;
+        AwardData award = pending.get(index);
+        // a prize with money in it waits for a server that has an economy rather than losing the money
+        if (!canPay(award.getPrize())) {
+            deliverFrom(player, pending, index + 1);
+            return;
         }
+        if (!fits(player, toStacks(award.getPrize()))) {
+            tellFull(player, award);
+            return;
+        }
+        PaperContext.async(() -> {
+            boolean reserved = claimBlocking(award);
+            PaperContext.sync(() -> {
+                if (!reserved) {
+                    // collected somewhere else already, or the launcher did not answer - either way not here
+                    deliverFrom(player, pending, index + 1);
+                    return;
+                }
+                if (!player.isOnline() || !hand(player, award)) {
+                    release(award);
+                    if (player.isOnline()) tellFull(player, award);
+                    return;
+                }
+                player.sendMessage(Component.text("★ " + award.getPlaceTitle() + " bei "
+                        + award.getEventName(), NamedTextColor.GOLD));
+                for (String line : award.getPrize().describe()) {
+                    player.sendMessage(Component.text("  " + line, NamedTextColor.GRAY));
+                }
+                deliverFrom(player, pending, index + 1);
+            });
+        });
+    }
+
+    private static void tellFull(Player player, AwardData award) {
+        player.sendMessage(Component.text("Du hast noch einen Preis offen ("
+                + award.getEventName() + ") - mach Platz im Inventar.", NamedTextColor.YELLOW));
     }
 
     /**
@@ -181,16 +200,35 @@ public final class AwardService {
     }
 
     /**
-     * Tells the launcher a prize was collected.
+     * Reserves a prize on the launcher and waits for the answer. Blocks.
+     *
+     * @param award the prize
+     * @return whether this server may hand it over
+     */
+    private static boolean claimBlocking(AwardData award) {
+        ClaimAwardEvent request = new ClaimAwardEvent(award.getId(), false);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null) {
+            // the launcher may have said yes after all, just too late - nothing was handed over here,
+            // so the reservation goes back rather than leaving the prize stuck as collected
+            release(award);
+            return false;
+        }
+        return Boolean.TRUE.equals(response.getData());
+    }
+
+    /**
+     * Gives a reservation back, so the prize waits for the next join.
      *
      * @param award the prize
      */
-    private static void claim(AwardData award) {
+    private static void release(AwardData award) {
         PaperContext.async(() -> {
             try {
-                ListenerAdapter.sendListeners(new ClaimAwardEvent(award.getId()));
+                ListenerAdapter.sendListeners(new ClaimAwardEvent(award.getId(), true));
             } catch (Exception e) {
-                Bukkit.getLogger().warning("Could not claim the award: " + e.getMessage());
+                Bukkit.getLogger().warning("Could not give the award " + award.getId() + " back - it stays "
+                        + "reserved and has to be handed over by hand: " + e.getMessage());
             }
         });
     }

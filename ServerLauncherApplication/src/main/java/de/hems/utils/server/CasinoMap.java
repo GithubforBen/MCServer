@@ -1,12 +1,8 @@
 package de.hems.utils.server;
 
+import de.hems.files.FileTrees;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
-import java.util.stream.Stream;
 
 /**
  * The casino, carried from one poker night to the next.
@@ -61,12 +57,10 @@ public class CasinoMap {
         File target = new File(serverDirectory, TARGET);
         if (new File(target, "level.dat").isFile()) return;
         try {
-            copyTree(directory.toPath(), target.toPath());
+            FileTrees.copy(directory.toPath(), target.toPath(), FileTrees.WORLD_IDENTITY);
             // a copied world that brings its lock and its player data along argues with the server it
             // lands in, so those stay behind
-            new File(target, "session.lock").delete();
-            new File(target, "uid.dat").delete();
-            deleteQuietly(new File(target, "playerdata"));
+            FileTrees.stripPlayers(target);
             System.out.println("Installed the casino on " + serverDirectory.getName() + ".");
         } catch (IOException e) {
             // a casino that cannot be copied is a casino that gets built again, not a server that fails
@@ -76,34 +70,4 @@ public class CasinoMap {
         }
     }
 
-    private static void deleteQuietly(File file) {
-        if (!file.exists()) return;
-        try {
-            deleteTree(file.toPath());
-        } catch (IOException ignored) {
-            // leftover player data in a copy is untidy, not broken
-        }
-    }
-
-    private static void copyTree(Path from, Path to) throws IOException {
-        try (Stream<Path> paths = Files.walk(from)) {
-            for (Path path : paths.toList()) {
-                Path destination = to.resolve(from.relativize(path).toString());
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                    continue;
-                }
-                Files.createDirectories(destination.getParent());
-                Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-    }
-
-    private static void deleteTree(Path path) throws IOException {
-        try (Stream<Path> paths = Files.walk(path)) {
-            for (Path entry : paths.sorted(Comparator.reverseOrder()).toList()) {
-                Files.deleteIfExists(entry);
-            }
-        }
-    }
 }

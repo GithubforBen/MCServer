@@ -1,12 +1,12 @@
 package de.hems.utils.event;
 
+import de.hems.utils.YamlFiles;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -33,16 +33,7 @@ public class EventStore {
 
     public EventStore(File file) {
         this.file = file;
-        if (!file.exists()) {
-            File parent = file.getParentFile();
-            if (parent != null) parent.mkdirs();
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        this.config = YamlConfiguration.loadConfiguration(file);
+        this.config = YamlFiles.load(file);
         load();
     }
 
@@ -85,7 +76,11 @@ public class EventStore {
         event.setRevision(entry.getLong("revision", 0L));
         ConfigurationSection settings = entry.getConfigurationSection("settings");
         if (settings != null) {
-            for (String settingKey : settings.getKeys(false)) {
+            // a key like "poker.buy-in" is written as a path, so it comes back as nested sections. Walking
+            // them deep and keeping only the leaves gives the dotted keys back - reading only the top level
+            // used to turn every such setting into the text of a section after a restart
+            for (String settingKey : settings.getKeys(true)) {
+                if (settings.isConfigurationSection(settingKey)) continue;
                 event.setSetting(settingKey, String.valueOf(settings.get(settingKey)));
             }
         }
@@ -107,11 +102,7 @@ public class EventStore {
     }
 
     public synchronized void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            System.out.println("Could not save " + file.getName() + ": " + e.getMessage());
-        }
+        YamlFiles.saveOrLog(config, file);
     }
 
     /**

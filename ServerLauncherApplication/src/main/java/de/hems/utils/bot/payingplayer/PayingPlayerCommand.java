@@ -2,7 +2,6 @@ package de.hems.utils.bot.payingplayer;
 
 import de.hems.Main;
 import de.hems.api.UUIDFetcher;
-import de.hems.utils.bot.tickets.Tickets;
 import de.hems.utils.bot.verification.DiscordOwner;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

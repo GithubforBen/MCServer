@@ -3,31 +3,22 @@ package de.hems.utils;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Properties;
 
 public class Configuration {
     private File file;
     private YamlConfiguration config;
     public Configuration() {
         file = new File("./main-config.yml");
-        System.out.println(file.getAbsolutePath().toString());
-        if(!file.exists()) {
-            file.getParentFile().mkdirs();
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        config = YamlConfiguration.loadConfiguration(file);
+        System.out.println(file.getAbsolutePath());
+        // strict on purpose: this file holds the proxy secret and the website account, and reading a broken
+        // one as empty would quietly make new ones
+        config = YamlFiles.load(file);
     }
 
     public void save() {
         try {
-            config.save(file);
+            YamlFiles.save(config, file);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

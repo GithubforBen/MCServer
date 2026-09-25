@@ -20,6 +20,12 @@ public final class BedwarsEventSettings {
     /** The largest team the mode list knows what to do with. */
     public static final int MAX_TEAM_SIZE = 8;
 
+    /** The knobs as the settings panel draws them. */
+    public static final java.util.List<EventSetting> SETTINGS = java.util.List.of(
+            EventSetting.choice(TEAM_SIZE, "Teamgröße", "RED_BED", DEFAULT_TEAM_SIZE, "pro Team", null,
+                    new int[]{1, 2, 3, 4, 5, 6, 7, 8}, "Legt auch den Modus fest:",
+                    "1 solo, 2 doubles, 3 trio, ab 4 quad"));
+
     private final EventData event;
 
     public BedwarsEventSettings(EventData event) {

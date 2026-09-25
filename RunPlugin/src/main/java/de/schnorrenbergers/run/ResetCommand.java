@@ -1,5 +1,6 @@
 package de.schnorrenbergers.run;
 
+import de.hems.files.FileTrees;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -14,13 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Stream;
 
 /**
  * Wipes this event server so it can host the next attempt.
@@ -82,7 +78,7 @@ public class ResetCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(Component.text("Konnte " + name + " nicht entladen.", NamedTextColor.RED));
                 continue;
             }
-            if (!delete(folder)) {
+            if (!FileTrees.deleteQuietly(folder)) {
                 sender.sendMessage(Component.text("Konnte " + name + " nicht löschen.", NamedTextColor.RED));
                 continue;
             }
@@ -90,28 +86,6 @@ public class ResetCommand implements CommandExecutor, TabCompleter {
             Bukkit.getLogger().info("Reset world " + name);
         }
         sender.sendMessage(Component.text("Der Server ist zurückgesetzt.", NamedTextColor.GREEN));
-    }
-
-    /**
-     * @param folder the world folder to remove
-     * @return whether it is gone
-     */
-    private static boolean delete(File folder) {
-        if (folder == null || !folder.exists()) return true;
-        try (Stream<Path> paths = Files.walk(folder.toPath())) {
-            // deepest first, a directory can only go once it is empty
-            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
-                try {
-                    Files.delete(path);
-                } catch (IOException e) {
-                    Bukkit.getLogger().warning("Could not delete " + path + ": " + e.getMessage());
-                }
-            });
-        } catch (IOException e) {
-            Bukkit.getLogger().warning("Could not walk " + folder + ": " + e.getMessage());
-            return false;
-        }
-        return !folder.exists();
     }
 
     @Override

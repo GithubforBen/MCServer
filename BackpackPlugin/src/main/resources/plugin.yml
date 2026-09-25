@@ -1,7 +1,7 @@
 name: Backpack
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.backpack.BackpackPlugin
-api-version: '26.2'
+api-version: '26.3'
 commands:
   backpack:
     description: Öffnet den geteilten Rucksack deines Teams

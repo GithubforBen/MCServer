@@ -1,17 +1,15 @@
 package de.schnorrenbergers.survival;
 
+import de.hems.paper.NetworkPlugin;
+import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
-import de.hems.paper.admin.NetworkOps;
 import de.hems.paper.cosmetic.CosmeticService;
 import de.hems.paper.discord.AccountLinkService;
 import de.hems.paper.cosmetic.CosmeticEffects;
 import de.hems.paper.money.MoneyService;
 import de.hems.paper.admin.AdminStash;
-import de.hems.paper.admin.PlayerAdminHandler;
-import de.hems.paper.commands.ServerManagerCommand;
 import de.hems.paper.event.AwardService;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
-import de.hems.paper.event.EventService;
 import de.hems.paper.event.RunService;
 import de.hems.paper.team.TeamService;
 import de.schnorrenbergers.survival.antiEnd.AntiEndListener;
@@ -35,18 +33,12 @@ import de.schnorrenbergers.survival.listener.JoinListener;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
 import de.schnorrenbergers.survival.utils.configs.ShopConfig;
 import de.schnorrenbergers.survival.utils.configs.TeamConfig;
-import de.hems.paper.customInventory.CustomInventoryListener;
 import de.schnorrenbergers.survival.utils.events.RequestPlayerMoneyEventHandler;
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Survival extends JavaPlugin {
     private static Survival instance;
     private MoneyConfig moneyConfig;
-    private ListenerAdapter listenerAdapter;
     private TeamConfig teamConfig;
     private ShopConfig shopConfig;
     private ChunkLimiter chunkLimiter;
@@ -63,10 +55,9 @@ public final class Survival extends JavaPlugin {
         teamConfig = new TeamConfig();
         shopConfig = new ShopConfig();
         teamRules = new TeamRules();
-        try {
-            listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.SURVIVAL);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        // survival owns the economy and the teams, and both live on the launcher
+        if (!NetworkPlugin.connect(this, ListenerAdapter.ServerName.SURVIVAL)) {
+            throw new IllegalStateException("Survival cannot run without the network.");
         }
         new RequestPlayerMoneyEventHandler();
         // the bits themselves live on the launcher now, this keeps the local copy current
@@ -77,8 +68,6 @@ public final class Survival extends JavaPlugin {
         // the gadgets need one answer more than the other cosmetics: who counts as playing here
         new de.schnorrenbergers.survival.featrues.cosmetic.GadgetListener(this);
         AccountLinkService.init(this);
-        NetworkOps.init(this);
-        new PlayerAdminHandler(this);
         AdminStash.init(this);
         // /admin join: the same stash, carried rather than opened, under a name nobody recognises
         de.schnorrenbergers.survival.featrues.adminjoin.AdminJoinService.init(this);
@@ -87,21 +76,17 @@ public final class Survival extends JavaPlugin {
         // claims are only worth having if somebody can see where they are: a title on crossing, the
         // owner over the hotbar while standing on it, and /cteam grenze for the line itself
         new de.schnorrenbergers.survival.featrues.team.ClaimDisplay(this);
-        registerCommand("admin", new de.schnorrenbergers.survival.commands.AdminCommand());
-        registerCommand("debug", new DebugCommand());
-        registerCommand("cteam", new TeamCommand());
-        getCommand("rs").setExecutor(new RestartCommand());
-        registerCommand("servermanger", new ServerManagerCommand());
-        registerCommand("warp", new de.hems.paper.commands.WarpCommand());
-        registerCommand("shopkeeper", new ShopkeeperCommand());
-        registerCommand("shop", new de.schnorrenbergers.survival.commands.ShopCommand());
-        registerCommand("banane", new BanCommand());
-        registerCommand("legitimize", new LegitimizeCommand());
-        registerCommand("verify", new de.hems.paper.commands.VerifyCommand());
-        registerCommand("cosmetics", new de.hems.paper.commands.CosmeticsCommand());
+        PluginCommands.register(this, "admin", new de.schnorrenbergers.survival.commands.AdminCommand());
+        PluginCommands.register(this, "debug", new DebugCommand());
+        PluginCommands.register(this, "cteam", new TeamCommand());
+        PluginCommands.register(this, "rs", new RestartCommand());
+        PluginCommands.register(this, "shopkeeper", new ShopkeeperCommand());
+        PluginCommands.register(this, "shop", new de.schnorrenbergers.survival.commands.ShopCommand());
+        PluginCommands.register(this, "banane", new BanCommand());
+        PluginCommands.register(this, "legitimize", new LegitimizeCommand());
+        PluginCommands.register(this, "verify", new de.hems.paper.commands.VerifyCommand());
+        PluginCommands.register(this, "cosmetics", new de.hems.paper.commands.CosmeticsCommand());
         new Tablist();
-        new CustomInventoryListener(this);
-        de.hems.paper.warp.ServerConnector.register(this);
         new ShopkeeperManager();
         new ShopkeeperListener();
         new ShopChestListener();
@@ -110,7 +95,6 @@ public final class Survival extends JavaPlugin {
         chunkLimiter.start();
         new ChunkLimiterListener();
         new JoinListener();
-        EventService.init(this);
         RunService.init(this);
         // the calendar is open here as well, and a poker ranking that is empty everywhere but the lobby
         // looks like a bug rather than like a server that was not asked
@@ -118,16 +102,10 @@ public final class Survival extends JavaPlugin {
         // this server owns the economy, so it is the one that can pay out the money side of a prize
         AwardService.setMoneyGiver((player, amount) ->
                 MoneyHandler.addMoney(amount, player.getUniqueId()));
-        registerCommand("events", new de.hems.paper.commands.EventCommand());
         new FlightListener();
         new CommandListener();
         new AntiEndListener();
         new EndListener();
-    }
-
-    private void registerCommand(String commandName, Object command) {
-        getCommand(commandName).setExecutor((CommandExecutor) command);
-        getCommand(commandName).setTabCompleter((TabCompleter) command);
     }
 
     @Override
@@ -149,9 +127,6 @@ public final class Survival extends JavaPlugin {
         return moneyConfig;
     }
 
-    public ListenerAdapter getListenerAdapter() {
-        return listenerAdapter;
-    }
 
     public TeamConfig getTeamConfig() {
         return teamConfig;

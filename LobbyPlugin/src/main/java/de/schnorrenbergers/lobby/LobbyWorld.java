@@ -1,5 +1,6 @@
 package de.schnorrenbergers.lobby;
 
+import de.hems.files.FileTrees;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -9,11 +10,6 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
-import java.util.stream.Stream;
 
 /**
  * The one world the lobby runs in.
@@ -94,36 +90,12 @@ public final class LobbyWorld {
         }
         File target = new File(Bukkit.getWorldContainer(), name);
         try {
-            if (target.exists()) deleteTree(target.toPath());
-            copyTree(source.toPath(), target.toPath());
+            FileTrees.delete(target.toPath());
+            FileTrees.copy(source.toPath(), target.toPath(), FileTrees.WORLD_IDENTITY);
             // a copied world carries the identity of the one it came from, which confuses the server
-            new File(target, "uid.dat").delete();
-            new File(target, "session.lock").delete();
             plugin.getLogger().info("Restored the lobby world from " + source.getPath());
         } catch (IOException e) {
             plugin.getLogger().warning("Could not restore the lobby world: " + e.getMessage());
-        }
-    }
-
-    private static void copyTree(Path source, Path target) throws IOException {
-        try (Stream<Path> paths = Files.walk(source)) {
-            for (Path path : paths.toList()) {
-                Path destination = target.resolve(source.relativize(path).toString());
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                } else {
-                    Files.createDirectories(destination.getParent());
-                    Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-                }
-            }
-        }
-    }
-
-    private static void deleteTree(Path root) throws IOException {
-        try (Stream<Path> paths = Files.walk(root)) {
-            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
-                Files.deleteIfExists(path);
-            }
         }
     }
 

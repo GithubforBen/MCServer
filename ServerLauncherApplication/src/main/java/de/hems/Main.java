@@ -21,9 +21,11 @@ import de.hems.utils.team.BackpackStore;
 import de.hems.utils.team.TeamStore;
 import de.hems.utils.bot.adminabuse.*;
 import de.hems.utils.bot.payingplayer.PayingPlayerCommand;
-import de.hems.utils.bot.tickets.TicketListener;
-import de.hems.utils.bot.tickets.SetTicketChannelListener;
-import de.hems.utils.bot.tickets.Tickets;
+import de.hems.utils.bot.tickets.DiscordTickets;
+import de.hems.utils.ticket.TicketEvents;
+import de.hems.utils.ticket.TicketMigration;
+import de.hems.utils.ticket.TicketService;
+import de.hems.utils.ticket.TicketStore;
 import de.hems.utils.bot.verification.OnAccountVerifyCommand;
 import de.hems.utils.server.IdleServerWatchdog;
 import de.hems.utils.server.MemoryWatch;
@@ -61,12 +63,17 @@ public class Main {
     private BackpackStore backpackStore;
     private StashStore stashStore;
     private EventStore eventStore;
+    private EventSettlement eventSettlement;
+    private de.hems.utils.restart.RestartScheduler restartScheduler;
     private RunStore runStore;
     private AwardStore awardStore;
     private MoneyStore moneyStore;
     private RoundStore roundStore;
     private CosmeticStore cosmeticStore;
     private AccountLinkStore accountLinkStore;
+    private TicketService ticketService;
+    private de.hems.utils.lotto.LottoService lottoService;
+    private DiscordTickets discordTickets;
     private de.hems.utils.poker.PokerStatsStore pokerStatsStore;
     private JDA jda;
     private WebServer webServer;
@@ -117,6 +124,10 @@ public class Main {
         // ownership all live here, so a purchase is one step and not three that can fail halfway
         cosmeticStore = new CosmeticStore();
         new CosmeticEvents(cosmeticStore, moneyStore);
+        // the lotto is paid in bits and drawn here, since this is the part of the network that is always on
+        lottoService = new de.hems.utils.lotto.LottoService(new de.hems.utils.lotto.LottoStore(), moneyStore);
+        new de.hems.utils.lotto.LottoEvents(lottoService);
+        lottoService.start();
         eventStore = new EventStore();
         runStore = new RunStore();
         awardStore = new AwardStore();
@@ -126,8 +137,12 @@ public class Main {
         de.hems.events.PokerEvents pokerEvents = new de.hems.events.PokerEvents(pokerStatsStore);
         de.hems.utils.poker.PokerSettlement pokerSettlement =
                 new de.hems.utils.poker.PokerSettlement(pokerStatsStore, moneyStore, awardStore, pokerEvents);
-        new EventEvents(eventStore, runStore, awardStore,
-                new EventSettlement(eventStore, runStore, awardStore, pokerSettlement));
+        de.hems.utils.event.EventResultStore resultStore = new de.hems.utils.event.EventResultStore();
+        new de.hems.events.EventResultEvents(resultStore, eventStore);
+        eventSettlement = new EventSettlement(eventStore, runStore, awardStore, pokerSettlement, resultStore);
+        new EventEvents(eventStore, runStore, awardStore, eventSettlement);
+        // /neustart on any server lands here: countdown, save, stop, and run.sh does the rest
+        restartScheduler = new de.hems.utils.restart.RestartScheduler();
         new AdminAbuseHandler();
         serverHandler = new ServerHandler();
         // what the machine has left, and which server is sitting on memory it never uses
@@ -141,6 +156,12 @@ public class Main {
         // who is who: a minecraft name is all anybody has when somebody has to be written to
         accountLinkStore = new AccountLinkStore();
         new AccountLinkEvents(accountLinkStore);
+        // tickets from discord, the game and the website - one conversation, wherever it is answered
+        TicketStore ticketStore = new TicketStore();
+        TicketMigration.run(configuration, ticketStore, accountLinkStore);
+        ticketService = new TicketService(ticketStore, accountLinkStore);
+        new TicketEvents(ticketService);
+        discordTickets = new DiscordTickets(ticketService, accountLinkStore, configuration);
         new StartServerEvent();
         new RestartServerEvent();
         new StopServerEvent();
@@ -152,8 +173,7 @@ public class Main {
             jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                     .addEventListeners(
-                            new SetTicketChannelListener(),
-                            new TicketListener(),
+                            discordTickets,
                             new OnAccountVerifyCommand(accountLinkStore),
                             new de.hems.utils.bot.verification.OpCommand(accountLinkStore),
                             new PayingPlayerCommand(),
@@ -163,7 +183,10 @@ public class Main {
             jda.awaitReady();
             jda.updateCommands().addCommands(Commands.slash("payingplayer", "Schreibe auf, dass ein spieler für den Server zahlt!").addOption(OptionType.STRING, "minecraftname", "Den Minecraft name hier einfügen.", true))
                     .addCommands(
-                            Commands.slash("setticketchannel", "Set the channel for tickets").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
+                            Commands.slash("setticketchannel", "Setzt den Kanal, in dem Spieler Tickets schreiben").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
+                            ))
+                    .addCommands(
+                            Commands.slash("setticketstaffchannel", "Setzt den Kanal, in dem die Admins Tickets bearbeiten").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
                             ))
                     .addCommands(
                             Commands.slash("setloggingchannel", "Set the channel for admin abuse logging").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
@@ -194,7 +217,7 @@ public class Main {
         // servers created for an event are nobody's job to clean up, so the launcher does it
         idleServerWatchdog = new IdleServerWatchdog(serverHandler);
         startWebServer();
-        if (jda != null) Tickets.updateTicketChannel();
+        if (jda != null) discordTickets.ensurePanel();
     }
 
     /**
@@ -287,6 +310,14 @@ public class Main {
         return backpackStore;
     }
 
+    public de.hems.utils.restart.RestartScheduler getRestartScheduler() {
+        return restartScheduler;
+    }
+
+    public EventSettlement getEventSettlement() {
+        return eventSettlement;
+    }
+
     public EventStore getEventStore() {
         return eventStore;
     }
@@ -321,6 +352,14 @@ public class Main {
 
     public AccountLinkStore getAccountLinkStore() {
         return accountLinkStore;
+    }
+
+    public TicketService getTicketService() {
+        return ticketService;
+    }
+
+    public de.hems.utils.lotto.LottoService getLottoService() {
+        return lottoService;
     }
 
     /**

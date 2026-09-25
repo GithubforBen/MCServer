@@ -1,5 +1,6 @@
 package de.hems.utils.round;
 
+import de.hems.utils.YamlFiles;
 import de.hems.types.round.RoundData;
 import de.hems.types.round.RoundPolicy;
 import de.hems.types.round.RoundState;
@@ -7,7 +8,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,16 +37,7 @@ public class RoundStore {
 
     public RoundStore(File file) {
         this.file = file;
-        if (!file.exists()) {
-            File parent = file.getParentFile();
-            if (parent != null) parent.mkdirs();
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        this.config = YamlConfiguration.loadConfiguration(file);
+        this.config = YamlFiles.load(file);
         load();
         // written out even when nothing was ever changed, so the file says what the rules are instead of
         // being an empty file an admin has to guess the defaults of
@@ -159,11 +150,7 @@ public class RoundStore {
     }
 
     public synchronized void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            System.out.println("Could not save " + file.getName() + ": " + e.getMessage());
-        }
+        YamlFiles.saveOrLog(config, file);
     }
 
     /**

@@ -156,11 +156,12 @@ public class EventModule implements WebModule {
     private void delete(ApiContext ctx) {
         EventData event = resolve(ctx);
         if (event == null) return;
-        if (!store().delete(event.getId())) {
+        // through the settlement, like a delete from the game: a deleted poker night hands the chips on its
+        // tables back first, and runs, results and servers go with the event
+        if (!Main.getInstance().getEventSettlement().delete(event.getId())) {
             ctx.error(404, "Dieses Event gibt es nicht.");
             return;
         }
-        announce(event.getId(), null);
         ctx.ok(event.getName() + " wurde gelöscht.");
     }
 

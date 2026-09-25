@@ -23,6 +23,8 @@ public class AwardData implements Serializable {
     /** Kept as text, because the event itself may be long gone by the time this is collected. */
     private String eventName;
     private int place;
+    /** What it was for, as the player reads it. Empty on awards from before rewards had titles. */
+    private String title;
     private PrizeData prize;
     private long awardedAt;
     private boolean claimed;
@@ -47,9 +49,20 @@ public class AwardData implements Serializable {
     }
 
     /**
+     * @param player who earned it
+     * @param event  the event it came from
+     * @param earned the reward they earned there
+     */
+    public AwardData(UUID player, EventData event, EventRewards.Earned earned) {
+        this(player, event, earned.place(), earned.rule().getPrize());
+        this.title = earned.title();
+    }
+
+    /**
      * @return how the placing reads, for a message
      */
     public String getPlaceTitle() {
+        if (title != null && !title.isBlank()) return title;
         return switch (place) {
             case PARTICIPATION -> "Teilnahme";
             case 1 -> "1. Platz";
@@ -97,6 +110,14 @@ public class AwardData implements Serializable {
 
     public void setPlace(int place) {
         this.place = place;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public PrizeData getPrize() {

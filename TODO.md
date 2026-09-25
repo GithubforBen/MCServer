@@ -110,6 +110,79 @@ Offen:
 - [ ] Eigene Pokerrunden über `/runde`, so wie es sie für Bedwars gibt — die Engine und
       die Bots stehen dafür schon, es fehlt der Weg über `RoundData`
 
+### 1.4c Hunger Games und einheitliche Event-Einstellungen — steht
+
+- [x] Eventtyp `HUNGER_GAMES`, eigenes Modul `HungerGamesPlugin`, Vorlage `HUNGER_GAMES`
+- [x] Füllhorn in der Mitte (vorhandene Kisten der Karte oder gebaut), Startring, Countdown mit Freeze
+- [x] Supply Drops als fallende Kiste mit Koordinaten und Lichtsäule
+- [x] Schutzzeit, schrumpfende Weltgrenze, Showdown mit Leuchten; Nether und End aus
+- [x] Vorbereitete Karte aus `./hungergames-world`, sonst frische Welt; Loot in `./hungergames-loot.yml`
+- [x] Platz und Kills gehen laufend an den Launcher (`results.yml`), Abrechnung beim Eventende
+- [x] Einstellungen und Belohnungen für **jedes** Event an denselben zwei Knöpfen, beim Anlegen und danach
+- [x] Belohnungen als Regeln: `#1`, Platzbereich, ab Platz X, ab X Kills, Teilnahme — alle passenden zahlen
+- [x] UHC und Pokernacht zahlen über dieselben Regeln aus; alte `prize.*`-Einträge werden übernommen
+- [x] Vorlage für neue Events: `EventSetting`, `EventDefinition(s)`, `ServerEventStarter`, `EventResultService`
+- [x] Bug: Einstellungen mit Punkt im Schlüssel waren nach einem Launcher-Neustart kaputt (`EventStore`)
+- [ ] Teams bei Hunger Games — `hg.team-size` ist vorbereitet, gespielt wird solo
+- [x] Bedwars meldet Team-Plätze und Kills an den Launcher und bekommt Belohnungen
+- [x] Bedwars-, Poker- und Hunger-Games-Server laufen alle über `ServerEventStarter`
+- [x] Der Server einer Bedwars-Event-Runde wird beim Abrechnen gestoppt und gelöscht (lag vorher liegen)
+
+### 1.4d Update auf Minecraft 26.3 — steht
+
+- [x] Paper 26.3 (build 40, ALPHA), Velocity 4.2.0, WorldEdit 7.4.6-beta-02, WorldGuard 7.0.19,
+      CoreProtect 24.1, Chunky 1.5.3, Voicechat 2.6.24 / 2.6.18
+- [x] Alle Plugins bauen gegen paper-api 26.3 und velocity-api 4.2.0, keine Warnung zu entfernten APIs
+- [x] `velocity.toml` im Format von Velocity 4 (config 2.9); mit dem echten Jar gestartet
+- [x] Automatisches Welt-Backup nach `./backups/` vor dem ersten Start auf einer neuen Version (`WorldBackupCheck`)
+- [x] Echter Paper-26.3-Server mit allen Plugins: startet ohne Exception, die Arena baut ihr Füllhorn
+- [x] Bug (schon vor dem Update): `/poker karte speichern` und der Export nach dem Bau haben nie funktioniert,
+      weil die Casino-Welt seit 26.1 unter `world/dimensions/...` liegt. Dazu lag das Layout auf dem
+      Casino-Server selbst, so dass jede Nacht das Casino neu gebaut hätte. Jetzt wandern Welt und Layout
+      über `./poker-world` — mit zwei 26.3-Servern nacheinander geprüft
+- [x] Hunger Games: eine 26.1-Karte als `./hungergames-world` wird auf 26.3 hochgestuft, `hungergames.yml`
+      gefunden; der Nether wird entladen, weil `allow-nether=false` ihn auf 26.3 nicht mehr aufhält
+- [ ] **CoreProtect gibt es nicht für 26.3** — es schaltet sich ab. Neue Version eintragen, sobald sie da ist
+- [ ] Auf Paper 26.3 stable und WorldEdit 7.4.6 (Release) wechseln, sobald es sie gibt
+- [ ] Die `backups/` werden nie aufgeräumt
+
+### 1.4e Review 2026-09-25 — Duplikate und Bugs
+
+Zusammengeführt (vorher mehrfach geschrieben):
+- [x] `FileTrees` — Ordner kopieren/löschen (9×)
+- [x] `YamlFiles` — Laden/Speichern der Launcher-Stores (12× + main-config + capacity)
+- [x] `ListenerAdapter.ask` — Anfrage senden und auf Antwort warten (22×)
+- [x] `PluginCommands.register` — Befehle registrieren (6×)
+- [x] `Presets.step` — Voreinstellungen durchklicken (4×)
+
+Behoben:
+- [x] Preise konnten doppelt ausgezahlt werden (aushändigen, dann ohne Antwort „abgeholt“ melden) —
+      jetzt erst beim Launcher reservieren, dann aushändigen; zurückgeben darf nur, wer reserviert hat
+- [x] Website-Löschen eines Events lief an der Aufräumlogik vorbei — bei einer laufenden Pokernacht
+      gingen die Chips auf den Tischen nie an die Spieler zurück. Beide Wege gehen jetzt durch
+      `EventSettlement.delete`, das auch den Server eines Bedwars-/Hunger-Games-Events wegräumt
+- [x] Launcher-Dateien: nicht atomar geschrieben, und eine unlesbare Datei wurde als leer gelesen und
+      überschrieben (bei `money.yml` mit erneutem Import der alten Stände)
+- [x] Ergebnisse, die in der Sekunde des Eventendes ankommen, gingen bei der Abrechnung verloren und
+      blieben verwaist in `results.yml` — 2 Minuten Frist, späte Zeilen werden verworfen
+- [x] `/legitimize`: ohne Berechtigung für jeden nutzbar, blockierte bei jedem Tab den Main-Thread,
+      stürzte ohne Anführungszeichen ab
+- [x] Kopierte Welten nahmen seit 26.1 die Spielerdaten mit (`players/` wurde nicht entfernt)
+- [x] Lobby und Survival hätten beim ersten Befehl ohne TabCompleter `onEnable` abgebrochen
+
+Gefunden, bewusst nicht geändert — **Entscheidung nötig**:
+- [x] Ein Event endet mit seinem Spiel, nicht mit seiner Uhr: Bedwars und Hunger Games gehen in die
+      Verlängerung und werden abgerechnet, wenn die Runde „fertig“ meldet (sonst: Server weg, oder nach
+      6 Stunden). Hunger Games wertet nicht mehr nach Kills, wenn die Zeit abläuft
+- [x] Der Launcher prüft neue Teamnamen selbst (bestehende Namen bleiben, wie sie sind)
+- [x] Die Lobby merkt sich über einen Neustart hinweg, wen sie zu welchem Event geschickt hat
+      (`plugins/<Lobby>/event-sent.yml`)
+- [x] `NetworkSync` — Lebenszyklus der acht Services mit Launcher-Kopie (laden, bis zum Erfolg
+      wiederholen, regelmäßig nachladen); vier davon leerten ihre Kopie beim Nachladen kurz komplett
+- [x] `NetworkPlugin.connect` — Netzwerk-Start der sechs Plugins. Dabei: Op-Änderungen aus Discord gelten
+      jetzt auch auf Bedwars-, Casino-, Arena- und Run-Servern sofort; `/rs` hing noch an der alten Falle
+- [ ] Die Doku sagt `TableCheck` hat 57 Prüfungen, er meldet 41
+
 ### 1.5 Lobby
 - [x] Eventsystem in der Lobby verfügbar (`/events`, Kalender, Join-Hinweis)
 - [x] Events lassen sich direkt aus der Lobby heraus anlegen
@@ -129,34 +202,189 @@ Offen:
 
 ## 2. Am lebenden Server nachprüfen
 
-Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiziert.
+Alles gebaut und logisch geprüft, aber nicht auf einem laufenden Server verifiziert. Aufgeteilt danach,
+wer es testen kann.
 
-**Pokernacht** — die Regeln selbst sind geprüft (`HandCheck`, `TableCheck`, 104 Prüfungen plus
-Zufallsläufe), die Bots gemessen (`BotBalanceCheck`). Was nur auf einem echten Server geht:
+### 2.1 Testbar von Claude per Computer Use
 
-- [ ] Sieht der Tisch aus wie gedacht? Karten flach auf dem Filz, eigene nur für einen selbst
-      sichtbar, Chipstapel in Denominationen, der Kopf des Aktiven dreht schneller
-- [ ] Setzt man sich per Rechtsklick sauber auf den Stuhl, und steht man auch wieder auf?
-      (`CasinoTable.placeOnChair` reitet einen unsichtbaren ArmorStand)
-- [ ] Buy-in unter echter Last: zwei Leute klicken gleichzeitig auf denselben Stuhl — einer
-      bekommt sein Geld zurück statt eines Platzes
-- [ ] Logout mitten in der Hand: kommen die Chips wirklich als Bits zurück?
-- [ ] Casino-Server hart killen (`kill -9`), Event abrechnen lassen: zahlt der Launcher die
-      offenen Stacks aus, und **nur einmal**?
-- [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau wieder da?
-- [ ] Turnier: steigen die Blinds nur zwischen Händen, und stimmt die Auszahlung?
-- [ ] Fühlen sich die Bots an einem echten Tisch verschieden an, oder nur in der Statistik?
-      Das ist die einzige Frage zu ihnen, die keine Messung beantwortet
+Claude steuert dabei deinen Rechner (Screenshots, Klicks, Tippen) über die Claude-Desktop-App.
 
-- [ ] Bleibt nach mehreren Neustarts **genau ein** Villager pro Shop übrig?
+**Voraussetzungen**, sonst fällt der Test in 2.2:
+- Computer Use ist in der Desktop-App eingeschaltet
+- Minecraft-Client läuft auf dem Rechner, eingeloggt mit **einem Op-Account**
+- Zugriff auf die Konsole des Launchers bzw. der Server (Terminal/SSH oder die Admin-Website) und auf
+  die Dateien neben dem Launcher
+- Für Event-Tests: Einstellungen mit kurzen Zeiten (Schrumpfen ab 3 Min, Drops alle 2 Min, Event in
+  wenigen Minuten), damit ein Test nicht eine Stunde dauert
+
+Grenze: ein Account heißt ein Spieler. Alles, wofür es Plätze, Gegner oder einen zweiten Blick braucht,
+steht in 2.2.
+
+**Update auf 26.3**
+- [ ] Launcher-Start nach dem Update: liegt für SURVIVAL und LOBBY ein Backup in `./backups/`, bevor die
+      Server starten, und ist die Welt darin vollständig (inkl. `dimensions/`)?
+- [ ] Proxy mit Velocity 4.2.0: verbinden, `/warp` auf jeden Server, ein neu erstellter Server taucht
+      ohne Proxy-Neustart in `/warp` auf
+- [ ] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
+- [ ] Survival nach der Umwandlung: eigene Claims (WorldGuard), Shops und Teams noch da?
+- [ ] WorldEdit-Beta: die Befehle, die ihr nutzt (`//wand`, `//set`, `//copy`, `//paste`, `//undo`)
+- [ ] Bedwars-Maps aus `./bedwars-maps` und die Lobby-Vorlage aus `./lobby-world`: auf 26.3 hochgestuft,
+      korrekt geladen, Map steht im Lobby-Menü
+- [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers (Konsole + `money.yml`)
+
+**Event-Starter und Event-Panel**
+- [ ] Bedwars-Event: Server geht 5 Min vorher hoch, Einladung im Chat, zur Eventzeit wird man
+      rübergeschickt; nach `/lobby` während des Events wird man wieder geholt (Nachzügler-Logik)
+- [ ] Lobby während eines Bedwars-Events neu starten: wird man danach **nicht** ein zweites Mal geholt?
+- [ ] Pokernacht: Casino geht hoch, Ankündigung mit Knopf, Erinnerung alle 15 Min, niemand wird gezogen
+- [ ] Event-Panel: „Zur Bedwars-Lobby“ / „Zum Casino“ / „Zur Arena“ an derselben Stelle,
+      Einstellungen und Belohnungen in denselben zwei Slots wie beim Anlegen
+- [ ] Ein abgesagtes Event wieder aktivieren: sind seine Läufe noch da?
+- [ ] Event abrechnen lassen (Server stoppen oder Runde beenden): Verzeichnis der Bedwars-Runde bzw.
+      der Arena ist danach weg
+
+**Hunger Games (allein, mit `/hg start`)**
+- [ ] Karte aus `./hungergames-world` kommt an, `hungergames.yml` wird gelesen (Mitte laut Konsole)
+- [ ] Nether und End sind aus: Konsole meldet „Unloaded world_nether“, ein Portal bringt einen nirgendwohin
+- [ ] Freeze im Countdown: umsehen geht, vom Startplatz laufen nicht
+- [ ] Supply Drop landet als gefüllte Kiste, Koordinaten im Chat, Lichtsäule steht
+- [ ] Grenze schrumpft in der eingestellten Zeit (`/worldborder get` vorher und nachher)
+- [ ] `/hg stop` bei einem Event: Arena meldet „fertig“, Event wird abgerechnet, die
+      **Teilnahme**-Belohnung kommt beim nächsten Join an, Arena ist danach gestoppt und gelöscht
+
+**Pokernacht (allein mit Bots)**
+- [ ] Tisch sieht aus wie gedacht: Karten flach auf dem Filz, Chipstapel in Denominationen, der Kopf
+      des Aktiven dreht schneller (Screenshots)
+- [ ] Per Rechtsklick auf den Stuhl setzen und wieder aufstehen
+- [ ] Logout mitten in der Hand: kommen die Chips als Bits zurück?
+- [ ] Casino-Server hart killen (`kill -9`), Event abrechnen lassen: offene Stacks werden ausgezahlt,
+      und **nur einmal** (Kontostand vorher/nachher)
+- [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau im selben Raum?
+- [ ] Turnier gegen Bots: Blinds steigen nur zwischen Händen, Auszahlung am Ende stimmt
+
+**Neustart und Updates**
+- [ ] `/neustart 2`: Countdown im Chat auf allen Servern, Bossbar, Titel; nach dem Kick sind alle
+      Server-Prozesse weg (Konsole: „Every server is down“), das Netzwerk kommt von selbst wieder
+- [ ] `/neustart 2 update` mit einem neuen Commit auf dem Branch: läuft danach der neue Stand, steht
+      „Update … erfolgreich“ unter `/neustart`?
+- [ ] `/neustart 2 update` mit einem Commit, der nicht baut: kommt das Netzwerk auf dem alten Stand
+      wieder, und steht das unter `/neustart`?
+- [ ] `/neustart 5`, dann `/neustart abbrechen`: Bossbar weg, Absage im Chat
+- [ ] Ein Server, der während des Countdowns startet, zeigt denselben Countdown
+- [ ] `/neustart 1 aus`: alles bleibt aus, `run.sh` beendet sich
+
+**Lotto**
+- [ ] `/lotto stand` in der Lobby: Villager und Schild stehen, Rechtsklick öffnet den Tippschein statt
+      des Handelsmenüs, Schlagen tut ihm nichts
+- [ ] Lobby neu starten: genau ein Villager, nicht zwei
+- [ ] Tippschein: 4 Zahlen wählen, 5. wird abgelehnt, „Tippen“ zieht die Bits ab, Topf auf dem
+      Schild steigt sofort
+- [ ] Zu wenig Bits: Kauf abgelehnt, nichts abgezogen
+- [ ] `/lotto termin <heute> <in 2 Minuten>`: Ziehung kommt von allein, auf Lobby und Survival
+      angesagt
+- [ ] `/lotto ziehen` ohne Tipps: abgelehnt
+
+**Tickets** (braucht Discord auf dem Rechner, mit Admin-Rechten auf dem Server)
+- [ ] Erster Start mit alten Tickets in der `main-config.yml`: stehen sie in `tickets.yml` und im
+      Website-Panel, und sind `tickets`/`ticket-N` aus der `main-config.yml` verschwunden?
+- [ ] `/setticketchannel` zweimal: steht die Knopf-Nachricht danach genau einmal da, und ist nichts
+      gelöscht?
+- [ ] `/setticketstaffchannel`, dann ein Ticket über Discord: Thread erscheint mit Kopf und Knöpfen,
+      DM mit „Antworten“ kommt an
+- [ ] Nachricht im Thread geht per DM raus (✅ am Thread-Post), eine mit `//` nicht
+- [ ] Ticket schließen, ein paar Tage warten (Thread archiviert), dann im Spiel antworten: taucht die
+      Antwort im alten Thread auf, oder gibt es einen neuen?
+- [ ] Knopf unter einer Admin-Aktion im Logging-Kanal: Formular steht auf „Frage zu einer
+      Admin-Aktion“, das Ticket hat „Bezieht sich auf“
+- [ ] Website: antworten, übernehmen, schließen. Kommt es im Thread und in der DM an? Bleibt der
+      angefangene Text beim Auto-Refresh stehen?
+
+**Survival: Shops und Marktplatz**
+- [ ] Nach mehreren Neustarts **genau ein** Villager pro Shop
       (`ShopkeeperChunkListener`, Spawn über `EntitiesLoadEvent`)
-- [ ] Feuert `ChunkUnloadEvent` in Paper 26.2 früh genug, dass `getState()` noch die
-      echten Kisteninhalte liefert? (`Shopkeeper.refreshStock()`)
-- [ ] Kauf-Transaktion unter echter Last: Rollback bei vollem Inventar, Erstattung,
-      Ware landet nicht doppelt (`Shopkeeper.buyItem()`)
+- [ ] Kiste füllen, weglaufen bis der Chunk entlädt, zurück: stimmt der Bestand
+      (`ChunkUnloadEvent` früh genug für `getState()`, `Shopkeeper.refreshStock()`)
 - [ ] Marktplatz-Oberfläche: Reiter, Sortierung, Toggles, Rechtsklick-Anbieterliste
-- [ ] BUILDING/MISC-Aufteilung — hängt an `Material.isBlock()` und ist deshalb nur auf
-      dem Server testbar (die expliziten Regeln sind abgedeckt)
+- [ ] BUILDING/MISC-Aufteilung stimmt für eine Handvoll Stichproben (`Material.isBlock()`)
+
+**Cosmetics, Gadgets, Admin**
+- [ ] Mit Lobby-Gadget nach Survival und zurück warpen: kein Item, kein Tier, kein Ballon bleibt
+      zurück, das Survival-Gadget ist noch angelegt
+- [ ] Wenn der Op-Account vor dem Update ein Gadget trug: trägt er es in allen drei Slots, und legt das
+      erste Umlegen nur einen davon um?
+- [ ] Erntehelfer in einer fremden Claim oder WorldGuard-Region erntet nicht (braucht eine Claim, die
+      nicht dem Test-Account gehört, z.B. von einem Admin-Team)
+- [ ] Reittier/Haustier/Ballon draußen, Server hart killen: steht danach nichts mehr herum?
+- [ ] `/admin join`: eigene Sicht in F5 zeigt die Admin-Gestalt
+- [ ] `/op` über Discord auf einem laufenden Server: gilt sofort, steht nach einem Neustart in `ops.json`
+      (braucht den Discord-Besitzer-Account auf dem Rechner)
+- [ ] Gemessene Speicherspitzen plausibel: Server-Manager-Panel gegen RSS aus `/proc` (Faktor 1,4)
+
+### 2.1b Testbar von Claude mit zwei Accounts
+
+Zwei Minecraft-Clients nebeneinander auf demselben Rechner (z.B. zwei Instanzen im Launcher, beide im
+Fenstermodus), Claude wechselt zwischen den Fenstern. Zusätzlich zu den Voraussetzungen oben: genug
+Arbeitsspeicher für zwei Clients, beide Accounts dürfen aufs Netzwerk (Whitelist).
+
+Grenzen: Claude handelt nacheinander, nicht im selben Moment - ein Spieler steht still, während der
+andere handelt. Für einen Kill heißt das: der eine greift an, der andere wehrt sich nicht.
+
+**Hunger Games (Mindestens Spieler: 2)**
+- [ ] Ein ganzes Spiel zu zweit: Schutzzeit hält (kein Schaden), danach zählt ein Treffer, der Kill
+      wird gezählt, Platz 2 und 1 stimmen, Sieger-Feuerwerk, beide nach 20 s zurück in die Lobby
+- [ ] Belohnungen für `#1`, `#2` und „ab 1 Kill“ kommen beim richtigen Account an
+- [ ] Event läuft über seine Zeit (kurze Dauer, späte Schrumpfzeit): „Verlängerung“ im Kalender,
+      Abrechnung erst nach dem Sieg
+
+**Bedwars-Belohnungen (Solo, zwei Teams)**
+- [ ] Bett zerstören, Final Kill: Platz 1 und 2 stimmen und stehen im Ergebnis-Panel des Events
+- [ ] „ab X Kills“: kommen die Kills (inkl. Final Kills) richtig an?
+- [ ] Event, das über seine Zeit hinaus läuft: „Verlängerung“ im Kalender, Abrechnung erst nach dem
+      Rundenende
+- [ ] Zeitlimit-Ende (kurzes Limit): stimmen die Plätze mit dem Endbildschirm überein?
+- [ ] Ein Account verlässt die Runde mittendrin: steht er noch im Ergebnis (Teilnahme)?
+
+**Pokernacht**
+- [ ] Die eigenen Karten sind nur für einen selbst sichtbar (Screenshots beider Clients vergleichen)
+
+**Tickets** (ein Op-Account, ein normaler, der normale mit `/verify` verknüpft)
+- [ ] `/ticket neu` mit dem normalen Account: der Op bekommt „Neues Ticket“ im Chat, egal auf
+      welchem Server er steht
+- [ ] `/ticket <nr> antworten ...` als Op: der normale bekommt die Antwort im Chat und per DM
+- [ ] Normaler Account offline, Op antwortet, normaler joint: „Neue Antwort“ nach dem Join, nach
+      `/ticket <nr>` nicht mehr
+- [ ] Normaler Account versucht `/ticket <nr>` auf ein fremdes Ticket: abgewiesen
+- [ ] Op übernimmt ein Ticket, der Spieler antwortet: nur der Bearbeiter bekommt die Nachricht
+
+**Lotto**
+- [ ] Beide Accounts tippen denselben Tipp, `/lotto ziehen` so oft, bis er fällt (oder mit wenigen
+      Zahlen in `/lotto quick 20` Glück haben): Topf wird geteilt, beide sehen „Gewonnen!“
+- [ ] Ein Gewinner ist offline: das Geld ist nach dem Join da
+
+**Runden und Admin**
+- [ ] Rundenadmin kickt den zweiten Account, der danach wieder joinen will
+- [ ] Private Runde: der zweite Account warpt ohne Einladung direkt auf den Servernamen
+- [ ] `/admin join`: sieht der zweite Account Name über dem Kopf, Skin und Tabliste der Admin-Gestalt?
+
+### 2.2 Muss von Spielern getestet werden
+
+Braucht drei oder mehr Spieler, echte Gleichzeitigkeit, Last, Ton oder ein Urteil, das keine Messung
+liefert.
+
+- [ ] Bedwars mit drei Teams: bekommen sie die Plätze 3, 2, 1 in der Reihenfolge des Ausscheidens?
+- [ ] Hunger Games mit mindestens drei Spielern: Plätze in der Reihenfolge des Rausfliegens,
+      Showdown-Leuchten im Endkampf
+- [ ] Pokernacht: zwei Leute klicken im selben Moment auf denselben Stuhl - einer bekommt sein Geld
+      zurück statt eines Platzes
+- [ ] Pokernacht: fühlen sich die Bots an einem echten Tisch verschieden an, oder nur in der Statistik?
+- [ ] Simple Voicechat über den Proxy: das Velocity-Plugin 2.6.18 ist für Velocity 3 gebaut - hört man
+      sich unter Velocity 4?
+- [ ] Zwei Spieler starten im selben Moment eine Runde, wenn nur noch für eine Platz ist
+- [ ] Kauf-Transaktion unter echter Last: Rollback bei vollem Inventar, Erstattung, Ware landet nicht
+      doppelt (`Shopkeeper.buyItem()`)
+- [ ] Tinte auf einer vollen Runde: kostet es TPS?
+- [ ] Tickets im Alltag: Sind die Hinweise im Spiel für Admins zu viele? Ist `/ticket neu` mit Titel
+      und Text im Chat verständlich genug für jemanden, der es zum ersten Mal benutzt?
 
 ---
 
@@ -332,22 +560,7 @@ Offen:
       umgebogen ist das Adminabuse-Log; andere Stellen wurden nicht durchgesehen
 
 ### 5.5 Am lebenden Server nachprüfen
-- [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers
-- [ ] Zwei Spieler starten gleichzeitig eine Runde, wenn nur noch für eine Platz ist
-- [ ] Die gemessenen Spitzen sind plausibel (RSS ist mehr als der Heap — der Vorschlag rechnet mit
-      Faktor 1,4 auf die Spitze, das sollte an echten Zahlen geprüft werden)
-- [ ] Tinte auf einer vollen Runde: kostet es TPS?
-- [ ] Ein Spieler mit Lobby-Gadget warpt nach Survival und zurück: bleibt kein Item, kein Tier und
-      kein Ballon zurück, und ist das Survival-Gadget noch angelegt?
-- [ ] Jemand, der vor dem Update ein Gadget anhatte: trägt er es nach dem Update in allen drei
-      Slots, und legt das erste Umlegen nur einen davon um?
-- [ ] Der Erntehelfer in einer fremden Claim oder WorldGuard-Region: erntet er dort nicht
-- [ ] Rundenadmin kickt jemanden, der danach wieder joinen will
-- [ ] Eine private Runde: jemand ohne Einladung warpt direkt auf den Servernamen
-- [ ] Eine Welt nach `./bedwars-maps` legen und prüfen, dass sie auf dem nächsten Rundenserver
-      liegt und im Lobby-Menü steht
-- [ ] Ein abgesagtes Event wieder aktivieren und prüfen, dass seine Läufe noch da sind
-- [ ] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
+Steht jetzt gesammelt in Abschnitt 2, aufgeteilt nach Claude und Spielern.
 
 ### 5.6 Discord-Verknüpfung und Ops — erledigt
 - [x] `/verify <minecraftname>` im Discord gibt einen Code (6 Zeichen, 10 Minuten, ephemeral)
@@ -363,8 +576,37 @@ Offen:
 - [ ] Ein Spieler, der sich umbenennt, behält den alten Namen in `links.yml`. Die UUID stimmt,
       die Anzeige nicht — beim nächsten Verknüpfen wird der Name aktualisiert
 - [ ] Die Verknüpfung steht nirgends in der Admin-Website, nur im Spiel
-- [ ] Nachprüfen: `/op` auf einem laufenden Server — bekommt der Spieler die Rechte wirklich
-      sofort und stehen sie nach einem Neustart noch in der `ops.json`?
+- [ ] Nachprüfen: `/op` auf einem laufenden Server (steht in Abschnitt 2.1)
+
+### 5.8 Lotto — steht
+- [x] 4 aus 15 mit Bits, beliebig viele Tipps, Ziehung zu einstellbarem Wochentermin
+- [x] Nur alle vier Richtigen gewinnen, sonst wächst der Topf weiter. Mehrere Gewinner teilen
+- [x] `/lotto` mit Tippschein auf allen Servern, Stand mit Schild in der Lobby
+- [x] `LottoCheck` für Kauf, Ziehung, Teilung, Übertrag und Termin
+
+Offen:
+- [ ] Die Admin-Website zeigt das Lotto nicht (war nicht gewünscht, wäre ein kleines Panel)
+- [ ] Discord-Ansage der Ziehung (ebenso)
+- [ ] Bei wenig Spielern dauert es lange bis zum ersten Gewinner (1:1365 pro Tipp). Falls es zäh
+      wird: auf 4 aus 12 (1:495) gehen, oder ab einer Anzahl leerer Runden an die meisten Treffer
+      auszahlen
+
+### 5.7 Ticket-System neu — erledigt
+- [x] Ein Stand für Discord, Spiel (`/ticket`) und Website, als Gespräch mit Status und Bearbeiter
+- [x] Ein Thread pro Ticket im Admin-Kanal statt einer DM an jedes Mitglied mit Nachrichtenrechten
+- [x] Nummern mit eigenem Zähler: vorher zählte die Nummer die Tickets, zwei gleichzeitige Tickets
+      bekamen dieselbe, und das zweite überschrieb das erste
+- [x] Kein Massenlöschen im Ticket-Kanal beim Start mehr. Discord lehnt das für Nachrichten über
+      14 Tage ab, der Start warf dann
+- [x] Eine Antwort schließt das Ticket nicht mehr, und Knöpfe auf gelöschte Tickets werfen keine NPE
+- [x] Alte Tickets werden aus der `main-config.yml` übernommen
+
+Offen:
+- [ ] Ein Thread, der nicht mehr zu finden ist (gelöscht, oder unter den archivierten nicht unter
+      den letzten 200), wird neu angelegt. Der alte Verlauf steht dann im neuen, aber zwei Threads
+      zum selben Ticket sind möglich
+- [ ] Anhänge (Screenshots) aus Discord-Threads werden nicht weitergegeben, nur der Text
+- [ ] Nachprüfen: Abschnitte 2.1 und 2.1b
 
 ---
 

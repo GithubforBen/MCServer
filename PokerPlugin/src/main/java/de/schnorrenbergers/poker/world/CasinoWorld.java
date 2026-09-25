@@ -1,5 +1,6 @@
 package de.schnorrenbergers.poker.world;
 
+import de.hems.files.FileTrees;
 import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
 import org.bukkit.GameRule;
@@ -15,11 +16,8 @@ import org.bukkit.plugin.Plugin;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
 import java.util.Random;
-import java.util.stream.Stream;
 
 /**
  * The one world the casino stands in.
@@ -38,6 +36,8 @@ public final class CasinoWorld {
 
     /** What the world is called on this server. */
     public static final String WORLD_NAME = "casino";
+    /** The layout of the tables, kept next to the world so it travels with it. */
+    public static final String LAYOUT_FILE = "layout.yml";
     /** Where the casino is kept between servers, relative to a server directory. */
     public static final String SHARED_SOURCE = "../../poker-world";
     /** And where a server keeps its own copy of that, so a start with no shared folder still works. */
@@ -68,7 +68,7 @@ public final class CasinoWorld {
             if (source != null) {
                 plugin.getLogger().info("Bringing the casino in from " + source.getPath() + ".");
                 try {
-                    copyTree(source.toPath(), new File(name).toPath());
+                    FileTrees.copy(source.toPath(), new File(name).toPath(), FileTrees.WORLD_IDENTITY);
                 } catch (IOException e) {
                     plugin.getLogger().warning("The casino could not be copied in ("
                             + e.getMessage() + ") - a fresh one is built instead.");
@@ -95,8 +95,9 @@ public final class CasinoWorld {
                     + tables + " tables.");
             CasinoBuilder.build(world, tables, seats, layout);
             // straight out to the shared folder, so the first evening's room is already the one that comes
-            // back next time rather than being generated again from scratch
-            export(plugin);
+            // back next time rather than being generated again from scratch. One tick later, once the server
+            // is up: while plugins load, the main world has not written the level.dat the copy needs yet
+            Bukkit.getScheduler().runTask(plugin, () -> export(plugin));
         }
         return world;
     }
@@ -120,15 +121,35 @@ public final class CasinoWorld {
         world.save();
         File target = new File(SHARED_SOURCE);
         try {
-            if (target.exists()) deleteTree(target.toPath());
-            copyTree(new File(world.getName()).toPath(), target.toPath());
+            FileTrees.delete(target.toPath());
+            // since 26.2 an extra world lives as a dimension inside the main world, not in a folder of its
+            // own name - the server says where, and that is the only place worth asking
+            FileTrees.copy(world.getWorldFolder().toPath(), target.toPath(), FileTrees.WORLD_IDENTITY);
+            // a dimension folder has no level.dat, and without one the copy is not a world that the next
+            // casino can import. The main world's stands in; the generator is set in code anyway
+            File layout = new File("configs/poker/layout.yml");
+            if (layout.isFile()) {
+                Files.copy(layout.toPath(), new File(target, LAYOUT_FILE).toPath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
+            File levelDat = new File(target, "level.dat");
+            // on a fresh server the main world has not written its level.dat yet - saving it does
+            World main = Bukkit.getWorlds().getFirst();
+            main.save();
+            File mainLevel = levelDatAbove(main.getWorldFolder());
+            if (!levelDat.isFile() && mainLevel != null) {
+                Files.copy(mainLevel.toPath(), levelDat.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            if (!levelDat.isFile()) {
+                // without it the next casino cannot import the world, and would take over a layout that
+                // says "built" for an empty room - so the layout goes too, and the next night builds anew
+                new File(target, LAYOUT_FILE).delete();
+                plugin.getLogger().warning("The casino was copied out without a level.dat - the next poker "
+                        + "night will build its own.");
+            }
             // a copied world that keeps its session lock and its player data is a world that argues with
             // the server it is copied into
-            new File(target, "session.lock").delete();
-            new File(target, "uid.dat").delete();
-            deleteQuietly(new File(target, "playerdata"));
-            deleteQuietly(new File(target, "stats"));
-            deleteQuietly(new File(target, "advancements"));
+            FileTrees.stripPlayers(target);
             plugin.getLogger().info("The casino was written to " + target.getPath() + ".");
             return "Die Casino-Welt liegt jetzt in " + target.getPath()
                     + " - die nächste Pokernacht spielt darin.";
@@ -170,46 +191,24 @@ public final class CasinoWorld {
         player.teleport(spawn);
     }
 
+    /**
+     * @param folder where to start
+     * @return the {@code level.dat} in that folder or one of the few above it, or {@code null}
+     */
+    private static File levelDatAbove(File folder) {
+        for (int depth = 0; folder != null && depth < 4; depth++) {
+            File levelDat = new File(folder, "level.dat");
+            if (levelDat.isFile()) return levelDat;
+            folder = folder.getParentFile();
+        }
+        return null;
+    }
+
     private static File firstExisting(File... candidates) {
         for (File candidate : candidates) {
             if (candidate != null && new File(candidate, "level.dat").isFile()) return candidate;
         }
         return null;
-    }
-
-    private static void deleteQuietly(File file) {
-        if (!file.exists()) return;
-        try {
-            deleteTree(file.toPath());
-        } catch (IOException ignored) {
-            // leftover player data in the copy is untidy, not broken
-        }
-    }
-
-    private static void copyTree(Path from, Path to) throws IOException {
-        try (Stream<Path> paths = Files.walk(from)) {
-            for (Path path : paths.toList()) {
-                String relative = from.relativize(path).toString();
-                // a live world holds its lock file open, and copying it is what makes the copy refuse to load
-                if (relative.equals("session.lock")) continue;
-                Path destination = to.resolve(relative);
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                    continue;
-                }
-                Files.createDirectories(destination.getParent());
-                Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-    }
-
-    private static void deleteTree(Path path) throws IOException {
-        if (!Files.exists(path)) return;
-        try (Stream<Path> paths = Files.walk(path)) {
-            for (Path entry : paths.sorted(Comparator.reverseOrder()).toList()) {
-                Files.deleteIfExists(entry);
-            }
-        }
     }
 
     /**

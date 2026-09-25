@@ -1,5 +1,6 @@
 package de.hems.paper.round;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.round.DeleteRoundEvent;
 import de.hems.communication.events.round.RequestRoundsEvent;
@@ -39,7 +40,6 @@ public final class RoundService {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final long REFRESH_INTERVAL_TICKS = 20L * 60L;
-    private static final long STARTUP_RETRY_TICKS = 40L;
 
     private static final Map<UUID, RoundData> rounds = new ConcurrentHashMap<>();
     private static volatile RoundPolicy policy = new RoundPolicy();
@@ -64,16 +64,7 @@ public final class RoundService {
             RoundPolicy updated = ((RoundPolicyUpdatedEvent) event).getPolicy();
             if (updated != null) policy = updated;
         });
-        refreshAsync();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, RoundService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, RoundService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     private static void apply(RoundUpdatedEvent event) {
@@ -192,21 +183,11 @@ public final class RoundService {
      */
     public static boolean saveBlocking(RoundData round) {
         if (round == null) return false;
-        try {
-            if (!ListenerAdapter.isInitialized()) return false;
-            SaveRoundEvent request = new SaveRoundEvent(round);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (!(response instanceof RespondRoundSaveEvent saved) || !saved.isSuccessful()) return false;
-            if (response.getData() instanceof RoundData stored) rounds.put(stored.getId(), stored);
-            return true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not store the round: " + e.getMessage());
-            return false;
-        }
+        SaveRoundEvent request = new SaveRoundEvent(round);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondRoundSaveEvent saved) || !saved.isSuccessful()) return false;
+        if (response.getData() instanceof RoundData stored) rounds.put(stored.getId(), stored);
+        return true;
     }
 
     /**
@@ -281,25 +262,16 @@ public final class RoundService {
      * Fetches the whole list. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestRoundsEvent request = new RequestRoundsEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof RoundSnapshot snapshot)) return;
-            Map<UUID, RoundData> fresh = new ConcurrentHashMap<>();
-            for (RoundData round : snapshot.getRounds()) {
-                if (round.getId() != null) fresh.put(round.getId(), round);
-            }
-            rounds.keySet().retainAll(fresh.keySet());
-            rounds.putAll(fresh);
-            policy = snapshot.getPolicy();
-            maps = List.copyOf(snapshot.getMaps());
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the rounds: " + e.getMessage());
+        RequestRoundsEvent request = new RequestRoundsEvent();
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (response == null || !(response.getData() instanceof RoundSnapshot snapshot)) return;
+        Map<UUID, RoundData> fresh = new ConcurrentHashMap<>();
+        for (RoundData round : snapshot.getRounds()) {
+            if (round.getId() != null) fresh.put(round.getId(), round);
         }
+        NetworkSync.replace(rounds, fresh);
+        policy = snapshot.getPolicy();
+        maps = List.copyOf(snapshot.getMaps());
+        loaded = true;
     }
 }

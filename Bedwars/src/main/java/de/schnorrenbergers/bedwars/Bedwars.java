@@ -1,17 +1,14 @@
 package de.schnorrenbergers.bedwars;
 
+import de.hems.paper.NetworkPlugin;
+import de.hems.paper.PluginCommands;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.ServerIdentity;
-import de.hems.paper.admin.PlayerAdminHandler;
-import de.hems.paper.commands.LobbyCommand;
-import de.hems.paper.commands.WarpCommand;
-import de.hems.paper.customInventory.CustomInventoryListener;
 import de.hems.paper.hologram.Holograms;
 import de.hems.paper.event.EventService;
 import de.hems.paper.cosmetic.CosmeticService;
 import de.hems.paper.cosmetic.CosmeticEffects;
 import de.hems.paper.round.RoundService;
-import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.BedwarsEventSettings;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
@@ -60,15 +57,11 @@ import de.schnorrenbergers.bedwars.spectator.SpectatorListener;
 import de.schnorrenbergers.bedwars.stats.FileStatsRepository;
 import de.schnorrenbergers.bedwars.stats.StatsTracker;
 import de.schnorrenbergers.bedwars.util.Messages;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * The bedwars server.
@@ -98,6 +91,8 @@ public final class Bedwars extends JavaPlugin {
     /** The event this round was ordered for, and when it begins. Both empty for a round nobody ordered. */
     private String eventName;
     private long eventStartsAt;
+    /** The event this round was ordered for, which its results are reported to. */
+    private java.util.UUID eventId;
 
     @Override
     public void onLoad() {
@@ -140,6 +135,8 @@ public final class Bedwars extends JavaPlugin {
         new SuddenDeathListener(this);
         new SpectatorListener(this);
         new RulesListener(this);
+        // the placings and kills of an event round go to the launcher, which pays the rewards out of them
+        new de.schnorrenbergers.bedwars.listener.EventResultReporter(this);
         new de.schnorrenbergers.bedwars.round.RoundStateListener(this);
         // what a round ends with, and what players carry into it
         CosmeticEffects.init(this);
@@ -148,7 +145,7 @@ public final class Bedwars extends JavaPlugin {
             stats = new StatsTracker(this, new FileStatsRepository(
                     new File(gameSettings.getStatsDirectory())));
         }
-        register("bw", new BedwarsCommand());
+        PluginCommands.register(this, "bw", new BedwarsCommand());
         getLogger().info("Hosting " + game.getMode()
                 + (game.getArena() == null ? " with no map yet" : " on " + game.getArena().getName())
                 + (networked ? "" : ", without a network connection"));
@@ -244,6 +241,7 @@ public final class Bedwars extends JavaPlugin {
             if (!self.equalsIgnoreCase(settings.getServer())) continue;
             eventName = event.getName();
             eventStartsAt = event.getStartsAt();
+            eventId = event.getId();
             getLogger().info("This round belongs to the event '" + event.getName() + "': "
                     + settings.getTeamSize() + " players per team, starting at "
                     + new java.util.Date(eventStartsAt) + ".");
@@ -332,36 +330,19 @@ public final class Bedwars extends JavaPlugin {
      * without a launcher would make that impossible.
      */
     private void connectToNetwork() {
-        new CustomInventoryListener(this);
-        ServerConnector.register(this);
-        // registered before the connection is attempted, so a round without a launcher still has a way out
-        register("warp", new WarpCommand());
-        register("lobby", new LobbyCommand());
         // the shop talks to the launcher and to nothing else, so it is registered with the rest of the
         // network commands - and it is the whole reason somebody who only plays bedwars no longer has to
         // travel to survival to put on what they bought
-        register("cosmetics", new de.hems.paper.commands.CosmeticsCommand());
-        try {
-            new ListenerAdapter(ServerIdentity.of(this, "BEDWARS"));
-            new PlayerAdminHandler(this);
-            EventService.init(this);
-            RoundService.init(this);
-            CosmeticService.init(this);
-            networked = true;
-        } catch (Exception e) {
-            getLogger().warning("No network connection (" + e.getMessage()
-                    + "). The round runs, but it cannot be started by an event or send anybody home.");
-        }
-    }
-
-    private void register(String name, Object command) {
-        PluginCommand registered = getCommand(name);
-        if (registered == null) {
-            getLogger().warning("The command /" + name + " is missing from plugin.yml");
+        PluginCommands.register(this, "cosmetics", new de.hems.paper.commands.CosmeticsCommand());
+        // the ways out are set up before the connection is attempted, so a round without a launcher is
+        // not a trap
+        if (!NetworkPlugin.connect(this, "BEDWARS")) {
+            getLogger().warning("The round runs, but it cannot be started by an event or send anybody home.");
             return;
         }
-        registered.setExecutor((CommandExecutor) command);
-        if (command instanceof TabCompleter completer) registered.setTabCompleter(completer);
+        RoundService.init(this);
+        CosmeticService.init(this);
+        networked = true;
     }
 
     /**
@@ -423,6 +404,13 @@ public final class Bedwars extends JavaPlugin {
         if (eventStartsAt <= 0L) return 0L;
         long left = eventStartsAt - System.currentTimeMillis();
         return left <= 0L ? 0L : (left + 999L) / 1000L;
+    }
+
+    /**
+     * @return the event this round was ordered for, or {@code null} for a round nobody ordered
+     */
+    public @org.jetbrains.annotations.Nullable java.util.UUID getEventId() {
+        return eventId;
     }
 
     /**

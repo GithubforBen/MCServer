@@ -20,6 +20,9 @@ import java.util.UUID;
 
 public class PaperConfigurator extends ServerConfigurator {
 
+    /** Where the hunger games map lies next to the launcher. */
+    public static final String HUNGER_GAMES_MAP = "./hungergames-world";
+
     private final int port;
     private final boolean isProxyed;
     private final List<UUID> ops;
@@ -47,6 +50,9 @@ public class PaperConfigurator extends ServerConfigurator {
     public void configure() throws Exception {
         String jarName = FileType.SERVER.getFileName(FileType.SERVER.PAPER);
         File jar = new File(this.directory + "/" + jarName);
+        // a new Minecraft version converts the worlds for good, so they are copied away first - before the
+        // old jar is removed, because that jar is how the old version is recognised
+        WorldBackup.beforeUpgrade(new File(this.directory), jarName);
         File jarFile = new FileHandler().provideFile(FileType.SERVER.PAPER);
         Files.copy(jarFile.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         removeStaleServerJars(jarName);
@@ -69,6 +75,17 @@ public class PaperConfigurator extends ServerConfigurator {
         // night in ./poker-world rather than being generated again on every fresh server
         if (template == ServerTemplate.POKER) {
             new CasinoMap().installInto(new File(this.directory));
+        }
+        // hunger games is one world and its border: the prepared map becomes the main world, and the
+        // other two dimensions are switched off so nobody can leave the arena through a portal
+        if (template == ServerTemplate.HUNGER_GAMES) {
+            new PreparedMap(HUNGER_GAMES_MAP, "world").installInto(new File(this.directory));
+            setProperty("server.properties", "allow-nether", false);
+            // the cornucopia stands at spawn, and vanilla spawn protection would make it unbreakable and its
+            // chests unopenable for everybody who is not an operator
+            setProperty("server.properties", "spawn-protection", 0);
+            setProperty("server.properties", "difficulty", "normal");
+            writeToYmlConfiguration("bukkit.yml", "settings.allow-end", false, true);
         }
 
         overwriteToFile("eula.txt", "eula=true", true);

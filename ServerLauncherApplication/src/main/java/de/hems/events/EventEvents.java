@@ -8,6 +8,7 @@ import de.hems.communication.events.event.RespondEventSaveEvent;
 import de.hems.communication.events.event.RespondEventsEvent;
 import de.hems.communication.events.event.SaveEventEvent;
 import de.hems.communication.events.event.ClaimAwardEvent;
+import de.hems.communication.events.event.RespondClaimAwardEvent;
 import de.hems.communication.events.event.RequestAwardsEvent;
 import de.hems.communication.events.event.RequestRunsEvent;
 import de.hems.communication.events.event.RespondAwardsEvent;
@@ -57,13 +58,19 @@ public class EventEvents {
     }
 
     /**
-     * Marks a prize as collected. The game server only sends this once the items are really in the
-     * player's inventory, so a prize that could not be handed over stays waiting.
+     * Reserves a prize for the server that asked, or takes a reservation back. The answer is what the game
+     * server waits for before it hands anything over, so only the first server ever gets a yes.
      *
-     * @param request the prize that was collected
+     * @param request the prize
      */
-    private void onClaimAward(ClaimAwardEvent request) {
-        awards.claim(request.getAwardId());
+    private void onClaimAward(ClaimAwardEvent request) throws Exception {
+        if (request.isRelease()) {
+            awards.release(request.getAwardId(), String.valueOf(request.getSender()));
+            return;
+        }
+        boolean claimed = awards.claim(request.getAwardId(), String.valueOf(request.getSender()));
+        ListenerAdapter.sendListeners(new RespondClaimAwardEvent(request.getSender(), claimed,
+                request.getEventId()));
     }
 
     private void onRequestRuns(RequestRunsEvent request) throws Exception {
@@ -100,11 +107,8 @@ public class EventEvents {
     }
 
     private void onDeleteEvent(DeleteEventEvent request) throws Exception {
-        if (!events.delete(request.getEventUuid())) return;
-        // the runs belong to the event - leaving them behind would keep a leaderboard alive for something
-        // that no longer exists
-        settlement.discard(request.getEventUuid());
-        announce(request.getEventUuid(), null);
+        // the runs, results, open poker stacks and the server belong to the event and go with it
+        settlement.delete(request.getEventUuid());
     }
 
     /**

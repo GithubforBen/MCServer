@@ -1,5 +1,6 @@
 package de.hems.paper.discord;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.discord.AccountLinkUpdatedEvent;
 import de.hems.communication.events.discord.ConfirmAccountLinkEvent;
@@ -8,7 +9,6 @@ import de.hems.communication.events.discord.RespondAccountLinkEvent;
 import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.paper.PaperContext;
 import de.hems.types.discord.AccountLink;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,6 @@ public final class AccountLinkService {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
-    private static final long STARTUP_RETRY_TICKS = 40L;
 
     private static final Map<UUID, AccountLink> links = new ConcurrentHashMap<>();
     private static volatile boolean loaded = false;
@@ -59,16 +58,7 @@ public final class AccountLinkService {
             }
             links.put(updated.getMinecraftId(), updated.getLink());
         });
-        refreshAsync();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, AccountLinkService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, AccountLinkService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     public static boolean isLoaded() {
@@ -134,25 +124,14 @@ public final class AccountLinkService {
      * @return what the launcher made of it
      */
     public static Result confirmBlocking(UUID player, String name, String code) {
-        try {
-            if (!ListenerAdapter.isInitialized()) {
-                return new Result(false, "Keine Verbindung zum Netzwerk.", null);
-            }
-            ConfirmAccountLinkEvent request = new ConfirmAccountLinkEvent(player, name, code);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (!(response instanceof RespondAccountLinkEvent answer)) {
-                return new Result(false, "Der Host antwortet nicht.", null);
-            }
-            AccountLink link = response.getData() instanceof AccountLink stored ? stored : null;
-            if (answer.isSuccessful() && link != null) links.put(link.getMinecraftId(), link);
-            return new Result(answer.isSuccessful(), answer.getMessage(), link);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new Result(false, "Unterbrochen.", null);
-        } catch (Exception e) {
-            return new Result(false, e.getMessage(), null);
+        ConfirmAccountLinkEvent request = new ConfirmAccountLinkEvent(player, name, code);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondAccountLinkEvent answer)) {
+            return new Result(false, "Der Host antwortet nicht.", null);
         }
+        AccountLink link = response.getData() instanceof AccountLink stored ? stored : null;
+        if (answer.isSuccessful() && link != null) links.put(link.getMinecraftId(), link);
+        return new Result(answer.isSuccessful(), answer.getMessage(), link);
     }
 
     /**
@@ -174,25 +153,16 @@ public final class AccountLinkService {
      * Fetches every link. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestAccountLinksEvent request = new RequestAccountLinksEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof List<?> list)) return;
-            Map<UUID, AccountLink> fresh = new ConcurrentHashMap<>();
-            for (Object entry : list) {
-                if (entry instanceof AccountLink link && link.getMinecraftId() != null) {
-                    fresh.put(link.getMinecraftId(), link);
-                }
+        RequestAccountLinksEvent request = new RequestAccountLinksEvent();
+        List<AccountLink> list = NetworkSync.fetchList(request, TIMEOUT, AccountLink.class);
+        if (list == null) return;
+        Map<UUID, AccountLink> fresh = new ConcurrentHashMap<>();
+        for (AccountLink link : list) {
+            if (link.getMinecraftId() != null) {
+                fresh.put(link.getMinecraftId(), link);
             }
-            links.keySet().retainAll(fresh.keySet());
-            links.putAll(fresh);
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the account links: " + e.getMessage());
         }
+        NetworkSync.replace(links, fresh);
+        loaded = true;
     }
 }

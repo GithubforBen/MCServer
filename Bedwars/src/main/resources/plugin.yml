@@ -1,8 +1,19 @@
 name: Bedwars
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.bedwars.Bedwars
-api-version: '26.2'
+api-version: '26.3'
 commands:
+  lotto:
+    description: Lotto 4 aus 15 - mit Bits tippen, wer alle vier trifft, bekommt den Topf
+    usage: /lotto [tipp <a> <b> <c> <d>|quick [anzahl]|info|meine]
+  ticket:
+    description: Tickets schreiben, lesen und beantworten - dieselben wie auf Discord
+    usage: /ticket [neu|offen|<nr> [antworten|schliessen|oeffnen|uebernehmen]]
+    aliases: [tickets]
+  neustart:
+    description: Das ganze Netzwerk zu einer Zeit neu starten, mit oder ohne Update
+    usage: /neustart <minuten> [update|aus] | /neustart abbrechen
+    permission: network.restart
   cosmetics:
     description: Cosmetics kaufen, anlegen und ablegen
     usage: /cosmetics [win_effect|kill_effect|trail|gadget|neu|verwalten]
@@ -19,6 +30,15 @@ commands:
     usage: /lobby
     aliases: [hub, leave]
 permissions:
+  network.lotto.admin:
+    description: Das Lotto ziehen und Preis und Termin einstellen
+    default: op
+  network.tickets:
+    description: Tickets aller Spieler sehen, beantworten und übernehmen
+    default: op
+  network.restart:
+    description: Das Netzwerk neu starten
+    default: op
   bedwars.admin:
     description: Darf die Runde und die Addons verwalten
     default: op

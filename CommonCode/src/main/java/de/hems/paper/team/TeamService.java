@@ -1,5 +1,6 @@
 package de.hems.paper.team;
 
+import de.hems.paper.NetworkSync;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.team.DeleteTeamEvent;
 import de.hems.communication.events.team.RequestTeamsEvent;
@@ -39,8 +40,6 @@ public final class TeamService {
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     /** How often the whole list is refreshed as a safety net, in ticks. */
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
-    /** How often to retry while the list has never arrived, in ticks. */
-    private static final long STARTUP_RETRY_TICKS = 40L;
 
     private static final Map<String, TeamData> teams = new ConcurrentHashMap<>();
     private static volatile boolean loaded = false;
@@ -59,17 +58,7 @@ public final class TeamService {
         initialized = true;
         PaperContext.setPlugin(plugin);
         ListenerAdapter.register(TeamUpdatedEvent.class, event -> apply((TeamUpdatedEvent) event));
-        refreshAsync();
-        // the network may not be connected yet when this plugin loads, so try again quickly until it is
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task -> {
-            if (loaded) {
-                task.cancel();
-                return;
-            }
-            refreshBlocking();
-        }, STARTUP_RETRY_TICKS, STARTUP_RETRY_TICKS);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, TeamService::refreshBlocking,
-                REFRESH_INTERVAL_TICKS, REFRESH_INTERVAL_TICKS);
+        NetworkSync.keepFresh(plugin, TeamService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
     }
 
     /**
@@ -146,25 +135,16 @@ public final class TeamService {
      * Fetches the full list. Blocks, so it must not run on the main thread.
      */
     public static void refreshBlocking() {
-        try {
-            if (!ListenerAdapter.isInitialized()) return;
-            RequestTeamsEvent request = new RequestTeamsEvent();
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (response == null || !(response.getData() instanceof List<?> list)) return;
-            Map<String, TeamData> fresh = new ConcurrentHashMap<>();
-            for (Object entry : list) {
-                if (!(entry instanceof TeamData team) || team.getName() == null) continue;
-                fresh.put(key(team.getName()), team);
-            }
-            teams.clear();
-            teams.putAll(fresh);
-            loaded = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            Bukkit.getLogger().warning("Could not load the teams: " + e.getMessage());
+        RequestTeamsEvent request = new RequestTeamsEvent();
+        List<TeamData> list = NetworkSync.fetchList(request, TIMEOUT, TeamData.class);
+        if (list == null) return;
+        Map<String, TeamData> fresh = new ConcurrentHashMap<>();
+        for (TeamData team : list) {
+            if (team.getName() == null) continue;
+            fresh.put(key(team.getName()), team);
         }
+        NetworkSync.replace(teams, fresh);
+        loaded = true;
     }
 
     /**
@@ -221,25 +201,17 @@ public final class TeamService {
      * @return what the launcher made of it
      */
     public static Result saveBlocking(TeamData team, boolean createIfMissing, String renameFrom) {
-        try {
-            SaveTeamEvent request = new SaveTeamEvent(team, createIfMissing, renameFrom);
-            ListenerAdapter.sendListeners(request);
-            RespondDataEvent response = ListenerAdapter.waitForEvent(request.getEventId(), TIMEOUT);
-            if (!(response instanceof RespondTeamSaveEvent saved)) {
-                return new Result(false, "Der Hauptserver hat nicht geantwortet.", null);
-            }
-            if (saved.isSuccessful() && saved.getData() instanceof TeamData stored) {
-                if (renameFrom != null) teams.remove(key(renameFrom));
-                teams.put(key(stored.getName()), stored);
-                return new Result(true, saved.getMessage(), stored);
-            }
-            return new Result(false, saved.getMessage(), null);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new Result(false, "Unterbrochen.", null);
-        } catch (Exception e) {
-            return new Result(false, "Konnte nicht gespeichert werden: " + e.getMessage(), null);
+        SaveTeamEvent request = new SaveTeamEvent(team, createIfMissing, renameFrom);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondTeamSaveEvent saved)) {
+            return new Result(false, "Der Hauptserver hat nicht geantwortet.", null);
         }
+        if (saved.isSuccessful() && saved.getData() instanceof TeamData stored) {
+            if (renameFrom != null) teams.remove(key(renameFrom));
+            teams.put(key(stored.getName()), stored);
+            return new Result(true, saved.getMessage(), stored);
+        }
+        return new Result(false, saved.getMessage(), null);
     }
 
     /**

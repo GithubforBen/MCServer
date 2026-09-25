@@ -1,7 +1,6 @@
 package de.hems.utils.bot.adminabuse;
 
 import de.hems.Main;
-import de.hems.utils.bot.tickets.Tickets;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

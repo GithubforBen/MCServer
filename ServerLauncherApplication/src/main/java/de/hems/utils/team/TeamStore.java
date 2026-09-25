@@ -1,12 +1,12 @@
 package de.hems.utils.team;
 
+import de.hems.utils.YamlFiles;
 import de.hems.types.team.TeamData;
 import de.hems.types.team.TeamSettings;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,16 +38,7 @@ public class TeamStore {
 
     public TeamStore(File file) {
         this.file = file;
-        if (!file.exists()) {
-            File parent = file.getParentFile();
-            if (parent != null) parent.mkdirs();
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        this.config = YamlConfiguration.loadConfiguration(file);
+        this.config = YamlFiles.load(file);
         load();
     }
 
@@ -118,11 +109,7 @@ public class TeamStore {
     }
 
     public synchronized void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            System.out.println("Could not save " + file.getName() + ": " + e.getMessage());
-        }
+        YamlFiles.saveOrLog(config, file);
     }
 
     /**
@@ -189,6 +176,12 @@ public class TeamStore {
         TeamData existing = teams.get(renaming ? oldKey : key);
         if (existing == null && !createIfMissing) {
             return Result.failed("Das Team '" + team.getName() + "' gibt es nicht.");
+        }
+        // the name is the path the team is stored under, so a dot in it would split it into sections and the
+        // team would come back broken after a restart. Survival checks the same rule; this is the one place
+        // every new name goes through, whoever chose it. A team that already has its name keeps it
+        if ((existing == null || renaming) && !team.getName().matches("[A-Za-z0-9_-]+")) {
+            return Result.failed("Der Teamname darf nur Buchstaben, Zahlen, _ und - enthalten.");
         }
         if (renaming) {
             if (existing == null) {

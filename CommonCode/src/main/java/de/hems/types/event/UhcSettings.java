@@ -20,6 +20,17 @@ public final class UhcSettings {
     private static final int DEFAULT_TEAM_SIZE = 1;
     private static final int DEFAULT_MAX_RUNS = 3;
 
+    /** The knobs as the settings panel draws them. */
+    public static final java.util.List<EventSetting> SETTINGS = java.util.List.of(
+            EventSetting.toggle(HARDCORE, "Hardcore", "RED_DYE", true,
+                    "Ein Tod beendet den Lauf."),
+            EventSetting.choice(TEAM_SIZE, "Teamgröße", "PLAYER_HEAD", DEFAULT_TEAM_SIZE, "",
+                    null, new int[]{1, 2, 3, 4}, "So viele laufen zusammen."),
+            EventSetting.choice(MAX_RUNS, "Versuche", "CLOCK", DEFAULT_MAX_RUNS, "", "unbegrenzt",
+                    new int[]{1, 3, 5, 10, 0}, "Pro Person."),
+            EventSetting.toggle(ALLOW_UNDERMANNED, "Unterbesetzt starten", "LIME_DYE", true,
+                    "Eine kleinere Gruppe darf trotzdem los.", "Sie hat es dann schwerer."));
+
     private final EventData event;
 
     public UhcSettings(EventData event) {

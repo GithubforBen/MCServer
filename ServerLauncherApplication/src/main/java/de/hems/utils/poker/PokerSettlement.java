@@ -3,14 +3,14 @@ package de.hems.utils.poker;
 import de.hems.Main;
 import de.hems.communication.ListenerAdapter;
 import de.hems.events.PokerEvents;
-import de.hems.types.event.AwardData;
 import de.hems.types.event.EventData;
+import de.hems.types.event.EventStanding;
 import de.hems.types.event.EventState;
 import de.hems.types.event.PokerEventSettings;
-import de.hems.types.event.PrizeData;
 import de.hems.types.money.BalanceResult;
 import de.hems.types.poker.PokerStatsData;
 import de.hems.utils.event.AwardStore;
+import de.hems.utils.event.RewardPayout;
 import de.hems.utils.money.MoneyStore;
 
 import java.util.ArrayList;
@@ -52,8 +52,7 @@ public class PokerSettlement {
         if (event == null) return;
         int handedBack = payOutOpenStacks(event);
         if (event.getState() != EventState.CANCELLED) {
-            awardPlaces(event);
-            awardParticipation(event);
+            awardRewards(event);
         }
         stopCasino(event);
         System.out.println("Settled poker night " + event.getName() + " - " + handedBack
@@ -96,36 +95,22 @@ public class PokerSettlement {
     }
 
     /**
-     * Puts the prizes of the first three places aside.
-     *
-     * @param event the night
-     */
-    private void awardPlaces(EventData event) {
-        PokerEventSettings settings = new PokerEventSettings(event);
-        List<PokerStatsData> ranking = ranking(event, settings);
-        for (int place = 1; place <= PrizeData.PLACES && place <= ranking.size(); place++) {
-            PrizeData prize = PrizeData.ofPlace(event, place);
-            if (prize.isEmpty()) continue;
-            awards.put(new AwardData(ranking.get(place - 1).getPlayerId(), event, place, prize));
-        }
-    }
-
-    /**
-     * Gives everybody who really played their prize.
+     * Puts the rewards of the night aside.
      * <p>
-     * "Really played" is the same bar the ranking uses. Without it the participation prize is a reason to
-     * sit down for one hand, and a poker night where the cheapest way to earn is not to play poker is not
-     * a poker night.
+     * Only the people who cleared both bars are in the standings, placed by their profit. Somebody below the
+     * bars is not ranked and does not count as having taken part either: without that a participation
+     * reward is a reason to sit down for one hand, and a poker night where the cheapest way to earn is not
+     * to play poker is not a poker night.
      *
      * @param event the night
      */
-    private void awardParticipation(EventData event) {
-        PrizeData prize = PrizeData.ofParticipation(event);
-        if (prize.isEmpty()) return;
-        PokerEventSettings settings = new PokerEventSettings(event);
-        for (PokerStatsData row : ranking(event, settings)) {
-            awards.put(new AwardData(row.getPlayerId(), event, AwardData.PARTICIPATION, prize));
+    private void awardRewards(EventData event) {
+        List<PokerStatsData> ranking = ranking(event, new PokerEventSettings(event));
+        List<EventStanding> standings = new ArrayList<>();
+        for (int i = 0; i < ranking.size(); i++) {
+            standings.add(new EventStanding(ranking.get(i).getPlayerId(), i + 1, 0));
         }
+        RewardPayout.pay(awards, event, standings);
     }
 
     /**

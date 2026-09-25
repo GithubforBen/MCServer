@@ -1,16 +1,17 @@
 package de.hems.paper.event;
 
+import de.hems.types.Presets;
 import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.hems.paper.util.ChatPrompt;
-import de.hems.types.event.BedwarsEventSettings;
 import de.hems.types.event.EventData;
+import de.hems.types.event.EventRewards;
 import de.hems.types.event.EventType;
-import de.hems.types.event.PokerEventSettings;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -31,6 +32,10 @@ public final class EventCreateUi {
 
     /** How long until the event starts, offered as buttons. */
     private static final long[] START_OFFSETS_MINUTES = {0, 60, 60 * 6, 60 * 24, 60 * 24 * 3};
+    /** Where the settings button sits - the same slot on the event panel. */
+    static final int SETTINGS_SLOT = 20;
+    /** Where the rewards button sits - the same slot on the event panel. */
+    static final int REWARDS_SLOT = 24;
     /** How long the event runs, offered as buttons. */
     private static final long[] DURATIONS_MINUTES = {60, 60 * 3, 60 * 24, 60 * 24 * 5, 60 * 24 * 7};
 
@@ -79,52 +84,31 @@ public final class EventCreateUi {
 
         List<EventType> types = EventCalendarUi.creatableTypes();
         EventType nextType = types.get((types.indexOf(draft.getType()) + 1) % types.size());
-        ui.setItem(12, new ItemApi(Material.COMPARATOR, ChatColor.GOLD + "Typ",
+        ui.setItem(12, new ItemApi(EventDefinitions.of(draft.getType()).getIcon(), ChatColor.GOLD + "Typ",
                 List.of(ChatColor.GRAY + "Aktuell: " + ChatColor.WHITE + draft.getType().getTitle(),
                         draft.getType().hasMechanics()
                                 ? ChatColor.AQUA + "Mit eigener Mechanik"
                                 : ChatColor.GRAY + "Nur eine Ankündigung",
                         ChatColor.GRAY + "Klicken für: " + nextType.getTitle())).build(),
                 new SimpleItemAction(click -> {
-                    draft.setType(nextType);
+                    changeType(draft, nextType);
                     player.openInventory(build(player, draft, startOffsetMin, durationMin).getInventory());
                 }));
 
-        // only bedwars has anything to set here so far, and a button that does nothing on five of six
-        // types is worse than one that appears when it means something
-        if (draft.getType() == EventType.BEDWARS) {
-            BedwarsEventSettings bedwars = new BedwarsEventSettings(draft);
-            int size = bedwars.getTeamSize();
-            int nextSize = size >= BedwarsEventSettings.MAX_TEAM_SIZE ? 1 : size + 1;
-            ui.setItem(13, new ItemApi(Material.RED_BED, ChatColor.GOLD + "Teamgröße",
-                    List.of(ChatColor.GRAY + "Aktuell: " + ChatColor.WHITE + size + " pro Team",
-                            ChatColor.GRAY + "Modus: " + ChatColor.WHITE + bedwars.getMode(),
-                            ChatColor.GRAY + "Klicken für: " + nextSize + " pro Team")).build(),
-                    new SimpleItemAction(click -> {
-                        new BedwarsEventSettings(draft).setTeamSize(nextSize);
-                        player.openInventory(build(player, draft, startOffsetMin, durationMin).getInventory());
-                    }));
-        }
+        // settings and rewards sit in the same two places for every kind of event, here and on the event
+        // panel alike - what is behind the button is what differs
+        Runnable reopen = () -> player.openInventory(build(player, draft, startOffsetMin, durationMin).getInventory());
+        EventEdit edit = EventEdit.draft(draft, back -> reopen.run());
+        boolean hasSettings = EventDefinitions.of(draft.getType()).hasSettings();
+        ItemStack settingsIcon = EventSettingsUi.icon(draft, hasSettings);
+        ui.setItem(SETTINGS_SLOT, settingsIcon, hasSettings
+                ? new SimpleItemAction(click -> EventSettingsUi.open(player, edit))
+                : SimpleItemAction.display());
+        ui.setItem(REWARDS_SLOT, RewardUi.icon(draft, draft.getType().isRanked()), draft.getType().isRanked()
+                ? new SimpleItemAction(click -> RewardUi.open(player, edit))
+                : SimpleItemAction.display());
 
-        // a poker night has more knobs than fit here, so it gets a door to its own panel rather than six
-        // more buttons that only ever mean something on one of seven types
-        if (draft.getType() == EventType.POKER) {
-            PokerEventSettings poker = new PokerEventSettings(draft);
-            poker.applyDefaults();
-            ui.setItem(13, new ItemApi(Material.PLAYER_HEAD, ChatColor.GOLD + "Pokereinstellungen",
-                            List.of(ChatColor.GRAY + "Format: " + ChatColor.WHITE + poker.getFormat().getTitle(),
-                                    ChatColor.GRAY + "Buy-in: " + ChatColor.WHITE + poker.getBuyIn() + " Bits",
-                                    ChatColor.GRAY + "Blinds: " + ChatColor.WHITE + poker.getSmallBlind()
-                                            + "/" + poker.getBigBlind(),
-                                    ChatColor.GRAY + "Haus: " + ChatColor.WHITE + poker.getRakeText(),
-                                    ChatColor.GRAY + "Klicken zum Einstellen")).build(),
-                    new SimpleItemAction(click -> player.openInventory(PokerSettingsUi.build(player, draft,
-                            edited -> player.openInventory(
-                                    build(player, edited, startOffsetMin, durationMin).getInventory()))
-                            .getInventory())));
-        }
-
-        long nextStart = nextValue(START_OFFSETS_MINUTES, startOffsetMin);
+        long nextStart = Presets.step(START_OFFSETS_MINUTES, startOffsetMin, true);
         ui.setItem(14, new ItemApi(Material.CLOCK, ChatColor.GOLD + "Start",
                 List.of(ChatColor.GRAY + "Beginnt: " + ChatColor.WHITE
                                 + WHEN.format(Instant.ofEpochMilli(draft.getStartsAt())),
@@ -135,7 +119,7 @@ public final class EventCreateUi {
                     player.openInventory(build(player, draft, nextStart, durationMin).getInventory());
                 }));
 
-        long nextDuration = nextValue(DURATIONS_MINUTES, durationMin);
+        long nextDuration = Presets.step(DURATIONS_MINUTES, durationMin, true);
         ui.setItem(15, new ItemApi(Material.REPEATER, ChatColor.GOLD + "Dauer",
                 List.of(ChatColor.GRAY + "Läuft: " + ChatColor.WHITE + describe(durationMin),
                         ChatColor.GRAY + "Endet: " + ChatColor.WHITE
@@ -152,7 +136,9 @@ public final class EventCreateUi {
 
         ui.setItem(35, new ItemApi(Material.LIME_DYE, ChatColor.GREEN + "Anlegen",
                 List.of(ChatColor.GRAY + "Legt das Event für alle Server an")).build(),
-                new SimpleItemAction(click -> EventService.saveAsync(draft, true, result -> {
+                new SimpleItemAction(click -> {
+                    EventDefinitions.of(draft.getType()).applyDefaults(draft);
+                    EventService.saveAsync(draft, true, result -> {
                     if (!result.successful()) {
                         player.sendMessage(ChatColor.RED + "❌ " + result.message());
                         return;
@@ -160,8 +146,25 @@ public final class EventCreateUi {
                     player.sendMessage(ChatColor.GREEN + "✓ " + draft.getName() + " wurde angelegt.");
                     player.openInventory(EventCalendarUi.build(player,
                             EventCalendarUi.Filter.ALL).getInventory());
-                })));
+                    });
+                }));
         return ui;
+    }
+
+    /**
+     * Switches the draft to another kind of event.
+     * <p>
+     * The knobs of the old kind go - a team size or a buy-in means nothing to the new one and would only
+     * sit in the settings list looking like it did. The rewards stay, because "#1 gets 500 bits" means the
+     * same on every kind that ranks people.
+     *
+     * @param draft the event being built
+     * @param type  the kind it becomes
+     */
+    private static void changeType(EventData draft, EventType type) {
+        draft.getSettings().keySet().removeIf(key -> !key.startsWith(EventRewards.KEY));
+        draft.setType(type);
+        EventDefinitions.of(type).applyDefaults(draft);
     }
 
     /**
@@ -175,18 +178,6 @@ public final class EventCreateUi {
         long start = System.currentTimeMillis() + Duration.ofMinutes(startOffsetMin).toMillis();
         draft.setStartsAt(start);
         draft.setEndsAt(start + Duration.ofMinutes(durationMin).toMillis());
-    }
-
-    /**
-     * @param values  the presets to cycle through
-     * @param current where we are now
-     * @return the next preset, wrapping around
-     */
-    private static long nextValue(long[] values, long current) {
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] == current) return values[(i + 1) % values.length];
-        }
-        return values[0];
     }
 
     /**

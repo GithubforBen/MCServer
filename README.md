@@ -5,21 +5,42 @@ Ein Minecraft Netzwerk aus einem Velocity Proxy und beliebig vielen Paper Server
 
 ## Versionen
 
-Alles läuft auf **Minecraft 26.2**:
+Alles läuft auf **Minecraft 26.3** (Stand 2026-09-24, jeweils die neueste Version):
 
-| Teil | Version |
-|------|---------|
-| Paper | 26.2 (build 112) |
-| Velocity | 3.5.1 (build 615) |
-| WorldEdit | 7.4.5 |
-| WorldGuard | 7.0.18 |
-| CoreProtect | 24.0 |
-| Chunky | 1.5.3 |
-| Simple Voicechat | 2.6.21 (Paper) / 2.6.18 (Velocity) |
+| Teil | Version | Status |
+|------|---------|--------|
+| Paper | 26.3 (build 40) | **ALPHA** — für 26.3 gibt es noch keinen stabilen Build |
+| Velocity | 4.2.0 (build 30) | stabil, neue Hauptversion (Config 2.9, API 4) |
+| WorldEdit | 7.4.6-beta-02 | **Beta** — das einzige WorldEdit für 26.3 |
+| WorldGuard | 7.0.19 | Release, für 26.3 freigegeben |
+| CoreProtect | 24.1 | Release, aber **nur bis 26.2** — schaltet sich auf 26.3 selbst ab |
+| Chunky | 1.5.3 | Release, für 26.3 freigegeben |
+| Simple Voicechat | 2.6.24 (Paper) / 2.6.18 (Velocity) | Release / neuestes Proxy-Plugin |
 
-Paper 26.2 braucht **Java 25** - sowohl zum Bauen als auch zum Starten. Die Downloads stehen alle in
+**CoreProtect läuft auf 26.3 nicht.** Es prüft die Version selbst und meldet „Minecraft 26.3 is not
+supported“. Bis es eine Version für 26.3 gibt, loggt niemand Blöcke und es gibt kein Rollback; die
+CoreProtect-Abfrage der Admin-Website sagt dann „CoreProtect ist nicht verfügbar“. Sobald eine neue
+Version erscheint, ist das eine Zeile in `FileType` (plus `coreprotect` in `CommonCode/pom.xml` und
+`Survival/pom.xml`).
+
+Paper braucht **Java 25** - sowohl zum Bauen als auch zum Starten. Die Downloads stehen alle in
 `CommonCode/src/main/java/de/hems/types/FileType.java`, ein Update ist also ein Update dieser einen Datei
 (plus `paper-api` in den poms und `api-version` in den `plugin.yml`).
+
+### Backup vor einem Versionswechsel
+
+Eine neue Minecraft-Version wandelt jede Welt beim ersten Laden um, und zurück geht es nicht. Der Launcher
+erkennt den Wechsel am alten Paper-Jar im Serververzeichnis (`paper-26.2-…` → `paper-26.3-…`) und kopiert
+**vor dem Start** jeden Weltordner dieses Servers nach
+`./backups/<SERVER>/<alte Version>-<Zeitstempel>/`. Schlägt das fehl, startet der Server nicht. Ein neuer
+Build derselben Version löst kein Backup aus. Die Backups werden nie automatisch gelöscht — bei großen
+Welten auf den Plattenplatz achten.
+
+### Velocity 4
+
+Velocity 4 hat das Format der `velocity.toml` geändert (`config-version = "2.9"`, `ping-passthrough`
+ist jetzt eine Tabelle). Der Launcher schreibt die Datei in diesem Format; geprüft durch einen Start des
+echten Velocity-4.2.0-Jars mit der erzeugten Datei.
 
 ## Bauen und starten
 
@@ -30,6 +51,43 @@ Paper 26.2 braucht **Java 25** - sowohl zum Bauen als auch zum Starten. Die Down
 
 Der Launcher startet zuerst den Proxy und danach die Server aus `autostart` in der `main-config.yml`
 (Standard: `LOBBY` und `SURVIVAL`).
+
+## Neustart und Updates
+
+`/neustart` startet das ganze Netzwerk zu einer festen Zeit neu - von jedem Server aus, nur für Ops.
+
+| Befehl | Was passiert |
+|--------|--------------|
+| `/neustart` | Zeigt, was geplant ist, und wie das letzte Update lief |
+| `/neustart 10` | In 10 Minuten neu starten, auf dem Code, der da ist |
+| `/neustart 10 update` | In 10 Minuten: `git pull`, bauen, neu starten |
+| `/neustart 10 aus` | In 10 Minuten herunterfahren, danach bleibt alles aus |
+| `/neustart abbrechen` | Den geplanten Neustart absagen |
+
+Ein neuer `/neustart` ersetzt einen geplanten. Jeder Server zählt selbst herunter: Chat bei 10, 5, 3, 2
+und 1 Minute und 30 Sekunden, eine Bossbar in den letzten 5 Minuten, ein Titel in den letzten 10
+Sekunden.
+
+**Wenn es so weit ist:** alle Spieler werden mit Hinweis gekickt, Spieler und Welten gespeichert, jeder
+Server gestoppt - und der Launcher **wartet, bis jeder Java-Prozess wirklich weg ist**. Ein Server
+schließt beim Stoppen zuerst seinen Port und speichert danach; wer auf den Port schaut, startet das
+Netzwerk auf halb geschriebene Welten. Nach drei Minuten wird ein hängender Server hart beendet. Dann
+beendet sich der Launcher mit einem Code, den `run.sh` liest:
+
+| Code | `run.sh` macht |
+|------|----------------|
+| 10 | Launcher wieder starten |
+| 11 | `git pull --ff-only`, bauen, Launcher starten |
+| sonst | nichts - das Netzwerk bleibt aus (0 nach `/neustart … aus`, alles andere ist ein Absturz) |
+
+**Ein Update kann das Netzwerk nicht ausgeschaltet lassen.** Scheitert `git pull`, startet der alte
+Stand. Baut der neue Stand nicht, setzt `run.sh` auf den vorigen Commit zurück, baut den und startet ihn.
+Liegen im Arbeitsverzeichnis eingecheckte Dateien mit lokalen Änderungen, wird gar nicht gepullt - ein
+Zurücksetzen würde sie sonst wegwerfen. Was passiert ist, steht in `update-result.txt` und unter
+`/neustart`.
+
+`start.sh` startet `run.sh` in der tmux-Sitzung `server`. **Einmalig:** eine Sitzung, die noch mit dem
+alten `start.sh` läuft, muss einmal von Hand beendet und neu gestartet werden, damit `run.sh` läuft.
 
 ## Server
 
@@ -112,6 +170,7 @@ Passwörter liegen als PBKDF2-Hash in der `main-config.yml`, nie im Klartext. Di
 |-------|-------------|
 | Server | Zeigt welche Server an sind, und schaltet sie an, aus oder neu |
 | Paying Player | Trägt zahlende Spieler per Minecraft-Name oder UUID ein und aus |
+| Tickets | Liest und beantwortet Tickets, übernimmt, schließt und öffnet sie wieder (siehe [Tickets](#tickets)) |
 | Konsole | Zeigt die Ausgabe eines Servers live an und schickt Befehle an ihn |
 
 ### Live-Konsole
@@ -479,7 +538,7 @@ selbst, mitsamt Kommentaren zu jedem Wert.
 | `maps/<name>.yml` | Alles, was zu einer Map gehört |
 
 Maps liegen als Weltordner unter `maps/<name>/`. Beim Start wird eine Kopie geladen, gespielt wird in
-der Kopie. **Achtung bei 26.2:** eine Zusatzwelt liegt nicht mehr neben der Hauptwelt, sondern als
+der Kopie. **Achtung seit 26.1:** eine Zusatzwelt liegt nicht mehr neben der Hauptwelt, sondern als
 Dimension darin (`world/dimensions/minecraft/arena_<name>`) - der Server verschiebt sie beim Import
 selbst dorthin.
 
@@ -752,8 +811,9 @@ Geschichte sehen will.
 Eine Schwelle bleibt: **Mindesthände**. Ein großer Pot ist ein echter Gewinn und trotzdem noch keine
 Pokernacht. Wer sie nicht hat, steht unter der Wertung mit der Angabe, was fehlt, statt einfach zu
 fehlen. Den Mindesteinsatz gibt es weiterhin als Einstellung, steht aber standardmäßig auf aus — er war
-nur für die Verhältnis-Wertung nötig. Preise für die Plätze 1–3 und für die Teilnahme werden wie bei
-jedem anderen Event über das Preis-Menü hinterlegt.
+nur für die Verhältnis-Wertung nötig. Belohnungen werden wie bei jedem anderen Event über den Knopf
+**Belohnungen** hinterlegt (siehe [Belohnungen](#belohnungen)). Platz 1 ist der größte Gewinn; wer unter
+den Mindesthänden bleibt, hat weder einen Platz noch zählt er als Teilnehmer.
 
 ### Am Tisch
 
@@ -907,6 +967,161 @@ nur mitgegangen sind, ein All-In das kleiner als eine volle Erhöhung ist öffne
 neu, und wer all-in für weniger drin ist, kann nur gewinnen, was er verlieren konnte. Am Ende 400
 Zufallshände, in denen Chips nur wandern und nie entstehen.
 
+## Events anlegen
+
+`/events` → **Neues Event**. Name, Beschreibung, Typ, Start und Dauer stehen oben, darunter zwei Knöpfe,
+die bei **jedem** Eventtyp an derselben Stelle sitzen:
+
+| Knopf | Was dahinter ist |
+|-------|------------------|
+| Einstellungen (Komparator, links) | Alle Regeln des Typs — Schalter und Zahlen zum Durchklicken |
+| Belohnungen (Goldbarren, rechts) | Wer was bekommt |
+
+Das Event-Panel eines bestehenden Events hat dieselben zwei Knöpfe an denselben Plätzen. Dort wird jede
+Änderung sofort gespeichert, beim Anlegen erst mit **Anlegen**. Spieler sehen beide Knöpfe auch, können
+sie aber nicht ändern — so sieht jeder, worum gespielt wird.
+
+### Belohnungen
+
+Eine Belohnung ist: **was** (Bits und Items) und **wer** sie bekommt. Angelegt wird sie in dieser
+Reihenfolge — Neue Belohnung, Geld durchklicken und Items aus der Hand dazulegen, dann wählen, wer:
+
+| Auswahl | Wer sie bekommt |
+|---------|-----------------|
+| `#1`, `#2`, `#3` | Genau dieser Platz |
+| Top 10 | Platz 1 bis 10 |
+| ab Platz 10 | Platz 10 bis zum letzten |
+| Von/Bis von Hand | Jeder beliebige Bereich, z.B. Platz 4–10 |
+| ab X Kills | Wer mindestens so viele Kills hat — nur bei Events, die Kills zählen |
+| Teilnahme | Jeder, der mitgemacht hat |
+
+**Jede Belohnung, die passt, wird ausgezahlt.** Wer Platz 1 und 5 Kills hat, bekommt die Belohnung für
+`#1` und die für „ab 5 Kills“. Ausgezahlt wird beim Abrechnen des Events; wer offline ist, bekommt sie
+beim nächsten Join (Geld nur auf einem Server mit Wirtschaft, wie bisher).
+
+Welche Events überhaupt jemanden werten:
+
+| Typ | Platz | Kills |
+|-----|-------|-------|
+| UHC (Bosse / Drache) | nach Zeit, das Team teilt sich den Platz | – |
+| Pokernacht | nach Gewinn, nur wer die Mindesthände hat | – |
+| Hunger Games | in der Reihenfolge, in der die Leute rausfliegen | ja |
+| Bedwars | nach Team, in der Reihenfolge, in der die Teams ausscheiden; das Team teilt sich den Platz | ja, pro Spieler, Final Kills zählen mit |
+| Einfach, Andere Welt, End | – | – |
+
+**Ein Event endet mit seinem Spiel, nicht mit seiner Uhr.** Bei Bedwars und Hunger Games geht ein
+Event, dessen Zeit abläuft, während noch gespielt wird, in die Verlängerung („Verlängerung“ im
+Kalender). Abgerechnet wird, sobald der Spielserver meldet, dass die Runde vorbei ist. Ohne diese Meldung
+rechnet der Launcher ab, wenn der Server nicht mehr läuft (Absturz, niemand kam), und spätestens nach
+sechs Stunden Verlängerung.
+
+**Bedwars im Detail:** Das zuerst ausgeschiedene Team bekommt den schlechtesten Platz, das letzte
+stehende Platz 1. Endet die Runde über das Zeitlimit, werden die noch stehenden Teams nach derselben
+Punktetabelle geordnet, mit der das Zeitlimit den Sieger bestimmt; bei einem Unentschieden an der Spitze
+entscheidet die Reihenfolge der Tabelle. Beendet ein Op die Runde (`STOPPED`) oder läuft sie leer,
+bleiben die stehenden Teams ohne Platz: Kills und Teilnahme zählen, ein Platz nicht. Private Runden über
+`/runde` melden nichts.
+
+Gespeichert werden Belohnungen als `reward.<n>` in den Einstellungen des Events, z.B.
+`who=place:4:10;money=100;items=DIAMOND:2`. Events von vorher mit `prize.place.1..3` und
+`prize.participation` werden als die Regeln gelesen, die sie meinten, und beim ersten Speichern
+umgeschrieben.
+
+**Behoben dabei:** Der Launcher hat Einstellungen mit Punkt im Schlüssel (`poker.buy-in`,
+`prize.place.1`) als verschachteltes YAML geschrieben, aber flach zurückgelesen. Nach einem Neustart des
+Launchers waren dadurch alle Preise und alle Poker-Einstellungen eines Events kaputt. `EventStore` liest
+sie jetzt vollständig zurück (geprüft in `RewardCheck`).
+
+### Ein neues Event bauen (Vorlage)
+
+Was ein neuer Eventtyp braucht, von oben nach unten — die meisten brauchen nur die ersten drei Schritte:
+
+1. **Typ**: Eintrag in `EventType` mit Titel und ob er Plätze (`ranked`) und Kills (`kills`) kennt.
+2. **Einstellungen**: eine Klasse wie `HungerGamesSettings` mit Schlüsseln, Gettern und einer Liste
+   `SETTINGS` aus `EventSetting.toggle(...)` / `EventSetting.choice(...)`. Das Einstellungs-Menü wird
+   daraus gebaut, niemand muss ein Inventar schreiben.
+3. **Definition**: eine Zeile in `EventDefinitions`:
+   `register(EventDefinition.of(EventType.X, Material.BOW).settings(XSettings.SETTINGS));`
+4. **Eigener Server** (falls das Event auf einem läuft): eine `ServerTemplate`, ein
+   `FileType.PLUGIN`, der Einstellungs-Schlüssel des Servers in `EventType`, und eine
+   `ServerEventStarter.define(...)`-Kette — der fährt den Server fünf Minuten vorher hoch, schreibt
+   seinen Namen ins Event und holt die Lobby rüber (`warpFor`) oder lädt nur ein (`walkIn`, wie die
+   Pokernacht). Bedwars, Pokernacht und Hunger Games laufen alle darüber. Der Server findet sein Event über den
+   eigenen Namen (siehe `ArenaContext`).
+5. **Wertung**: der Spielserver meldet `EventResultData` (Platz, Kills) über
+   `EventResultService.report(...)`. Der Launcher hebt sie in `results.yml` auf und zahlt beim Abrechnen
+   über `RewardPayout` aus — die Belohnungsregeln gelten dann ohne weiteren Code. Für die Anzeige gibt es
+   `EventResultUi`.
+
+## Hunger Games
+
+Alle in eine Welt, in der Mitte das Füllhorn mit gutem Loot, über die Karte fallen Supply Drops, am Ende
+zieht sich die Weltgrenze zusammen bis zum Showdown. Nether und End sind aus.
+
+Ablauf: Fünf Minuten vor dem Event fährt die Lobby die Arena hoch (`HUNGER_GAMES_<id>`) und lädt ein;
+zur Eventzeit schickt sie alle rüber, zwei Minuten lang auch Nachzügler. In der Arena wird gewartet, bis
+die Eventzeit da ist **und** genug Spieler da sind, dann 30 Sekunden Countdown — die letzten zehn steht
+jeder eingefroren auf seinem Startplatz im Ring ums Füllhorn. Danach Schutzzeit, freies Spiel, Grenze
+schrumpft, Showdown. Wer stirbt oder den Server verlässt, ist raus und schaut zu; wer nach dem Start
+kommt, schaut zu. Der Letzte gewinnt, 20 Sekunden später geht es zurück in die Lobby.
+
+| Einstellung | Standard | Was sie macht |
+|-------------|----------|---------------|
+| Mindestens Spieler | 2 | Vorher startet nichts, auch wenn die Zeit da ist |
+| Schutzzeit | 1 Min | Niemand kann einem anderen Spieler schaden |
+| Grenze am Anfang | 500 | Durchmesser der Welt beim Start |
+| Grenze beim Showdown | 20 | So klein wird sie am Ende |
+| Grenze schrumpft ab | 10 Min | Nach dem Start |
+| Schrumpfdauer | 10 Min | Bis zur Showdown-Größe |
+| Supply Drops | 4 Min | Abstand zwischen zwei Paketen, `aus` möglich |
+| Leuchten im Showdown | an | Wer im Showdown lebt, leuchtet |
+
+Die Teamgröße ist als Schlüssel (`hg.team-size`) vorbereitet, gespielt wird aber immer solo: Teams
+brauchen eigene Plätze und Friendly-Fire-Regeln, die gibt es noch nicht.
+
+**Plätze** ergeben sich aus der Reihenfolge des Rausfliegens. **Das Spiel endet, wenn einer übrig ist —
+nicht, wenn die Eventzeit abläuft.** Läuft die Zeit ab, geht das Event in die Verlängerung (so steht es
+auch im Kalender) und wird erst abgerechnet, wenn die Arena meldet, dass das Spiel vorbei ist.
+`/hg stop` beendet ohne Wertung der Lebenden.
+
+**Nether und End:** `allow-end` in der `bukkit.yml` wirkt, `allow-nether=false` hält den Nether auf 26.3
+aber nicht mehr vom Laden ab. Die Arena entlädt ihn deshalb nach dem Start selbst, und Portale werden
+ohnehin abgelehnt.
+
+**Die Karte.** Liegt eine Welt in `./hungergames-world` beim Launcher (Ordner mit `level.dat`), wird sie
+auf jede neue Arena kopiert. Ohne Karte gibt es eine frisch generierte Welt. Optional liegt in der Karte
+eine `hungergames.yml`:
+
+```yaml
+center: {x: 0, z: 0}   # Standard: der Weltspawn
+cornucopia-radius: 12  # Kisten so nah an der Mitte sind das Füllhorn
+spawn-radius: 22       # Radius des Startrings
+spawns: ["10,70,-4"]   # feste Startplätze statt des Rings, optional
+```
+
+`/hg mitte` schreibt die Mitte von dort, wo man steht — auch in die Karte beim Launcher, gilt also ab
+der nächsten Arena. Steht keine Kiste in der Nähe der Mitte, baut die Arena ein kleines Füllhorn
+(Steinplatte, goldenes Horn, zwölf Kisten). Kisten auf der Karte werden beim ersten Öffnen gefüllt, wenn
+sie leer sind; was der Kartenbauer hineingelegt hat, bleibt.
+
+**Loot** steht in `./hungergames-loot.yml` beim Launcher (wird beim ersten Start mit den Standards
+geschrieben): drei Tabellen `normal`, `cornucopia`, `supply` mit Material, Anzahl, Gewicht und optional
+Verzauberungen.
+
+**Supply Drops** fallen als Kiste aus 40 Blöcken Höhe irgendwo in die inneren 80 % der aktuellen Grenze,
+mit Koordinaten im Chat und einer Lichtsäule. Landet eine auf einer Fackel oder in einem nicht geladenen
+Chunk, wird sie nach 20 Sekunden einfach hingestellt.
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/hg` | Stand des Spiels |
+| `/hg start` | Sofort starten (Op). Alleine läuft es als Test, bis `/hg stop` |
+| `/hg stop` | Ohne Sieger beenden (Op) |
+| `/hg mitte` | Mitte der Karte setzen (Op) |
+
+Beim Abrechnen des Events zahlt der Launcher die Belohnungen aus `results.yml` aus, stoppt die Arena und
+löscht ihr Verzeichnis.
+
 ## Discord-Verknüpfung
 
 Ein Minecraft-Name ist alles, was man von jemandem hat, wenn er auffällt. Die Verknüpfung macht daraus
@@ -943,6 +1158,81 @@ im Code von `/payingplayer` verdrahtet; er ist jetzt an einer Stelle und änderb
 Operator ist jedes Recht, das es gibt — deshalb hängt das bewusst am Besitzer und nicht an einer
 Discord-Rolle.
 
+## Tickets
+
+Ein Ticket ist ein Gespräch zwischen einem Spieler und den Admins. Es läuft so lange hin und her, bis
+jemand es schließt, und jeder kann es danach wieder öffnen. Wo geschrieben wird, ist egal: Es gibt einen
+Stand, und der landet überall.
+
+| Wo | Spieler | Admins |
+|----|---------|--------|
+| Discord | Knopf „Ticket schreiben“ im Ticket-Kanal; Antworten und Schließen über die Knöpfe in der DM | Ein Thread pro Ticket im Admin-Kanal: Jede Nachricht dort geht an den Spieler, außer sie beginnt mit `//`. Knöpfe zum Übernehmen, Schließen und Wieder-Öffnen |
+| Im Spiel | `/ticket`, `/ticket neu`, `/ticket <nr>`, `/ticket <nr> antworten [text]`, `/ticket <nr> schliessen\|oeffnen` | dazu `/ticket offen` und `/ticket <nr> uebernehmen` (Op oder `network.tickets`) |
+| Website | – | Panel „Tickets“ |
+
+Wer antwortet, bekommt das Ticket automatisch zugeteilt, sofern es noch niemand hat. Ein Spieler bekommt
+Antworten per DM, wenn sein Discord bekannt ist, und im Spiel, wenn er online ist. War er offline, sieht
+er sie beim nächsten Join. Mit einer [Discord-Verknüpfung](#discord-verknüpfung) ist er an beiden Stellen
+erreichbar. Ohne Verknüpfung nur dort, wo er das Ticket geschrieben hat. Admins im Spiel erfahren von neuen
+Tickets und Antworten. Ist ein Ticket übernommen und der Bearbeiter online, erfährt es nur er.
+
+Unter jeder Admin-Aktion im Logging-Kanal steht ein Knopf, der ein Ticket zu genau dieser Aktion öffnet.
+Die Aktion steht dann im Ticket unter „Bezieht sich auf“.
+
+**Einrichten** (Discord, Administrator):
+- `/setticketchannel` im Kanal, in dem Spieler Tickets schreiben. Der Bot legt dort seine Nachricht mit
+  dem Knopf an, falls sie in den letzten 25 Nachrichten fehlt. Gelöscht wird nichts.
+- `/setticketstaffchannel` im Kanal, in dem die Admins arbeiten. Ohne ihn gibt es keine Threads.
+  Tickets laufen dann nur über DM, Spiel und Website.
+
+Die Tickets liegen in `tickets.yml` beim Launcher. Die alten Tickets aus der `main-config.yml`
+(`tickets`, `ticket-N`) werden beim ersten Start einmal dorthin übernommen, mit derselben Nummer, und
+danach aus der `main-config.yml` entfernt. Ist der Discord-Account des alten Autors verknüpft, bekommen
+sie auch seinen Minecraft-Namen.
+
+Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
+steht in der Klasse, aus einem leeren Verzeichnis starten).
+
+## Lotto
+
+4 aus 15, bezahlt mit Bits. Jeder Tipp kostet gleich viel (Standard 100 Bits, also einen Diamanten an
+der Bank), und man kann so oft tippen, wie man will. Jede Woche zur selben Zeit (Standard: Sonntag
+20:00, Zeitzone Berlin) zieht der Launcher vier Zahlen. Wer alle vier getroffen hat, bekommt den
+ganzen Topf.
+
+- **Der ganze Einsatz geht in den Topf.** Das Haus behält nichts.
+- **Trifft niemand**, bleibt der Topf und wächst in der nächsten Runde weiter.
+- **Treffen mehrere**, wird pro Gewinnertipp geteilt: Wer zwei richtige Tipps hat, bekommt zwei
+  Anteile. Was sich nicht glatt teilen lässt, bleibt im Topf.
+- **Der Gewinn geht direkt aufs Konto**, auch an Spieler, die gerade offline sind.
+- **Chance:** 1 zu 1365 pro Tipp.
+- **Eine Runde ohne Tipps** wird nicht gezogen, der Termin rückt einfach eine Woche weiter.
+- **War der Launcher zur Ziehung aus**, wird gezogen, sobald er wieder läuft.
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/lotto` | Öffnet den Tippschein: Zahlen anklicken, zufällig ausfüllen, 5 Quicktipps, eigene Tipps |
+| `/lotto tipp 3 7 11 14` | Ein Tipp direkt |
+| `/lotto quick [anzahl]` | 1 bis 20 zufällige Tipps |
+| `/lotto info` · `/lotto meine` | Topf, Termin, letzte Zahlen · eigene Tipps dieser Runde |
+| `/lotto ziehen` | Admin: jetzt ziehen |
+| `/lotto termin sonntag 20:00` | Admin: Wochentag und Uhrzeit der Ziehung |
+| `/lotto preis 100` | Admin: Preis pro Tipp, gilt ab dann |
+| `/lotto stand` · `/lotto standweg` | Admin, nur Lobby: Lotto-Stand an die eigene Position stellen oder entfernen |
+
+Admin heißt Op oder `network.lotto.admin`. `/lotto` gibt es auf jedem Server. Die Ziehung wird überall
+im Chat und als Titel angesagt, und wer gewonnen hat, sieht „Gewonnen!“.
+
+Der Stand in der Lobby ist ein Villager. Ein Klick auf ihn öffnet den Tippschein, und über ihm stehen
+Topf, Zeit bis zur Ziehung und die letzten Zahlen. Er wird nicht mit der Welt gespeichert, sondern bei
+jedem Start und nach dem Entladen seines Chunks neu hingestellt. Sein Platz steht in
+`plugins/LobbyPlugin/lotto-stand.yml`.
+
+Alles andere liegt in `lotto.yml` beim Launcher: Preis, Termin, Zeitzone (`settings.zone`), der Topf,
+die Tipps der laufenden Runde und die letzten 20 Ziehungen. Gezogen wird mit `SecureRandom`.
+
+Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/lotto/LottoCheck.java`.
+
 ## Module
 
 | Modul | Inhalt |
@@ -953,5 +1243,6 @@ Discord-Rolle.
 | `Survival` | Survival Spielmodus |
 | `Bedwars` | Bedwars Minispiel |
 | `PokerPlugin` | Casino einer Pokernacht: Regeln, Tisch, Bots |
+| `HungerGamesPlugin` | Arena eines Hunger-Games-Events: Füllhorn, Supply Drops, Grenze, Wertung |
 | `BackpackPlugin` | Geteilter Team-Rucksack |
 | `VelocityPlugin` | Meldet neue Server am laufenden Proxy an |
