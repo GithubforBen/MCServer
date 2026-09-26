@@ -9,6 +9,7 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,6 +19,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * The title is deliberately tied to the <em>owner</em> changing rather than to the chunk changing. Walking
  * across a team's territory crosses a chunk border every sixteen blocks, and a title on each of them would
  * be the reason somebody asks for the feature to be removed again.
+ * <p>
+ * Even so, a title in the middle of the screen is the one part of this that somebody building at a border
+ * cannot ignore, so every player can switch it off for themselves with {@code /cteam titel}. The choice
+ * sits on the player, not in the config: it is a matter of taste, and taste differs per player. The action
+ * bar and the borders stay - they are asked for, or they are quiet enough to live with.
  */
 public final class ClaimDisplay implements Listener {
 
@@ -52,6 +60,9 @@ public final class ClaimDisplay implements Listener {
     private static final int BORDER_RADIUS = 1;
     /** One block apart along an edge, and two heights, is enough to read as a wall. */
     private static final double[] BORDER_HEIGHTS = {0.5d, 2.5d};
+
+    /** Where a player's choice about the crossing title is kept. Absent means on. */
+    private static final NamespacedKey TITLE_KEY = new NamespacedKey("survival", "claim-title");
 
     /** What everybody is standing on right now, by team name; the empty string means wilderness. */
     private static final Map<UUID, String> standingIn = new ConcurrentHashMap<>();
@@ -116,6 +127,7 @@ public final class ClaimDisplay implements Listener {
         // the first step of a player nobody has seen yet is not a crossing: onJoin remembers where they
         // are, and a null here means the join was missed, not that they came from somewhere
         if (before == null) return;
+        if (!isTitleOn(player)) return;
         showTitle(player, owner);
     }
 
@@ -134,6 +146,36 @@ public final class ClaimDisplay implements Listener {
         Component sub = Component.text(owner == null ? "Verlassen" : "Betreten", NamedTextColor.GRAY);
         player.showTitle(Title.title(headline, sub, Title.Times.times(
                 Duration.ofMillis(300), Duration.ofMillis(1500), Duration.ofMillis(500))));
+    }
+
+    /* --------------------------------------------------------------- the switch */
+
+    /**
+     * @param player the player asking
+     * @return whether they want a title when they walk onto somebody else's land
+     */
+    public static boolean isTitleOn(Player player) {
+        Byte stored = player.getPersistentDataContainer().get(TITLE_KEY, PersistentDataType.BYTE);
+        // never asked is the same as yes: the feature is only worth having if it shows up unprompted
+        return stored == null || stored != 0;
+    }
+
+    /**
+     * Turns the crossing title on or off for one player, and remembers it across sessions.
+     *
+     * @param player the player asking
+     * @return whether the title is on now
+     */
+    public static boolean toggleTitle(Player player) {
+        boolean on = !isTitleOn(player);
+        PersistentDataContainer data = player.getPersistentDataContainer();
+        if (on) {
+            // the default is on, so wanting it back is the same as never having said anything
+            data.remove(TITLE_KEY);
+        } else {
+            data.set(TITLE_KEY, PersistentDataType.BYTE, (byte) 0);
+        }
+        return on;
     }
 
     /* ----------------------------------------------------------------- action bar */

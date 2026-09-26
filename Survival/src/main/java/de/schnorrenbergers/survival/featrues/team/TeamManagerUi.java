@@ -81,6 +81,12 @@ public final class TeamManagerUi {
         for (int filler = 27; filler < 45; filler++) ui.setPlaceHolder(filler);
 
         ui.setItem(45, info(team, manager), SimpleItemAction.display());
+        // not a team setting but a personal one, so it sits here for everybody rather than behind the
+        // leader's settings screen
+        ui.setItem(46, titleToggle(source), new SimpleItemAction(event -> {
+            ClaimDisplay.toggleTitle(source);
+            source.openInventory(main(manager, source).getInventory());
+        }));
 
         if (leader) {
             ui.setItem(47, new ItemApi(Material.COMPARATOR, ChatColor.AQUA + "Einstellungen",
@@ -112,6 +118,20 @@ public final class TeamManagerUi {
                     }));
         }
         return ui;
+    }
+
+    /**
+     * @param source the player looking at the menu
+     * @return the button for their own claim title, showing what it is set to right now
+     */
+    private static ItemStack titleToggle(Player source) {
+        boolean on = ClaimDisplay.isTitleOn(source);
+        return new ItemApi(on ? Material.LIME_DYE : Material.GRAY_DYE,
+                ChatColor.YELLOW + "Claim-Titel " + (on ? ChatColor.GREEN + "an" : ChatColor.RED + "aus"),
+                List.of(ChatColor.GRAY + "Der große Text beim Betreten",
+                        ChatColor.GRAY + "eines fremden Claims.",
+                        ChatColor.DARK_GRAY + "Gilt nur für dich.",
+                        ChatColor.YELLOW + "Klicken zum Umschalten")).build();
     }
 
     /**

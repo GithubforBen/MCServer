@@ -284,6 +284,7 @@ Danach wird die alte Datei als migriert markiert (nicht gelöscht).
 | `/cteam info [team]` · `list` | Team-Infos, alle Teams im Netzwerk |
 | `/cteam claim` · `unclaim` · `chunks` | Chunks kaufen, freigeben, Karte anzeigen |
 | `/cteam grenze` | Zeichnet die Chunk-Grenzen um dich herum zehn Sekunden lang mit Partikeln |
+| `/cteam titel` | Schaltet den Titel beim Betreten eines Claims für dich an und aus |
 
 ### Wem gehört der Boden hier
 
@@ -293,7 +294,10 @@ Claims sind unterwegs sichtbar, nicht nur auf Befehl:
   eingeblendet, darunter „Betreten" - beim Schritt zurück ins Freie steht dort „Wildnis" und
   „Verlassen". Ausgelöst wird das vom Wechsel des **Besitzers**, nicht vom Chunkwechsel: quer über ein
   Teamgebiet zu laufen überquert alle sechzehn Blöcke eine Chunkgrenze, und ein Titel bei jeder davon
-  wäre der Grund, das Ganze wieder abzuschalten.
+  wäre der Grund, das Ganze wieder abzuschalten. Wer ihn trotzdem nicht will, schaltet ihn mit
+  `/cteam titel` ab - oder über den Knopf im Team-Manager neben der Team-Übersicht. Die Entscheidung
+  hängt am Spieler, nicht am Server: Geschmackssache, und Geschmack ist pro Spieler verschieden. Der
+  Name über der Hotbar bleibt dabei stehen.
 - **Actionbar währenddessen.** Solange jemand auf fremdem oder eigenem Boden steht, steht der
   Teamname über der Hotbar, beim eigenen Team mit dem Zusatz „dein Team". In der Wildnis steht dort
   nichts - eine leere Zeile ist dort die richtige Antwort und hält die Anzeige aus dem Weg.
@@ -340,6 +344,14 @@ Speicherung und Netzwerk-Übertragung ändern sich nicht.
 
 Ein eigenes, auswählbares Plugin (`BackpackPlugin`). `/backpack` oder `/bp` öffnet den Rucksack, den sich
 ein **Team teilt**. Er liegt beim Launcher neben den Teams, ist also auf jedem Server derselbe.
+
+Das Plugin **verbindet sich selbst** mit dem Netzwerk, auch wenn auf demselben Server schon ein anderes
+Plugin verbunden ist. Jedes Plugin trägt seine eigene Kopie des gemeinsamen Codes im Jar, und die
+Verbindung des Nachbarn liegt damit in einem Klassenraum, den es gar nicht sehen kann. Ohne eigene
+Verbindung kämen die Teams nie an, und `/backpack` würde bis zum Serverneustart „die Teams sind noch nicht
+geladen" antworten - lautlos, denn die Aktualisierung bricht in dem Fall ohne Meldung ab. Der Server steht
+dann zweimal im JGroups-Cluster; das kostet einen Teilnehmer mehr und sonst nichts, weil Events ohnehin an
+alle gehen und jede Verbindung nur mit ihren eigenen Handlern antwortet.
 
 **Die Größe hängt davon ab, wer zahlt:** sobald die zahlenden Mitglieder eines Teams in der *Mehrheit*
 sind, wird aus der Kiste (27 Slots) eine Doppelkiste (54). Gleichstand zählt nicht als Mehrheit - ein

@@ -63,6 +63,13 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
             sendUsage(sender);
             return true;
         }
+        // whether somebody wants the title on crossing a claim is their own setting and lives on them, so
+        // it is answered before the teams are asked for - a display preference has no business waiting for
+        // the network
+        if (args.length > 0 && (args[0].equalsIgnoreCase("titel") || args[0].equalsIgnoreCase("title"))) {
+            titleToggle(player);
+            return true;
+        }
         if (!TeamService.isLoaded()) {
             player.sendMessage(ChatColor.RED
                     + "❌ Die Teams sind noch nicht vom Hauptserver geladen. Gleich nochmal versuchen.");
@@ -296,6 +303,17 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
     }
 
     /**
+     * Switches the title that announces whose land somebody just walked onto.
+     */
+    private void titleToggle(Player player) {
+        boolean on = ClaimDisplay.toggleTitle(player);
+        player.sendMessage(on
+                ? ChatColor.GREEN + "✓ Der Titel beim Betreten eines Claims ist wieder an."
+                : ChatColor.GRAY + "Der Titel beim Betreten eines Claims ist aus. "
+                        + "Der Name über der Hotbar bleibt.");
+    }
+
+    /**
      * Draws the chunk borders around the player in particles, for a few seconds.
      */
     private void border(Player player) {
@@ -433,7 +451,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
         sender.sendMessage(ChatColor.GOLD + "/cteam" + ChatColor.GRAY + " öffnet den Team-Manager");
         sender.sendMessage(ChatColor.GRAY + "create, invite, join, leave, kick, transfer,");
         sender.sendMessage(ChatColor.GRAY + "rename, tag, disband, sethome, home, settings,");
-        sender.sendMessage(ChatColor.GRAY + "info, list, claim, unclaim, chunks, grenze, atm");
+        sender.sendMessage(ChatColor.GRAY + "info, list, claim, unclaim, chunks, grenze, atm, titel");
     }
 
     @Override
@@ -442,7 +460,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
         if (args.length <= 1) {
             return List.of("create", "invite", "join", "leave", "kick", "transfer", "rename", "tag",
                     "disband", "sethome", "home", "settings", "info", "list", "claim", "unclaim",
-                    "chunks", "grenze", "atm");
+                    "chunks", "grenze", "atm", "titel");
         }
         String first = args[0].toLowerCase();
         if (args.length == 2) {
