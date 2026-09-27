@@ -220,12 +220,33 @@ Claude steuert dabei deinen Rechner (Screenshots, Klicks, Tippen) über die Clau
 Grenze: ein Account heißt ein Spieler. Alles, wofür es Plätze, Gegner oder einen zweiten Blick braucht,
 steht in 2.2.
 
+**Stand 2026-09-27:** Computer Use gibt es unter Linux nicht (weder CLI noch Desktop). Getestet wurde
+stattdessen aus Claude Code heraus: beide Clients mit `SDL_VIDEO_DRIVER=x11` über XWayland gestartet (Lunar
+zusätzlich mit `--ozone-platform=x11`), Eingaben per `xdotool` (ohne sudo aus dem .deb entpackt),
+Screenshots per `import`. Dabei gefunden und behoben:
+- Gadgets kamen beim Join nie an (ausgeteilt, bevor die Cosmetics geladen waren); Anlegen im Menü gab
+  das Item erst beim nächsten Join
+- Rechtsklick in die Luft tat bei Konfetti-Kanone, Emotes, Raketenstiefeln, Reittier, Wetter und Werkbank
+  nichts (`ignoreCancelled` - ein Luftklick kommt schon abgebrochen an)
+- Sprungpad war ein voller Block, gegen den man lief - hat nie jemanden geworfen
+- Sitzen: beim Aufstehen fiel man durch den Boden
+- Kill-Effekte spielten in Bedwars nie (Bedwars simuliert den Tod selbst)
+- Gadget-Items ließen sich droppen, einlagern und beim Tod verlieren - bei Gadgets, die sich nachfüllen,
+  ein Vervielfältiger
+- Gadgets wirken nicht mehr in Bedwars (Endlos-Perle, Enterhaken): kein Spielvorteil durch Cosmetics
+- Endlos-Perle bricht einen Parkour-Lauf ab
+- Bedwars: Team eines Spielers, der mitten in der Runde geht, schied nach Bettverlust nie aus
+- `/neustart`: Ansage beim Planen kam doppelt
+
 **Update auf 26.3**
-- [ ] Launcher-Start nach dem Update: liegt für SURVIVAL und LOBBY ein Backup in `./backups/`, bevor die
+- [x] Launcher-Start nach dem Update: liegt für SURVIVAL und LOBBY ein Backup in `./backups/`, bevor die
       Server starten, und ist die Welt darin vollständig (inkl. `dimensions/`)?
-- [ ] Proxy mit Velocity 4.2.0: verbinden, `/warp` auf jeden Server, ein neu erstellter Server taucht
+      → 2026-09-26: beide Backups vor dem Start da, mit `dimensions/`
+- [x] Proxy mit Velocity 4.2.0: verbinden, `/warp` auf jeden Server, ein neu erstellter Server taucht
       ohne Proxy-Neustart in `/warp` auf
-- [ ] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
+      → Runden-, Casino- und Arena-Server waren sofort per `/warp` erreichbar
+- [x] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
+      → nach `/neustart 2` vollständig
 - [ ] Survival nach der Umwandlung: eigene Claims (WorldGuard), Shops und Teams noch da?
 - [ ] WorldEdit-Beta: die Befehle, die ihr nutzt (`//wand`, `//set`, `//copy`, `//paste`, `//undo`)
 - [ ] Bedwars-Maps aus `./bedwars-maps` und die Lobby-Vorlage aus `./lobby-world`: auf 26.3 hochgestuft,
@@ -240,49 +261,54 @@ steht in 2.2.
 - [ ] Event-Panel: „Zur Bedwars-Lobby“ / „Zum Casino“ / „Zur Arena“ an derselben Stelle,
       Einstellungen und Belohnungen in denselben zwei Slots wie beim Anlegen
 - [ ] Ein abgesagtes Event wieder aktivieren: sind seine Läufe noch da?
-- [ ] Event abrechnen lassen (Server stoppen oder Runde beenden): Verzeichnis der Bedwars-Runde bzw.
+- [x] Event abrechnen lassen (Server stoppen oder Runde beenden): Verzeichnis der Bedwars-Runde bzw.
       der Arena ist danach weg
+      → Bedwars und Arena ja. **Aber:** das Casino einer Pokernacht wird nur gestoppt, `servers/POKER_<id>` bleibt
+        liegen (~270 MB je Nacht) - Pokernächte laufen nicht über `discardEventServer`. Absicht?
 
 **Hunger Games (allein, mit `/hg start`)**
 - [ ] Karte aus `./hungergames-world` kommt an, `hungergames.yml` wird gelesen (Mitte laut Konsole)
-- [ ] Nether und End sind aus: Konsole meldet „Unloaded world_nether“, ein Portal bringt einen nirgendwohin
-- [ ] Freeze im Countdown: umsehen geht, vom Startplatz laufen nicht
-- [ ] Supply Drop landet als gefüllte Kiste, Koordinaten im Chat, Lichtsäule steht
-- [ ] Grenze schrumpft in der eingestellten Zeit (`/worldborder get` vorher und nachher)
+- [x] Nether und End sind aus: Konsole meldet „Unloaded world_nether“, ein Portal bringt einen nirgendwohin
+      → Konsole ja; das Portal selbst nicht ausprobiert
+- [x] Freeze im Countdown: umsehen geht, vom Startplatz laufen nicht
+- [x] Supply Drop landet als gefüllte Kiste, Koordinaten im Chat, Lichtsäule steht
+- [x] Grenze schrumpft in der eingestellten Zeit (`/worldborder get` vorher und nachher)
+      → 200 → 112 nach 89 s von 180 s, genau auf der Kurve
 - [ ] `/hg stop` bei einem Event: Arena meldet „fertig“, Event wird abgerechnet, die
       **Teilnahme**-Belohnung kommt beim nächsten Join an, Arena ist danach gestoppt und gelöscht
 
 **Pokernacht (allein mit Bots)**
 - [ ] Tisch sieht aus wie gedacht: Karten flach auf dem Filz, Chipstapel in Denominationen, der Kopf
       des Aktiven dreht schneller (Screenshots)
-- [ ] Per Rechtsklick auf den Stuhl setzen und wieder aufstehen
-- [ ] Logout mitten in der Hand: kommen die Chips als Bits zurück?
+- [x] Per Rechtsklick auf den Stuhl setzen und wieder aufstehen
+- [x] Logout mitten in der Hand: kommen die Chips als Bits zurück?
 - [ ] Casino-Server hart killen (`kill -9`), Event abrechnen lassen: offene Stacks werden ausgezahlt,
       und **nur einmal** (Kontostand vorher/nachher)
 - [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau im selben Raum?
 - [ ] Turnier gegen Bots: Blinds steigen nur zwischen Händen, Auszahlung am Ende stimmt
 
 **Neustart und Updates**
-- [ ] `/neustart 2`: Countdown im Chat auf allen Servern, Bossbar, Titel; nach dem Kick sind alle
+- [x] `/neustart 2`: Countdown im Chat auf allen Servern, Bossbar, Titel; nach dem Kick sind alle
       Server-Prozesse weg (Konsole: „Every server is down“), das Netzwerk kommt von selbst wieder
+      → ja. Die Ansage beim Planen kam doppelt (Planung + 5-Minuten-Marke) - behoben in `RestartService`
 - [ ] `/neustart 2 update` mit einem neuen Commit auf dem Branch: läuft danach der neue Stand, steht
       „Update … erfolgreich“ unter `/neustart`?
 - [ ] `/neustart 2 update` mit einem Commit, der nicht baut: kommt das Netzwerk auf dem alten Stand
       wieder, und steht das unter `/neustart`?
-- [ ] `/neustart 5`, dann `/neustart abbrechen`: Bossbar weg, Absage im Chat
+- [x] `/neustart 5`, dann `/neustart abbrechen`: Bossbar weg, Absage im Chat
 - [ ] Ein Server, der während des Countdowns startet, zeigt denselben Countdown
 - [ ] `/neustart 1 aus`: alles bleibt aus, `run.sh` beendet sich
 
 **Lotto**
-- [ ] `/lotto stand` in der Lobby: Villager und Schild stehen, Rechtsklick öffnet den Tippschein statt
+- [x] `/lotto stand` in der Lobby: Villager und Schild stehen, Rechtsklick öffnet den Tippschein statt
       des Handelsmenüs, Schlagen tut ihm nichts
-- [ ] Lobby neu starten: genau ein Villager, nicht zwei
-- [ ] Tippschein: 4 Zahlen wählen, 5. wird abgelehnt, „Tippen“ zieht die Bits ab, Topf auf dem
+- [x] Lobby neu starten: genau ein Villager, nicht zwei
+- [x] Tippschein: 4 Zahlen wählen, 5. wird abgelehnt, „Tippen“ zieht die Bits ab, Topf auf dem
       Schild steigt sofort
-- [ ] Zu wenig Bits: Kauf abgelehnt, nichts abgezogen
-- [ ] `/lotto termin <heute> <in 2 Minuten>`: Ziehung kommt von allein, auf Lobby und Survival
+- [x] Zu wenig Bits: Kauf abgelehnt, nichts abgezogen
+- [x] `/lotto termin <heute> <in 2 Minuten>`: Ziehung kommt von allein, auf Lobby und Survival
       angesagt
-- [ ] `/lotto ziehen` ohne Tipps: abgelehnt
+- [x] `/lotto ziehen` ohne Tipps: abgelehnt
 
 **Tickets** (braucht Discord auf dem Rechner, mit Admin-Rechten auf dem Server)
 - [ ] Erster Start mit alten Tickets in der `main-config.yml`: stehen sie in `tickets.yml` und im
@@ -308,14 +334,16 @@ steht in 2.2.
 - [ ] BUILDING/MISC-Aufteilung stimmt für eine Handvoll Stichproben (`Material.isBlock()`)
 
 **Cosmetics, Gadgets, Admin**
-- [ ] Mit Lobby-Gadget nach Survival und zurück warpen: kein Item, kein Tier, kein Ballon bleibt
+- [x] Mit Lobby-Gadget nach Survival und zurück warpen: kein Item, kein Tier, kein Ballon bleibt
       zurück, das Survival-Gadget ist noch angelegt
+      → ja. Ein Gadget, das in beiden wirkt (z.B. Haustier), belegt beim Anlegen beide Slots - so gewollt
 - [ ] Wenn der Op-Account vor dem Update ein Gadget trug: trägt er es in allen drei Slots, und legt das
       erste Umlegen nur einen davon um?
 - [ ] Erntehelfer in einer fremden Claim oder WorldGuard-Region erntet nicht (braucht eine Claim, die
       nicht dem Test-Account gehört, z.B. von einem Admin-Team)
 - [ ] Reittier/Haustier/Ballon draußen, Server hart killen: steht danach nichts mehr herum?
-- [ ] `/admin join`: eigene Sicht in F5 zeigt die Admin-Gestalt
+- [x] `/admin join`: eigene Sicht in F5 zeigt die Admin-Gestalt
+      → im Vanilla-Client ja. Lunar zeigt sich selbst weiter mit eigenem Skin und Namen - Client-Sache
 - [ ] `/op` über Discord auf einem laufenden Server: gilt sofort, steht nach einem Neustart in `ops.json`
       (braucht den Discord-Besitzer-Account auf dem Rechner)
 - [ ] Gemessene Speicherspitzen plausibel: Server-Manager-Panel gegen RSS aus `/proc` (Faktor 1,4)
@@ -330,41 +358,51 @@ Grenzen: Claude handelt nacheinander, nicht im selben Moment - ein Spieler steht
 andere handelt. Für einen Kill heißt das: der eine greift an, der andere wehrt sich nicht.
 
 **Hunger Games (Mindestens Spieler: 2)**
-- [ ] Ein ganzes Spiel zu zweit: Schutzzeit hält (kein Schaden), danach zählt ein Treffer, der Kill
+- [x] Ein ganzes Spiel zu zweit: Schutzzeit hält (kein Schaden), danach zählt ein Treffer, der Kill
       wird gezählt, Platz 2 und 1 stimmen, Sieger-Feuerwerk, beide nach 20 s zurück in die Lobby
-- [ ] Belohnungen für `#1`, `#2` und „ab 1 Kill“ kommen beim richtigen Account an
+- [x] Belohnungen für `#1`, `#2` und „ab 1 Kill“ kommen beim richtigen Account an
+      → ja, liegen aber bis zur geplanten Endzeit des Events (bei „sofort“ also 1 Std) in `awards.yml`
 - [ ] Event läuft über seine Zeit (kurze Dauer, späte Schrumpfzeit): „Verlängerung“ im Kalender,
       Abrechnung erst nach dem Sieg
 
 **Bedwars-Belohnungen (Solo, zwei Teams)**
-- [ ] Bett zerstören, Final Kill: Platz 1 und 2 stimmen und stehen im Ergebnis-Panel des Events
-- [ ] „ab X Kills“: kommen die Kills (inkl. Final Kills) richtig an?
+- [x] Bett zerstören, Final Kill: Platz 1 und 2 stimmen und stehen im Ergebnis-Panel des Events
+      → `results.yml` und Auszahlung stimmen; das Ergebnis-Panel selbst nicht angesehen
+- [x] „ab X Kills“: kommen die Kills (inkl. Final Kills) richtig an?
 - [ ] Event, das über seine Zeit hinaus läuft: „Verlängerung“ im Kalender, Abrechnung erst nach dem
       Rundenende
 - [ ] Zeitlimit-Ende (kurzes Limit): stimmen die Plätze mit dem Endbildschirm überein?
-- [ ] Ein Account verlässt die Runde mittendrin: steht er noch im Ergebnis (Teilnahme)?
+- [x] Ein Account verlässt die Runde mittendrin: steht er noch im Ergebnis (Teilnahme)?
+      → ja - nach einem Fix: vorher schied das Team eines Gegangenen nie aus, die Runde hing bis zum
+        Zeitlimit (`GameTeam.setBedAlive`)
 
 **Pokernacht**
 - [ ] Die eigenen Karten sind nur für einen selbst sichtbar (Screenshots beider Clients vergleichen)
+      → halb: der Gegner sieht nur rote Rückseiten (Zoom). Die eigenen Kartenwerte sind auf 854x480
+        nicht lesbar - braucht einen großen Bildschirm oder einen Menschen
 
 **Tickets** (ein Op-Account, ein normaler, der normale mit `/verify` verknüpft)
-- [ ] `/ticket neu` mit dem normalen Account: der Op bekommt „Neues Ticket“ im Chat, egal auf
+- [x] `/ticket neu` mit dem normalen Account: der Op bekommt „Neues Ticket“ im Chat, egal auf
       welchem Server er steht
-- [ ] `/ticket <nr> antworten ...` als Op: der normale bekommt die Antwort im Chat und per DM
-- [ ] Normaler Account offline, Op antwortet, normaler joint: „Neue Antwort“ nach dem Join, nach
+- [x] `/ticket <nr> antworten ...` als Op: der normale bekommt die Antwort im Chat und per DM
+      → Chat ja; DM nicht geprüft (kein Discord auf dem Rechner)
+- [x] Normaler Account offline, Op antwortet, normaler joint: „Neue Antwort“ nach dem Join, nach
       `/ticket <nr>` nicht mehr
-- [ ] Normaler Account versucht `/ticket <nr>` auf ein fremdes Ticket: abgewiesen
-- [ ] Op übernimmt ein Ticket, der Spieler antwortet: nur der Bearbeiter bekommt die Nachricht
+- [x] Normaler Account versucht `/ticket <nr>` auf ein fremdes Ticket: abgewiesen
+- [x] Op übernimmt ein Ticket, der Spieler antwortet: nur der Bearbeiter bekommt die Nachricht
 
 **Lotto**
-- [ ] Beide Accounts tippen denselben Tipp, `/lotto ziehen` so oft, bis er fällt (oder mit wenigen
+- [x] Beide Accounts tippen denselben Tipp, `/lotto ziehen` so oft, bis er fällt (oder mit wenigen
       Zahlen in `/lotto quick 20` Glück haben): Topf wird geteilt, beide sehen „Gewonnen!“
-- [ ] Ein Gewinner ist offline: das Geld ist nach dem Join da
+      → beide haben alle 1365 Kombinationen getippt, Topf 2730 → je 1365
+- [x] Ein Gewinner ist offline: das Geld ist nach dem Join da
+      → ja (sofort auf dem Konto). Beim Join gibt es keinen Hinweis auf den Gewinn - soll da einer hin?
 
 **Runden und Admin**
-- [ ] Rundenadmin kickt den zweiten Account, der danach wieder joinen will
-- [ ] Private Runde: der zweite Account warpt ohne Einladung direkt auf den Servernamen
-- [ ] `/admin join`: sieht der zweite Account Name über dem Kopf, Skin und Tabliste der Admin-Gestalt?
+- [x] Rundenadmin kickt den zweiten Account, der danach wieder joinen will
+- [x] Private Runde: der zweite Account warpt ohne Einladung direkt auf den Servernamen
+      → 4 von 5 Versuchen abgewiesen. Beim allerersten blieb er drin - nicht reproduzierbar
+- [x] `/admin join`: sieht der zweite Account Name über dem Kopf, Skin und Tabliste der Admin-Gestalt?
 
 ### 2.2 Muss von Spielern getestet werden
 

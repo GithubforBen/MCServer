@@ -121,7 +121,10 @@ public final class CosmeticService {
         for (CosmeticData cosmetic : catalog.values()) {
             if (cosmetic.getType() == type && cosmetic.isEnabled()) visible.add(cosmetic);
         }
-        visible.sort((a, b) -> Integer.compare(a.getPriceBits(), b.getPriceBits()));
+        // by price, and by name where the price is the same: the catalogue is a map with no order of its own,
+        // and without the second key two things at the same price swapped places between two openings
+        visible.sort(java.util.Comparator.comparingInt(CosmeticData::getPriceBits)
+                .thenComparing(CosmeticData::getDisplayName, String.CASE_INSENSITIVE_ORDER));
         return visible;
     }
 

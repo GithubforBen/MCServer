@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.WeatherType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -72,8 +73,11 @@ public class PersonalWeatherGadget implements Gadget, Listener {
         return "Eigenes Wetter: Rechtsklick wechselt deinen Himmel - nur deinen.";
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // not ignoreCancelled: a right click into the air arrives already cancelled, because there is no block
+    // to use - only whether the item may be used says if somebody else forbade it
+    @EventHandler
     public void onInteract(PlayerInteractEvent event) {
+        if (event.useItemInHand() == Event.Result.DENY) return;
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }

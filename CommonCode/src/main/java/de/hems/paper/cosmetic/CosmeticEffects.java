@@ -65,6 +65,7 @@ public final class CosmeticEffects {
         Gadgets.register(plugin, new EmoteWheelGadget());
 
         new CosmeticSafetyListener(plugin);
+        new GadgetItemGuard(plugin);
         new CosmeticKillListener(plugin);
         Trails.start(plugin);
         // every gadget is registered by now, so the loop that runs the passive ones and cleans up after

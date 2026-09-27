@@ -136,8 +136,12 @@ public final class RestartService {
                     NamedTextColor.GREEN));
             return;
         }
+        long left = current.getSecondsLeft();
+        // this line is the announcement for the mark it falls on: a restart set for five minutes would
+        // otherwise be announced twice in the same second, once here and once by the countdown
+        lastAnnounced = left;
         Bukkit.getServer().sendMessage(Component.text("⚠ " + current.getMode().getTitle() + " des Netzwerks in "
-                + RestartStatus.format(current.getSecondsLeft()) + ".", NamedTextColor.GOLD));
+                + RestartStatus.format(left) + ".", NamedTextColor.GOLD));
     }
 
     /**

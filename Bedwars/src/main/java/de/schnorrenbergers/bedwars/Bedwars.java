@@ -138,9 +138,9 @@ public final class Bedwars extends JavaPlugin {
         // the placings and kills of an event round go to the launcher, which pays the rewards out of them
         new de.schnorrenbergers.bedwars.listener.EventResultReporter(this);
         new de.schnorrenbergers.bedwars.round.RoundStateListener(this);
-        // what a round ends with, and what players carry into it
+        // what a round ends with. Gadgets are left off on purpose: this server never names a gadget slot,
+        // and a server without one has no gadgets at all - a cosmetic may not be an advantage in a game
         CosmeticEffects.init(this);
-        new de.schnorrenbergers.bedwars.cosmetic.GadgetListener(this);
         if (gameSettings.isStatsEnabled()) {
             stats = new StatsTracker(this, new FileStatsRepository(
                     new File(gameSettings.getStatsDirectory())));

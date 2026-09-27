@@ -88,7 +88,9 @@ public class JumpPadGadget implements Gadget, Listener {
         if (!on.getType().isAir()) return;
         Location at = block(on.getLocation());
         pads.put(at, player.getUniqueId());
-        draw(at, Material.SLIME_BLOCK.createBlockData());
+        // flat, so it is walked onto: a full block here is a wall to the client, and whoever jumps on top of
+        // it has their feet a block higher than the pad is kept under - nobody was ever thrown
+        draw(at, Material.LIME_CARPET.createBlockData());
 
         player.setCooldown(Material.SLIME_BALL, Math.max(1,
                 gadget.getNumber(Cosmetics.SETTING_COOLDOWN_TICKS, DEFAULT_COOLDOWN_TICKS)));

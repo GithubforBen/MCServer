@@ -10,7 +10,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
 
@@ -23,6 +22,9 @@ import org.bukkit.plugin.Plugin;
  * <p>
  * The lobby world and nothing else. Somebody watching a parkour run in spectator is not standing here in
  * any sense that matters, and a player who has already been sent on to another world is on their way out.
+ * <p>
+ * Joining is not here: the hand-out has to wait for the player's cosmetics to arrive from the launcher,
+ * which {@code CosmeticJoinListener} does - long after the join has sorted out their inventory.
  */
 public class GadgetListener implements Listener {
 
@@ -35,13 +37,6 @@ public class GadgetListener implements Listener {
         // a reload with people online: they are already standing here and would otherwise wait for their
         // next join for something they are wearing right now
         for (Player online : plugin.getServer().getOnlinePlayers()) handOut(online, false);
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onJoin(PlayerJoinEvent event) {
-        // a tick later: joining still moves people to the spawn and sorts out their inventory, and an
-        // item given before that is an item given to an inventory that is about to be cleared
-        handOut(event.getPlayer(), true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

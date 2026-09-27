@@ -6,11 +6,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -65,6 +67,21 @@ public class CheckpointListener implements Listener {
         if (event.getCause() == PlayerTeleportEvent.TeleportCause.PLUGIN) return;
         if (LobbyWorld.get() == null || event.getTo().getWorld().equals(LobbyWorld.get())) return;
         parkour.abandon(event.getPlayer());
+    }
+
+    /**
+     * An ender pearl ends a run. A course is there to be jumped, and a pearl over the hard part of it is
+     * not a time anybody ran - the endless pearl from the cosmetics least of all, which never runs out.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPearl(ProjectileLaunchEvent event) {
+        if (!(event.getEntity() instanceof EnderPearl pearl)) return;
+        if (!(pearl.getShooter() instanceof Player player)) return;
+        if (parkour.runOf(player) == null) return;
+        // the pearl goes with the run: left flying, it lands after quit has put them back at the start and
+        // carries them out onto the course again
+        pearl.remove();
+        parkour.quit(player);
     }
 
     @EventHandler

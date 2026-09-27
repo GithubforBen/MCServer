@@ -712,8 +712,8 @@ Dazu die Gadgets. Sie stehen in derselben Liste, haben aber eine Spalte mehr: wo
 
 | Gadget | Wirkt in | Was es macht |
 |--------|----------|--------------|
-| Endlos-Perle | Bedwars | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden |
-| Enterhaken | Lobby, Survival, Bedwars | Angel, die den Träger dorthin zieht, wo der Haken gelandet ist |
+| Endlos-Perle | Lobby, Survival | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden. Im Lobby-Parkour bricht ein Wurf den Lauf ab |
+| Enterhaken | Lobby, Survival | Angel, die den Träger dorthin zieht, wo der Haken gelandet ist |
 | Doppelsprung | Lobby | Zweiter Sprung in der Luft, weiche Landung |
 | Raketenstiefel | Lobby | Rechtsklick wirft nach oben, runter geht es langsam |
 | Schneeball-Kanone | Lobby | Schneebälle, die wegschubsen und niemandem wehtun |

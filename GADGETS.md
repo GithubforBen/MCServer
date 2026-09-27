@@ -10,8 +10,8 @@ Freigegeben wurden 18 Vorschläge, aufgeteilt nach dem Server, auf dem sie laufe
 Lobby, drei nur Survival, acht auf beiden. Umgesetzt sind sie alle. Drei Punkte weichen ab:
 
 - **Der Enterhaken war schon da.** Er kam mit der Cosmetic-Runde auf `master` dazu, bevor diese
-  Liste umgesetzt wurde. Er hat hier nur seine Slots bekommen - Lobby, Survival und zusätzlich
-  Bedwars, wo er bereits lief und wo ihn wegzunehmen eine Verschlechterung gewesen wäre.
+  Liste umgesetzt wurde. Er hat hier nur seine Slots bekommen - Lobby und Survival. In Bedwars lief er
+  anfangs auch, das ist wieder raus: ein Gadget darf kein Spielvorteil sein.
 - **Die Partikelspur ist kein Gadget.** Es gibt inzwischen den Cosmetic-Typ `TRAIL` und drei Spuren
   darin. Sie als Gadget ein zweites Mal zu bauen, hätte dasselbe zweimal verkauft.
 - **Sprungpad und Fußspuren sind Lobby-only**, wie nachträglich entschieden - nicht auf beiden
@@ -21,7 +21,8 @@ Lobby, drei nur Survival, acht auf beiden. Umgesetzt sind sie alle. Drei Punkte 
 
 Vorher galt: ein Spieler trägt genau ein Gadget, netzwerkweit. Damit hätte der Doppelsprung in der
 Lobby den Erntehelfer auf Survival abgelegt. Jetzt gibt es `GadgetSlot` mit `LOBBY`, `SURVIVAL` und
-`BEDWARS`, und ein Slot hält je ein Gadget.
+`BEDWARS`, und ein Slot hält je ein Gadget. `BEDWARS` bleibt leer - die Bedwars-Server schalten Gadgets
+nicht ein, der Slot ist nur noch da, damit gespeicherte Auswahlen lesbar bleiben.
 
 Angefasst dafür:
 
@@ -55,5 +56,5 @@ Angefasst dafür:
   Wenn er sich als zu bequem zeigt, gehört ein Cooldown in seine Settings - der ist noch nicht da.
 - Das Emote-Rad ist Partikel, Ton und eine Zeile im Chat. Ohne echtes Animationssystem geht mehr
   nicht, und das sollte es auch nicht vortäuschen.
-- Ob Bedwars über Endlos-Perle und Enterhaken hinaus eigene Gadgets bekommt, ist offen. Der Slot
-  dafür steht.
+- In Bedwars gibt es keine Gadgets: ein Gadget darf nie ein Spielvorteil sein. Endlos-Perle und Enterhaken
+  wirken nur noch in Lobby und Survival, und die Bedwars-Server schalten Gadgets gar nicht erst ein.

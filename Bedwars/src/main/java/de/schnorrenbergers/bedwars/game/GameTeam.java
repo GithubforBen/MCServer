@@ -102,8 +102,20 @@ public class GameTeam {
         return bedAlive;
     }
 
+    /**
+     * Whoever is away when the bed goes loses the place that was kept for them: that place was only ever
+     * held while there was a bed to come back to. Without this a team whose last player logged off could
+     * never be eliminated - the offline player still counts as playing - and the round only ended when its
+     * time ran out.
+     *
+     * @param bedAlive whether the bed still stands
+     */
     public void setBedAlive(boolean bedAlive) {
         this.bedAlive = bedAlive;
+        if (bedAlive) return;
+        for (GamePlayer member : members) {
+            if (!member.isOnline() && member.isPlaying()) member.setState(GamePlayer.State.SPECTATOR);
+        }
     }
 
     public boolean isEliminated() {

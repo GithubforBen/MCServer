@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
 
@@ -19,9 +18,10 @@ import org.bukkit.plugin.Plugin;
  * and the nether are survival too, and a harvest helper that stops working at the nether portal would be
  * a bug nobody could explain.
  * <p>
- * Which gadgets those are is not decided here either: a gadget says itself whether it belongs on survival,
- * and the endless pearl says no. That is the line this server has to hold - a cosmetic may not become a
- * shortcut in a world people build in.
+ * Which gadgets those are is not decided here either: a gadget says itself whether it belongs on survival.
+ * <p>
+ * The hand-out on joining is not here: it has to wait for the player's cosmetics to arrive from the
+ * launcher, which {@code CosmeticJoinListener} does.
  */
 public class GadgetListener implements Listener {
 
@@ -32,11 +32,6 @@ public class GadgetListener implements Listener {
         Gadgets.setGuard(GadgetListener::isPlaying, GadgetSlot.SURVIVAL);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         for (Player online : plugin.getServer().getOnlinePlayers()) handOut(online, false);
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onJoin(PlayerJoinEvent event) {
-        handOut(event.getPlayer(), true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

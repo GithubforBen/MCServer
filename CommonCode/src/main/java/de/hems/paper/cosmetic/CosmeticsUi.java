@@ -189,6 +189,27 @@ public final class CosmeticsUi {
     }
 
     /**
+     * Puts a gadget's item into somebody's hands the moment they put it on, and takes it away when they take
+     * it off. Otherwise it would only turn up with their next join or respawn, which looks like the button
+     * did nothing.
+     *
+     * @param player   who clicked
+     * @param cosmetic what they clicked
+     * @param takenOff whether the click took it off rather than put it on
+     */
+    private static void handOverGadget(Player player, CosmeticData cosmetic, boolean takenOff) {
+        if (cosmetic.getType() != CosmeticType.GADGET) return;
+        // one that does not work here has nothing to hand over; handing out would instead announce whatever
+        // they wear here, which reads as if the click had put that on
+        if (!Gadgets.slotsOf(cosmetic.getId()).contains(Gadgets.slot())) return;
+        if (takenOff) {
+            GadgetItems.take(player, cosmetic.getId());
+        } else {
+            Gadgets.handOut(player, true);
+        }
+    }
+
+    /**
      * @param id       whose cosmetics
      * @param cosmetic a gadget
      * @return the slots they are wearing it in, which is where taking it off has to reach
@@ -234,6 +255,7 @@ public final class CosmeticsUi {
                 return;
             }
             boolean selected = wear(id, cosmetic);
+            handOverGadget(player, cosmetic, selected);
             player.playSound(player, Sound.UI_BUTTON_CLICK, 0.6f, selected ? 0.9f : 1.3f);
             open(player, tab);
             return;
@@ -255,6 +277,7 @@ public final class CosmeticsUi {
             player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.4f);
             // straight on, because the next thing anybody does after buying one is put it on
             wear(id, cosmetic);
+            handOverGadget(player, cosmetic, false);
             open(player, tab);
         });
     }

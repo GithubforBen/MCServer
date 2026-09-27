@@ -1,5 +1,6 @@
 package de.schnorrenbergers.bedwars.listener;
 
+import de.hems.paper.cosmetic.KillEffects;
 import de.schnorrenbergers.bedwars.Bedwars;
 import de.schnorrenbergers.bedwars.api.BedwarsPlayerKillEvent;
 import de.schnorrenbergers.bedwars.config.GeneratorSettings;
@@ -232,6 +233,8 @@ public class CombatListener implements Listener {
     private void die(Game game, GamePlayer victim, Player player) {
         GamePlayer killer = findKiller(game, player);
         boolean finalKill = victim.getTeam() != null && !victim.getTeam().isBedAlive();
+        // where they fell, before they are moved out of the way to wait
+        Location fell = player.getLocation().clone();
 
         victim.addDeath();
         // one level off every tool chain: a death has to cost something without starting the round over
@@ -241,6 +244,9 @@ public class CombatListener implements Listener {
         clear(player);
 
         Bukkit.getPluginManager().callEvent(new BedwarsPlayerKillEvent(game, victim, killer, finalKill));
+        // the kill effects hang off the vanilla death, and a death here never is one - it is played here
+        Player killedBy = killer == null ? null : killer.getPlayer();
+        if (killedBy != null) KillEffects.playFor(Bedwars.getInstance(), killedBy, player, fell);
         announce(victim, killer, finalKill);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.0f);
 

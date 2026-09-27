@@ -21,7 +21,11 @@ public enum GadgetSlot {
     LOBBY("Lobby"),
     /** The world people build in. */
     SURVIVAL("Survival"),
-    /** A bedwars round, whichever server happens to be running it. */
+    /**
+     * A bedwars round. No gadget works here and none may: a gadget is a cosmetic and must never be an
+     * advantage in a game, so the bedwars servers do not switch gadgets on at all. The slot stays because
+     * choices stored under it still have to be read.
+     */
     BEDWARS("Bedwars");
 
     private final String displayName;

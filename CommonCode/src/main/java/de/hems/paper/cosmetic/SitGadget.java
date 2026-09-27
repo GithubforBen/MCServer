@@ -1,5 +1,6 @@
 package de.hems.paper.cosmetic;
 
+import de.hems.paper.PaperContext;
 import de.hems.types.cosmetic.Cosmetics;
 import de.hems.types.cosmetic.GadgetSlot;
 import org.bukkit.Location;
@@ -86,12 +87,38 @@ public class SitGadget implements Gadget, Listener {
     @EventHandler
     public void onDismount(org.bukkit.event.entity.EntityDismountEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
+        Entity seat = seats.of(player);
+        Location top = seat == null || !seat.equals(event.getDismounted()) ? null : standingSpot(seat, player);
         seats.remove(player);
+        if (top == null) return;
+        // a tick later: the dismount under way puts them where the seat was, which is inside the block they
+        // sat on - nothing holds a player up from inside a block, and they fell through whatever was below
+        PaperContext.sync(() -> {
+            if (player.isOnline() && player.getWorld().equals(top.getWorld())) player.teleport(top);
+        });
     }
 
     @Override
     public void cleanUp(Player player) {
+        Entity seat = seats.of(player);
+        Location top = seat == null ? null : standingSpot(seat, player);
         seats.remove(player);
+        // taken off while sitting: the same fall as standing up, so the same way out of the block
+        if (top != null && player.isOnline() && player.getWorld().equals(top.getWorld())) player.teleport(top);
+    }
+
+    /**
+     * @param seat   the stand somebody sits on
+     * @param player who is getting up
+     * @return on top of the stair or slab the seat is in, looking where they looked
+     */
+    private static Location standingSpot(Entity seat, Player player) {
+        Block block = seat.getLocation().getBlock();
+        double top = Math.max(block.getY(), block.getBoundingBox().getMaxY());
+        Location at = new Location(block.getWorld(), block.getX() + 0.5d, top, block.getZ() + 0.5d);
+        at.setYaw(player.getLocation().getYaw());
+        at.setPitch(player.getLocation().getPitch());
+        return at;
     }
 
     /**

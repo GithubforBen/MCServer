@@ -28,8 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Two numbers make or break it. The pull needs a floor under its upward part, or a hook in the wall in
  * front of you drags you into that wall instead of up it; and the landing has to be free of fall damage
  * for a moment, because a mobility gadget that kills its owner every third use is one nobody puts on. The
- * window is short and it starts at the throw, so it cannot be used to walk off a tower safely - which is
- * the one thing it must not become in a round where the drop is the map.
+ * window is short and it starts at the throw, so it cannot be used to walk off a tower safely.
+ * <p>
+ * Lobby and survival only. In a bedwars round a pull across the gap is a way onto somebody's island that
+ * the others do not have, and a gadget may never be an advantage in a game.
  */
 public class GrappleGadget implements Gadget, Listener {
 
@@ -55,7 +57,7 @@ public class GrappleGadget implements Gadget, Listener {
 
     @Override
     public Set<GadgetSlot> slots() {
-        return Set.of(GadgetSlot.LOBBY, GadgetSlot.SURVIVAL, GadgetSlot.BEDWARS);
+        return Set.of(GadgetSlot.LOBBY, GadgetSlot.SURVIVAL);
     }
 
     @Override

@@ -75,6 +75,8 @@ public class SnowballCannonGadget implements Gadget, Listener {
     public void onLaunch(ProjectileLaunchEvent event) {
         if (!(event.getEntity() instanceof Snowball snowball)) return;
         if (!(snowball.getShooter() instanceof Player player)) return;
+        // only the cannon's own snowball comes back; one scooped up from the ground is thrown and gone
+        if (!GadgetItems.is(snowball.getItem(), getId())) return;
         CosmeticData gadget = Gadgets.settingsFor(player, getId());
         if (gadget == null) return;
 

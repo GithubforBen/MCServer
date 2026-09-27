@@ -61,6 +61,16 @@ public final class GadgetItems {
     }
 
     /**
+     * @param item something, possibly nothing
+     * @return whether it belongs to any gadget at all
+     */
+    public static boolean isAny(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR) return false;
+        ItemMeta meta = item.getItemMeta();
+        return meta != null && meta.getPersistentDataContainer().has(GADGET, PersistentDataType.STRING);
+    }
+
+    /**
      * @param player   somebody
      * @param gadgetId a gadget
      * @return whether they are already carrying that gadget's item

@@ -22,9 +22,10 @@ import java.util.Set;
  * The cooldown is the whole balance of it - the pearl does nothing a bought one does not do, it simply
  * never runs out - so it lives in the cosmetic's settings and can be turned without a new version.
  * <p>
- * Bedwars and nowhere else. In a round of twenty minutes an endless pearl is a cosmetic; in a world
- * people build in it is a way of never walking anywhere again, which is a change to the game and not
- * something to sell for bits.
+ * Lobby and survival, not bedwars. In a round a pearl that never runs out is the fastest way onto every
+ * island and out of every fight - it decides games, and that is not something to sell for bits. Where
+ * people build and stand around it is a way of getting about. A parkour run in the lobby ends when one
+ * is thrown, see the lobby's {@code CheckpointListener}.
  */
 public class EndlessPearlGadget implements Gadget, Listener {
 
@@ -44,12 +45,14 @@ public class EndlessPearlGadget implements Gadget, Listener {
 
     @Override
     public Set<GadgetSlot> slots() {
-        return Set.of(GadgetSlot.BEDWARS);
+        return Set.of(GadgetSlot.LOBBY, GadgetSlot.SURVIVAL);
     }
 
     @Override
     public ItemStack item(CosmeticData cosmetic) {
-        return new ItemStack(Material.ENDER_PEARL, 1);
+        // marked, so that only this pearl comes back: a pearl somebody found or bought is thrown and gone
+        // like any other, and the one in their pocket is recognised on the next join instead of doubled
+        return GadgetItems.of(Material.ENDER_PEARL, getId(), "Endlos-Perle", "Kommt nach dem Wurf zurück");
     }
 
     @Override
@@ -61,6 +64,7 @@ public class EndlessPearlGadget implements Gadget, Listener {
     public void onLaunch(ProjectileLaunchEvent event) {
         if (!(event.getEntity() instanceof EnderPearl pearl)) return;
         if (!(pearl.getShooter() instanceof Player player)) return;
+        if (!GadgetItems.is(pearl.getItem(), getId())) return;
         CosmeticData gadget = Gadgets.settingsFor(player, getId());
         if (gadget == null) return;
 
