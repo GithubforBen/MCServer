@@ -282,8 +282,9 @@ Screenshots per `import`. Dabei gefunden und behoben:
       des Aktiven dreht schneller (Screenshots)
 - [x] Per Rechtsklick auf den Stuhl setzen und wieder aufstehen
 - [x] Logout mitten in der Hand: kommen die Chips als Bits zurück?
-- [ ] Casino-Server hart killen (`kill -9`), Event abrechnen lassen: offene Stacks werden ausgezahlt,
+- [x] Casino-Server hart killen (`kill -9`), Event abrechnen lassen: offene Stacks werden ausgezahlt,
       und **nur einmal** (Kontostand vorher/nachher)
+      → je 1000 Bits offen, nach dem Eventende genau einmal zurück (auch über einen Launcher-Neustart hinweg)
 - [ ] `/poker karte speichern`, neue Pokernacht anlegen: steht der Umbau im selben Raum?
 - [ ] Turnier gegen Bots: Blinds steigen nur zwischen Händen, Auszahlung am Ende stimmt
 
