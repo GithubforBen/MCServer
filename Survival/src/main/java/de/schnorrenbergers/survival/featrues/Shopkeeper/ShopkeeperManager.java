@@ -1,74 +1,37 @@
 package de.schnorrenbergers.survival.featrues.Shopkeeper;
 
+import de.hems.paper.team.TeamService;
 import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
-import de.schnorrenbergers.survival.featrues.team.ClaimManager;
-import de.schnorrenbergers.survival.utils.Inventorys;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Team;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class ShopkeeperManager {
-    private static List<Shopkeeper> shopkeepers;
+/**
+ * Every shop on this server: where they are found, how they are made, and when they are written out.
+ */
+public final class ShopkeeperManager {
 
+    /**
+     * How many bits a player has to have to open a shop. Only checked, never charged - that is how it has
+     * always been, and whether it should cost something is a decision rather than a fix.
+     */
+    public static final int MINIMUM_BALANCE = 2000;
     /** How often everything is written out, so a crash costs at most this much. */
     private static final long AUTOSAVE_TICKS = 20L * 60L * 5L;
 
-    public ShopkeeperManager() {
-        if (shopkeepers == null) {
-            shopkeepers = new ArrayList<>();
-            load();
-            new ShopkeeperChunkListener();
-            // shops whose chunk is already in get their villager now, the rest when their chunk loads
-            ShopkeeperChunkListener.spawnInLoadedChunks();
-            Bukkit.getScheduler().runTaskTimer(Survival.getInstance(),
-                    ShopkeeperManager::saveAll, AUTOSAVE_TICKS, AUTOSAVE_TICKS);
-        }
-    }
-
-    /**
-     * Writes every shopkeeper into the config and flushes it to disk.
-     * <p>
-     * Writing the config object alone is not enough - nothing survived a crash before, because the file was
-     * only ever written in {@code onDisable}.
-     */
-    public static void saveAll() {
-        if (shopkeepers == null) return;
-        shopkeepers.forEach(Shopkeeper::save);
-        Survival.getInstance().getShopConfig().save();
-    }
-
-    /** Kept for the shutdown path, which also has to take the villagers back out of the world. */
-    public static void save() {
-        saveAll();
-    }
-
-    /**
-     * Stores everything and removes the villagers, so the next start finds exactly one villager per shop.
-     */
-    public static void shutdown() {
-        if (shopkeepers == null) return;
-        saveAll();
-        shopkeepers.forEach(Shopkeeper::despawn);
-    }
-
-    /**
-     * @return every shopkeeper that is currently loaded, for the marketplace to collect offers from
-     */
-    public static List<Shopkeeper> getShopkeepers() {
-        return shopkeepers == null ? List.of() : List.copyOf(shopkeepers);
-    }
+    private static final Map<UUID, Shopkeeper> shopkeepers = new LinkedHashMap<>();
+    private static ShopkeeperStore store;
 
     /**
      * Shops by the chunk their chest sits in.
@@ -77,6 +40,83 @@ public class ShopkeeperManager {
      * index is thrown away whenever a chest moves or a shop is added.
      */
     private static Map<Long, List<Shopkeeper>> chestIndex;
+
+    private ShopkeeperManager() {
+    }
+
+    /**
+     * Loads the shops and starts looking after them.
+     *
+     * @param shopStore where the shops are kept
+     */
+    public static void init(ShopkeeperStore shopStore) {
+        if (store != null) return;
+        store = shopStore;
+        for (Shopkeeper shop : store.loadAll()) shopkeepers.put(shop.getUuid(), shop);
+        new ShopkeeperChunkListener();
+        new ShopkeeperListener();
+        new ShopChestListener();
+        // shops whose chunk is already in get their villager now, the rest when their chunk loads
+        ShopkeeperChunkListener.spawnInLoadedChunks();
+        Bukkit.getScheduler().runTaskTimer(Survival.getInstance(),
+                ShopkeeperManager::saveAll, AUTOSAVE_TICKS, AUTOSAVE_TICKS);
+        // a shop is kept under its team's name, so it has to follow the team when that changes
+        TeamService.onRename(ShopkeeperManager::onTeamRenamed);
+    }
+
+    /**
+     * Writes every shopkeeper to disk.
+     */
+    public static void saveAll() {
+        if (store == null) return;
+        store.saveAll(shopkeepers.values());
+    }
+
+    /**
+     * Stores everything and removes the villagers, so the next start finds exactly one villager per shop.
+     */
+    public static void shutdown() {
+        if (store == null) return;
+        saveAll();
+        shopkeepers.values().forEach(Shopkeeper::despawn);
+    }
+
+    /**
+     * Moves every shop of a team over to its new name.
+     * <p>
+     * Without this a rename orphaned every shop the team had: the shop still pointed at the old name, told
+     * every customer the team had been disbanded, and its owners could no longer open its settings.
+     *
+     * @param oldName what the team was called
+     * @param newName what it is called now
+     */
+    static void onTeamRenamed(String oldName, String newName) {
+        boolean changed = false;
+        for (Shopkeeper shop : shopkeepers.values()) {
+            if (oldName.equalsIgnoreCase(shop.getOwnerTeam())) {
+                shop.setOwnerTeam(newName);
+                changed = true;
+            }
+        }
+        if (changed) saveAll();
+    }
+
+    // ------------------------------------------------------------------ finding shops
+
+    /**
+     * @return every shopkeeper that is currently loaded, for the marketplace to collect offers from
+     */
+    public static List<Shopkeeper> getShopkeepers() {
+        return List.copyOf(shopkeepers.values());
+    }
+
+    /**
+     * @param uuid the id of a shop
+     * @return that shop, or {@code null}
+     */
+    public static @Nullable Shopkeeper getShopkeeper(UUID uuid) {
+        return uuid == null ? null : shopkeepers.get(uuid);
+    }
 
     /** Drops the lookup, so it is rebuilt the next time a chunk unloads. */
     public static void invalidateChestIndex() {
@@ -87,7 +127,7 @@ public class ShopkeeperManager {
         Map<Long, List<Shopkeeper>> index = chestIndex;
         if (index != null) return index;
         index = new HashMap<>();
-        for (Shopkeeper shopkeeper : getShopkeepers()) {
+        for (Shopkeeper shopkeeper : shopkeepers.values()) {
             Location chest = shopkeeper.getChest();
             if (chest == null || chest.getWorld() == null) continue;
             index.computeIfAbsent(Chunk.getChunkKey(chest), key -> new ArrayList<>()).add(shopkeeper);
@@ -115,7 +155,7 @@ public class ShopkeeperManager {
      * @param location a block
      * @return the shop whose stock chest stands there, or {@code null} when no shop does
      */
-    public static Shopkeeper withChestAt(Location location) {
+    public static @Nullable Shopkeeper withChestAt(Location location) {
         if (location == null || location.getWorld() == null) return null;
         List<Shopkeeper> candidates = chestIndex().get(Chunk.getChunkKey(location));
         if (candidates == null) return null;
@@ -132,77 +172,37 @@ public class ShopkeeperManager {
         return null;
     }
 
-    public static Shopkeeper createShopkeeper(Player player, String name) {
-        int money = MoneyHandler.getMoney(player.getUniqueId());
-        if (money < 20 * 100) {
-            player.sendMessage("You dont have enough money! You need 2000!");
+    // ------------------------------------------------------------------ making shops
+
+    /**
+     * Puts a shop down: the villager where the player stands, the chest they stand on as its stock.
+     *
+     * @param player who is opening the shop
+     * @param name   what it should be called
+     * @return the new shop, or {@code null} when it could not be made - the player has been told why
+     */
+    public static @Nullable Shopkeeper createShopkeeper(Player player, String name) {
+        if (MoneyHandler.getMoney(player.getUniqueId()) < MINIMUM_BALANCE) {
+            player.sendMessage("Für einen Shop brauchst du mindestens " + MINIMUM_BALANCE + " Bits.");
             return null;
         }
-        Location chest = new Location(player.getWorld(), player.getX(), player.getY() , player.getZ());
+        Location chest = player.getLocation().getBlock().getLocation();
         if (chest.getBlock().getType() != Material.CHEST) {
-            player.sendMessage("You need to be standing on a chest!");
+            player.sendMessage("Stell dich dafür auf die Kiste, die das Lager des Shops sein soll.");
             return null;
         }
-        Team playerTeam = player.getScoreboard().getPlayerTeam(player);
-        if (playerTeam == null) {
-            player.sendMessage("You dont have a team!");
+        String problem = ShopOwnership.problemWithChunk(player, player.getChunk());
+        if (problem != null) {
+            player.sendMessage(problem);
             return null;
         }
-        if (ClaimManager.getTeamOfChunk(player.getChunk()) == null) {
-            player.sendMessage("You need to claim this chunk first!");
-            return null;
-        }
-        if (!ClaimManager.getTeamOfChunk(player.getChunk()).equals(playerTeam.getName())) {
-            player.sendMessage("You dont own this chunk!");
-            return null;
-        }
-        Shopkeeper shopkeeper = new Shopkeeper(UUID.randomUUID(),
-                name,
-                player.getLocation(),
-                chest,
-                playerTeam.getName(),
-                new ArrayList<>());
-        shopkeepers.add(shopkeeper);
+        Shopkeeper shopkeeper = new Shopkeeper(UUID.randomUUID(), name, player.getLocation(), chest,
+                ShopOwnership.teamOf(player), new ArrayList<>());
+        shopkeepers.put(shopkeeper.getUuid(), shopkeeper);
+        shopkeeper.spawnOrAdoptVillager();
         invalidateChestIndex();
         // a new shop has to reach the disk right away, otherwise it is gone after the next crash
         saveAll();
         return shopkeeper;
-    }
-
-    public static void openManagerInventory(Player player, UUID uuid) {
-        Shopkeeper shopkeeper = getShopkeeper(uuid);
-        if (shopkeeper == null) {
-            player.sendMessage("Shopkeeper not found! Report this to the server owner!");
-            return;
-        }
-        player.openInventory(Inventorys.ADMIN_SHOPKEEPER_INVENTORY(
-                shopkeeper
-        ).getInventory());
-    }
-
-    public static Shopkeeper getShopkeeper(UUID uuid) {
-        for (Shopkeeper shopkeeper : shopkeepers) {
-            if (shopkeeper.getUuid().equals(uuid)) {
-                return shopkeeper;
-            }
-        }
-        return null;
-    }
-
-    public static void openShopInventory(Player player, UUID uuid) {
-        Shopkeeper shopkeeper = getShopkeeper(uuid);
-        if (shopkeeper == null) return;
-        player.openInventory(shopkeeper.getInventory(1).getInventory());
-    }
-
-    private void load() {
-        YamlConfiguration config = Survival.getInstance().getShopConfig().getConfig();
-        if (config.contains("shopkeepers.ids")) {
-            config.getStringList("shopkeepers.ids").forEach(id -> {
-                if (config.contains("shopkeepers." + id)) {
-                    shopkeepers.add(new Shopkeeper(UUID.fromString(id)));
-                }
-            });
-        }
     }
 }

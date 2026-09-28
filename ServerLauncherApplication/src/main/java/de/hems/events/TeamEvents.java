@@ -52,18 +52,20 @@ public class TeamEvents {
                 request.getSender(), result.successful(), result.message(), result.team(), request.getEventId()));
         if (!result.successful()) return;
         // the backpack lives under the team name, so it has to follow the rename before anyone reopens it
-        if (renameFrom != null && !renameFrom.equalsIgnoreCase(result.team().getName())) {
+        boolean renamed = renameFrom != null && !renameFrom.equalsIgnoreCase(result.team().getName());
+        if (renamed) {
             backpacks.rename(renameFrom, result.team().getName());
-            announce(renameFrom, null);
+            announce(renameFrom, null, null);
         }
-        announce(result.team().getName(), result.team());
+        // the servers are told what the team was called, so whatever they keep under the old name follows
+        announce(result.team().getName(), result.team(), renamed ? renameFrom : null);
     }
 
     private void onDeleteTeam(DeleteTeamEvent request) throws Exception {
         boolean existed = teams.delete(request.getTeamName());
         if (existed) {
             backpacks.delete(request.getTeamName());
-            announce(request.getTeamName(), null);
+            announce(request.getTeamName(), null, null);
         }
     }
 
@@ -89,10 +91,11 @@ public class TeamEvents {
      *
      * @param name the team
      * @param team its new state, or {@code null} when it was deleted
+     * @param previousName what it was called before, when it was renamed
      */
-    private void announce(String name, TeamData team) {
+    private void announce(String name, TeamData team, String previousName) {
         try {
-            ListenerAdapter.sendListeners(new TeamUpdatedEvent(name, team));
+            ListenerAdapter.sendListeners(new TeamUpdatedEvent(name, team, previousName));
         } catch (Exception e) {
             System.out.println("Could not announce the change to team " + name + ": " + e.getMessage());
         }

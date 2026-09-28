@@ -2,6 +2,7 @@ package de.schnorrenbergers.survival.featrues.Shopkeeper.market;
 
 import de.hems.paper.cosmetic.CosmeticsUi;
 import de.hems.paper.customInventory.CustomInventory;
+import de.hems.paper.customInventory.types.SimpleItemAction;
 import de.schnorrenbergers.survival.Survival;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -76,7 +77,7 @@ public class MarketplaceUi {
             ItemStack icon = label(tab.getIcon(), (active ? "» " : "") + tab.getTitle(),
                     active ? NamedTextColor.GREEN : NamedTextColor.GRAY,
                     active ? List.of("Wird gerade angezeigt") : List.of("Klicken zum Wechseln"));
-            inventory.setItem(i, icon, MarketAction.opens(() -> {
+            inventory.setItem(i, icon, SimpleItemAction.opens(() -> {
                 category = tab;
                 page = 0;
                 return build();
@@ -87,7 +88,7 @@ public class MarketplaceUi {
     /** Sorting and the two filters, on the right of the top row. */
     private void drawControls(CustomInventory inventory, int total) {
         inventory.setItem(6, label(sort.getIcon(), "Sortierung: " + sort.getTitle(), NamedTextColor.AQUA,
-                List.of("Klicken für die nächste Sortierung")), MarketAction.opens(() -> {
+                List.of("Klicken für die nächste Sortierung")), SimpleItemAction.opens(() -> {
             sort = sort.next();
             page = 0;
             return build();
@@ -96,7 +97,7 @@ public class MarketplaceUi {
         inventory.setItem(7, label(showOutOfStock ? Material.LIME_DYE : Material.GRAY_DYE,
                 "Ausverkaufte anzeigen: " + (showOutOfStock ? "an" : "aus"),
                 showOutOfStock ? NamedTextColor.GREEN : NamedTextColor.GRAY,
-                List.of("Zeigt auch Angebote, deren Kiste leer ist")), MarketAction.opens(() -> {
+                List.of("Zeigt auch Angebote, deren Kiste leer ist")), SimpleItemAction.opens(() -> {
             showOutOfStock = !showOutOfStock;
             page = 0;
             return build();
@@ -106,7 +107,7 @@ public class MarketplaceUi {
                 "Nur schon Verkauftes: " + (onlySold ? "an" : "aus"),
                 onlySold ? NamedTextColor.GREEN : NamedTextColor.GRAY,
                 List.of("Blendet Angebote aus, die noch nie gekauft wurden",
-                        "Hilft gegen zugespammte Listen")), MarketAction.opens(() -> {
+                        "Hilft gegen zugespammte Listen")), SimpleItemAction.opens(() -> {
             onlySold = !onlySold;
             page = 0;
             return build();
@@ -121,7 +122,7 @@ public class MarketplaceUi {
         int first = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && first + i < listings.size(); i++) {
             MarketListing listing = listings.get(first + i);
-            inventory.setItem(CONTENT_START + i, icon(listing), MarketAction.handles(event -> {
+            inventory.setItem(CONTENT_START + i, icon(listing), new SimpleItemAction(event -> {
                 if (event.isRightClick()) {
                     openLater(() -> new OfferListUi(player, this, listing).build());
                     return;
@@ -137,7 +138,7 @@ public class MarketplaceUi {
     private void drawPaging(CustomInventory inventory, int pages) {
         if (page > 0) {
             inventory.setItem(45, label(Material.ARROW, "Zurück", NamedTextColor.YELLOW,
-                    List.of("Seite " + page + " von " + pages)), MarketAction.opens(() -> {
+                    List.of("Seite " + page + " von " + pages)), SimpleItemAction.opens(() -> {
                 page--;
                 return build();
             }));
@@ -146,7 +147,7 @@ public class MarketplaceUi {
         // the same bits, so this is where somebody already has their wallet open
         inventory.setItem(47, label(Material.FIREWORK_ROCKET, "Cosmetics", NamedTextColor.LIGHT_PURPLE,
                 List.of("Sieges-Effekte und Gadgets",
-                        "fürs ganze Netzwerk, bezahlt mit Bits")), MarketAction.handles(event -> {
+                        "fürs ganze Netzwerk, bezahlt mit Bits")), new SimpleItemAction(event -> {
             Player clicker = (Player) event.getWhoClicked();
             clicker.closeInventory();
             CosmeticsUi.open(clicker);
@@ -155,11 +156,11 @@ public class MarketplaceUi {
                 NamedTextColor.WHITE, List.of(
                         "Linksklick auf ein Item kauft es",
                         "beim günstigsten Anbieter.",
-                        "Rechtsklick zeigt alle Anbieter.")), MarketAction.handles(event -> {
+                        "Rechtsklick zeigt alle Anbieter.")), new SimpleItemAction(event -> {
         }));
         if (page + 1 < pages) {
             inventory.setItem(53, label(Material.ARROW, "Weiter", NamedTextColor.YELLOW,
-                    List.of("Seite " + (page + 2) + " von " + pages)), MarketAction.opens(() -> {
+                    List.of("Seite " + (page + 2) + " von " + pages)), SimpleItemAction.opens(() -> {
                 page++;
                 return build();
             }));

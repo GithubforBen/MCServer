@@ -21,7 +21,6 @@ import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -45,7 +44,7 @@ public class ShopChestListener implements Listener {
 
     private static boolean registered = false;
 
-    public ShopChestListener() {
+    ShopChestListener() {
         if (registered) return;
         Bukkit.getPluginManager().registerEvents(this, Survival.getInstance());
         registered = true;
@@ -108,8 +107,7 @@ public class ShopChestListener implements Listener {
      */
     private static boolean mayTouch(Player player, Shopkeeper shop) {
         if (player.getGameMode() == GameMode.CREATIVE && player.isOp()) return true;
-        Team team = player.getScoreboard().getPlayerTeam(player);
-        return team != null && team.getName().equals(shop.getOwnerTeam());
+        return ShopOwnership.owns(player, shop);
     }
 
     /**

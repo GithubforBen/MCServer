@@ -670,6 +670,26 @@ laufende Server behält seinen Speicher: der Heap einer JVM steht fest, sobald s
 Gezählt wird auch, was nur reserviert ist: ein bewilligter Start hält seinen Speicher, bis der
 Server dazu wirklich läuft.
 
+## Shops (Survival)
+
+Ein Team stellt einen Händler (Villager) auf eigenen Boden, eine Kiste daneben ist sein Lager.
+`/shop create <name>` (oder `/shopkeeper <name>`) auf der Kiste stehend legt ihn an - dafür muss man
+mindestens 2000 Bits haben (geprüft, nicht abgebucht). Rechtsklick auf den Händler öffnet den Laden,
+Schleich-Rechtsklick für das Team die Einstellungen: Kiste wechseln, Händler versetzen, Angebote, Preise
+und Mengen. `/shop` öffnet den Marktplatz über alle Shops.
+
+| Klasse | Aufgabe |
+|--------|---------|
+| `Shopkeeper` | Ein Shop: Villager, Lager, Verkauf - sonst nichts |
+| `ShopkeeperManager` | Alle Shops: finden (nach Id, nach Kiste), anlegen, Autosave, folgt Team-Umbenennungen |
+| `ShopkeeperStore` | Liest und schreibt `configs/shop-config.yml` (Format unverändert) |
+| `ShopOwnership` | Wem ein Shop gehört und wo er stehen darf - über den `TeamService`, nicht über das Scoreboard |
+| `ShopUi` · `ShopEditorUi` | Laden für Kunden, Einstellungen für das Team |
+| `ShopkeeperListener` · `ShopChestListener` · `ShopkeeperChunkListener` | Klicks, Schutz der Lagerkiste, Villager beim Laden des Chunks |
+
+Wird ein Team umbenannt, meldet der Launcher den alten Namen mit (`TeamUpdatedEvent.getPreviousName()`),
+und die Shops ziehen mit. Vorher hat eine Umbenennung jeden Shop des Teams verwaist.
+
 ## Geld
 
 Die Bits gehören seit dieser Runde dem Launcher, nicht mehr dem Survival-Server. Vorher lagen sie in
