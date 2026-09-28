@@ -25,7 +25,7 @@ import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiterListener;
 import de.schnorrenbergers.survival.featrues.chunklimiter.ChunkLimiterSettings;
 import de.schnorrenbergers.survival.featrues.endfight.EndListener;
 import de.schnorrenbergers.survival.featrues.flight.FlightListener;
-import de.schnorrenbergers.survival.featrues.tablist.Tablist;
+import de.schnorrenbergers.survival.featrues.tablist.SurvivalTab;
 import de.schnorrenbergers.survival.listener.ATMListener;
 import de.schnorrenbergers.survival.listener.JoinListener;
 import de.schnorrenbergers.survival.utils.configs.MoneyConfig;
@@ -86,7 +86,7 @@ public final class Survival extends JavaPlugin {
         PluginCommands.register(this, "legitimize", new LegitimizeCommand());
         PluginCommands.register(this, "verify", new de.hems.paper.commands.VerifyCommand());
         PluginCommands.register(this, "cosmetics", new de.hems.paper.commands.CosmeticsCommand());
-        new Tablist();
+        de.hems.paper.tablist.TabList.init(this, new SurvivalTab());
         ShopkeeperManager.init(new ShopkeeperStore(shopConfig, getLogger()));
         new ATMListener();
         chunkLimiter = new ChunkLimiter(new ChunkLimiterSettings());

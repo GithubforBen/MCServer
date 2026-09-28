@@ -670,6 +670,27 @@ laufende Server behält seinen Speicher: der Heap einer JVM steht fest, sobald s
 Gezählt wird auch, was nur reserviert ist: ein bewilligter Start hält seinen Speicher, bis der
 Server dazu wirklich läuft.
 
+## Tabliste
+
+Jeder Server hat dieselbe Tabliste (`de.hems.paper.tablist.TabList`) mit dem Inhalt seines Spielmodus:
+
+- **Kopf:** Netzwerkname, Spielmodus in seiner Farbe, wie viele im ganzen Netzwerk online sind (alle
+  10 Sekunden vom Proxy geholt) und wie viele davon hier.
+- **Fuß:** was der Modus zu sagen hat, darunter das laufende oder nächste Event, die wichtigsten Befehle
+  und - nur mit `network.tablist.tps` (Standard: Ops) - Servername, TPS und Tickzeit.
+
+| Modus | Eigene Zeilen | Namen in der Liste |
+|-------|---------------|--------------------|
+| Lobby | Bits | unverändert |
+| Survival | Bits, Team mit Tag, Mitgliedern und Chunks | unverändert (Team-Tag kommt vom Scoreboard) |
+| Bedwars | Map; vor dem Start Wartende; danach eigenes Team und Bett, Teams im Spiel, Kills/Finals/Betten | in Teamfarbe, Zuschauer grau |
+| Hunger Games | Phase, wie viele noch leben | Ausgeschiedene grau |
+| Casino | Bits | unverändert |
+| Speedrun | - | unverändert |
+
+Ein neuer Modus ist eine Klasse, die `TabContent` implementiert (oder ein `SimpleTab`), und eine Zeile
+`TabList.init(this, …)` im `onEnable`. Der Netzwerkname steht in `TabList.NETWORK_NAME`.
+
 ## Shops (Survival)
 
 Ein Team stellt einen Händler (Villager) auf eigenen Boden, eine Kiste daneben ist sein Lager.

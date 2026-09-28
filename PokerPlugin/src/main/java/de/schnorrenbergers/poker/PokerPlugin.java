@@ -50,6 +50,8 @@ public final class PokerPlugin extends JavaPlugin {
         }
         MoneyService.init(this);
         PokerStatsService.init(this);
+        de.hems.paper.tablist.TabList.init(this, new de.hems.paper.tablist.SimpleTab("Casino",
+                net.kyori.adventure.text.format.NamedTextColor.DARK_GREEN, true, "/poker  ·  /lobby"));
 
         // which night this is, and what it is played for. Blocking on purpose: the stakes have to be known
         // before the first player can sit down

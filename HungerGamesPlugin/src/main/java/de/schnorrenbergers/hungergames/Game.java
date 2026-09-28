@@ -556,6 +556,13 @@ public final class Game {
     }
 
     /**
+     * @return how many are still in the game
+     */
+    public int aliveCount() {
+        return alive.size();
+    }
+
+    /**
      * @return whether players can hurt each other right now
      */
     public boolean isPvp() {

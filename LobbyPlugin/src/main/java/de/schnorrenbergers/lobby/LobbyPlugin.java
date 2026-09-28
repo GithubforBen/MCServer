@@ -81,6 +81,7 @@ public final class LobbyPlugin extends JavaPlugin {
         // the people standing around the hub who take you to a server or show you the events
         npcs = new LobbyNpcs(this, new NpcStore(new File(getDataFolder(), "npcs.yml"), getLogger()));
         PluginCommands.register(this, "npc", new NpcCommand(npcs));
+        de.hems.paper.tablist.TabList.init(this, new de.schnorrenbergers.lobby.tablist.LobbyTab());
         new LobbyJoinListener();
         new LobbyProtectionListener(this);
     }
