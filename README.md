@@ -5,11 +5,11 @@ Ein Minecraft Netzwerk aus einem Velocity Proxy und beliebig vielen Paper Server
 
 ## Versionen
 
-Alles läuft auf **Minecraft 26.3** (Stand 2026-09-24, jeweils die neueste Version):
+Alles läuft auf **Minecraft 26.3** (Stand 2026-09-28, jeweils die neueste Version):
 
 | Teil | Version | Status |
 |------|---------|--------|
-| Paper | 26.3 (build 40) | **ALPHA** — für 26.3 gibt es noch keinen stabilen Build |
+| Paper | 26.3 (build 134) | **BETA** — der erste Beta-Build für 26.3, einen stabilen gibt es noch nicht |
 | Velocity | 4.2.0 (build 30) | stabil, neue Hauptversion (Config 2.9, API 4) |
 | WorldEdit | 7.4.6-beta-02 | **Beta** — das einzige WorldEdit für 26.3 |
 | WorldGuard | 7.0.19 | Release, für 26.3 freigegeben |
