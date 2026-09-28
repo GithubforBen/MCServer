@@ -1205,6 +1205,34 @@ sie auch seinen Minecraft-Namen.
 Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
 steht in der Klasse, aus einem leeren Verzeichnis starten).
 
+## Lobby-NPCs
+
+In der Lobby stehen NPCs, die man anklickt (rechts oder links), um woanders hinzukommen:
+
+- **Warp-NPC:** schickt auf einen Server - genau wie `/warp <server>`, wartet also auf einen Server, der
+  gerade hochfährt. Über dem Kopf steht der Name, ob der Server läuft und wie viele darauf sind
+  (alle 10 Sekunden aus dem Netzwerk geholt).
+- **Event-NPC:** öffnet den Eventkalender (`/events`). Über dem Kopf steht live, was gerade läuft oder
+  als Nächstes kommt, mit Countdown.
+
+Die NPCs sind `Mannequin`s - die spielerförmige Entity, die Minecraft seit 1.21.9 selbst hat. Sie tragen
+echte Skins, brauchen kein zusätzliches Plugin und keine Pakete, und schauen den nächsten Spieler in
+acht Blöcken Umkreis an. Wie der Lotto-Stand werden sie nie mit der Welt gespeichert, sondern bei jedem
+Start und jedem Nachladen des Chunks neu aufgestellt - es bleibt also nie ein doppelter stehen.
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/npc` · `/npc list` | Alle NPCs, anklicken springt hin |
+| `/npc warp <server> [name]` | Warp-NPC an die eigene Position, Blickrichtung wird übernommen |
+| `/npc events [name]` | Event-NPC an die eigene Position |
+| `/npc name <id> <name>` | Umbenennen, `&`-Farbcodes gehen (`&bSurvival`) |
+| `/npc skin <id> <spieler\|aus>` | Skin eines Minecraft-Accounts tragen, oder den Standard |
+| `/npc ziel <id> <server>` | Ziel eines Warp-NPCs ändern |
+| `/npc hier <id>` · `/npc tp <id>` · `/npc weg <id>` | Versetzen, hinspringen, entfernen |
+
+Alles nur mit `network.npc.admin` (Standard: Ops). Gespeichert wird in `plugins/LobbyPlugin/npcs.yml`,
+ohne Weltnamen - eine neue Lobby-Map behält ihre NPCs.
+
 ## Lotto
 
 4 aus 15, bezahlt mit Bits. Jeder Tipp kostet gleich viel (Standard 100 Bits, also einen Diamanten an

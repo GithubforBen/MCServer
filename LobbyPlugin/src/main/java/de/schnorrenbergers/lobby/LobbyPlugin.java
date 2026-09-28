@@ -13,6 +13,9 @@ import de.hems.paper.commands.VerifyCommand;
 import de.hems.paper.discord.AccountLinkService;
 import de.hems.paper.round.RoundService;
 import de.schnorrenbergers.lobby.bedwars.BedwarsDebugCommand;
+import de.schnorrenbergers.lobby.npc.LobbyNpcs;
+import de.schnorrenbergers.lobby.npc.NpcCommand;
+import de.schnorrenbergers.lobby.npc.NpcStore;
 import de.schnorrenbergers.lobby.parkour.CheckpointListener;
 import de.schnorrenbergers.lobby.parkour.ParkourCommand;
 import de.schnorrenbergers.lobby.parkour.ParkourService;
@@ -27,6 +30,7 @@ public final class LobbyPlugin extends JavaPlugin {
     private static LobbyPlugin instance;
     private ListenerAdapter listenerAdapter;
     private ParkourService parkour;
+    private LobbyNpcs npcs;
 
     @Override
     public void onLoad() {
@@ -74,6 +78,9 @@ public final class LobbyPlugin extends JavaPlugin {
         de.schnorrenbergers.lobby.lotto.LottoStand stand = new de.schnorrenbergers.lobby.lotto.LottoStand(this);
         PluginCommands.register(this, "lotto", new de.hems.paper.lotto.LottoCommand(java.util.Map.of(
                 "stand", stand::place, "standweg", stand::remove)));
+        // the people standing around the hub who take you to a server or show you the events
+        npcs = new LobbyNpcs(this, new NpcStore(new File(getDataFolder(), "npcs.yml"), getLogger()));
+        PluginCommands.register(this, "npc", new NpcCommand(npcs));
         new LobbyJoinListener();
         new LobbyProtectionListener(this);
     }
@@ -84,6 +91,7 @@ public final class LobbyPlugin extends JavaPlugin {
         // while the jar is still open: closing the cluster connection from a jvm shutdown hook is too
         // late, see ListenerAdapter.disconnect()
         ListenerAdapter.disconnect();
+        if (npcs != null) npcs.despawnAll();
         Holograms.removeAll();
     }
 
