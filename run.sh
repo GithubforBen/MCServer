@@ -59,11 +59,12 @@ update() {
 
 MODE=update
 while true; do
+  # settings of this machine, e.g. which java to use and how much memory a server may get. Not in git: it
+  # describes the box. Read before the build, so the build uses the same java as the launcher
+  [ -f .env.local ] && set -a && . ./.env.local && set +a
   if [ "$MODE" = update ]; then
     update
   fi
-  # settings of this machine, e.g. how much memory a server may get. Not in git: it describes the box
-  [ -f .env.local ] && set -a && . ./.env.local && set +a
   java -version
   java -jar "$JAR"
   CODE=$?

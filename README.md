@@ -44,6 +44,22 @@ echten Velocity-4.2.0-Jars mit der erzeugten Datei.
 
 ## Bauen und starten
 
+Auf einem neuen Rechner reicht:
+
+```bash
+./install.sh
+```
+
+Das Skript prüft Java 25, tmux und git (und installiert sie auf Wunsch mit apt), baut alles und fragt
+dann ab, was der Launcher braucht: Discord-Token und Besitzer-ID, Modus und Adresse des Proxys, Ops,
+Whitelist, Autostart, die Admin-Website mit Account und Google Authenticator (als QR-Code im Terminal
+zum Scannen), und den Arbeitsspeicher.
+Das Velocity-Secret und das Secret für `/command` werden erzeugt. Alles landet in der `main-config.yml`,
+Java und Speicher in der `.env.local`; danach startet es das Netzwerk. Nochmal ausgeführt zeigt jede Frage
+den aktuellen Wert, Enter behält ihn - so lässt sich einzeln etwas ändern, etwa ein neuer Token.
+
+Von Hand:
+
 ```bash
 ./mvnw clean install     # baut alle Plugins nach ./builds/
 ./start.sh               # startet den Launcher in einer tmux Session
@@ -241,7 +257,7 @@ web:
 ```
 
 Der alte `/command` Endpoint gibt es weiterhin, er akzeptiert aber nicht mehr das fest eingebaute Secret
-`67`, sondern das aus `web.command-secret`, das beim ersten Start erzeugt wird.
+`67`, sondern das aus `web.command-secret`, das beim ersten Start (oder von `./install.sh`) erzeugt wird.
 
 ### Technik
 
