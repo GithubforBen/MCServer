@@ -631,6 +631,31 @@ dem Klick zu verraten.
 
 ### Maps
 
+Mit der `BEDWARS`-Vorlage kommen vier Hypixel-Maps:
+
+| Map | Teams | Modi | Generatoren in der Mitte |
+|-----|-------|------|--------------------------|
+| Speedway | 8 | Solo, Doppel, 3er, 4er | 4 Diamant, 4 Smaragd |
+| Lighthouse | 8 | Solo, Doppel, 3er, 4er | 4 Diamant, 4 Smaragd |
+| Orbit | 8 | Solo, Doppel, 3er, 4er | 4 Diamant, 4 Smaragd |
+| Aquarium | 4 | 3er, 4er | 4 Diamant, 2 Smaragd |
+
+Lighthouse, Orbit und Aquarium stammen aus der Sammlung
+[Odsodium/Hypixel-Bedwars-Maps](https://github.com/Odsodium/Hypixel-Bedwars-Maps) (Mitschnitte vom
+Hypixel-Server). Die Punkte stehen nicht von Hand in den `.yml`, sondern sind aus der Welt gelesen:
+Bett und Teamfarbe (Wolle um das Bett), Spawn hinter Kiste und Endertruhe, Team-Generator auf den sechs
+Steinziegelstufen bzw. im Gitterkäfig am Ende der Basis, Händler in den Seelaternen-Nischen unter einer
+Barriere (Orbit: links und rechts vom Spawn), und jeder Diamant-/Smaragd-Generator ist der einzelne
+Edelsteinblock unter einem Ring mit Loch. Die Warteplattform ist Hypixels eigene über der Mitte.
+
+Geprüft auf Paper 26.3 mit dem Bedwars-Plugin selbst: jede Map lädt, besteht den Map-Validator für
+jeden ihrer Modi, an jeder Bett-Stelle liegt ein Bett, jeder Spawn und Händler hat Boden unter und
+zwei freie Blöcke über sich, jeder Generator ist frei und hat Boden. **Nicht** geprüft ist, wie sich
+die Maps spielen - ein Händler, der ungünstig steht, lässt sich mit `/bw setup` versetzen.
+
+Bekannte Eigenheit: bei Aquarium war das Loch über einem Diamant-Generator im Mitschnitt mit einem
+Diamantblock zugesetzt; der Generator steht dort einen Block höher.
+
 Zur Auswahl stehen die Maps, die mit der `BEDWARS`-Vorlage ausgeliefert werden, plus alles, was in
 `./bedwars-maps` neben dem Launcher liegt. Ein Weltordner dort (mit `level.dat`) landet auf jedem
 neu erstellten Rundenserver und taucht im Menü auf — ohne Release, ohne Code. Liegt die zugehörige

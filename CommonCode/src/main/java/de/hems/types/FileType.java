@@ -62,7 +62,13 @@ public class FileType implements Serializable {
     public enum ASSET {
 
         /** The hypixel map "Speedway": eight bases, so it plays solo and doubles as 2v2 x8. */
-        BEDWARS_SPEEDWAY;
+        BEDWARS_SPEEDWAY,
+        /** The hypixel map "Lighthouse": eight islands around a lighthouse. */
+        BEDWARS_LIGHTHOUSE,
+        /** The hypixel map "Orbit": eight bases around a star of walkways. */
+        BEDWARS_ORBIT,
+        /** The hypixel map "Aquarium": four bases, so it plays 3v3v3v3 and 4v4v4v4 only. */
+        BEDWARS_AQUARIUM;
 
         /**
          * @param type the asset
@@ -71,6 +77,9 @@ public class FileType implements Serializable {
         public static String getFileURL(ASSET type) {
             return switch (type) {
                 case BEDWARS_SPEEDWAY -> "asset:/bedwars-speedway.zip";
+                case BEDWARS_LIGHTHOUSE -> "asset:/bedwars-lighthouse.zip";
+                case BEDWARS_ORBIT -> "asset:/bedwars-orbit.zip";
+                case BEDWARS_AQUARIUM -> "asset:/bedwars-aquarium.zip";
             };
         }
 
@@ -92,6 +101,7 @@ public class FileType implements Serializable {
         public static String getVersion(ASSET type) {
             return switch (type) {
                 case BEDWARS_SPEEDWAY -> "3";
+                case BEDWARS_LIGHTHOUSE, BEDWARS_ORBIT, BEDWARS_AQUARIUM -> "1";
             };
         }
 
@@ -106,6 +116,9 @@ public class FileType implements Serializable {
         public String getDisplayName() {
             return switch (this) {
                 case BEDWARS_SPEEDWAY -> "Bedwars Map: Speedway";
+                case BEDWARS_LIGHTHOUSE -> "Bedwars Map: Lighthouse";
+                case BEDWARS_ORBIT -> "Bedwars Map: Orbit";
+                case BEDWARS_AQUARIUM -> "Bedwars Map: Aquarium";
             };
         }
 
@@ -122,6 +135,9 @@ public class FileType implements Serializable {
         public static String getBedwarsMap(ASSET type) {
             return switch (type) {
                 case BEDWARS_SPEEDWAY -> "speedway";
+                case BEDWARS_LIGHTHOUSE -> "lighthouse";
+                case BEDWARS_ORBIT -> "orbit";
+                case BEDWARS_AQUARIUM -> "aquarium";
             };
         }
     }
