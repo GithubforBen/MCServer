@@ -22,16 +22,12 @@ import java.util.UUID;
  */
 public final class ShopkeeperManager {
 
-    /**
-     * How many bits a player has to have to open a shop. Only checked, never charged - that is how it has
-     * always been, and whether it should cost something is a decision rather than a fix.
-     */
-    public static final int MINIMUM_BALANCE = 2000;
     /** How often everything is written out, so a crash costs at most this much. */
     private static final long AUTOSAVE_TICKS = 20L * 60L * 5L;
 
     private static final Map<UUID, Shopkeeper> shopkeepers = new LinkedHashMap<>();
     private static ShopkeeperStore store;
+    private static ShopSettings settings;
 
     /**
      * Shops by the chunk their chest sits in.
@@ -47,11 +43,13 @@ public final class ShopkeeperManager {
     /**
      * Loads the shops and starts looking after them.
      *
-     * @param shopStore where the shops are kept
+     * @param shopStore    where the shops are kept
+     * @param shopSettings what the server decides about shops
      */
-    public static void init(ShopkeeperStore shopStore) {
+    public static void init(ShopkeeperStore shopStore, ShopSettings shopSettings) {
         if (store != null) return;
         store = shopStore;
+        settings = shopSettings;
         for (Shopkeeper shop : store.loadAll()) shopkeepers.put(shop.getUuid(), shop);
         new ShopkeeperChunkListener();
         new ShopkeeperListener();
@@ -175,17 +173,15 @@ public final class ShopkeeperManager {
     // ------------------------------------------------------------------ making shops
 
     /**
-     * Puts a shop down: the villager where the player stands, the chest they stand on as its stock.
+     * Puts a shop down: the villager where the player stands, the chest they stand on as its stock. The
+     * player pays {@link ShopSettings#getCreateCost()} for it.
      *
      * @param player who is opening the shop
      * @param name   what it should be called
      * @return the new shop, or {@code null} when it could not be made - the player has been told why
      */
     public static @Nullable Shopkeeper createShopkeeper(Player player, String name) {
-        if (MoneyHandler.getMoney(player.getUniqueId()) < MINIMUM_BALANCE) {
-            player.sendMessage("Für einen Shop brauchst du mindestens " + MINIMUM_BALANCE + " Bits.");
-            return null;
-        }
+        int cost = settings.getCreateCost();
         Location chest = player.getLocation().getBlock().getLocation();
         if (chest.getBlock().getType() != Material.CHEST) {
             player.sendMessage("Stell dich dafür auf die Kiste, die das Lager des Shops sein soll.");
@@ -196,6 +192,12 @@ public final class ShopkeeperManager {
             player.sendMessage(problem);
             return null;
         }
+        // paid last, once nothing else can stand in the way, so nobody pays for a shop that is then refused
+        if (cost > 0 && !MoneyHandler.removeMoney(cost, player.getUniqueId())) {
+            player.sendMessage("Ein Shop kostet " + cost + " Bits - so viele hast du nicht.");
+            return null;
+        }
+        if (cost > 0) player.sendMessage("Für den Shop wurden dir " + cost + " Bits abgezogen.");
         Shopkeeper shopkeeper = new Shopkeeper(UUID.randomUUID(), name, player.getLocation(), chest,
                 ShopOwnership.teamOf(player), new ArrayList<>());
         shopkeepers.put(shopkeeper.getUuid(), shopkeeper);

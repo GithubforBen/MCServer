@@ -87,7 +87,9 @@ public final class Survival extends JavaPlugin {
         PluginCommands.register(this, "verify", new de.hems.paper.commands.VerifyCommand());
         PluginCommands.register(this, "cosmetics", new de.hems.paper.commands.CosmeticsCommand());
         de.hems.paper.tablist.TabList.init(this, new SurvivalTab());
-        ShopkeeperManager.init(new ShopkeeperStore(shopConfig, getLogger()));
+        ShopkeeperManager.init(new ShopkeeperStore(shopConfig, getLogger()),
+                new de.schnorrenbergers.survival.featrues.Shopkeeper.ShopSettings(
+                        new java.io.File("./configs/shop.yml"), getLogger()));
         new ATMListener();
         chunkLimiter = new ChunkLimiter(new ChunkLimiterSettings());
         chunkLimiter.start();

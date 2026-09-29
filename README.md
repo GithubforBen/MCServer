@@ -694,8 +694,9 @@ Ein neuer Modus ist eine Klasse, die `TabContent` implementiert (oder ein `Simpl
 ## Shops (Survival)
 
 Ein Team stellt einen Händler (Villager) auf eigenen Boden, eine Kiste daneben ist sein Lager.
-`/shop create <name>` (oder `/shopkeeper <name>`) auf der Kiste stehend legt ihn an - dafür muss man
-mindestens 2000 Bits haben (geprüft, nicht abgebucht). Rechtsklick auf den Händler öffnet den Laden,
+`/shop create <name>` (oder `/shopkeeper <name>`) auf der Kiste stehend legt ihn an und kostet den
+Spieler 2000 Bits (`create-cost` in `configs/shop.yml`, 0 = kostenlos). Abgebucht wird erst, wenn Kiste,
+Team und Chunk passen. Rechtsklick auf den Händler öffnet den Laden,
 Schleich-Rechtsklick für das Team die Einstellungen: Kiste wechseln, Händler versetzen, Angebote, Preise
 und Mengen. `/shop` öffnet den Marktplatz über alle Shops.
 
@@ -704,6 +705,7 @@ und Mengen. `/shop` öffnet den Marktplatz über alle Shops.
 | `Shopkeeper` | Ein Shop: Villager, Lager, Verkauf - sonst nichts |
 | `ShopkeeperManager` | Alle Shops: finden (nach Id, nach Kiste), anlegen, Autosave, folgt Team-Umbenennungen |
 | `ShopkeeperStore` | Liest und schreibt `configs/shop-config.yml` (Format unverändert) |
+| `ShopSettings` | `configs/shop.yml`: was ein Shop kostet |
 | `ShopOwnership` | Wem ein Shop gehört und wo er stehen darf - über den `TeamService`, nicht über das Scoreboard |
 | `ShopUi` · `ShopEditorUi` | Laden für Kunden, Einstellungen für das Team |
 | `ShopkeeperListener` · `ShopChestListener` · `ShopkeeperChunkListener` | Klicks, Schutz der Lagerkiste, Villager beim Laden des Chunks |
@@ -728,6 +730,17 @@ Kopie, also sofort - eine Schätzung ist das in genau einem Fall, nämlich wenn 
 zwei Servern in derselben Sekunde leergeräumt wird. Dann lehnt der Launcher die zweite Änderung ab
 und schickt den richtigen Stand hinterher. Für alles, wo an der Antwort etwas Wertvolles hängt,
 gibt es `MoneyService.changeBlocking` - der Cosmetic-Kauf geht diesen Weg.
+
+**Teamkassen gehen nicht verloren.** Ein Teamkonto hängt am Teamnamen. Früher blieb das Geld bei
+einer Umbenennung unter dem alten Namen liegen, und bei einer Auflösung lag es herrenlos herum - ein
+neues Team mit demselben Namen hat es dann geerbt. Jetzt zieht der Launcher das Konto bei einer
+Umbenennung mit auf den neuen Namen (wie den Rucksack), und bei einer Auflösung bekommt der Anführer
+den ganzen Kontostand; das Teamkonto wird danach gelöscht. Beides meldet er ins Netzwerk, die Kopien
+auf den Servern stimmen sofort. Geprüft durch `MoneyMoveCheck`.
+
+Geld, das vor dieser Änderung schon unter einem alten Teamnamen liegen geblieben ist, wird nicht
+automatisch zugeordnet - welcher Name zu welchem Team gehörte, weiß der Launcher nicht mehr. Es steht
+in `money.yml` unter `balances.<alter Name>` und lässt sich dort von Hand umtragen.
 
 ## Cosmetics
 

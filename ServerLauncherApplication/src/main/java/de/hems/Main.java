@@ -111,15 +111,16 @@ public class Main {
         }
         listenerAdapter = new ListenerAdapter(ListenerAdapter.ServerName.HOST);
         new RespondDataEvent();
-        teamStore = new TeamStore();
-        backpackStore = new BackpackStore();
-        new TeamEvents(teamStore, backpackStore);
-        stashStore = new StashStore();
-        new StashEvents(stashStore);
         // the money of the network belongs here as well: it used to sit next to the survival
         // server, where only that one server could see it and nothing else could spend it
         moneyStore = new MoneyStore();
         new MoneyEvents(moneyStore);
+        teamStore = new TeamStore();
+        backpackStore = new BackpackStore();
+        // a team's money hangs on its name, so the teams need the money to take it along
+        new TeamEvents(teamStore, backpackStore, moneyStore);
+        stashStore = new StashStore();
+        new StashEvents(stashStore);
         // cosmetics are sold here rather than on the server the shop is on: the price, the bits and the
         // ownership all live here, so a purchase is one step and not three that can fail halfway
         cosmeticStore = new CosmeticStore();

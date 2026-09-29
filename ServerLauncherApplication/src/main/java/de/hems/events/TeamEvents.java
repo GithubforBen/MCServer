@@ -2,6 +2,7 @@ package de.hems.events;
 
 import de.hems.Main;
 import de.hems.communication.ListenerAdapter;
+import de.hems.communication.events.money.BalanceUpdatedEvent;
 import de.hems.communication.events.team.DeleteTeamEvent;
 import de.hems.communication.events.team.RequestBackpackEvent;
 import de.hems.communication.events.team.RequestTeamsEvent;
@@ -14,6 +15,7 @@ import de.hems.communication.events.team.SaveTeamEvent;
 import de.hems.communication.events.team.TeamUpdatedEvent;
 import de.hems.types.team.BackpackData;
 import de.hems.types.team.TeamData;
+import de.hems.utils.money.MoneyStore;
 import de.hems.utils.team.BackpackStore;
 import de.hems.utils.team.TeamStore;
 
@@ -29,10 +31,12 @@ public class TeamEvents {
 
     private final TeamStore teams;
     private final BackpackStore backpacks;
+    private final MoneyStore money;
 
-    public TeamEvents(TeamStore teams, BackpackStore backpacks) {
+    public TeamEvents(TeamStore teams, BackpackStore backpacks, MoneyStore money) {
         this.teams = teams;
         this.backpacks = backpacks;
+        this.money = money;
         ListenerAdapter.register(RequestTeamsEvent.class, event -> onRequestTeams((RequestTeamsEvent) event));
         ListenerAdapter.register(SaveTeamEvent.class, event -> onSaveTeam((SaveTeamEvent) event));
         ListenerAdapter.register(DeleteTeamEvent.class, event -> onDeleteTeam((DeleteTeamEvent) event));
@@ -55,6 +59,8 @@ public class TeamEvents {
         boolean renamed = renameFrom != null && !renameFrom.equalsIgnoreCase(result.team().getName());
         if (renamed) {
             backpacks.rename(renameFrom, result.team().getName());
+            // and the team's money, which is kept under its name just like the backpack
+            moveMoney(renameFrom, result.team().getName(), "Umbenennung");
             announce(renameFrom, null, null);
         }
         // the servers are told what the team was called, so whatever they keep under the old name follows
@@ -62,10 +68,35 @@ public class TeamEvents {
     }
 
     private void onDeleteTeam(DeleteTeamEvent request) throws Exception {
+        TeamData team = teams.getTeam(request.getTeamName());
         boolean existed = teams.delete(request.getTeamName());
         if (existed) {
             backpacks.delete(request.getTeamName());
+            // the money of a disbanded team goes to its leader rather than staying behind under the name
+            if (team != null && team.getLeader() != null) {
+                moveMoney(team.getName(), team.getLeader().toString(), "Auflösung");
+            }
             announce(request.getTeamName(), null, null);
+        }
+    }
+
+    /**
+     * Moves a team's account and tells every server what both accounts hold now.
+     *
+     * @param from   the account to empty
+     * @param to     the account that gets it
+     * @param reason what it is for, for the log
+     */
+    private void moveMoney(String from, String to, String reason) {
+        MoneyStore.Transfer transfer = money.moveAll(from, to);
+        if (transfer.amount() > 0) {
+            System.out.println("Balance " + from + " -> " + to + ": " + transfer.amount() + " (" + reason + ")");
+        }
+        try {
+            ListenerAdapter.sendListeners(new BalanceUpdatedEvent(from, transfer.fromLeft()));
+            ListenerAdapter.sendListeners(new BalanceUpdatedEvent(to, transfer.toNow()));
+        } catch (Exception e) {
+            System.out.println("Could not announce the move of " + from + "'s money: " + e.getMessage());
         }
     }
 
