@@ -71,6 +71,7 @@ public class Main {
     private RoundStore roundStore;
     private CosmeticStore cosmeticStore;
     private AccountLinkStore accountLinkStore;
+    private de.hems.utils.whitelist.WhitelistStore whitelistStore;
     private TicketService ticketService;
     private de.hems.utils.lotto.LottoService lottoService;
     private DiscordTickets discordTickets;
@@ -145,6 +146,8 @@ public class Main {
         // /neustart on any server lands here: countdown, save, stop, and run.sh does the rest
         restartScheduler = new de.hems.utils.restart.RestartScheduler();
         new AdminAbuseHandler();
+        // who accepted the rules - read before any server is configured, since that writes the whitelist
+        whitelistStore = new de.hems.utils.whitelist.WhitelistStore();
         serverHandler = new ServerHandler();
         // what the machine has left, and which server is sitting on memory it never uses
         memoryWatch = new MemoryWatch(serverHandler);
@@ -349,6 +352,10 @@ public class Main {
 
     public de.hems.utils.poker.PokerStatsStore getPokerStatsStore() {
         return pokerStatsStore;
+    }
+
+    public de.hems.utils.whitelist.WhitelistStore getWhitelistStore() {
+        return whitelistStore;
     }
 
     public AccountLinkStore getAccountLinkStore() {

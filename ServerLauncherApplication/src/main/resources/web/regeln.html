@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Regeln</title>
+    <link rel="stylesheet" href="/tokens.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- The public rules page: whoever accepts the rules and names their minecraft account is on the whitelist.
+     No login, and nothing here reaches the admin interface. -->
+<main class="login-view">
+    <form id="rules-form" class="card login-card rules-card" autocomplete="off">
+        <h1 id="rules-brand">Regeln</h1>
+        <p class="muted">Lies die Regeln, akzeptiere sie und trag deinen Minecraft-Namen ein - danach stehst du
+            auf der Whitelist und kannst sofort spielen.</p>
+
+        <div id="rules-text" class="rules-text">Lade ...</div>
+
+        <label class="checkbox accept">
+            <input id="rules-accepted" type="checkbox" required>
+            Ich habe die Regeln gelesen und akzeptiere sie.
+        </label>
+
+        <label for="rules-name">Minecraft-Name</label>
+        <input id="rules-name" type="text" maxlength="16" autocomplete="off" spellcheck="false"
+               placeholder="z.B. Steve" required>
+
+        <button id="rules-submit" type="submit">Auf die Whitelist</button>
+        <p id="rules-message" class="message hidden"></p>
+    </form>
+</main>
+
+<script src="/regeln.js"></script>
+</body>
+</html>

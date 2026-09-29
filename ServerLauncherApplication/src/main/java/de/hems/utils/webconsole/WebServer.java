@@ -15,6 +15,7 @@ import de.hems.utils.webconsole.modules.PlayerModule;
 import de.hems.utils.webconsole.modules.ServerModule;
 import de.hems.utils.webconsole.modules.SettingsModule;
 import de.hems.utils.webconsole.modules.TicketModule;
+import de.hems.utils.webconsole.modules.WhitelistModule;
 import io.javalin.Javalin;
 import io.javalin.config.RoutesConfig;
 import io.javalin.http.Context;
@@ -110,6 +111,7 @@ public class WebServer {
         add(new PlayerModule());
         add(new CoreProtectModule());
         add(new PayingPlayerModule());
+        add(new WhitelistModule());
         add(new TicketModule());
         add(new ConsoleModule());
         add(new SettingsModule());

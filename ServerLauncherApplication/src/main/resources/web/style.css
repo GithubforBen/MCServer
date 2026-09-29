@@ -1072,3 +1072,34 @@ datalist {
     overflow-wrap: anywhere;
     user-select: all;
 }
+
+/* ---------------------------------------------------------------- rules page */
+
+.rules-card {
+    max-width: 620px;
+}
+
+/* the rules as the admins wrote them, line breaks and all, scrolling on their own when they are long */
+.rules-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: var(--s3) var(--s4);
+    margin: var(--s2) 0;
+    background: var(--ground);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    line-height: 1.55;
+}
+
+.checkbox.accept {
+    font-size: 13px;
+    color: var(--bone);
+    margin-bottom: var(--s2);
+}
+
+/* a link is not a state, so it stays achromatic like every other control */
+a.secret {
+    color: var(--bone);
+}

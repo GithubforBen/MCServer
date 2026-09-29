@@ -56,6 +56,7 @@ stashes.yml
 events.yml
 runs.yml
 awards.yml
+whitelist.yml
 
 # Scratch files of the IDE database tool
 .idea/queries/

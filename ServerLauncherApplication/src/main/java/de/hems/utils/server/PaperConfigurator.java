@@ -9,6 +9,7 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.types.FileType;
 import de.hems.types.MissingConfigurationException;
 import de.hems.types.ServerTemplate;
+import de.hems.utils.whitelist.WhitelistSync;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,14 +116,13 @@ public class PaperConfigurator extends ServerConfigurator {
         }
         System.out.println(ops.size() + ":" + jsonArray);
         overwriteToFile("ops.json", jsonArray.toString(), true);
-        jsonArray = new JsonArray();
-        for (String whitelisted : whitelist) {
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("uuid", UUIDFetcher.findUUIDByName(whitelisted, true).toString());
-            jsonObject.addProperty("name", whitelisted);
-            jsonArray.add(jsonObject);
-        }
-        overwriteToFile("whitelist.json", jsonArray.toString(), false);
+        // written every time, so a player who accepted the rules while this server was off is on it too
+        overwriteToFile("whitelist.json", WhitelistSync.entries(Arrays.asList(whitelist)).toString(), true);
+        boolean enforced = Main.getInstance().getWhitelistStore().isEnforced();
+        setProperty("server.properties", "white-list", enforced);
+        // with this, "whitelist reload" also sends off whoever was taken off the list
+        setProperty("server.properties", "enforce-whitelist", enforced);
+        writeToYmlConfiguration("spigot.yml", "messages.whitelist", WhitelistSync.kickMessage(), true);
         System.out.println("Configured server " + name + " on port " + port);
     }
 }

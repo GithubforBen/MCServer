@@ -188,6 +188,7 @@ Passwörter liegen als PBKDF2-Hash in der `main-config.yml`, nie im Klartext. Di
 | Paying Player | Trägt zahlende Spieler per Minecraft-Name oder UUID ein und aus |
 | Tickets | Liest und beantwortet Tickets, übernimmt, schließt und öffnet sie wieder (siehe [Tickets](#tickets)) |
 | Konsole | Zeigt die Ausgabe eines Servers live an und schickt Befehle an ihn |
+| Whitelist | Regeln für die öffentliche Seite `/regeln`, Whitelist an/aus, wer sich selbst eingetragen hat (siehe [Whitelist und Regeln](#whitelist-und-regeln)) |
 | Netzwerk | `/neustart` aus dem Browser (Neustart, Update, Herunterfahren, Absagen), der laufende Commit, das letzte Update und das Speicherbudget mit Vorschlägen |
 | Einstellungen | Eigenes Passwort ändern, Google Authenticator neu einrichten (QR-Code), Admin-Accounts anlegen und löschen, Besitzer-ID, Name der Seite, Ops, Whitelist und Autostart |
 
@@ -1237,6 +1238,41 @@ Chunk, wird sie nach 20 Sekunden einfach hingestellt.
 
 Beim Abrechnen des Events zahlt der Launcher die Belohnungen aus `results.yml` aus, stoppt die Arena und
 löscht ihr Verzeichnis.
+
+## Whitelist und Regeln
+
+Spieler setzen sich selbst auf die Whitelist: auf `http://<host>:8080/regeln` lesen sie die Regeln,
+setzen den Haken bei „akzeptiere“ und geben ihren Minecraft-Namen ein. Der Name wird bei Mojang
+nachgeschlagen (Groß-/Kleinschreibung kommt von dort), und der Spieler landet sofort auf allen laufenden
+Servern - ohne Neustart. Wer nicht auf der Whitelist steht, bekommt beim Joinen genau diesen Link genannt.
+
+| Wo | Was |
+|----|-----|
+| `/regeln` (ohne Login) | Regeln lesen, akzeptieren, Namen eintragen. Ein Versuch alle 10 Sekunden pro Adresse |
+| Admin-Website → Whitelist | Regeln schreiben, Whitelist an/aus, Selbst-Eintragen an/aus, öffentlicher Link, Liste mit Entfernen |
+| Admin-Website → Einstellungen | Namen, die Admins von Hand eintragen (wie bisher `whitelist` in der `main-config.yml`) |
+
+**Die Whitelist ist standardmäßig aus** (`enforced: false` in der `whitelist.yml`). Vorher war sie das auch
+- `whitelist.json` wurde geschrieben, `white-list` aber nie eingeschaltet, also kam jeder rein. Wer sie
+einschaltet, sperrt jeden aus, der noch nicht darauf steht; deshalb geht das nur bewusst im Panel (mit
+zweitem Klick), und Eintragen funktioniert schon vorher, damit die Liste voll ist. Ops kommen immer rein.
+
+Wie es gebaut ist:
+
+- `whitelist.yml` hält die Regeln, die Schalter und jeden, der sie akzeptiert hat - nach UUID, mit Datum und
+  einem Hash der Regeln, die er gesehen hat. Nach einer Regeländerung bleiben alle auf der Liste und sind im
+  Panel als „alte Regeln“ markiert.
+- Beim Start eines Servers schreibt der Launcher `whitelist.json` **jedes Mal neu** aus den Admin-Namen und
+  der `whitelist.yml`, dazu `white-list`/`enforce-whitelist` und die Kick-Nachricht (`spigot.yml`,
+  `messages.whitelist`). Vorher geschah das nur beim allerersten Start eines Servers, spätere Änderungen
+  kamen nie an. Ein `/whitelist add` im Spiel überlebt deshalb keinen Neustart - dafür ist die Website da.
+- Ein Name, den Mojang nicht kennt (Tippfehler, umbenannt), wird ausgelassen statt den Start mit einer
+  NullPointerException abzubrechen.
+- Laufende Server bekommen neue Spieler über ihre `whitelist.json` plus `whitelist reload`, nicht über
+  `whitelist add`: die Server laufen hinter dem Proxy im Offline-Modus und müssten die UUID sonst selbst
+  raten. Entfernen wirkt genauso sofort und schickt den Spieler vom Server.
+- Der Link in der Kick-Nachricht ist `http://<Adresse des Netzwerks>:<web.port>/regeln`; läuft die
+  Website hinter einer Domain, trägt man die Adresse im Panel ein.
 
 ## Discord-Verknüpfung
 
