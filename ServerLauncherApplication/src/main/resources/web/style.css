@@ -1033,3 +1033,42 @@ datalist {
     overflow-wrap: anywhere;
     margin-top: 4px;
 }
+
+/* ---------------------------------------------------------------- authenticator */
+
+/* the qr code for google authenticator. It stays black on white whatever the theme, because that is what a
+   scanner reads */
+.qr-box {
+    display: flex;
+    gap: var(--s4);
+    margin-bottom: var(--s3);
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.qr-box .grow {
+    flex: 1 1 240px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s1);
+}
+
+.qr-box .grow p {
+    margin: 0 0 var(--s2);
+}
+
+.qr {
+    width: 184px;
+    height: 184px;
+    background: #FFFFFF;
+    border-radius: var(--r);
+    image-rendering: pixelated;
+}
+
+.secret {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    overflow-wrap: anywhere;
+    user-select: all;
+}

@@ -40,6 +40,8 @@ public class AuthService {
     private final Map<String, Long> graceUntil = new ConcurrentHashMap<>();
     /** The last authenticator step that was accepted per account, so a code can not be replayed. */
     private final Map<String, Long> usedTotpStep = new ConcurrentHashMap<>();
+    /** One lock per account, so password confirmations of an account run one after the other. */
+    private final Map<String, Object> confirmLocks = new ConcurrentHashMap<>();
 
     public AuthService(Configuration configuration) {
         this.configuration = configuration;
@@ -219,6 +221,63 @@ public class AuthService {
 
     public void logout(String token) {
         if (token != null) sessions.remove(token);
+    }
+
+    /**
+     * Checks the password of an account that is already logged in, before something that could lock
+     * people out or let somebody in: a new password, a new authenticator secret, another account.
+     * <p>
+     * A stolen session cookie must not become a way to try passwords at leisure, so every check takes the
+     * full grace period, and the checks of one account are taken one at a time.
+     *
+     * @param username the account
+     * @param password what was typed as its password
+     * @return whether it is the password of that account
+     */
+    public boolean confirmPassword(String username, String password) {
+        String account = normalize(username);
+        synchronized (confirmLocks.computeIfAbsent(account, key -> new Object())) {
+            long startedAt = System.currentTimeMillis();
+            try {
+                AdminAccount admin = findAccount(account);
+                if (admin == null || password == null || password.isEmpty()) {
+                    Passwords.burn(password);
+                    return false;
+                }
+                return Passwords.matches(password, admin.getPasswordHash());
+            } finally {
+                waitOutGracePeriod(startedAt);
+            }
+        }
+    }
+
+    /**
+     * Removes an account and ends every session it has.
+     *
+     * @param username the account
+     * @return whether there was such an account
+     */
+    public boolean deleteAccount(String username) {
+        AdminAccount admin = findAccount(username);
+        if (admin == null) return false;
+        config().set(ACCOUNTS_PATH + "." + admin.getUsername(), null);
+        configuration.save();
+        endSessions(admin.getUsername(), null);
+        usedTotpStep.remove(normalize(admin.getUsername()));
+        return true;
+    }
+
+    /**
+     * Logs an account out everywhere - after its password changed, so a session somebody else holds with
+     * the old one ends too.
+     *
+     * @param username    the account
+     * @param exceptToken a session to keep, the one that made the change, or {@code null}
+     */
+    public void endSessions(String username, String exceptToken) {
+        String account = normalize(username);
+        sessions.values().removeIf(session -> normalize(session.getUsername()).equals(account)
+                && !session.getToken().equals(exceptToken));
     }
 
     private void cleanUpSessions() {

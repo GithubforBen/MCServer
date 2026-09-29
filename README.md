@@ -188,6 +188,15 @@ Passwörter liegen als PBKDF2-Hash in der `main-config.yml`, nie im Klartext. Di
 | Paying Player | Trägt zahlende Spieler per Minecraft-Name oder UUID ein und aus |
 | Tickets | Liest und beantwortet Tickets, übernimmt, schließt und öffnet sie wieder (siehe [Tickets](#tickets)) |
 | Konsole | Zeigt die Ausgabe eines Servers live an und schickt Befehle an ihn |
+| Netzwerk | `/neustart` aus dem Browser (Neustart, Update, Herunterfahren, Absagen), der laufende Commit, das letzte Update und das Speicherbudget mit Vorschlägen |
+| Einstellungen | Eigenes Passwort ändern, Google Authenticator neu einrichten (QR-Code), Admin-Accounts anlegen und löschen, Besitzer-ID, Name der Seite, Ops, Whitelist und Autostart |
+
+Alles in den Einstellungen, was jemanden aussperren oder hereinlassen kann - Passwort, 2FA, Accounts -
+braucht zusätzlich das eigene Passwort. Die Prüfung läuft mit derselben Grace Period wie der Login und pro
+Account nacheinander, damit ein gestohlenes Session-Cookie kein Weg zum Passwort-Raten wird. Ein neuer
+2FA-Schlüssel gilt erst, wenn ein Code daraus eingegeben wurde; bis dahin bleibt der alte. Nach einem
+Passwortwechsel werden alle anderen Sitzungen des Accounts beendet, ein gelöschter Account wird überall
+abgemeldet.
 
 ### Live-Konsole
 

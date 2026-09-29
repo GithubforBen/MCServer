@@ -9,9 +9,11 @@ import de.hems.utils.webconsole.modules.AuthModule;
 import de.hems.utils.webconsole.modules.ConsoleModule;
 import de.hems.utils.webconsole.modules.CoreProtectModule;
 import de.hems.utils.webconsole.modules.EventModule;
+import de.hems.utils.webconsole.modules.NetworkModule;
 import de.hems.utils.webconsole.modules.PayingPlayerModule;
 import de.hems.utils.webconsole.modules.PlayerModule;
 import de.hems.utils.webconsole.modules.ServerModule;
+import de.hems.utils.webconsole.modules.SettingsModule;
 import de.hems.utils.webconsole.modules.TicketModule;
 import io.javalin.Javalin;
 import io.javalin.config.RoutesConfig;
@@ -103,12 +105,14 @@ public class WebServer {
     private void loadModules() {
         add(new AuthModule());
         add(new ServerModule());
+        add(new NetworkModule());
         add(new EventModule());
         add(new PlayerModule());
         add(new CoreProtectModule());
         add(new PayingPlayerModule());
         add(new TicketModule());
         add(new ConsoleModule());
+        add(new SettingsModule());
     }
 
     /**
