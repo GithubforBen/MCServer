@@ -23,9 +23,9 @@ public class FileType implements Serializable {
 
         public static String getFileURL(SERVER type) {
             return switch (type) {
-                // Paper 26.3 build 40 - the newest there is, and still ALPHA at the time of writing
+                // Paper 26.3 build 134 - the newest there is, and the first BETA build of 26.3
                 case SERVER.PAPER ->
-                        "https://fill-data.papermc.io/v1/objects/49399919246cbf443efc8507447dc948eb7477c41be560b0e87e2a455aff824a/paper-26.3-40.jar";
+                        "https://fill-data.papermc.io/v1/objects/16c5494aed1015de4e7c6e5aefece74e0b398f733bd3fcd8975c820598c19bca/paper-26.3-134.jar";
                 // Velocity 4.2.0 build 30 (stable)
                 case SERVER.VELOCITY ->
                         "https://fill-data.papermc.io/v1/objects/35a5596a5468a035d8a32c8de5ebb0dc6b8d8f0cc3ff5169d514aca762af8aa8/velocity-4.2.0-30.jar";
@@ -62,7 +62,13 @@ public class FileType implements Serializable {
     public enum ASSET {
 
         /** The hypixel map "Speedway": eight bases, so it plays solo and doubles as 2v2 x8. */
-        BEDWARS_SPEEDWAY;
+        BEDWARS_SPEEDWAY,
+        /** The hypixel map "Lighthouse": eight islands around a lighthouse. */
+        BEDWARS_LIGHTHOUSE,
+        /** The hypixel map "Orbit": eight bases around a star of walkways. */
+        BEDWARS_ORBIT,
+        /** The hypixel map "Aquarium": four bases, so it plays 3v3v3v3 and 4v4v4v4 only. */
+        BEDWARS_AQUARIUM;
 
         /**
          * @param type the asset
@@ -71,6 +77,9 @@ public class FileType implements Serializable {
         public static String getFileURL(ASSET type) {
             return switch (type) {
                 case BEDWARS_SPEEDWAY -> "asset:/bedwars-speedway.zip";
+                case BEDWARS_LIGHTHOUSE -> "asset:/bedwars-lighthouse.zip";
+                case BEDWARS_ORBIT -> "asset:/bedwars-orbit.zip";
+                case BEDWARS_AQUARIUM -> "asset:/bedwars-aquarium.zip";
             };
         }
 
@@ -92,6 +101,7 @@ public class FileType implements Serializable {
         public static String getVersion(ASSET type) {
             return switch (type) {
                 case BEDWARS_SPEEDWAY -> "3";
+                case BEDWARS_LIGHTHOUSE, BEDWARS_ORBIT, BEDWARS_AQUARIUM -> "1";
             };
         }
 
@@ -106,6 +116,9 @@ public class FileType implements Serializable {
         public String getDisplayName() {
             return switch (this) {
                 case BEDWARS_SPEEDWAY -> "Bedwars Map: Speedway";
+                case BEDWARS_LIGHTHOUSE -> "Bedwars Map: Lighthouse";
+                case BEDWARS_ORBIT -> "Bedwars Map: Orbit";
+                case BEDWARS_AQUARIUM -> "Bedwars Map: Aquarium";
             };
         }
 
@@ -122,6 +135,9 @@ public class FileType implements Serializable {
         public static String getBedwarsMap(ASSET type) {
             return switch (type) {
                 case BEDWARS_SPEEDWAY -> "speedway";
+                case BEDWARS_LIGHTHOUSE -> "lighthouse";
+                case BEDWARS_ORBIT -> "orbit";
+                case BEDWARS_AQUARIUM -> "aquarium";
             };
         }
     }

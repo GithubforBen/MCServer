@@ -132,4 +132,37 @@ public class MoneyStore {
         save();
         return BalanceResult.ok(holder, updated);
     }
+
+    /**
+     * Moves everything on one account onto another and closes the first.
+     * <p>
+     * For the accounts that hang on a team's name: a rename takes the money to the new name, and a
+     * disbanded team leaves its money to its leader. Both used to leave it behind under a name nobody
+     * could reach any more - and a new team that happened to take that name got it.
+     *
+     * @param from the account to empty and close
+     * @param to   the account that gets it
+     * @return how much was moved, and what both hold afterwards
+     */
+    public synchronized Transfer moveAll(String from, String to) {
+        if (from == null || to == null || from.equals(to)) return new Transfer(0, get(from), get(to));
+        int amount = get(from);
+        balances.remove(from);
+        config.set("balances." + from, null);
+        int updated = (int) Math.min(Integer.MAX_VALUE, (long) get(to) + amount);
+        if (amount > 0 || balances.containsKey(to)) {
+            balances.put(to, updated);
+            config.set("balances." + to, updated);
+        }
+        save();
+        return new Transfer(amount, 0, updated);
+    }
+
+    /**
+     * @param amount   how much was moved
+     * @param fromLeft what the emptied account holds now, always 0 after a move
+     * @param toNow    what the receiving account holds now
+     */
+    public record Transfer(int amount, int fromLeft, int toNow) {
+    }
 }

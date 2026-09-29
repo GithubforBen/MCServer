@@ -39,6 +39,14 @@ public class MoneyHandler {
         MoneyService.change(MoneyService.holderOf(team), amount, false, "survival team");
     }
 
+    /**
+     * @param amount how much to add
+     * @param team   the name of the team, for callers that know the team rather than its scoreboard entry
+     */
+    public static void addTeamMoney(int amount, String team) {
+        MoneyService.change(team, amount, false, "survival team");
+    }
+
     public static boolean removeMoney(int amount, Team team) {
         return MoneyService.change(MoneyService.holderOf(team), -amount, true, "survival team");
     }

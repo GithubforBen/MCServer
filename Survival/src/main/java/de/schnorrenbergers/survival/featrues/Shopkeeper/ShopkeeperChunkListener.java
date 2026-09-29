@@ -27,7 +27,7 @@ public class ShopkeeperChunkListener implements Listener {
 
     private static boolean registered = false;
 
-    public ShopkeeperChunkListener() {
+    ShopkeeperChunkListener() {
         if (registered) return;
         Bukkit.getPluginManager().registerEvents(this, Survival.getInstance());
         registered = true;

@@ -123,6 +123,7 @@ public final class Bedwars extends JavaPlugin {
         applyRoundAddons();
         addons.apply(game);
         game.start(this);
+        de.hems.paper.tablist.TabList.init(this, new de.schnorrenbergers.bedwars.scoreboard.BedwarsTab(this));
 
         new LobbyListener(this);
         new BedListener(this);

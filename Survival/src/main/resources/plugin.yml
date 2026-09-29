@@ -35,7 +35,7 @@ commands:
     usage: /servermanger [create|stop|restart|list]
   shopkeeper:
     description: Legt einen Shopkeeper auf der Kiste an, auf der du stehst
-    usage: /shopkeeper <name>
+    usage: /shopkeeper <name> (wie /shop create <name>)
   shop:
     description: Marktplatz öffnen oder einen Shop erstellen
     usage: /shop [create <name>]

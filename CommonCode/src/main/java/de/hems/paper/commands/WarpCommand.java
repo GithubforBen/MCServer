@@ -109,6 +109,13 @@ public class WarpCommand implements CommandExecutor, TabCompleter {
         knownServers = names;
     }
 
+    /**
+     * @return the servers that were running the last time somebody looked, for completing a server name
+     */
+    public static List<String> knownServers() {
+        return List.copyOf(knownServers);
+    }
+
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length != 1) return List.of();

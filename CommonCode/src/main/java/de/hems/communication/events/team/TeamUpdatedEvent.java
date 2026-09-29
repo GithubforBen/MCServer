@@ -20,11 +20,23 @@ public class TeamUpdatedEvent extends EventFoundationData implements Event, Seri
     private String teamName;
     /** The new state, or {@code null} when the team was deleted. */
     private TeamData team;
+    /** What the team was called before, when this change is a rename - {@code null} otherwise. */
+    private String previousName;
 
     public TeamUpdatedEvent(String teamName, TeamData team) {
+        this(teamName, team, null);
+    }
+
+    /**
+     * @param teamName     the team
+     * @param team         its new state, or {@code null} when it was deleted
+     * @param previousName what it was called before, when it was renamed
+     */
+    public TeamUpdatedEvent(String teamName, TeamData team, String previousName) {
         super(ListenerAdapter.ServerName.ALL);
         this.teamName = teamName;
         this.team = team;
+        this.previousName = previousName;
     }
 
     public TeamUpdatedEvent() {
@@ -36,6 +48,17 @@ public class TeamUpdatedEvent extends EventFoundationData implements Event, Seri
 
     public TeamData getTeam() {
         return team;
+    }
+
+    /**
+     * Anything a server keeps under the team's name - a shop, an account - has to follow a rename, and
+     * the old name being deleted and a new one appearing are two announcements that cannot be told apart
+     * from a disband and a new team without this.
+     *
+     * @return what the team was called before, or {@code null} when this is not a rename
+     */
+    public String getPreviousName() {
+        return previousName;
     }
 
     public boolean isDeleted() {

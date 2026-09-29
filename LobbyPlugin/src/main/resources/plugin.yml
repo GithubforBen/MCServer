@@ -40,7 +40,14 @@ commands:
   parkour:
     description: Die Sprungstrecken der Lobby laufen und bauen
     usage: /parkour [list|start <strecke>|leave|top <strecke>|setup <strecke> start|checkpoint|undo|finish|board|name|delete]
+  npc:
+    description: NPCs in der Lobby aufstellen, die auf Server warpen oder die Events zeigen
+    usage: /npc [list|warp <server> [name]|events [name]|name|skin|ziel|hier|tp|weg]
+    permission: network.npc.admin
 permissions:
+  network.npc.admin:
+    description: NPCs in der Lobby aufstellen und bearbeiten
+    default: op
   network.lotto.admin:
     description: Das Lotto ziehen und Preis und Termin einstellen
     default: op

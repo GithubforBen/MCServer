@@ -31,7 +31,8 @@ public enum ServerTemplate implements Serializable {
 
     /** A bedwars round. Ships with the maps it can play, so a fresh round server has one right away. */
     BEDWARS(FileType.SERVER.PAPER, 2048, true,
-            List.of(FileType.ASSET.BEDWARS_SPEEDWAY),
+            List.of(FileType.ASSET.BEDWARS_SPEEDWAY, FileType.ASSET.BEDWARS_LIGHTHOUSE,
+                    FileType.ASSET.BEDWARS_ORBIT, FileType.ASSET.BEDWARS_AQUARIUM),
             FileType.PLUGIN.BEDWARS),
 
     /**

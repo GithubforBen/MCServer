@@ -31,6 +31,8 @@ public final class RunPlugin extends JavaPlugin {
         }
         RunService.init(this);
         new RunTracker(this);
+        de.hems.paper.tablist.TabList.init(this, new de.hems.paper.tablist.SimpleTab("Speedrun",
+                net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE, false, "/events  ·  /lobby"));
         PluginCommands.register(this, "reset", new ResetCommand());
     }
 

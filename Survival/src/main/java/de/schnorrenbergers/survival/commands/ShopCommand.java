@@ -14,7 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * {@code /shop} opens the marketplace, {@code /shop create <name>} puts a shopkeeper down.
+ * {@code /shop} opens the marketplace, {@code /shop create <name>} puts a shopkeeper down. {@code /shopkeeper
+ * <name>} is the older way of saying the same, and does the same.
  */
 public class ShopCommand implements CommandExecutor, TabCompleter {
 
@@ -25,6 +26,10 @@ public class ShopCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("Diesen Befehl kann nur ein Spieler benutzen.");
             return true;
         }
+        if (command.getName().equalsIgnoreCase("shopkeeper")) {
+            create(player, args, 0);
+            return true;
+        }
         if (args.length == 0) {
             MarketplaceUi.open(player);
             return true;
@@ -33,20 +38,30 @@ public class ShopCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("Benutzung: /shop  oder  /shop create <name>");
             return true;
         }
-        if (args.length < 2) {
-            player.sendMessage("Benutzung: /shop create <name>");
-            return true;
-        }
-        String name = String.join(" ", List.of(args).subList(1, args.length));
-        Shopkeeper shopkeeper = ShopkeeperManager.createShopkeeper(player, name);
-        if (shopkeeper == null) return true;
-        player.sendMessage("Shop \"" + name + "\" wurde erstellt.");
+        create(player, args, 1);
         return true;
+    }
+
+    /**
+     * @param player who is opening a shop
+     * @param args   what was typed
+     * @param from   where the name starts
+     */
+    private static void create(Player player, String[] args, int from) {
+        if (args.length <= from) {
+            player.sendMessage("Benutzung: /shop create <name>");
+            return;
+        }
+        String name = String.join(" ", List.of(args).subList(from, args.length));
+        Shopkeeper shopkeeper = ShopkeeperManager.createShopkeeper(player, name);
+        if (shopkeeper == null) return;
+        player.sendMessage("Shop \"" + name + "\" wurde erstellt. Schleich-Rechtsklick auf den Händler öffnet die Einstellungen.");
     }
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                 @NotNull String label, @NotNull String @NotNull [] args) {
+        if (command.getName().equalsIgnoreCase("shopkeeper")) return List.of();
         return args.length == 1 ? List.of("create") : List.of();
     }
 }

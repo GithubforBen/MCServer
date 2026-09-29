@@ -21,6 +21,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -42,6 +44,7 @@ public final class TeamService {
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
 
     private static final Map<String, TeamData> teams = new ConcurrentHashMap<>();
+    private static final List<BiConsumer<String, String>> renameListeners = new CopyOnWriteArrayList<>();
     private static volatile boolean loaded = false;
     private static boolean initialized = false;
 
@@ -74,6 +77,27 @@ public final class TeamService {
             return;
         }
         teams.put(key, event.getTeam());
+        String previous = event.getPreviousName();
+        if (previous != null && !previous.equalsIgnoreCase(event.getTeamName())) {
+            // on the main thread, like everything else that touches the world
+            PaperContext.sync(() -> {
+                for (BiConsumer<String, String> listener : renameListeners) {
+                    listener.accept(previous, event.getTeamName());
+                }
+            });
+        }
+    }
+
+    /**
+     * Gets told whenever a team is renamed, wherever that happened.
+     * <p>
+     * For whatever a server keeps under a team's name. The launcher moves what it keeps itself - the team,
+     * the backpack - but a shop standing on this server is only known here.
+     *
+     * @param listener gets the old and the new name, on the main thread
+     */
+    public static void onRename(BiConsumer<String, String> listener) {
+        renameListeners.add(listener);
     }
 
     /**

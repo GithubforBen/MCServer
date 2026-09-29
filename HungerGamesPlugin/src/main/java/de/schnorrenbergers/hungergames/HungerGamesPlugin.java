@@ -36,6 +36,7 @@ public final class HungerGamesPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new GameListener(this, game), this);
         PluginCommands.register(this, "hg", new HgCommand(game));
         game.start();
+        de.hems.paper.tablist.TabList.init(this, new HungerGamesTab(game));
         // on 26.3 allow-nether=false no longer keeps the nether from loading; nobody can get there (the
         // portals are refused), but it holds memory the arena needs. So it is unloaded once the server is up
         getServer().getScheduler().runTask(this, this::unloadOtherDimensions);

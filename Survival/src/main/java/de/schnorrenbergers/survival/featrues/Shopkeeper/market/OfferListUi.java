@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival.featrues.Shopkeeper.market;
 
 import de.hems.paper.customInventory.CustomInventory;
+import de.hems.paper.customInventory.types.SimpleItemAction;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -41,14 +42,14 @@ public class OfferListUi {
                 NamedTextColor.WHITE, List.of(
                         "Anbieter: " + listing.sellerCount(),
                         "Bisher verkauft: " + listing.totalSold() + "x")),
-                MarketAction.handles(event -> {
+                new SimpleItemAction(event -> {
                 }));
 
         List<MarketOffer> offers = listing.getOffers();
         double best = offers.isEmpty() ? 0 : offers.getFirst().unitPrice();
         for (int i = 0; i < PAGE_SIZE && i < offers.size(); i++) {
             MarketOffer offer = offers.get(i);
-            inventory.setItem(CONTENT_START + i, icon(offer, best), MarketAction.handles(event -> {
+            inventory.setItem(CONTENT_START + i, icon(offer, best), new SimpleItemAction(event -> {
                 if (offer.stock() <= 0) {
                     player.sendMessage("Dieser Anbieter ist gerade ausverkauft.");
                     return;
@@ -59,7 +60,7 @@ public class OfferListUi {
         }
 
         inventory.setItem(49, MarketplaceUi.label(Material.ARROW, "Zurück zum Marktplatz",
-                NamedTextColor.YELLOW, List.of()), MarketAction.opens(parent::build));
+                NamedTextColor.YELLOW, List.of()), SimpleItemAction.opens(parent::build));
         return inventory;
     }
 

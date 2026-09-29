@@ -5,11 +5,11 @@ Ein Minecraft Netzwerk aus einem Velocity Proxy und beliebig vielen Paper Server
 
 ## Versionen
 
-Alles läuft auf **Minecraft 26.3** (Stand 2026-09-24, jeweils die neueste Version):
+Alles läuft auf **Minecraft 26.3** (Stand 2026-09-28, jeweils die neueste Version):
 
 | Teil | Version | Status |
 |------|---------|--------|
-| Paper | 26.3 (build 40) | **ALPHA** — für 26.3 gibt es noch keinen stabilen Build |
+| Paper | 26.3 (build 134) | **BETA** — der erste Beta-Build für 26.3, einen stabilen gibt es noch nicht |
 | Velocity | 4.2.0 (build 30) | stabil, neue Hauptversion (Config 2.9, API 4) |
 | WorldEdit | 7.4.6-beta-02 | **Beta** — das einzige WorldEdit für 26.3 |
 | WorldGuard | 7.0.19 | Release, für 26.3 freigegeben |
@@ -631,6 +631,31 @@ dem Klick zu verraten.
 
 ### Maps
 
+Mit der `BEDWARS`-Vorlage kommen vier Hypixel-Maps:
+
+| Map | Teams | Modi | Generatoren in der Mitte |
+|-----|-------|------|--------------------------|
+| Speedway | 8 | Solo, Doppel, 3er, 4er | 4 Diamant, 4 Smaragd |
+| Lighthouse | 8 | Solo, Doppel, 3er, 4er | 4 Diamant, 4 Smaragd |
+| Orbit | 8 | Solo, Doppel, 3er, 4er | 4 Diamant, 4 Smaragd |
+| Aquarium | 4 | 3er, 4er | 4 Diamant, 2 Smaragd |
+
+Lighthouse, Orbit und Aquarium stammen aus der Sammlung
+[Odsodium/Hypixel-Bedwars-Maps](https://github.com/Odsodium/Hypixel-Bedwars-Maps) (Mitschnitte vom
+Hypixel-Server). Die Punkte stehen nicht von Hand in den `.yml`, sondern sind aus der Welt gelesen:
+Bett und Teamfarbe (Wolle um das Bett), Spawn hinter Kiste und Endertruhe, Team-Generator auf den sechs
+Steinziegelstufen bzw. im Gitterkäfig am Ende der Basis, Händler in den Seelaternen-Nischen unter einer
+Barriere (Orbit: links und rechts vom Spawn), und jeder Diamant-/Smaragd-Generator ist der einzelne
+Edelsteinblock unter einem Ring mit Loch. Die Warteplattform ist Hypixels eigene über der Mitte.
+
+Geprüft auf Paper 26.3 mit dem Bedwars-Plugin selbst: jede Map lädt, besteht den Map-Validator für
+jeden ihrer Modi, an jeder Bett-Stelle liegt ein Bett, jeder Spawn und Händler hat Boden unter und
+zwei freie Blöcke über sich, jeder Generator ist frei und hat Boden. **Nicht** geprüft ist, wie sich
+die Maps spielen - ein Händler, der ungünstig steht, lässt sich mit `/bw setup` versetzen.
+
+Bekannte Eigenheit: bei Aquarium war das Loch über einem Diamant-Generator im Mitschnitt mit einem
+Diamantblock zugesetzt; der Generator steht dort einen Block höher.
+
 Zur Auswahl stehen die Maps, die mit der `BEDWARS`-Vorlage ausgeliefert werden, plus alles, was in
 `./bedwars-maps` neben dem Launcher liegt. Ein Weltordner dort (mit `level.dat`) landet auf jedem
 neu erstellten Rundenserver und taucht im Menü auf — ohne Release, ohne Code. Liegt die zugehörige
@@ -670,6 +695,49 @@ laufende Server behält seinen Speicher: der Heap einer JVM steht fest, sobald s
 Gezählt wird auch, was nur reserviert ist: ein bewilligter Start hält seinen Speicher, bis der
 Server dazu wirklich läuft.
 
+## Tabliste
+
+Jeder Server hat dieselbe Tabliste (`de.hems.paper.tablist.TabList`) mit dem Inhalt seines Spielmodus:
+
+- **Kopf:** Netzwerkname, Spielmodus in seiner Farbe, wie viele im ganzen Netzwerk online sind (alle
+  10 Sekunden vom Proxy geholt) und wie viele davon hier.
+- **Fuß:** was der Modus zu sagen hat, darunter das laufende oder nächste Event, die wichtigsten Befehle
+  und - nur mit `network.tablist.tps` (Standard: Ops) - Servername, TPS und Tickzeit.
+
+| Modus | Eigene Zeilen | Namen in der Liste |
+|-------|---------------|--------------------|
+| Lobby | Bits | unverändert |
+| Survival | Bits, Team mit Tag, Mitgliedern und Chunks | unverändert (Team-Tag kommt vom Scoreboard) |
+| Bedwars | Map; vor dem Start Wartende; danach eigenes Team und Bett, Teams im Spiel, Kills/Finals/Betten | in Teamfarbe, Zuschauer grau |
+| Hunger Games | Phase, wie viele noch leben | Ausgeschiedene grau |
+| Casino | Bits | unverändert |
+| Speedrun | - | unverändert |
+
+Ein neuer Modus ist eine Klasse, die `TabContent` implementiert (oder ein `SimpleTab`), und eine Zeile
+`TabList.init(this, …)` im `onEnable`. Der Netzwerkname steht in `TabList.NETWORK_NAME`.
+
+## Shops (Survival)
+
+Ein Team stellt einen Händler (Villager) auf eigenen Boden, eine Kiste daneben ist sein Lager.
+`/shop create <name>` (oder `/shopkeeper <name>`) auf der Kiste stehend legt ihn an und kostet den
+Spieler 2000 Bits (`create-cost` in `configs/shop.yml`, 0 = kostenlos). Abgebucht wird erst, wenn Kiste,
+Team und Chunk passen. Rechtsklick auf den Händler öffnet den Laden,
+Schleich-Rechtsklick für das Team die Einstellungen: Kiste wechseln, Händler versetzen, Angebote, Preise
+und Mengen. `/shop` öffnet den Marktplatz über alle Shops.
+
+| Klasse | Aufgabe |
+|--------|---------|
+| `Shopkeeper` | Ein Shop: Villager, Lager, Verkauf - sonst nichts |
+| `ShopkeeperManager` | Alle Shops: finden (nach Id, nach Kiste), anlegen, Autosave, folgt Team-Umbenennungen |
+| `ShopkeeperStore` | Liest und schreibt `configs/shop-config.yml` (Format unverändert) |
+| `ShopSettings` | `configs/shop.yml`: was ein Shop kostet |
+| `ShopOwnership` | Wem ein Shop gehört und wo er stehen darf - über den `TeamService`, nicht über das Scoreboard |
+| `ShopUi` · `ShopEditorUi` | Laden für Kunden, Einstellungen für das Team |
+| `ShopkeeperListener` · `ShopChestListener` · `ShopkeeperChunkListener` | Klicks, Schutz der Lagerkiste, Villager beim Laden des Chunks |
+
+Wird ein Team umbenannt, meldet der Launcher den alten Namen mit (`TeamUpdatedEvent.getPreviousName()`),
+und die Shops ziehen mit. Vorher hat eine Umbenennung jeden Shop des Teams verwaist.
+
 ## Geld
 
 Die Bits gehören seit dieser Runde dem Launcher, nicht mehr dem Survival-Server. Vorher lagen sie in
@@ -687,6 +755,17 @@ Kopie, also sofort - eine Schätzung ist das in genau einem Fall, nämlich wenn 
 zwei Servern in derselben Sekunde leergeräumt wird. Dann lehnt der Launcher die zweite Änderung ab
 und schickt den richtigen Stand hinterher. Für alles, wo an der Antwort etwas Wertvolles hängt,
 gibt es `MoneyService.changeBlocking` - der Cosmetic-Kauf geht diesen Weg.
+
+**Teamkassen gehen nicht verloren.** Ein Teamkonto hängt am Teamnamen. Früher blieb das Geld bei
+einer Umbenennung unter dem alten Namen liegen, und bei einer Auflösung lag es herrenlos herum - ein
+neues Team mit demselben Namen hat es dann geerbt. Jetzt zieht der Launcher das Konto bei einer
+Umbenennung mit auf den neuen Namen (wie den Rucksack), und bei einer Auflösung bekommt der Anführer
+den ganzen Kontostand; das Teamkonto wird danach gelöscht. Beides meldet er ins Netzwerk, die Kopien
+auf den Servern stimmen sofort. Geprüft durch `MoneyMoveCheck`.
+
+Geld, das vor dieser Änderung schon unter einem alten Teamnamen liegen geblieben ist, wird nicht
+automatisch zugeordnet - welcher Name zu welchem Team gehörte, weiß der Launcher nicht mehr. Es steht
+in `money.yml` unter `balances.<alter Name>` und lässt sich dort von Hand umtragen.
 
 ## Cosmetics
 
@@ -1204,6 +1283,34 @@ sie auch seinen Minecraft-Namen.
 
 Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
 steht in der Klasse, aus einem leeren Verzeichnis starten).
+
+## Lobby-NPCs
+
+In der Lobby stehen NPCs, die man anklickt (rechts oder links), um woanders hinzukommen:
+
+- **Warp-NPC:** schickt auf einen Server - genau wie `/warp <server>`, wartet also auf einen Server, der
+  gerade hochfährt. Über dem Kopf steht der Name, ob der Server läuft und wie viele darauf sind
+  (alle 10 Sekunden aus dem Netzwerk geholt).
+- **Event-NPC:** öffnet den Eventkalender (`/events`). Über dem Kopf steht live, was gerade läuft oder
+  als Nächstes kommt, mit Countdown.
+
+Die NPCs sind `Mannequin`s - die spielerförmige Entity, die Minecraft seit 1.21.9 selbst hat. Sie tragen
+echte Skins, brauchen kein zusätzliches Plugin und keine Pakete, und schauen den nächsten Spieler in
+acht Blöcken Umkreis an. Wie der Lotto-Stand werden sie nie mit der Welt gespeichert, sondern bei jedem
+Start und jedem Nachladen des Chunks neu aufgestellt - es bleibt also nie ein doppelter stehen.
+
+| Befehl | Was er macht |
+|--------|--------------|
+| `/npc` · `/npc list` | Alle NPCs, anklicken springt hin |
+| `/npc warp <server> [name]` | Warp-NPC an die eigene Position, Blickrichtung wird übernommen |
+| `/npc events [name]` | Event-NPC an die eigene Position |
+| `/npc name <id> <name>` | Umbenennen, `&`-Farbcodes gehen (`&bSurvival`) |
+| `/npc skin <id> <spieler\|aus>` | Skin eines Minecraft-Accounts tragen, oder den Standard |
+| `/npc ziel <id> <server>` | Ziel eines Warp-NPCs ändern |
+| `/npc hier <id>` · `/npc tp <id>` · `/npc weg <id>` | Versetzen, hinspringen, entfernen |
+
+Alles nur mit `network.npc.admin` (Standard: Ops). Gespeichert wird in `plugins/LobbyPlugin/npcs.yml`,
+ohne Weltnamen - eine neue Lobby-Map behält ihre NPCs.
 
 ## Lotto
 
