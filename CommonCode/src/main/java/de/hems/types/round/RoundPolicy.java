@@ -102,7 +102,7 @@ public class RoundPolicy implements Serializable {
     }
 
     public void setMemoryMB(int memoryMB) {
-        this.memoryMB = Math.max(0, Math.min(16384, memoryMB));
+        this.memoryMB = Math.max(0, Math.min(65536, memoryMB));
     }
 
     public RoundPolicy copy() {

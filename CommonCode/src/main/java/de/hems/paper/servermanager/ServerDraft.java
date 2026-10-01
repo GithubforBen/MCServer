@@ -20,8 +20,11 @@ public class ServerDraft {
 
     /** Smallest amount of memory a server can be created with. */
     public static final int MIN_MEMORY_MB = 512;
-    /** Largest amount of memory the UI hands out. */
-    public static final int MAX_MEMORY_MB = 16384;
+    /**
+     * Largest amount of memory the UI hands out - the same 64 GB the launcher accepts. Whether the machine
+     * has that much free is the launcher's question when the server starts, not a number fixed in here.
+     */
+    public static final int MAX_MEMORY_MB = 65536;
     /** How much one click adds or removes. */
     public static final int MEMORY_STEP_MB = 512;
 
