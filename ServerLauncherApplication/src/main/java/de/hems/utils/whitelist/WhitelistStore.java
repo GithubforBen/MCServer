@@ -28,12 +28,93 @@ public class WhitelistStore {
 
     /** What a fresh network shows until an admin writes its own rules. */
     public static final String DEFAULT_RULES = """
-            1. Sei freundlich zu allen - keine Beleidigungen, kein Spam, keine Hetze.
-            2. Kein Griefing und kein Stehlen: was andere gebaut haben, bleibt, wie es ist.
-            3. Keine Hacks, Cheat-Clients, X-Ray oder Exploits.
-            4. Die Anweisungen der Admins gelten.
+            MC-Server Regelwerk
 
-            Wer sich nicht daran hält, fliegt von der Whitelist.""";
+            §0
+
+            Der Server dient der Unterhaltung und dem Spaß aller Teilnehmer, welcher nicht durch andere Spieler \
+            beeinträchtigt werden sollte. Um dies zu gewähren, besteht dieses Regelwerk. Die Regeln gelten für \
+            jeden, treten aber erst in Kraft, wenn sich ein unfairer Vorteil erschafft wurde, oder eine Person \
+            zu Schaden gekommen ist, die sich beschwert. Wenn sich niemand bei den Admins (Rolle Österreicher auf \
+            Discord) beschwert, besteht auch kein Grund zur Bestrafung. Allerdings können auch die Admins selbst \
+            eine Beschwerde aufnehmen, das kann zum Beispiel der Fall bei X-Rayen sein.
+
+            §1 - Kein Base-/Chunk-Griefing*
+
+            Griefing an Basen / in geclaimten Chunks (was zu großen/bleibenden/nicht reparierbarem Schaden führt) \
+            ist verboten.
+
+            Bestrafung: 12 Stunden - permanenter Bann
+
+            §2 - Cheaten
+
+            §2.1 - Hacken
+
+            Cheaten jeglicher Art (Flyhacks, Rangehacks, ...) ist verboten, wenn es einen unfairen Vorteil \
+            verschafft.
+
+            Bestrafung: 12 Stunden - permanenter Bann
+
+            §2.2 - Duping
+
+            Duping jeglicher Art (außer TNT-, Sand-, Carpet- und Gravel-Duper, etc.) ist verboten.
+
+            Bestrafung: Wipe - Base Wipe / 12 Stunden - 24 Stunden Bann
+
+            §2.3 - X-Ray
+
+            X-Ray und Chunk Reloading ist für jeglichen Zweck verboten. Außerdem muss die Freecam-Mod (falls \
+            benutzt) auf "Collision on" gespielt werden.
+
+            Bestrafung: Wipe + 12 Stunden - 48 Stunden Bann
+
+            §3 - PVP
+
+            Die PVP-Regeln können auf Absprache mit allen kämpfenden Parteien ausgesetzt werden. Auf \
+            wiederholende, unabgesprochene Regelbrüche werden Bestrafungen durchgeführt.
+
+            §3.1 - Spawncamping*
+
+            Spawncamping ist bis zu 5-mal erlaubt. Danach ist es verboten.
+
+            Bestrafung: variiert je nach Situation (Einschätzung der Admins)
+
+            §3.2 - Sukzessives Töten*
+
+            Sukzessives Töten anderer Spieler im Allgemeinen sollte vermieden, und nicht übertrieben werden.
+
+            Bestrafung: variiert je nach Situation (Einschätzung der Admins)
+
+            §4 - Stehlen
+
+            Stehlen von Items/Stuff aus Basen / Farmen ist verboten.
+
+            Bestrafung: variiert je nach Situation (Einschätzung der Admins)
+
+            §5 - Verbindungsoptionen
+
+            Die Server-Internetprotokoll-Adresse ist << mc.samiuen.com >>.
+
+            §6 - Definitionen
+
+            §6.0 - Bestrafungen
+
+            Alle Bestrafungen sind nur grobe Richtlinien und können kleiner, aber auch größer ausfallen.
+
+            §6.1 - Griefen*
+
+            Mutwilliges Zerstören von Blöcken, Entitys usw.
+
+            §6.2 - Spawncamping*
+
+            Das Töten eines Spielers direkt, nachdem dieser gestorben ist, ohne dass er die Möglichkeit hatte \
+            zu kämpfen oder sich aus der Situation zu befreien.
+
+            §6.3 - Sukzessives Töten*
+
+            Generell andere Spieler (nicht unbedingt nur einen) wahllos töten, so dass man das Spielerlebnis \
+            des anderen zerstört.""";
+
 
     private final File file;
     private final YamlConfiguration config;
