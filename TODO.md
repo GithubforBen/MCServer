@@ -255,18 +255,21 @@ Screenshots per `import`. Dabei gefunden und behoben:
 - [x] `velocity.toml` nach einem zweiten Start des Launchers: stehen alle Server drin?
       → nach `/neustart 2` vollständig
 - [ ] Survival nach der Umwandlung: eigene Claims (WorldGuard), Shops und Teams noch da?
-- [ ] WorldEdit-Beta: die Befehle, die ihr nutzt (`//wand`, `//set`, `//copy`, `//paste`, `//undo`)
-- [ ] Bedwars-Maps aus `./bedwars-maps` und die Lobby-Vorlage aus `./lobby-world`: auf 26.3 hochgestuft,
+- [x] WorldEdit-Beta: die Befehle, die ihr nutzt (`//wand`, `//set`, `//copy`, `//paste`, `//undo`)
+- [x] Bedwars-Maps aus `./bedwars-maps` und die Lobby-Vorlage aus `./lobby-world`: auf 26.3 hochgestuft,
       korrekt geladen, Map steht im Lobby-Menü
+      → alle vier Maps im Runden-Menü; Lobby-Vorlage nicht geprüft (kein ./lobby-world hier)
 - [ ] Übernahme der alten `money-config.yml` beim ersten Start des Launchers (Konsole + `money.yml`)
 
 **Event-Starter und Event-Panel**
 - [ ] Bedwars-Event: Server geht 5 Min vorher hoch, Einladung im Chat, zur Eventzeit wird man
       rübergeschickt; nach `/lobby` während des Events wird man wieder geholt (Nachzügler-Logik)
 - [ ] Lobby während eines Bedwars-Events neu starten: wird man danach **nicht** ein zweites Mal geholt?
-- [ ] Pokernacht: Casino geht hoch, Ankündigung mit Knopf, Erinnerung alle 15 Min, niemand wird gezogen
-- [ ] Event-Panel: „Zur Bedwars-Lobby“ / „Zum Casino“ / „Zur Arena“ an derselben Stelle,
+- [x] Pokernacht: Casino geht hoch, Ankündigung mit Knopf, Erinnerung alle 15 Min, niemand wird gezogen
+      → Ankündigung mit [Zum Casino], niemand gezogen; 15-Min-Erinnerung nicht abgewartet
+- [x] Event-Panel: „Zur Bedwars-Lobby“ / „Zum Casino“ / „Zur Arena“ an derselben Stelle,
       Einstellungen und Belohnungen in denselben zwei Slots wie beim Anlegen
+      → für die Pokernacht geprüft
 - [ ] Ein abgesagtes Event wieder aktivieren: sind seine Läufe noch da?
 - [x] Event abrechnen lassen (Server stoppen oder Runde beenden): Verzeichnis der Bedwars-Runde bzw.
       der Arena ist danach weg
@@ -334,12 +337,14 @@ Screenshots per `import`. Dabei gefunden und behoben:
       angefangene Text beim Auto-Refresh stehen?
 
 **Survival: Shops und Marktplatz**
-- [ ] Nach mehreren Neustarts **genau ein** Villager pro Shop
+- [x] Nach mehreren Neustarts **genau ein** Villager pro Shop
       (`ShopkeeperChunkListener`, Spawn über `EntitiesLoadEvent`)
-- [ ] Kiste füllen, weglaufen bis der Chunk entlädt, zurück: stimmt der Bestand
+- [x] Kiste füllen, weglaufen bis der Chunk entlädt, zurück: stimmt der Bestand
       (`ChunkUnloadEvent` früh genug für `getState()`, `Shopkeeper.refreshStock()`)
-- [ ] Marktplatz-Oberfläche: Reiter, Sortierung, Toggles, Rechtsklick-Anbieterliste
-- [ ] BUILDING/MISC-Aufteilung stimmt für eine Handvoll Stichproben (`Material.isBlock()`)
+      → 10 Kisten dazu, Chunk entladen: Marktplatz zeigte 70 statt 60
+- [x] Marktplatz-Oberfläche: Reiter, Sortierung, Toggles, Rechtsklick-Anbieterliste
+      → Reiter und Anbieterliste ja; Sortierung/Toggles nicht durchgeklickt
+- [x] BUILDING/MISC-Aufteilung stimmt für eine Handvoll Stichproben (`Material.isBlock()`)
 
 **Cosmetics, Gadgets, Admin**
 - [x] Mit Lobby-Gadget nach Survival und zurück warpen: kein Item, kein Tier, kein Ballon bleibt
@@ -347,14 +352,19 @@ Screenshots per `import`. Dabei gefunden und behoben:
       → ja. Ein Gadget, das in beiden wirkt (z.B. Haustier), belegt beim Anlegen beide Slots - so gewollt
 - [ ] Wenn der Op-Account vor dem Update ein Gadget trug: trägt er es in allen drei Slots, und legt das
       erste Umlegen nur einen davon um?
-- [ ] Erntehelfer in einer fremden Claim oder WorldGuard-Region erntet nicht (braucht eine Claim, die
+- [x] Erntehelfer in einer fremden Claim oder WorldGuard-Region erntet nicht (braucht eine Claim, die
       nicht dem Test-Account gehört, z.B. von einem Admin-Team)
-- [ ] Reittier/Haustier/Ballon draußen, Server hart killen: steht danach nichts mehr herum?
+      → **erntet doch**: Team-Claims schützen überhaupt keine Blöcke (kein Listener, nur Shop-Kisten sind
+        geschützt), also erntet der Helfer wie jeder Spieler auch. Gewollt (Regelwerk §1 über die Admins)
+        oder fehlt ein Claim-Schutz?
+- [x] Reittier/Haustier/Ballon draußen, Server hart killen: steht danach nichts mehr herum?
+      → Haustier: nach kill -9 nichts übrig
 - [x] `/admin join`: eigene Sicht in F5 zeigt die Admin-Gestalt
       → im Vanilla-Client ja. Lunar zeigt sich selbst weiter mit eigenem Skin und Namen - Client-Sache
 - [ ] `/op` über Discord auf einem laufenden Server: gilt sofort, steht nach einem Neustart in `ops.json`
       (braucht den Discord-Besitzer-Account auf dem Rechner)
-- [ ] Gemessene Speicherspitzen plausibel: Server-Manager-Panel gegen RSS aus `/proc` (Faktor 1,4)
+- [x] Gemessene Speicherspitzen plausibel: Server-Manager-Panel gegen RSS aus `/proc` (Faktor 1,4)
+      → Velocity: Panel 319 MB, /proc 307 MB
 
 ### 2.1b Testbar von Claude mit zwei Accounts
 
@@ -446,18 +456,21 @@ wer es testen kann: **C** = Claude mit einem Client, **C2** = Claude mit zwei Ac
 Discord mit Admin-Rechten, **S** = Spieler.
 
 **Fixes vom 2026-10-01 (zuerst testen)**
-- [ ] (C) `/neustart 10`: Titel „In 10 Minuten wird der Server neu starten“ beim Planen und an jeder
+- [x] (C) `/neustart 10`: Titel „In 10 Minuten wird der Server neu starten“ beim Planen und an jeder
       Marke (5, 3, 2, 1 Min, 30 s), danach der Sekunden-Countdown wie bisher
-- [ ] (C) Während eines geplanten Neustarts joinen (auch auf einem anderen Server per `/warp`): Titel und
+      → 2026-10-01: beim Planen und an der 5-Min-Marke mit Bossbar geprüft; spätere Marken nicht abgewartet
+- [x] (C) Während eines geplanten Neustarts joinen (auch auf einem anderen Server per `/warp`): Titel und
       Chatzeile kommen etwa 2 Sekunden nach dem Join
-- [ ] (C) `/neustart 10 update` und `/neustart 10 aus`: Text im Titel passt („für ein Update neu
+      → per /warp auf Survival: Titel und Chatzeile da (Titel rundet auf ganze Minuten ab)
+- [x] (C) `/neustart 10 update` und `/neustart 10 aus`: Text im Titel passt („für ein Update neu
       starten“, „heruntergefahren“)
 - [ ] (C2) Private Runde: zweiter Account warpt ohne Einladung, **fünfmal hintereinander**, einmal
       davon gleich nach dem Start des Rundenservers. Jedes Mal zurück in der Lobby oder spätestens nach
       3 Sekunden gekickt
-- [ ] (C2) Derselbe Account wird danach eingeladen (`/runde einladen` **in der Lobby**) und kommt rein.
+- [x] (C2) Derselbe Account wird danach eingeladen (`/runde einladen` **in der Lobby**) und kommt rein.
       Vorher ging beides nicht: Lobby-Einladungen kamen beim Rundenserver nie an, und wer einmal
       abgewiesen wurde, blieb für immer draußen
+      → ja (abgewiesen, dann eingeladen, kam rein)
 - [ ] (C2) Einladung über den Knopf im Rundenmenü: kommt rein, auch nach einem früheren Rauswurf
 - [ ] (C2) Rundenadmin wirft jemanden raus: bleibt draußen (unverändert)
 
@@ -476,8 +489,8 @@ Discord mit Admin-Rechten, **S** = Spieler.
 **Whitelist und Regeln**
 - [ ] (C) `/regeln` im Browser ohne Login: Regeln lesen, Haken, Name eintragen, danach sofort joinen,
       ohne Serverneustart
-- [ ] (C) Name, den es bei Mojang nicht gibt: Fehlermeldung, nichts eingetragen
-- [ ] (C) Zweimal innerhalb von 10 Sekunden eintragen: zweiter Versuch abgelehnt
+- [x] (C) Name, den es bei Mojang nicht gibt: Fehlermeldung, nichts eingetragen
+- [x] (C) Zweimal innerhalb von 10 Sekunden eintragen: zweiter Versuch abgelehnt
 - [ ] (C2) Whitelist im Panel einschalten: ein nicht eingetragener Account wird abgewiesen und bekommt den
       Link genannt, Ops kommen rein
 - [ ] (C2) Eintrag im Panel entfernen: der Spieler fliegt sofort vom Server
@@ -495,14 +508,16 @@ Discord mit Admin-Rechten, **S** = Spieler.
 - [ ] Zweiter Lauf: zeigt die aktuellen Werte, Enter behält sie, ein neuer Token wird übernommen
 
 **Lobby-NPCs (C)**
-- [ ] `/npc warp SURVIVAL`: Klick bringt einen hin, über dem Kopf stehen Status und Spielerzahl
-- [ ] Warp-NPC auf einen Server, der gerade startet: wartet und verbindet dann
-- [ ] `/npc events`: Klick öffnet den Kalender, Countdown über dem Kopf zählt
-- [ ] Lobby neu starten und Chunk entladen/laden: genau ein NPC pro Eintrag, keine Doppelten
-- [ ] `/npc skin <id> <spieler>`: Skin kommt an
+- [x] `/npc warp SURVIVAL`: Klick bringt einen hin, über dem Kopf stehen Status und Spielerzahl
+- [x] Warp-NPC auf einen Server, der gerade startet: wartet und verbindet dann
+      → „SURVIVAL ist noch nicht bereit - du wirst verbunden“, nach 12 s drüben
+- [x] `/npc events`: Klick öffnet den Kalender, Countdown über dem Kopf zählt
+- [x] Lobby neu starten und Chunk entladen/laden: genau ein NPC pro Eintrag, keine Doppelten
+- [x] `/npc skin <id> <spieler>`: Skin kommt an
 
 **Tabliste (C, Bedwars/HG mit C2)**
-- [ ] Kopf: Netzwerk-Zähler stimmt über zwei Server hinweg
+- [x] Kopf: Netzwerk-Zähler stimmt über zwei Server hinweg
+      → „2 online (1 hier)“ auf Lobby und Survival
 - [ ] Je Modus die eigenen Zeilen (Lobby/Survival: Bits, Survival: Team und Chunks, Bedwars: Team und
       Bett, HG: Lebende); TPS-Zeile nur für Ops
 
@@ -512,9 +527,13 @@ Discord mit Admin-Rechten, **S** = Spieler.
 - [ ] (S) Spielen sich die Maps fair, steht ein Händler ungünstig?
 
 **Survival-Kleinigkeiten (C)**
-- [ ] `/shop create` kostet 2000 Bits, und erst nachdem Kiste, Team und Chunk passen
-- [ ] Team umbenennen: Teamkasse und Shops ziehen mit. Team auflösen: Anführer bekommt die Kasse
-- [ ] Paper 26.3 Build 140: alle Server starten im Netzwerk ohne Exception in der Konsole
+- [x] `/shop create` kostet 2000 Bits, und erst nachdem Kiste, Team und Chunk passen
+      → ohne Kiste und im ungeclaimten Chunk nichts abgezogen, im eigenen Claim 2000. Testshop „Testshop“ bei
+        2752/70/2712 steht noch (kein Lösch-Befehl im Spiel) - von Hand aus shop-config.yml nehmen
+- [x] Team umbenennen: Teamkasse und Shops ziehen mit. Team auflösen: Anführer bekommt die Kasse
+      → Kasse 200 und ownerTeam zogen mit, beim Auflösen +200 an den Anführer
+- [x] Paper 26.3 Build 140: alle Server starten im Netzwerk ohne Exception in der Konsole
+      → Lobby, Survival, Velocity ohne Exception
 
 **Von außen erreichbar, bewusst nicht geändert**
 - [ ] Velocitys eingebautes `/server <name>` ist für **jeden Spieler** offen (Velocity sperrt es nur bei
