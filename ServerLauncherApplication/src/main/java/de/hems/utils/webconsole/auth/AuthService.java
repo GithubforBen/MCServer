@@ -45,6 +45,8 @@ public class AuthService {
 
     public AuthService(Configuration configuration) {
         this.configuration = configuration;
+        // ./admin-passwort.sh may change the accounts in the file while the launcher runs
+        configuration.adopt(ACCOUNTS_PATH);
         YamlConfiguration config = configuration.getConfig();
         this.graceMillis = Math.max(0L, config.getLong("web.grace-period-seconds", 3L)) * 1000L;
         this.sessionTimeoutMillis = Math.max(1L, config.getLong("web.session-timeout-minutes", 60L)) * 60_000L;
@@ -296,6 +298,7 @@ public class AuthService {
      * @return the account, or {@code null} if there is none with that name
      */
     public AdminAccount findAccount(String username) {
+        configuration.adopt(ACCOUNTS_PATH);
         ConfigurationSection section = config().getConfigurationSection(ACCOUNTS_PATH);
         if (section == null) return null;
         String normalized = normalize(username);
