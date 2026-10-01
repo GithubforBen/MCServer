@@ -184,10 +184,12 @@ public class Game {
     }
 
     /**
-     * @return how many players are on this server right now
+     * @return how many of the round's players are on this server right now - not everybody on it: somebody
+     * who was turned away from a private round is still connected for the moment it takes to send them
+     * back, and counting them started the countdown for a round nobody else had joined
      */
     public int getOnlineCount() {
-        return Bukkit.getOnlinePlayers().size();
+        return getOnlinePlayers().size();
     }
 
     // --------------------------------------------------------------- teams

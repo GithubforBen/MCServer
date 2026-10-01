@@ -13,9 +13,11 @@ import java.util.Set;
 /**
  * Who the admin becomes: a name and a skin, both out of the config.
  * <p>
- * The skin is borrowed from a real Minecraft account, named in {@code admin-join.yml}. It is fetched once
- * when the server starts and then kept - Mojang is asked once a restart rather than once a disguise,
- * because a command that waits on somebody else's web service is a command that sometimes does nothing.
+ * The skin is a signed texture in {@code admin-join.yml} ({@code skin-value}, {@code skin-signature}), which
+ * ships with a default. With {@code skin-value} left empty it is borrowed from a real Minecraft account
+ * instead ({@code skin-account}), fetched once when the server starts and then kept - Mojang is asked once a
+ * restart rather than once a disguise, because a command that waits on somebody else's web service is a
+ * command that sometimes does nothing.
  * <p>
  * Without a fetched skin the disguise does not happen at all. Half a disguise - the right name over the
  * wrong skin - is worse than none: it is exactly the tell that gives an admin away, and it would give
@@ -27,6 +29,12 @@ public final class AdminIdentity {
      * themselves are the service's, in the plugin's own folder. */
     private static final String FILE = "./configs/admin-join.yml";
     private static final String DEFAULT_NAME = "Admin";
+    /**
+     * The skin the disguise wears unless the config says otherwise - signed by Mojang (generated through
+     * MineSkin), because a client shows nobody a texture without a valid signature.
+     */
+    private static final String DEFAULT_SKIN_VALUE = "ewogICJ0aW1lc3RhbXAiIDogMTc4NTk2NTAyMTE4OCwKICAicHJvZmlsZUlkIiA6ICIyZmI1ZGJhYTY2NTA0OGEyYjZhYzU5YWE2Nzk5MDYzNSIsCiAgInByb2ZpbGVOYW1lIiA6ICJkcmFnbG9uZXIiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTNiZDRkOTk2NGQwOTBhNTRiMzI5MTA5Mzk2Y2Y5M2NiNTI3Y2ViNjNmNzUwNWIwMzM2NDI3ZDI4ZjE4NTRiIgogICAgfQogIH0KfQ==";
+    private static final String DEFAULT_SKIN_SIGNATURE = "bYDfSAaxoNWlR+bn+GhSupN9Tk/az3XK1X5FOss9qWhZJCib9QTF0EPydp00iYO4FIWk/16fpt4+DPdi8tJvMlfTbEYCRpUuAkP7SwvD9xPdYe2rvBtkV78gsPGxHodgEWRpXoNF9Vj0m06SEvEi5lDUv7QNypi2kVAGIqt1aCpAPKUV9lmRY3qu8a5mYe6QPQAMJuxlH9JHzRH37vCJ26nBkmTaCAj5RHNhIZ0pPwBZcCyyoe3njsaiSGQLVvHoOAbBL/UqAF92ZHQFZyOckksMjK417p/oxH9fhVlV5aKFzCskBtkNrn9uJXyTbJR3XEJyZpA5ZWsISi5X60qMcdbGC8wJxOslELa6/l8nS/OT8tUInsPNek8ABL5q6mVFjCIeaAy+g4BIuRnM95aylcPdjezcRFzkjlOCPYPmyHHu/LMwL91VZEoj8MPI1yWSZvnvSZ+/Tea3WkyPgjZgnEVPmQbAxOb9dUWtXpYkQK0guGu2FK8t0Gi44kV3jnf4Kpi47wTZ5Yy3pwzUC5UW2LivbLPbL1CLmu0t90dxD2XfwF/p60miwD1s3C+g0Ye49/8NTjVyjwAhXiHjOOEOO91I4o6uyuijq5hy2EKRLYzeNUli6VFscWY7bMJKguOakqLdrDeGmw/m55hg7/p3D7IBZkpSlVIwKDY4ojMEBAQ=";
 
     private static String displayName = DEFAULT_NAME;
     private static String skinAccount = DEFAULT_NAME;
@@ -45,17 +53,30 @@ public final class AdminIdentity {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         displayName = config.getString("display-name", DEFAULT_NAME);
         skinAccount = config.getString("skin-account", displayName);
-        if (!config.contains("skin-account")) {
-            // written out on the first start, so the two things somebody actually wants to change are
-            // in the file rather than in this class
+        if (!config.contains("skin-account") || !config.contains("skin-value")) {
+            // written out on the first start, so the things somebody actually wants to change are in the
+            // file rather than in this class
             config.set("display-name", displayName);
             config.set("skin-account", skinAccount);
+            config.set("skin-value", DEFAULT_SKIN_VALUE);
+            config.set("skin-signature", DEFAULT_SKIN_SIGNATURE);
+            config.setComments("skin-value", java.util.List.of(
+                    "The admin skin as a signed texture (value and signature, e.g. from mineskin.org).",
+                    "Leave skin-value empty to borrow the skin of skin-account instead."));
             try {
                 file.getParentFile().mkdirs();
                 config.save(file);
             } catch (java.io.IOException e) {
                 plugin.getLogger().warning("Could not write admin-join.yml: " + e.getMessage());
             }
+        }
+        String value = config.getString("skin-value", DEFAULT_SKIN_VALUE);
+        String signature = config.getString("skin-signature", DEFAULT_SKIN_SIGNATURE);
+        if (value != null && !value.isBlank()) {
+            skin = new LinkedHashSet<>(Set.of(new ProfileProperty("textures", value.trim(),
+                    signature == null || signature.isBlank() ? null : signature.trim())));
+            plugin.getLogger().info("Admin skin loaded from admin-join.yml.");
+            return;
         }
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> fetch(plugin));
     }

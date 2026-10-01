@@ -49,7 +49,12 @@ public final class LobbyWorld {
         File source = new File(config.getString("lobby.source", DEFAULT_SOURCE));
         boolean restore = config.getBoolean("lobby.restore-on-start", true);
 
-        if (source.isDirectory()) {
+        boolean mainWorld = !Bukkit.getWorlds().isEmpty() && Bukkit.getWorlds().getFirst().getName().equals(name);
+        if (source.isDirectory() && mainWorld) {
+            // the main world cannot be unloaded while the server runs - the launcher restores it before
+            // the start instead
+            plugin.getLogger().info("Lobby world is the main world - restored by the launcher before the start.");
+        } else if (source.isDirectory()) {
             if (restore || Bukkit.getWorld(name) == null) {
                 restore(plugin, source, name);
             }
@@ -67,6 +72,24 @@ public final class LobbyWorld {
             return;
         }
         plugin.getLogger().info("Lobby world is " + world.getName());
+        settle(world);
+    }
+
+    /**
+     * Nothing spawns in the lobby by itself, and the weather does not change. It is a built hub, not a world to play in: a zombie in the
+     * parkour or a phantom over the spawn only gets in the way. Set on every start, because the world is
+     * restored from the map each time and whatever the map says comes back with it.
+     */
+    private static void settle(World world) {
+        world.setGameRule(org.bukkit.GameRules.SPAWN_MOBS, false);
+        world.setGameRule(org.bukkit.GameRules.SPAWN_PHANTOMS, false);
+        world.setGameRule(org.bukkit.GameRules.SPAWN_PATROLS, false);
+        world.setGameRule(org.bukkit.GameRules.SPAWN_WANDERING_TRADERS, false);
+        world.setGameRule(org.bukkit.GameRules.SPAWN_WARDENS, false);
+        // and the weather stays as the map has it - rain over the hub is only grey
+        world.setGameRule(org.bukkit.GameRules.ADVANCE_WEATHER, false);
+        world.setStorm(false);
+        world.setThundering(false);
     }
 
     /**

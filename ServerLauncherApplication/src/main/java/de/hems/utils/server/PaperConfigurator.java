@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class PaperConfigurator extends ServerConfigurator {
+    /** The seed the survival world is generated from. */
+    private static final String SURVIVAL_SEED = "8750345191364376078";
+
 
     /** Where the hunger games map lies next to the launcher. */
     public static final String HUNGER_GAMES_MAP = "./hungergames-world";
@@ -68,6 +71,11 @@ public class PaperConfigurator extends ServerConfigurator {
         }
         // the worlds and the configuration that belongs to them, written once and then left to the admins
         new AssetInstaller(new File(this.directory)).install(template.getAssets());
+        // the lobby is the built spawn again on every start - here, because a running server cannot swap its
+        // main world
+        if (template == ServerTemplate.LOBBY) {
+            LobbyMap.installInto(new File(this.directory));
+        }
         // and the maps somebody dropped into ./bedwars-maps themselves, which no release knows about
         if (template == ServerTemplate.BEDWARS) {
             new CustomMaps().installInto(new File(this.directory));
@@ -89,6 +97,12 @@ public class PaperConfigurator extends ServerConfigurator {
             writeToYmlConfiguration("bukkit.yml", "settings.allow-end", false, true);
         }
 
+        // survival is generated from one fixed seed, so a fresh installation gets the same world; only read
+        // when the world is created, an existing one stays as it is
+        if (template == ServerTemplate.SURVIVAL) {
+            setProperty("server.properties", "level-seed", SURVIVAL_SEED);
+        }
+
         overwriteToFile("eula.txt", "eula=true", true);
         // written every time so that a server keeps working after it was given another port
         setProperty("server.properties", "server-ip", "localhost");
@@ -107,6 +121,12 @@ public class PaperConfigurator extends ServerConfigurator {
         }
         JsonArray jsonArray = new JsonArray();
         for (UUID op : ops) {
+            // a name the account service could not resolve right now - it is down, or it answers too many
+            // lookups with nothing. One missing operator must not keep the whole server from starting
+            if (op == null) {
+                System.out.println("An operator of " + name + " could not be looked up and is left out of ops.json.");
+                continue;
+            }
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("uuid", op.toString());
             jsonObject.addProperty("name", UUIDFetcher.findNameByUUID(op));

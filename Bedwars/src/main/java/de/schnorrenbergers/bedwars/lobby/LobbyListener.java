@@ -102,11 +102,14 @@ public class LobbyListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Game game = game();
         if (game == null || !game.isWaiting()) return;
+        // somebody who was only ever turned away was never part of the round, so nobody is told they left
+        if (game.get(event.getPlayer()) == null) return;
         game.forget(event.getPlayer().getUniqueId());
-        reportRound(game, Math.max(0, game.getOnlineCount() - 1));
+        // forgotten first, so the count no longer includes them although they are still connected
+        reportRound(game, game.getOnlineCount());
         Messages.broadcast("lobby.left",
                 "player", event.getPlayer().getName(),
-                "online", String.valueOf(Math.max(0, game.getOnlineCount() - 1)),
+                "online", String.valueOf(game.getOnlineCount()),
                 "maximum", String.valueOf(game.getMaximumPlayers()));
     }
 

@@ -250,6 +250,9 @@ public class EventSettlement {
                         + ": " + e.getMessage() + " - it stays open and is tried again.");
                 return;
             }
+            // the casino is a copy of ./poker-world with nothing of its own worth keeping - a room somebody
+            // rebuilt is saved back there with /poker karte speichern - so it goes like an arena does
+            discardEventServer(event);
         }
 
         // a cancelled event never really happened, so nobody is rewarded for it
@@ -450,9 +453,12 @@ public class EventSettlement {
         // people it belongs to, so the delete button cannot quietly empty somebody's account
         if (poker != null) poker.discard(eventId);
         if (results != null) results.discard(eventId);
-        // a round or an arena of a deleted event would otherwise keep running until it idles out, and its
-        // directory would never be removed
-        if (event != null && event.getType().reportsResults()) discardEventServer(event);
+        // a round, an arena or a casino of a deleted event would otherwise keep running until it idles out,
+        // and its directory would never be removed
+        if (event != null && (event.getType().reportsResults()
+                || event.getType() == de.hems.types.event.EventType.POKER)) {
+            discardEventServer(event);
+        }
     }
 
     /**

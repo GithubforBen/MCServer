@@ -85,6 +85,7 @@ public final class TableView {
     public void spawn(org.bukkit.World world) {
         despawn();
         this.world = world;
+        holdChunks(true);
         Location centre = spot.centre(world).add(0, CARD_LIFT, 0);
 
         for (int i = 0; i < 5; i++) {
@@ -119,6 +120,7 @@ public final class TableView {
      * Takes everything off the table. Called when the casino closes, and whenever the view is rebuilt.
      */
     public void despawn() {
+        holdChunks(false);
         Displays.removeAll(community);
         for (TextDisplay[] pair : hole.values()) {
             for (TextDisplay card : pair) {
@@ -137,6 +139,34 @@ public final class TableView {
         potLabel = null;
         if (button != null && button.isValid()) button.remove();
         button = null;
+    }
+
+    /** How far past the chairs the table's displays reach, in blocks - heads, labels and the pot above. */
+    private static final double REACH = 3.0d;
+
+    /**
+     * Keeps the chunks under this table loaded, or lets them go.
+     * <p>
+     * Every display here is non-persistent, so nothing is left over after a crash - and a non-persistent
+     * entity in a chunk that unloads is gone for good. A casino starts before anybody is in it, so its
+     * chunks unloaded right after the tables were drawn, and the cards, heads and names never came back:
+     * people sat at a bare table. The tickets keep the table's few chunks loaded while it stands.
+     *
+     * @param hold whether to hold them, rather than to let go
+     */
+    private void holdChunks(boolean hold) {
+        if (world == null) return;
+        double reach = spot.getSeatRadius() + REACH;
+        int fromX = (int) Math.floor((spot.getCentreX() - reach) / 16.0d);
+        int toX = (int) Math.floor((spot.getCentreX() + reach) / 16.0d);
+        int fromZ = (int) Math.floor((spot.getCentreZ() - reach) / 16.0d);
+        int toZ = (int) Math.floor((spot.getCentreZ() + reach) / 16.0d);
+        for (int x = fromX; x <= toX; x++) {
+            for (int z = fromZ; z <= toZ; z++) {
+                if (hold) world.addPluginChunkTicket(x, z, plugin);
+                else world.removePluginChunkTicket(x, z, plugin);
+            }
+        }
     }
 
     /* ------------------------------------------------------------------ drawing */

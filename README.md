@@ -506,8 +506,10 @@ anderes gespeichert - im Browser oder im Spiel - wird der Schreibvorgang mit 409
 `/admin join` auf Survival macht aus einem Admin den **Admin**: der Chat meldet, dass der Spieler
 gegangen ist, gleich darauf, dass „Admin" gekommen ist, und ab da heißt er überall so - über dem
 Kopf, in der Tabliste, im Chat - mit dem Skin dazu. Nochmal getippt geht es andersherum zurück. Wie
-er heißt und wessen Skin er trägt, steht in `./configs/admin-join.yml` (`display-name`,
-`skin-account`); der Skin wird beim Serverstart einmal bei Mojang geholt. Ohne geladenen Skin
+er heißt und welchen Skin er trägt, steht in `./configs/admin-join.yml`: `display-name`, und der Skin als
+signierte Textur in `skin-value`/`skin-signature` (Standard ist der mitgelieferte Admin-Skin; eine eigene
+Textur bekommt man z.B. über mineskin.org). Ist `skin-value` leer, wird der Skin von `skin-account` beim
+Serverstart einmal bei Mojang geholt. Ohne geladenen Skin
 passiert gar nichts - der richtige Name über dem falschen Gesicht wäre genau das Merkmal, an dem
 man ihn erkennt.
 
@@ -1400,7 +1402,9 @@ Nachrichten im alten weg.
 Die Texte liegen in `ServerLauncherApplication/src/main/resources/discord-info/` (`spieler.md`,
 `admins.md`). Wer sie ohne Build ändern will, legt eine Datei gleichen Namens in `./discord-info/`
 neben den Launcher, die gewinnt. `{adresse}` und `{regeln}` werden mit der Adresse des Netzwerks und
-dem Link zur Regeln-Seite gefüllt. Ist eines davon nur lokal (`localhost`), fällt die Zeile weg.
+dem Link zur Regeln-Seite gefüllt - die Adresse aus `public-address` in der `main-config.yml`
+(z.B. `mc.ben-schnorr.com`), sonst die IP, auf die der Proxy hört. Ist eines davon nur lokal
+(`localhost`), fällt die Zeile weg.
 Discord zeigt keine Tabellen. Deshalb sind die Texte Listen, und pro Abschnitt sind höchstens 4096 Zeichen
 möglich (längere werden an einem Absatz geteilt).
 

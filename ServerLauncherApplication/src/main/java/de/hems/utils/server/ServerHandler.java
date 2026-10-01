@@ -32,10 +32,17 @@ public class ServerHandler {
     private static final String CONFIG_ROOT = "servers";
 
     private final List<ServerInstance> instances = new CopyOnWriteArrayList<>();
+    /**
+     * Servers somebody stopped on purpose - an admin, a restart of the network, the idle watchdog. A server
+     * that is gone without being in here crashed, which is what the {@link AutostartWatchdog} asks.
+     */
+    private final Set<String> stoppedOnPurpose = java.util.concurrent.ConcurrentHashMap.newKeySet();
     /** Set once the launcher has one, so a granted slot is given back when its server starts. */
     private MemoryWatch memoryWatch;
 
     public ServerHandler() throws Exception {
+        // the launcher hands out the ports; what the plugins send about them must not overwrite that
+        ListenerAdapter.ServerName.claimPortAuthority();
         loadKnownServers();
         startNewInstance(ListenerAdapter.ServerName.VELOCITY, ServerTemplate.PROXY, null, new FileType.PLUGIN[0]);
     }
@@ -50,6 +57,8 @@ public class ServerHandler {
         if (section == null) return;
         for (String name : section.getKeys(false)) {
             int port = section.getInt(name + ".port", ListenerAdapter.ServerName.NO_PORT);
+            // a fixed server takes the port from here too, so one changed by hand - a box that already
+            // uses 3000 for something else - is what the proxy and the server get
             ListenerAdapter.ServerName.of(name, port);
         }
     }
@@ -79,15 +88,30 @@ public class ServerHandler {
     }
 
     /**
+     * @param port a port on this machine
+     * @return whether something is listening on it already
+     */
+    private static boolean portTaken(int port) {
+        try (java.net.ServerSocket probe = new java.net.ServerSocket()) {
+            probe.setReuseAddress(true);
+            probe.bind(new java.net.InetSocketAddress(port));
+            return false;
+        } catch (java.io.IOException e) {
+            return true;
+        }
+    }
+
+    /**
      * Makes sure the server has a port. Names that were never used before get the lowest free port of the
      * dynamic range, which is what allows creating servers on the fly.
      *
      * @param name the server
      */
     private void assignPortIfNeeded(ListenerAdapter.ServerName name) {
-        if (name.isJoinable() || name.isReserved()) return;
+        if (name.isReserved()) return;
         YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
         int stored = config.getInt(CONFIG_ROOT + "." + name + ".port", ListenerAdapter.ServerName.NO_PORT);
+        if (name.isJoinable()) return;
         if (stored != ListenerAdapter.ServerName.NO_PORT) {
             name.setPort(stored);
             return;
@@ -137,6 +161,12 @@ public class ServerHandler {
             return;
         }
         assignPortIfNeeded(name);
+        // a port another program holds is not a server that is starting: it would die on bind, and the
+        // liveness probe would take the other program's answer for this server being up
+        if (name.isJoinable() && portTaken(name.getPort())) {
+            throw new IllegalStateException("port " + name.getPort() + " is already used by another program."
+                    + " Give " + name + " another one under servers." + name + ".port in main-config.yml.");
+        }
 
         Set<FileType.PLUGIN> pluginList = new LinkedHashSet<>();
         for (FileType.PLUGIN plugin : template.resolvePlugins(plugins)) {
@@ -154,6 +184,7 @@ public class ServerHandler {
         // the slot this server was granted before it existed is now the server itself
         if (memoryWatch != null) memoryWatch.release(memory);
         instance.start();
+        stoppedOnPurpose.remove(name.toString());
         rememberServer(name, memory, jarFile, template, resolved);
         announceRegistered(instance);
     }
@@ -212,6 +243,21 @@ public class ServerHandler {
      */
     public void setMemoryWatch(MemoryWatch memoryWatch) {
         this.memoryWatch = memoryWatch;
+    }
+
+    /**
+     * @param name a server that is being stopped by somebody, not by a crash
+     */
+    void markStoppedOnPurpose(ListenerAdapter.ServerName name) {
+        stoppedOnPurpose.add(name.toString());
+    }
+
+    /**
+     * @param name a server
+     * @return whether its last stop was asked for
+     */
+    public boolean wasStoppedOnPurpose(ListenerAdapter.ServerName name) {
+        return stoppedOnPurpose.contains(name.toString());
     }
 
     public boolean doesInstanceExist(ListenerAdapter.ServerName name) {
