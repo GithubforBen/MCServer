@@ -3,7 +3,9 @@ package de.schnorrenbergers.bedwars.game;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Fills the teams before the round starts.
@@ -19,6 +21,13 @@ public final class TeamBalancer {
     }
 
     /**
+     * Puts everybody who has not picked a team into one, and evens the teams out with them.
+     * <p>
+     * A pick is kept, also in a round that is not full: two friends who chose red play red together, even
+     * if that makes red the bigger team. Only the players the balancer placed itself are moved to even
+     * things out - with one exception: when everybody is in the same team there is nobody to play against,
+     * and the round would be won before it began, so then one of them moves.
+     *
      * @param game the round about to start
      */
     public static void balance(Game game) {
@@ -36,26 +45,53 @@ public final class TeamBalancer {
             if (smallest == null) break;
             smallest.add(player);
         }
-        even(teams, teamSize);
+        even(teams, teamSize, new HashSet<>(unassigned));
+        opponent(teams, teamSize);
     }
 
     /**
-     * Moves players off the fullest team until the teams differ by at most one.
+     * Moves players the balancer placed itself off the fullest team until the teams differ by at most one,
+     * or until only players who chose their team are left to move.
+     *
+     * @param teams    the teams of the round
+     * @param teamSize how many fit into one
+     * @param movable  the players who did not pick a team
+     */
+    private static void even(List<GameTeam> teams, int teamSize, Set<GamePlayer> movable) {
+        // bounded by the number of players: every move makes the spread smaller, and a spread of one ends it
+        for (int guard = 0; guard < 128; guard++) {
+            GameTeam smallest = smallest(teams, teamSize);
+            if (smallest == null) return;
+            GameTeam from = null;
+            GamePlayer moving = null;
+            for (GameTeam team : teams) {
+                if (team.size() - smallest.size() <= 1) continue;
+                if (from != null && team.size() <= from.size()) continue;
+                GamePlayer candidate = team.getMembers().stream().filter(movable::contains).reduce((a, b) -> b)
+                        .orElse(null);
+                if (candidate == null) continue;
+                from = team;
+                moving = candidate;
+            }
+            if (moving == null) return;
+            smallest.add(moving);
+        }
+    }
+
+    /**
+     * When every player is in one team, one of them goes into another - a round needs two sides.
      *
      * @param teams    the teams of the round
      * @param teamSize how many fit into one
      */
-    private static void even(List<GameTeam> teams, int teamSize) {
-        // bounded by the number of players: every move makes the spread smaller, and a spread of one ends it
-        for (int guard = 0; guard < 128; guard++) {
-            GameTeam biggest = teams.stream().max(Comparator.comparingInt(GameTeam::size)).orElse(null);
-            GameTeam smallest = smallest(teams, teamSize);
-            if (biggest == null || smallest == null) return;
-            if (biggest.size() - smallest.size() <= 1) return;
-            List<GamePlayer> members = biggest.getMembers();
-            if (members.isEmpty()) return;
-            smallest.add(members.getLast());
-        }
+    private static void opponent(List<GameTeam> teams, int teamSize) {
+        List<GameTeam> occupied = teams.stream().filter(team -> !team.isEmpty()).toList();
+        if (occupied.size() != 1) return;
+        GameTeam only = occupied.getFirst();
+        if (only.size() < 2) return;
+        GameTeam other = teams.stream().filter(team -> team != only && !team.isFull(teamSize)).findFirst()
+                .orElse(null);
+        if (other != null) other.add(only.getMembers().getLast());
     }
 
     /**
