@@ -10,6 +10,7 @@ Fragen, Bugs, Ideen: schreib ein **Ticket** (siehe ganz unten).
 
 **Whitelist:** Auf der Regeln-Seite liest du die Regeln, setzt den Haken bei „akzeptiere“ und gibst deinen Minecraft-Namen ein. Danach kommst du sofort rein, ohne dass jemand etwas freischalten muss. Wenn du beim Joinen abgewiesen wirst, steht der Link in der Meldung.
 **Regeln-Seite:** {regeln}
+**Regeln auf Discord:** `/regeln` zeigt sie dir zum Durchblättern.
 
 **Zwischen den Servern wechseln:**
 - `/warp`: Menü mit allen Servern, die gerade laufen
