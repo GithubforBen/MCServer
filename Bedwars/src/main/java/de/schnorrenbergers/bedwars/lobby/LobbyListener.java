@@ -78,7 +78,7 @@ public class LobbyListener implements Listener {
                             "Diese Runde ist privat - du musst eingeladen werden.",
                             net.kyori.adventure.text.format.NamedTextColor.RED));
                 }
-                RoundContext.kick(player);
+                RoundContext.sendBack(player);
             });
             return;
         }

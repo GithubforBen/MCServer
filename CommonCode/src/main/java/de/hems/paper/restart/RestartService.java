@@ -17,19 +17,23 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.time.Duration;
 import java.util.Set;
 
 /**
- * The restart of the network, as every server sees it: a countdown in chat, a bar in the last minutes, a
- * title in the last seconds, and everybody sent off when it happens.
+ * The restart of the network, as every server sees it: a title and a chat line when it is scheduled, at every
+ * mark of the countdown and for everybody who joins while it is coming, a bar in the last minutes, a seconds
+ * countdown at the end, and everybody sent off when it happens.
  * <p>
  * The launcher only says when; each server counts down by itself from that. So a countdown costs no
  * network traffic, and a server that starts in the middle of one picks it up with its first load.
  */
-public final class RestartService {
+public final class RestartService implements Listener {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     /** The seconds before the restart at which the chat is told. */
@@ -43,6 +47,9 @@ public final class RestartService {
     private static final BossBar bar = BossBar.bossBar(Component.empty(), 1f, BossBar.Color.RED,
             BossBar.Overlay.PROGRESS);
     private static long lastAnnounced = -1L;
+
+    /** How long after a join the title comes, so whatever the server shows on join does not cover it. */
+    private static final long JOIN_DELAY_TICKS = 40L;
 
     private RestartService() {
     }
@@ -65,6 +72,25 @@ public final class RestartService {
         });
         NetworkSync.keepFresh(plugin, RestartService::refreshBlocking, () -> loaded, NetworkSync.DEFAULT_REFRESH_TICKS);
         Bukkit.getScheduler().runTaskTimer(plugin, RestartService::tick, 20L, 20L);
+        Bukkit.getPluginManager().registerEvents(new RestartService(), plugin);
+    }
+
+    /**
+     * Whoever joins while a restart is coming is told at once - a chat line from five minutes ago is
+     * nothing they have seen.
+     */
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        Bukkit.getScheduler().runTaskLater(PaperContext.getPlugin(), () -> {
+            RestartStatus current = status;
+            if (!player.isOnline() || !current.isScheduled()) return;
+            long left = current.getSecondsLeft();
+            // the last seconds have their own countdown title
+            if (left <= 10) return;
+            player.sendMessage(chatLine(current.getMode(), left));
+            player.showTitle(warning(current.getMode(), left));
+        }, JOIN_DELAY_TICKS);
     }
 
     private static void refreshBlocking() {
@@ -106,8 +132,7 @@ public final class RestartService {
         String what = current.getMode().getTitle();
         if (ANNOUNCE_AT.contains(left) && left != lastAnnounced) {
             lastAnnounced = left;
-            Bukkit.getServer().sendMessage(Component.text("⚠ " + what + " des Netzwerks in "
-                    + RestartStatus.format(left) + ".", NamedTextColor.GOLD));
+            announce(current.getMode(), left);
         }
         if (left <= BAR_FROM) {
             bar.name(Component.text(what + " in " + RestartStatus.format(left), NamedTextColor.RED));
@@ -140,8 +165,44 @@ public final class RestartService {
         // this line is the announcement for the mark it falls on: a restart set for five minutes would
         // otherwise be announced twice in the same second, once here and once by the countdown
         lastAnnounced = left;
-        Bukkit.getServer().sendMessage(Component.text("⚠ " + current.getMode().getTitle() + " des Netzwerks in "
-                + RestartStatus.format(left) + ".", NamedTextColor.GOLD));
+        announce(current.getMode(), left);
+    }
+
+    /** Chat and title for everybody on this server. */
+    private static void announce(RestartMode mode, long left) {
+        Bukkit.getServer().sendMessage(chatLine(mode, left));
+        if (left <= 10) return;
+        Title title = warning(mode, left);
+        for (Player player : Bukkit.getOnlinePlayers()) player.showTitle(title);
+    }
+
+    private static Component chatLine(RestartMode mode, long left) {
+        return Component.text("⚠ " + mode.getTitle() + " des Netzwerks in " + RestartStatus.format(left) + ".",
+                NamedTextColor.GOLD);
+    }
+
+    /**
+     * @return "In 10 Minuten wird der Server neu starten", or what fits the mode
+     */
+    static Title warning(RestartMode mode, long left) {
+        String what = switch (mode) {
+            case SHUTDOWN -> "heruntergefahren";
+            case UPDATE -> "für ein Update neu starten";
+            default -> "neu starten";
+        };
+        return Title.title(Component.text("⚠ " + mode.getTitle(), NamedTextColor.GOLD),
+                Component.text("In " + spoken(left) + " wird der Server " + what, NamedTextColor.YELLOW),
+                Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(5), Duration.ofMillis(700)));
+    }
+
+    /**
+     * @return "10 Minuten", "1 Minute", "30 Sekunden" - rounded down: someone told four minutes when four and
+     *         a half are left is fine, someone told five is not
+     */
+    static String spoken(long seconds) {
+        if (seconds < 60) return seconds + (seconds == 1 ? " Sekunde" : " Sekunden");
+        long minutes = seconds / 60;
+        return minutes + (minutes == 1 ? " Minute" : " Minuten");
     }
 
     /**

@@ -125,6 +125,16 @@ public final class RoundService {
     }
 
     /**
+     * Takes a change into the local copy before the launcher has confirmed it, so the server that made it
+     * does not read its own older state back in the meantime.
+     *
+     * @param round the changed round
+     */
+    public static void remember(RoundData round) {
+        if (round != null && round.getId() != null) rounds.put(round.getId(), round);
+    }
+
+    /**
      * @param serverName a server
      * @return the round running on it, or {@code null}
      */

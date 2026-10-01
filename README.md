@@ -80,9 +80,11 @@ Der Launcher startet zuerst den Proxy und danach die Server aus `autostart` in d
 | `/neustart 10 aus` | In 10 Minuten herunterfahren, danach bleibt alles aus |
 | `/neustart abbrechen` | Den geplanten Neustart absagen |
 
-Ein neuer `/neustart` ersetzt einen geplanten. Jeder Server zählt selbst herunter: Chat bei 10, 5, 3, 2
-und 1 Minute und 30 Sekunden, eine Bossbar in den letzten 5 Minuten, ein Titel in den letzten 10
-Sekunden.
+Ein neuer `/neustart` ersetzt einen geplanten. Jeder Server zählt selbst herunter: beim Planen und bei 10,
+5, 3, 2 und 1 Minute und 30 Sekunden eine Chatzeile und ein Titel („In 10 Minuten wird der Server neu
+starten“), eine Bossbar in den letzten 5 Minuten, ein Sekunden-Countdown als Titel in den letzten 10
+Sekunden. Wer während eines geplanten Neustarts joint, bekommt Titel und Chatzeile zwei Sekunden nach dem
+Join.
 
 **Wenn es so weit ist:** alle Spieler werden mit Hinweis gekickt, Spieler und Welten gespeichert, jeder
 Server gestoppt - und der Launcher **wartet, bis jeder Java-Prozess wirklich weg ist**. Ein Server
@@ -1066,7 +1068,7 @@ nachprüfen kann. Vier Klassen mit `main` tun genau das:
 ./mvnw -q -pl PokerPlugin -am install -DskipTests
 CP=PokerPlugin/target/classes:PokerPlugin/target/test-classes
 java -cp $CP de.schnorrenbergers.poker.game.HandCheck        # 47 Prüfungen
-java -cp $CP de.schnorrenbergers.poker.game.TableCheck       # 57 Prüfungen
+java -cp $CP de.schnorrenbergers.poker.game.TableCheck       # 38 Prüfungen
 java -cp $CP de.schnorrenbergers.poker.bot.BotBalanceCheck   # Bot gegen Maniac, Nit, Station
 java -cp $CP de.schnorrenbergers.poker.bot.BotTableCheck     # sechs Bots gegeneinander
 java -cp $CP de.schnorrenbergers.poker.bot.BotCharacterCheck # Spread, Mischung, Drift
