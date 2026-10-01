@@ -440,7 +440,7 @@ public final class AdminJoinService implements Listener {
     }
 
     private void announceQuit(String name) {
-        Bukkit.broadcast(Component.text("<<" + name, NamedTextColor.RED));
+        Bukkit.broadcast(de.hems.paper.JoinQuitMessages.quit(name));
     }
 
     /**
@@ -448,7 +448,7 @@ public final class AdminJoinService implements Listener {
      * @return the line the join listener would have written, so the two are not told apart
      */
     private static Component joinLine(String name) {
-        return Component.text(">>" + name, NamedTextColor.GREEN);
+        return de.hems.paper.JoinQuitMessages.join(name);
     }
 
     /**
