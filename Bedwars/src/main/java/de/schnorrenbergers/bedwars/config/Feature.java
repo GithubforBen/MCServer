@@ -15,9 +15,10 @@ public enum Feature {
 
     /**
      * Combat the way 1.8 played it: no attack cooldown and no sweep. Every player is given an attack
-     * speed nothing can recharge, so hitting fast is worth as much as hitting at the right moment.
+     * speed nothing can recharge, so hitting fast is worth as much as hitting at the right moment. On by
+     * default - it is how bedwars is meant to be played here.
      */
-    OLD_PVP("1.8 PvP", Material.IRON_SWORD, false,
+    OLD_PVP("1.8 PvP", Material.IRON_SWORD, true,
             "How a swing of a sword works.",
             "",
             "On: no cooldown bar, no sweep. Hitting fast",

@@ -13,6 +13,9 @@ import java.util.Map;
  */
 public final class FeatureSettings {
 
+    /** Which defaults the file was last brought up to, see {@link #load}. */
+    private static final String VERSION = "defaults-version";
+
     private final ConfigFile file;
     private final Map<Feature, Boolean> state = new EnumMap<>(Feature.class);
 
@@ -33,6 +36,13 @@ public final class FeatureSettings {
         for (Feature feature : Feature.values()) {
             state.put(feature, file.get("features." + feature.getKey(), feature.isDefault(),
                     feature.getDescription()));
+        }
+        // 1.8 combat used to be off by default, and every file written back then says so - which is the
+        // old default written down, not a decision. It is switched on once; turned off after that, it stays off
+        if (file.read(VERSION, 1) < 2) {
+            state.put(Feature.OLD_PVP, true);
+            file.set("features." + Feature.OLD_PVP.getKey(), true);
+            file.set(VERSION, 2);
         }
         file.save();
     }
