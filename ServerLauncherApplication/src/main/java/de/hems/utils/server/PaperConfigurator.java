@@ -68,6 +68,11 @@ public class PaperConfigurator extends ServerConfigurator {
         }
         // the worlds and the configuration that belongs to them, written once and then left to the admins
         new AssetInstaller(new File(this.directory)).install(template.getAssets());
+        // the lobby is the built spawn again on every start - here, because a running server cannot swap its
+        // main world
+        if (template == ServerTemplate.LOBBY) {
+            LobbyMap.installInto(new File(this.directory));
+        }
         // and the maps somebody dropped into ./bedwars-maps themselves, which no release knows about
         if (template == ServerTemplate.BEDWARS) {
             new CustomMaps().installInto(new File(this.directory));

@@ -68,7 +68,12 @@ public class FileType implements Serializable {
         /** The hypixel map "Orbit": eight bases around a star of walkways. */
         BEDWARS_ORBIT,
         /** The hypixel map "Aquarium": four bases, so it plays 3v3v3v3 and 4v4v4v4 only. */
-        BEDWARS_AQUARIUM;
+        BEDWARS_AQUARIUM,
+        /**
+         * The built spawn of the lobby. Unpacked as {@code lobby-world/}, which the lobby plugin restores
+         * its world from on every start - so the hub is always the map as it was built.
+         */
+        LOBBY_SPAWN;
 
         /**
          * @param type the asset
@@ -80,6 +85,7 @@ public class FileType implements Serializable {
                 case BEDWARS_LIGHTHOUSE -> "asset:/bedwars-lighthouse.zip";
                 case BEDWARS_ORBIT -> "asset:/bedwars-orbit.zip";
                 case BEDWARS_AQUARIUM -> "asset:/bedwars-aquarium.zip";
+                case LOBBY_SPAWN -> "asset:/lobby-spawn.zip";
             };
         }
 
@@ -101,7 +107,7 @@ public class FileType implements Serializable {
         public static String getVersion(ASSET type) {
             return switch (type) {
                 case BEDWARS_SPEEDWAY -> "3";
-                case BEDWARS_LIGHTHOUSE, BEDWARS_ORBIT, BEDWARS_AQUARIUM -> "1";
+                case BEDWARS_LIGHTHOUSE, BEDWARS_ORBIT, BEDWARS_AQUARIUM, LOBBY_SPAWN -> "1";
             };
         }
 
@@ -119,6 +125,7 @@ public class FileType implements Serializable {
                 case BEDWARS_LIGHTHOUSE -> "Bedwars Map: Lighthouse";
                 case BEDWARS_ORBIT -> "Bedwars Map: Orbit";
                 case BEDWARS_AQUARIUM -> "Bedwars Map: Aquarium";
+                case LOBBY_SPAWN -> "Lobby-Welt: Spawn";
             };
         }
 
@@ -138,6 +145,7 @@ public class FileType implements Serializable {
                 case BEDWARS_LIGHTHOUSE -> "lighthouse";
                 case BEDWARS_ORBIT -> "orbit";
                 case BEDWARS_AQUARIUM -> "aquarium";
+                case LOBBY_SPAWN -> null;
             };
         }
     }

@@ -21,8 +21,9 @@ public enum ServerTemplate implements Serializable {
     PROXY(FileType.SERVER.VELOCITY, 1024, false,
             FileType.PLUGIN.VELOCITY, FileType.PLUGIN.SIMPLE_VOICECHAT_VELOCITY),
 
-    /** The hub players land on. */
+    /** The hub players land on. Ships with its built spawn, which the lobby plugin loads on every start. */
     LOBBY(FileType.SERVER.PAPER, 2048, true,
+            List.of(FileType.ASSET.LOBBY_SPAWN),
             FileType.PLUGIN.LOBBY),
 
     /** The main survival world. */

@@ -49,7 +49,12 @@ public final class LobbyWorld {
         File source = new File(config.getString("lobby.source", DEFAULT_SOURCE));
         boolean restore = config.getBoolean("lobby.restore-on-start", true);
 
-        if (source.isDirectory()) {
+        boolean mainWorld = !Bukkit.getWorlds().isEmpty() && Bukkit.getWorlds().getFirst().getName().equals(name);
+        if (source.isDirectory() && mainWorld) {
+            // the main world cannot be unloaded while the server runs - the launcher restores it before
+            // the start instead
+            plugin.getLogger().info("Lobby world is the main world - restored by the launcher before the start.");
+        } else if (source.isDirectory()) {
             if (restore || Bukkit.getWorld(name) == null) {
                 restore(plugin, source, name);
             }
