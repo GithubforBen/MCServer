@@ -192,10 +192,7 @@ public class DiscordInfo extends ListenerAdapter {
         try {
             String rules = WhitelistSync.rulesUrl();
             if (!local(rules)) values.put("regeln", rules);
-            // the name players type in, when there is one - the address the proxy binds to is often only
-            // an ip, or one that is not reachable from outside at all
-            String named = Main.getInstance().getConfiguration().getConfig().getString("public-address", "");
-            String ip = named != null && !named.isBlank() ? named.trim() : Main.getInstance().getIp();
+            String ip = Main.getInstance().getPublicAddress();
             if (ip != null && !local(ip)) values.put("adresse", ip);
         } catch (Exception ignored) {
             // without an address the line is left out
