@@ -10,8 +10,17 @@ import java.io.InputStreamReader;
 import java.net.*;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class UUIDFetcher {
+    /**
+     * Names already looked up. A uuid never changes, and the account service turns lookups away when a
+     * launcher asks for the same few operators on every server start - so each name is asked for once.
+     */
+    private static final Map<String, UUID> BY_NAME = new ConcurrentHashMap<>();
+
     private static String getApiReponse(String url, String jsonKey) {
         try {
             URI uri = new URI(url);
@@ -72,12 +81,17 @@ public class UUIDFetcher {
      * @return the uuid, or {@code null} if mojang does not know the name or can not be reached
      */
     public static UUID findUUIDByName(String name, boolean returnFormatted) {
+        String key = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        UUID known = BY_NAME.get(key);
+        if (known != null) return known;
         try {
             String apiEndPoint = "https://api.mojang.com/users/profiles/minecraft/" + name;
             String raw = getApiReponse(apiEndPoint, "id");
             // an unknown name and an unreachable api both end up here - neither is worth an exception
             if (raw == null) return null;
-            return UUID.fromString(formatUUID(raw));
+            UUID found = UUID.fromString(formatUUID(raw));
+            BY_NAME.put(key, found);
+            return found;
         } catch (JSONException | IllegalArgumentException e) {
             e.printStackTrace();
             return null;

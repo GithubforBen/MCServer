@@ -78,7 +78,7 @@ public class LobbyListener implements Listener {
                             "Diese Runde ist privat - du musst eingeladen werden.",
                             net.kyori.adventure.text.format.NamedTextColor.RED));
                 }
-                RoundContext.kick(player);
+                sendBack(player, 1);
             });
             return;
         }
@@ -102,12 +102,41 @@ public class LobbyListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Game game = game();
         if (game == null || !game.isWaiting()) return;
+        // somebody who was only ever turned away was never part of the round, so nobody is told they left
+        if (game.get(event.getPlayer()) == null) return;
         game.forget(event.getPlayer().getUniqueId());
-        reportRound(game, Math.max(0, game.getOnlineCount() - 1));
+        // forgotten first, so the count no longer includes them although they are still connected
+        reportRound(game, game.getOnlineCount());
         Messages.broadcast("lobby.left",
                 "player", event.getPlayer().getName(),
-                "online", String.valueOf(Math.max(0, game.getOnlineCount() - 1)),
+                "online", String.valueOf(game.getOnlineCount()),
                 "maximum", String.valueOf(game.getMaximumPlayers()));
+    }
+
+    /** How many times somebody turned away is sent back before the server lets go of them itself. */
+    private static final int SEND_BACK_TRIES = 3;
+
+    /**
+     * Sends somebody who may not be here back to the lobby, and makes sure it happened.
+     * <p>
+     * The way back is a message to the proxy, and one sent in the second after a join can get lost - the
+     * player then simply stayed, outside the round but on its server. So it is sent again until they are
+     * gone, and the last resort is disconnecting them, which the proxy answers by putting them on the lobby.
+     *
+     * @param player  who has to go
+     * @param attempt which try this is, from 1
+     */
+    private void sendBack(Player player, int attempt) {
+        if (!player.isOnline()) return;
+        if (attempt > SEND_BACK_TRIES) {
+            player.kick(net.kyori.adventure.text.Component.text("Diese Runde ist privat.",
+                    net.kyori.adventure.text.format.NamedTextColor.RED));
+            return;
+        }
+        // somebody thrown out stays thrown out; somebody who only was not invited yet may still be
+        if (RoundContext.isKicked(player)) RoundContext.kick(player);
+        else RoundContext.sendToLobby(player);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> sendBack(player, attempt + 1), 40L);
     }
 
     /**

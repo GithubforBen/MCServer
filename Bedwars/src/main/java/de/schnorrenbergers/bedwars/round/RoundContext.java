@@ -25,6 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class RoundContext {
 
     private static volatile RoundData round;
+    /** This server's name, to find the round in the network's live list again. */
+    private static volatile String server;
     /** Who was thrown out of this round, so they do not simply walk back in. */
     private static final Set<UUID> kicked = ConcurrentHashMap.newKeySet();
 
@@ -42,6 +44,7 @@ public final class RoundContext {
      */
     public static void load(String serverName) {
         RoundService.refreshBlocking();
+        server = serverName;
         round = RoundService.byServer(serverName);
     }
 
@@ -49,11 +52,15 @@ public final class RoundContext {
      * @return the round this server is playing, or {@code null} when nobody ordered it
      */
     public static @Nullable RoundData get() {
+        // the network's copy, which every change reaches - an invitation sent from the lobby, a switch to
+        // private in the menu. The one read at start only stands in while the list is not there
+        RoundData live = server == null ? null : RoundService.byServer(server);
+        if (live != null) round = live;
         return round;
     }
 
     public static boolean exists() {
-        return round != null;
+        return get() != null;
     }
 
     /**
@@ -61,7 +68,8 @@ public final class RoundContext {
      * @return whether they own this round
      */
     public static boolean isOwner(Player player) {
-        return round != null && player != null && round.isOwner(player.getUniqueId());
+        RoundData current = get();
+        return current != null && player != null && current.isOwner(player.getUniqueId());
     }
 
     /**
@@ -89,6 +97,17 @@ public final class RoundContext {
     public static void kick(Player player) {
         if (player == null) return;
         kicked.add(player.getUniqueId());
+        sendToLobby(player);
+    }
+
+    /**
+     * Sends somebody to the lobby without holding it against them - for whoever came to a private round
+     * uninvited, who may still be invited a minute later.
+     *
+     * @param player who has to go
+     */
+    public static void sendToLobby(Player player) {
+        if (player == null) return;
         ServerConnector.connect(player, ListenerAdapter.ServerName.LOBBY);
     }
 
@@ -118,7 +137,7 @@ public final class RoundContext {
      * @return whether they may stay
      */
     public static boolean mayJoin(Player player) {
-        RoundData current = round;
+        RoundData current = get();
         if (current == null || player == null) return true;
         if (player.isOp() || player.hasPermission("bedwars.admin")) return true;
         return current.isAllowed(player.getUniqueId());
@@ -131,8 +150,10 @@ public final class RoundContext {
      * @return whether they were not already invited
      */
     public static boolean invite(UUID player) {
-        RoundData current = round;
+        RoundData current = get();
         if (current == null) return false;
+        // an invitation forgives: whoever the owner asks in may come, even after being thrown out
+        kicked.remove(player);
         RoundData updated = current.copy();
         if (!updated.invite(player)) return false;
         round = updated;
@@ -146,7 +167,7 @@ public final class RoundContext {
      * @param open whether it shows up in the lobby list
      */
     public static void setOpen(boolean open) {
-        RoundData current = round;
+        RoundData current = get();
         if (current == null) return;
         RoundData updated = current.copy();
         updated.setOpen(open);
@@ -162,7 +183,7 @@ public final class RoundContext {
      * @param players how many are on it
      */
     public static void report(RoundState state, int players) {
-        RoundData current = round;
+        RoundData current = get();
         if (current == null) return;
         if (current.getState() == state && current.getPlayers() == players) return;
         RoundData updated = current.copy();

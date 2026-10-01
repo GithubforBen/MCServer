@@ -79,15 +79,38 @@ public class ServerHandler {
     }
 
     /**
+     * @param port a port on this machine
+     * @return whether something is listening on it already
+     */
+    private static boolean portTaken(int port) {
+        try (java.net.ServerSocket probe = new java.net.ServerSocket()) {
+            probe.setReuseAddress(true);
+            probe.bind(new java.net.InetSocketAddress(port));
+            return false;
+        } catch (java.io.IOException e) {
+            return true;
+        }
+    }
+
+    /**
      * Makes sure the server has a port. Names that were never used before get the lowest free port of the
      * dynamic range, which is what allows creating servers on the fly.
      *
      * @param name the server
      */
     private void assignPortIfNeeded(ListenerAdapter.ServerName name) {
-        if (name.isJoinable() || name.isReserved()) return;
+        if (name.isReserved()) return;
         YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
         int stored = config.getInt(CONFIG_ROOT + "." + name + ".port", ListenerAdapter.ServerName.NO_PORT);
+        if (name.isJoinable()) {
+            // the fixed servers bring a port of their own, but the machine decides what is free on it: a port
+            // written into the config by hand wins, so a box that already uses 3000 can still run survival
+            if (stored != ListenerAdapter.ServerName.NO_PORT && stored != name.getPort()) {
+                System.out.println(name + " uses port " + stored + " from the config instead of " + name.getPort());
+                name.setPort(stored);
+            }
+            return;
+        }
         if (stored != ListenerAdapter.ServerName.NO_PORT) {
             name.setPort(stored);
             return;
@@ -137,6 +160,12 @@ public class ServerHandler {
             return;
         }
         assignPortIfNeeded(name);
+        // a port another program holds is not a server that is starting: it would die on bind, and the
+        // liveness probe would take the other program's answer for this server being up
+        if (name.isJoinable() && portTaken(name.getPort())) {
+            throw new IllegalStateException("port " + name.getPort() + " is already used by another program."
+                    + " Give " + name + " another one under servers." + name + ".port in main-config.yml.");
+        }
 
         Set<FileType.PLUGIN> pluginList = new LinkedHashSet<>();
         for (FileType.PLUGIN plugin : template.resolvePlugins(plugins)) {

@@ -198,6 +198,9 @@ public final class RoundService {
      */
     public static void saveAsync(RoundData round, Consumer<Boolean> callback) {
         if (!PaperContext.hasPlugin()) return;
+        // kept here at once, so whoever reads the list next sees the change rather than the version from
+        // before it - the launcher's answer only comes back a moment later
+        if (round != null && round.getId() != null) rounds.put(round.getId(), round);
         PaperContext.async(() -> {
             boolean stored = saveBlocking(round);
             if (callback == null) return;

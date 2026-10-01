@@ -107,6 +107,12 @@ public class PaperConfigurator extends ServerConfigurator {
         }
         JsonArray jsonArray = new JsonArray();
         for (UUID op : ops) {
+            // a name the account service could not resolve right now - it is down, or it answers too many
+            // lookups with nothing. One missing operator must not keep the whole server from starting
+            if (op == null) {
+                System.out.println("An operator of " + name + " could not be looked up and is left out of ops.json.");
+                continue;
+            }
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("uuid", op.toString());
             jsonObject.addProperty("name", UUIDFetcher.findNameByUUID(op));
