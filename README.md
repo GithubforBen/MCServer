@@ -64,7 +64,7 @@ Auf einem neuen Rechner reicht:
 ```
 
 Das Skript prüft Java 25, tmux und git (und installiert sie auf Wunsch mit apt), baut alles und fragt
-dann ab, was der Launcher braucht: Discord-Token und Besitzer-ID, Modus und Adresse des Proxys, Ops,
+dann ab, was der Launcher braucht: Discord-Token und Besitzer-ID, Modus und Adresse des Proxys, die Domain für Spieler, Ops,
 Whitelist, Autostart, die Admin-Website mit Account und Google Authenticator (als QR-Code im Terminal
 zum Scannen), und den Arbeitsspeicher.
 Das Velocity-Secret und das Secret für `/command` werden erzeugt. Alles landet in der `main-config.yml`,
@@ -1403,8 +1403,8 @@ Die Texte liegen in `ServerLauncherApplication/src/main/resources/discord-info/`
 `admins.md`). Wer sie ohne Build ändern will, legt eine Datei gleichen Namens in `./discord-info/`
 neben den Launcher, die gewinnt. `{adresse}` und `{regeln}` werden mit der Adresse des Netzwerks und
 dem Link zur Regeln-Seite gefüllt - die Adresse aus `public-address` in der `main-config.yml`
-(z.B. `mc.ben-schnorr.com`), sonst die IP, auf die der Proxy hört. Ist eines davon nur lokal
-(`localhost`), fällt die Zeile weg.
+(fragt das Setup ab, z.B. `mc.ben-schnorr.com`), sonst die IP, auf die der Proxy hört. Ist eines
+davon nur lokal (`localhost`), fällt die Zeile weg.
 Discord zeigt keine Tabellen. Deshalb sind die Texte Listen, und pro Abschnitt sind höchstens 4096 Zeichen
 möglich (längere werden an einem Absatz geteilt).
 

@@ -170,6 +170,21 @@ public final class Installer {
         }
         if (mode != RunningMode.LOCAL) {
             notes.add("Port 25565/tcp muss in der Firewall (und am Router) offen sein, damit Spieler joinen können.");
+
+            // the name players type in - the address the proxy binds to is often only an ip, or not one that
+            // is reachable from outside at all, so the discord texts would show the wrong thing
+            System.out.println("Die Adresse, die Spieler in Minecraft eintragen (z.B. mc.ben-schnorr.com).");
+            System.out.println("Sie steht in den Discord-Infotexten; \"-\" = keine eigene, dann wird die IP gezeigt.");
+            String domain = ask("public-address", config.getString("public-address", ""), value -> null);
+            if (domain.isEmpty() || domain.equals("-")) {
+                config.set("public-address", null);
+                summary.put("public-address", "keine (IP)");
+            } else {
+                config.set("public-address", domain);
+                config.setComments("public-address",
+                        List.of("The address players connect with, shown in the discord info texts."));
+                summary.put("public-address", domain);
+            }
         }
     }
 
