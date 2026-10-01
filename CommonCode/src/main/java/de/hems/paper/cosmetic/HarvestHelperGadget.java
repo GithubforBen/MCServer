@@ -1,5 +1,6 @@
 package de.hems.paper.cosmetic;
 
+import de.hems.paper.CoreProtectLog;
 import de.hems.types.cosmetic.Cosmetics;
 import de.hems.types.cosmetic.GadgetSlot;
 import org.bukkit.Material;
@@ -91,6 +92,9 @@ public class HarvestHelperGadget implements Gadget, Listener {
         BlockData fresh = crop.clone();
         ((Ageable) fresh).setAge(0);
         block.setBlockData(fresh);
+        // the harvest above went through BlockBreakEvent, which CoreProtect logs on its own; the new seed
+        // does not, and a rollback that only knows about the harvest would leave the field half planted
+        CoreProtectLog.placed(player.getName(), block.getState());
         for (ItemStack drop : harvest) {
             block.getWorld().dropItemNaturally(block.getLocation().add(0.5d, 0.2d, 0.5d), drop);
         }

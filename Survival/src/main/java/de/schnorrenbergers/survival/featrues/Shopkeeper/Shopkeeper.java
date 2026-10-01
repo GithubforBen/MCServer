@@ -1,5 +1,6 @@
 package de.schnorrenbergers.survival.featrues.Shopkeeper;
 
+import de.hems.paper.CoreProtectLog;
 import de.hems.paper.team.TeamService;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import net.kyori.adventure.text.Component;
@@ -281,6 +282,9 @@ public class Shopkeeper {
             return;
         }
 
+        // the chest changes without a player opening it, which CoreProtect would never see: the buyer is
+        // who took the goods out, so the log names them
+        CoreProtectLog.container(player.getName(), chest.getBlock().getLocation());
         // Bukkit reports what it could not take out. The hand written loop this replaces wrote through
         // ItemStack mirrors from getContents(), which silently removes nothing if those are ever copies -
         // the buyer would get the goods and the chest would keep them.

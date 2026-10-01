@@ -59,13 +59,15 @@ Spieler sehen einen Countdown im Chat, eine Bossbar und einen Titel. Baut ein Up
 
 Vorlagen: `LOBBY`, `SURVIVAL`, `BEDWARS`, `EVENT`. Jeder Name kann gestartet werden und bekommt automatisch einen Port.
 
+**Chunks vorladen:** Chunky ist auf jedem Server. `/chunky world world`, `/chunky radius 3000`, `/chunky start`. Mit `/chunky pause`, `continue` und `cancel` steuerst du den Lauf, mit `/chunky progress` siehst du den Stand. Geht auch über die Website-Konsole.
+
 **Speicher:** Der Launcher lehnt Starts ab, die nicht mehr in den Arbeitsspeicher passen. Im Server Manager und im Panel **Netzwerk** steht, welcher Server mehr Speicher hat, als er braucht, mit einem Vorschlag zum Anklicken.
 
 ## Moderation
 
 - `/banane <spieler> <HACKING|GRIEFING|OTHER> <zahl> <m|h|d|w>`: zeitlich begrenzter Bann (Survival)
 - `/verify wer <spieler>`: wer das auf Discord ist (`network.verify.lookup`)
-- **CoreProtect** (auf jedem Server): `/co inspect` zeigt, wer einen Block gesetzt oder abgebaut hat, `/co rollback` macht Griefing rückgängig. Die Abfrage geht auch über die Website.
+- **CoreProtect** (auf jedem Server): `/co inspect` zeigt, wer einen Block gesetzt oder abgebaut hat, `/co rollback` macht Griefing rückgängig. Auch Shop-Käufe aus Lagerkisten und der Erntehelfer stehen dort. Die Abfrage geht auch über die Website.
 
 **Admin-Aktionen werden geloggt.** Auf Survival landen `gamemode`, `give`, `tp`, `kill`, `ban`, `kick`, `clear`, `fill`, `setblock` und ähnliche Befehle von Ops im Logging-Kanal, ebenso jeder Spielmoduswechsel. Begründen lässt sich das nachträglich mit `/legitimize <uuid|@all> "<grund>"` (`network.adminabuse.legitimize`). Unter jedem Log-Eintrag auf Discord steht ein Knopf, der ein Ticket zu genau dieser Aktion öffnet.
 

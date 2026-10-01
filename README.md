@@ -24,6 +24,13 @@ Gebaut wird weiter gegen die API von 24.1 aus Maven; alles, was der Code davon a
 unverändert (API-Version 13, mit dem 25.0-Jar kompiliert). Geprüft auf Paper 26.3 Build 134: startet,
 `/co status` antwortet, fährt sauber herunter.
 
+**Unsere Plugins schreiben selbst nach CoreProtect** (`de.hems.paper.CoreProtectLog`), wo sie die
+Welt an CoreProtect vorbei ändern: der Shop-Kauf nimmt Items aus der Lagerkiste (steht unter dem Käufer),
+der Erntehelfer pflanzt neu (unter dem Spieler, die Ernte selbst loggt CoreProtect über das
+`BlockBreakEvent`). Geprüft auf Paper 26.3 mit 25.0: `/co lookup` zeigt beide Einträge. Bedwars-,
+Hunger-Games-, Casino- und Speedrun-Server werden nach der Runde gelöscht, ihre Welt ändert unser Code
+dort bewusst ohne Log. Ohne CoreProtect tun die Aufrufe nichts.
+
 25.0 speichert standardmäßig in **DuckDB** (`database.duckdb`), nicht mehr in SQLite. Eine alte
 `database.db` wird nicht von selbst übernommen; dafür gibt es `/co migrate-db`. Wer lieber bei SQLite
 bleibt, setzt `database-type: sqlite` in `plugins/CoreProtect/config.yml`. Beim ersten Start lädt Paper
@@ -112,6 +119,26 @@ Zurücksetzen würde sie sonst wegwerfen. Was passiert ist, steht in `update-res
 
 `start.sh` startet `run.sh` in der tmux-Sitzung `server`. **Einmalig:** eine Sitzung, die noch mit dem
 alten `start.sh` läuft, muss einmal von Hand beendet und neu gestartet werden, damit `run.sh` läuft.
+
+## Chunks vorladen (Chunky)
+
+Chunky ist auf **jedem** Paper-Server installiert (es gehört zu den Basis-Plugins aller Vorlagen) und
+läuft auf 26.3 - geprüft auf Build 134: 441 Chunks in 14 Sekunden. Vorladen spart Lag, wenn Spieler
+zum ersten Mal in neue Gegenden kommen; am sinnvollsten auf Survival, vor einem End-Event auch für das
+End.
+
+| Befehl (Op oder Konsole) | Was er macht |
+|--------------------------|--------------|
+| `/chunky world <welt>` | Welt wählen, z.B. `world`, `world_nether`, `world_the_end` |
+| `/chunky center <x> <z>` · `/chunky radius <blöcke>` | Mitte und Radius des Gebiets |
+| `/chunky worldborder` | Genau das Gebiet innerhalb der Weltgrenze |
+| `/chunky start` | Loslegen. Fortschritt steht in der Konsole |
+| `/chunky pause` · `/chunky continue` · `/chunky cancel` | Anhalten, weitermachen, abbrechen |
+| `/chunky progress` | Stand abfragen |
+
+Ohne Spiel geht es über das Konsolen-Panel der Website. Ein Lauf überlebt einen Neustart: nach dem
+Start mit `/chunky continue` weitermachen. Vorladen kostet CPU - während viel los ist, lieber
+pausieren.
 
 ## Server
 
