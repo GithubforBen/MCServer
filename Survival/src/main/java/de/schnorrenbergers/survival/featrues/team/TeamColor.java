@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival.featrues.team;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,6 +34,39 @@ public enum TeamColor {
 
     public ChatColor getColor() {
         return color;
+    }
+
+    /**
+     * @return the wool closest to the colour, so the colour menu shows what a team will look like. Minecraft
+     *         has sixteen wools for these fourteen colours; blue and aqua both come out light blue.
+     */
+    public Material getWool() {
+        return switch (this) {
+            case DARK_BLUE -> Material.BLUE_WOOL;
+            case DARK_GREEN -> Material.GREEN_WOOL;
+            case DARK_AQUA -> Material.CYAN_WOOL;
+            case DARK_RED -> Material.RED_WOOL;
+            case DARK_PURPLE -> Material.PURPLE_WOOL;
+            case GOLD -> Material.ORANGE_WOOL;
+            case GRAY -> Material.LIGHT_GRAY_WOOL;
+            case DARK_GRAY -> Material.GRAY_WOOL;
+            case BLUE, AQUA -> Material.LIGHT_BLUE_WOOL;
+            case GREEN -> Material.LIME_WOOL;
+            case RED -> Material.PINK_WOOL;
+            case LIGHT_PURPLE -> Material.MAGENTA_WOOL;
+            case YELLOW -> Material.YELLOW_WOOL;
+        };
+    }
+
+    /**
+     * @param chatColor the name of a {@code ChatColor}, the way a team stores its colour
+     * @return the colour, or {@code null} when it is not one of these
+     */
+    public static TeamColor of(String chatColor) {
+        for (TeamColor value : values()) {
+            if (value.color.name().equals(chatColor)) return value;
+        }
+        return null;
     }
 
     public String getReadableName() {

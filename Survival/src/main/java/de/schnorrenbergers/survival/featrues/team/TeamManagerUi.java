@@ -92,8 +92,10 @@ public final class TeamManagerUi {
             ui.setItem(47, new ItemApi(Material.COMPARATOR, ChatColor.AQUA + "Einstellungen",
                             List.of(ChatColor.GRAY + "Was dein Team selbst festlegt")).build(),
                     new SimpleItemAction(event -> source.openInventory(settings(manager, source).getInventory())));
-            ui.setItem(48, new ItemApi(Material.WHITE_BANNER, ChatColor.BLUE + "Farbe",
-                            List.of(ChatColor.GRAY + "Aktuell: " + team.getColor())).build(),
+            TeamColor current = TeamColor.of(team.getColor());
+            ui.setItem(48, new ItemApi(current == null ? Material.WHITE_WOOL : current.getWool(), ChatColor.BLUE + "Farbe",
+                            List.of(ChatColor.GRAY + "Aktuell: "
+                                    + (current == null ? team.getColor() : current.getColor() + current.getReadableName()))).build(),
                     new SimpleItemAction(event -> source.openInventory(colors(manager, source).getInventory())));
             ui.setItem(49, new ItemApi(Material.NAME_TAG, ChatColor.GOLD + "Name & Tag",
                             List.of(ChatColor.GRAY + "Name: " + team.getName(),
@@ -207,10 +209,13 @@ public final class TeamManagerUi {
         ui.setItem(0, back(), new SimpleItemAction(event ->
                 source.openInventory(main(manager, source).getInventory())));
         int slot = 9;
+        TeamColor current = TeamColor.of(manager.getData() == null ? null : manager.getData().getColor());
         for (TeamColor color : TeamColor.values()) {
             if (slot > 26) break;
-            ItemStack item = new ItemApi(Material.WHITE_WOOL,
-                    color.getColor() + color.getReadableName()).build();
+            ItemStack item = new ItemApi(color.getWool(), color.getColor() + color.getReadableName(),
+                    color == current ? List.of(ChatColor.GREEN + "✔ Aktuelle Farbe") : List.of()).build();
+            // the colour the team has now stands out, so nobody picks it again wondering why nothing changed
+            if (color == current) item.editMeta(meta -> meta.setEnchantmentGlintOverride(true));
             ui.setItem(slot++, item, new SimpleItemAction(event -> {
                 manager.setTeamColor(color, source);
                 source.closeInventory();
