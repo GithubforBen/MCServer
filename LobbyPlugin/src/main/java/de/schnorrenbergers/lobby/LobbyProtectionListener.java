@@ -18,7 +18,13 @@ import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockFormEvent;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.BlockGrowEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.FluidLevelChangeEvent;
+import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
@@ -245,6 +251,43 @@ public class LobbyProtectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDecay(LeavesDecayEvent event) {
+        event.setCancelled(true);
+    }
+
+    /**
+     * No block updates at all. The map is built with blocks that only hold because nothing has asked them
+     * yet - a torch on glass, a flower on stone, sand in the air - and the first neighbour update, from a
+     * door, a gadget or a builder, knocked them off. Nothing in the lobby needs physics to work.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onPhysics(BlockPhysicsEvent event) {
+        event.setCancelled(true);
+    }
+
+    /** Water and lava stay where they were built. */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onFlow(BlockFromToEvent event) {
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onFluidLevel(FluidLevelChangeEvent event) {
+        event.setCancelled(true);
+    }
+
+    /** Crops, saplings, snow and ice stay as built. */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onGrow(BlockGrowEvent event) {
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onForm(BlockFormEvent event) {
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onStructureGrow(StructureGrowEvent event) {
         event.setCancelled(true);
     }
 
