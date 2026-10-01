@@ -15,6 +15,9 @@ import java.nio.file.StandardCopyOption;
  * and builds the plugins of this project when they are needed.
  */
 public class FileHandler {
+    /** How often a download is tried before the server it is for is given up on. */
+    private static final int DOWNLOAD_ATTEMPTS = 3;
+
 
     /** The plugins of this project are only rebuilt once per launcher run. */
     private static boolean built = false;
@@ -96,6 +99,29 @@ public class FileHandler {
      * @param target where the file should end up
      */
     private void download(String url, File target) throws IOException {
+        // a download server that is slow for a minute is common enough; one that stays slow over three tries
+        // is not, and a server that never starts because of one bad minute is worse than a short wait
+        IOException last = null;
+        for (int attempt = 1; attempt <= DOWNLOAD_ATTEMPTS; attempt++) {
+            try {
+                downloadOnce(url, target);
+                return;
+            } catch (IOException e) {
+                last = e;
+                System.out.println("Download of " + url + " failed (attempt " + attempt + " of "
+                        + DOWNLOAD_ATTEMPTS + "): " + e);
+                try {
+                    Thread.sleep(5_000L * attempt);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        throw new IOException("Could not download " + url + ": " + last.getMessage(), last);
+    }
+
+    private void downloadOnce(String url, File target) throws IOException {
         System.out.println("Downloading " + url);
         File temporary = new File(target.getPath() + ".part");
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
