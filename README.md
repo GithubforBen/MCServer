@@ -1345,6 +1345,34 @@ sie auch seinen Minecraft-Namen.
 Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
 steht in der Klasse, aus einem leeren Verzeichnis starten).
 
+## Info-Kanäle
+
+Der Bot erklärt das Netzwerk auf Discord: einmal für Spieler (alle Features und ihre Befehle), einmal
+für Admins (Admin-Befehle, Website, Neustart, Events, Moderation, bekannte Einschränkungen).
+
+| Befehl (Discord, Administrator) | Was er macht |
+|---------------------------------|--------------|
+| `/setinfochannel` | Postet hier die Erklärung für Spieler |
+| `/setadmininfochannel` | Postet hier das Handbuch für Admins |
+
+Jeder `##`-Abschnitt wird eine eigene Nachricht, damit man auf „Lotto“ verlinken kann statt auf eine
+Wand. Der Bot merkt sich seine Nachrichten (`info-channel-messages` bzw. `admin-info-channel-messages`
+in der `main-config.yml`) und bringt sie **bei jedem Start** auf den neuen Stand: ein geänderter
+Abschnitt wird bearbeitet, nur wenn sich die Zahl der Abschnitte ändert oder eine Nachricht fehlt,
+postet er alles neu. Löschen tut er nur seine eigenen Info-Nachrichten. Ein neuer Kanal räumt die
+Nachrichten im alten weg.
+
+Die Texte liegen in `ServerLauncherApplication/src/main/resources/discord-info/` (`spieler.md`,
+`admins.md`). Wer sie ohne Build ändern will, legt eine Datei gleichen Namens in `./discord-info/`
+neben den Launcher, die gewinnt. `{adresse}` und `{regeln}` werden mit der Adresse des Netzwerks und
+dem Link zur Regeln-Seite gefüllt. Ist eines davon nur lokal (`localhost`), fällt die Zeile weg.
+Discord zeigt keine Tabellen. Deshalb sind die Texte Listen, und pro Abschnitt sind höchstens 4096 Zeichen
+möglich (längere werden an einem Absatz geteilt).
+
+**Wer ein Feature baut, ergänzt den passenden Text.** Geprüft mit
+`ServerLauncherApplication/src/test/java/de/hems/utils/bot/info/InfoTextCheck.java` (Aufruf wie bei
+`RewardCheck`, aus einem leeren Verzeichnis starten).
+
 ## Lobby-NPCs
 
 In der Lobby stehen NPCs, die man anklickt (rechts oder links), um woanders hinzukommen:
