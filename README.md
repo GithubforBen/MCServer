@@ -9,19 +9,32 @@ Alles läuft auf **Minecraft 26.3** (Stand 2026-09-28, jeweils die neueste Versi
 
 | Teil | Version | Status |
 |------|---------|--------|
-| Paper | 26.3 (build 134) | **BETA** — der erste Beta-Build für 26.3, einen stabilen gibt es noch nicht |
+| Paper | 26.3 (build 140) | **BETA** — neuester Build vom 29.09., einen stabilen gibt es für 26.3 noch nicht |
 | Velocity | 4.2.0 (build 30) | stabil, neue Hauptversion (Config 2.9, API 4) |
 | WorldEdit | 7.4.6-beta-02 | **Beta** — das einzige WorldEdit für 26.3 |
 | WorldGuard | 7.0.19 | Release, für 26.3 freigegeben |
-| CoreProtect | 24.1 | Release, aber **nur bis 26.2** — schaltet sich auf 26.3 selbst ab |
+| CoreProtect | 25.0 | erster Build für 26.3, **nicht öffentlich** - kommt über einen Dropbox-Link |
 | Chunky | 1.5.3 | Release, für 26.3 freigegeben |
 | Simple Voicechat | 2.6.24 (Paper) / 2.6.18 (Velocity) | Release / neuestes Proxy-Plugin |
 
-**CoreProtect läuft auf 26.3 nicht.** Es prüft die Version selbst und meldet „Minecraft 26.3 is not
-supported“. Bis es eine Version für 26.3 gibt, loggt niemand Blöcke und es gibt kein Rollback; die
-CoreProtect-Abfrage der Admin-Website sagt dann „CoreProtect ist nicht verfügbar“. Sobald eine neue
-Version erscheint, ist das eine Zeile in `FileType` (plus `coreprotect` in `CommonCode/pom.xml` und
-`Survival/pom.xml`).
+**CoreProtect 25.0** gibt es weder auf Modrinth noch auf `maven.playpro.com` (beide enden bei 24.1, das
+sich auf 26.3 selbst abschaltet). Der Launcher lädt es deshalb über einen Dropbox-Link in `FileType`.
+**Wird der Link gelöscht oder läuft er ab, scheitert der Download** - dann einen neuen Link eintragen.
+Gebaut wird weiter gegen die API von 24.1 aus Maven; alles, was der Code davon aufruft, gibt es in 25.0
+unverändert (API-Version 13, mit dem 25.0-Jar kompiliert). Geprüft auf Paper 26.3 Build 134 und 140: startet,
+`/co status` antwortet, fährt sauber herunter.
+
+**Unsere Plugins schreiben selbst nach CoreProtect** (`de.hems.paper.CoreProtectLog`), wo sie die
+Welt an CoreProtect vorbei ändern: der Shop-Kauf nimmt Items aus der Lagerkiste (steht unter dem Käufer),
+der Erntehelfer pflanzt neu (unter dem Spieler, die Ernte selbst loggt CoreProtect über das
+`BlockBreakEvent`). Geprüft auf Paper 26.3 mit 25.0: `/co lookup` zeigt beide Einträge. Bedwars-,
+Hunger-Games-, Casino- und Speedrun-Server werden nach der Runde gelöscht, ihre Welt ändert unser Code
+dort bewusst ohne Log. Ohne CoreProtect tun die Aufrufe nichts.
+
+25.0 speichert standardmäßig in **DuckDB** (`database.duckdb`), nicht mehr in SQLite. Eine alte
+`database.db` wird nicht von selbst übernommen; dafür gibt es `/co migrate-db`. Wer lieber bei SQLite
+bleibt, setzt `database-type: sqlite` in `plugins/CoreProtect/config.yml`. Beim ersten Start lädt Paper
+die DuckDB-Bibliothek von Maven Central nach.
 
 Paper braucht **Java 25** - sowohl zum Bauen als auch zum Starten. Die Downloads stehen alle in
 `CommonCode/src/main/java/de/hems/types/FileType.java`, ein Update ist also ein Update dieser einen Datei
@@ -80,9 +93,11 @@ Der Launcher startet zuerst den Proxy und danach die Server aus `autostart` in d
 | `/neustart 10 aus` | In 10 Minuten herunterfahren, danach bleibt alles aus |
 | `/neustart abbrechen` | Den geplanten Neustart absagen |
 
-Ein neuer `/neustart` ersetzt einen geplanten. Jeder Server zählt selbst herunter: Chat bei 10, 5, 3, 2
-und 1 Minute und 30 Sekunden, eine Bossbar in den letzten 5 Minuten, ein Titel in den letzten 10
-Sekunden.
+Ein neuer `/neustart` ersetzt einen geplanten. Jeder Server zählt selbst herunter: beim Planen und bei 10,
+5, 3, 2 und 1 Minute und 30 Sekunden eine Chatzeile und ein Titel („In 10 Minuten wird der Server neu
+starten“), eine Bossbar in den letzten 5 Minuten, ein Sekunden-Countdown als Titel in den letzten 10
+Sekunden. Wer während eines geplanten Neustarts joint, bekommt Titel und Chatzeile zwei Sekunden nach dem
+Join.
 
 **Wenn es so weit ist:** alle Spieler werden mit Hinweis gekickt, Spieler und Welten gespeichert, jeder
 Server gestoppt - und der Launcher **wartet, bis jeder Java-Prozess wirklich weg ist**. Ein Server
@@ -104,6 +119,26 @@ Zurücksetzen würde sie sonst wegwerfen. Was passiert ist, steht in `update-res
 
 `start.sh` startet `run.sh` in der tmux-Sitzung `server`. **Einmalig:** eine Sitzung, die noch mit dem
 alten `start.sh` läuft, muss einmal von Hand beendet und neu gestartet werden, damit `run.sh` läuft.
+
+## Chunks vorladen (Chunky)
+
+Chunky ist auf **jedem** Paper-Server installiert (es gehört zu den Basis-Plugins aller Vorlagen) und
+läuft auf 26.3 - geprüft auf Build 134 und 140: 441 Chunks in 14 Sekunden. Vorladen spart Lag, wenn Spieler
+zum ersten Mal in neue Gegenden kommen; am sinnvollsten auf Survival, vor einem End-Event auch für das
+End.
+
+| Befehl (Op oder Konsole) | Was er macht |
+|--------------------------|--------------|
+| `/chunky world <welt>` | Welt wählen, z.B. `world`, `world_nether`, `world_the_end` |
+| `/chunky center <x> <z>` · `/chunky radius <blöcke>` | Mitte und Radius des Gebiets |
+| `/chunky worldborder` | Genau das Gebiet innerhalb der Weltgrenze |
+| `/chunky start` | Loslegen. Fortschritt steht in der Konsole |
+| `/chunky pause` · `/chunky continue` · `/chunky cancel` | Anhalten, weitermachen, abbrechen |
+| `/chunky progress` | Stand abfragen |
+
+Ohne Spiel geht es über das Konsolen-Panel der Website. Ein Lauf überlebt einen Neustart: nach dem
+Start mit `/chunky continue` weitermachen. Vorladen kostet CPU - während viel los ist, lieber
+pausieren.
 
 ## Server
 
@@ -1066,7 +1101,7 @@ nachprüfen kann. Vier Klassen mit `main` tun genau das:
 ./mvnw -q -pl PokerPlugin -am install -DskipTests
 CP=PokerPlugin/target/classes:PokerPlugin/target/test-classes
 java -cp $CP de.schnorrenbergers.poker.game.HandCheck        # 47 Prüfungen
-java -cp $CP de.schnorrenbergers.poker.game.TableCheck       # 57 Prüfungen
+java -cp $CP de.schnorrenbergers.poker.game.TableCheck       # 38 Prüfungen
 java -cp $CP de.schnorrenbergers.poker.bot.BotBalanceCheck   # Bot gegen Maniac, Nit, Station
 java -cp $CP de.schnorrenbergers.poker.bot.BotTableCheck     # sechs Bots gegeneinander
 java -cp $CP de.schnorrenbergers.poker.bot.BotCharacterCheck # Spread, Mischung, Drift
@@ -1344,6 +1379,34 @@ sie auch seinen Minecraft-Namen.
 
 Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
 steht in der Klasse, aus einem leeren Verzeichnis starten).
+
+## Info-Kanäle
+
+Der Bot erklärt das Netzwerk auf Discord: einmal für Spieler (alle Features und ihre Befehle), einmal
+für Admins (Admin-Befehle, Website, Neustart, Events, Moderation, bekannte Einschränkungen).
+
+| Befehl (Discord, Administrator) | Was er macht |
+|---------------------------------|--------------|
+| `/setinfochannel` | Postet hier die Erklärung für Spieler |
+| `/setadmininfochannel` | Postet hier das Handbuch für Admins |
+
+Jeder `##`-Abschnitt wird eine eigene Nachricht, damit man auf „Lotto“ verlinken kann statt auf eine
+Wand. Der Bot merkt sich seine Nachrichten (`info-channel-messages` bzw. `admin-info-channel-messages`
+in der `main-config.yml`) und bringt sie **bei jedem Start** auf den neuen Stand: ein geänderter
+Abschnitt wird bearbeitet, nur wenn sich die Zahl der Abschnitte ändert oder eine Nachricht fehlt,
+postet er alles neu. Löschen tut er nur seine eigenen Info-Nachrichten. Ein neuer Kanal räumt die
+Nachrichten im alten weg.
+
+Die Texte liegen in `ServerLauncherApplication/src/main/resources/discord-info/` (`spieler.md`,
+`admins.md`). Wer sie ohne Build ändern will, legt eine Datei gleichen Namens in `./discord-info/`
+neben den Launcher, die gewinnt. `{adresse}` und `{regeln}` werden mit der Adresse des Netzwerks und
+dem Link zur Regeln-Seite gefüllt. Ist eines davon nur lokal (`localhost`), fällt die Zeile weg.
+Discord zeigt keine Tabellen. Deshalb sind die Texte Listen, und pro Abschnitt sind höchstens 4096 Zeichen
+möglich (längere werden an einem Absatz geteilt).
+
+**Wer ein Feature baut, ergänzt den passenden Text.** Geprüft mit
+`ServerLauncherApplication/src/test/java/de/hems/utils/bot/info/InfoTextCheck.java` (Aufruf wie bei
+`RewardCheck`, aus einem leeren Verzeichnis starten).
 
 ## Lobby-NPCs
 

@@ -125,6 +125,16 @@ public final class RoundService {
     }
 
     /**
+     * Takes a change into the local copy before the launcher has confirmed it, so the server that made it
+     * does not read its own older state back in the meantime.
+     *
+     * @param round the changed round
+     */
+    public static void remember(RoundData round) {
+        if (round != null && round.getId() != null) rounds.put(round.getId(), round);
+    }
+
+    /**
      * @param serverName a server
      * @return the round running on it, or {@code null}
      */
@@ -198,9 +208,6 @@ public final class RoundService {
      */
     public static void saveAsync(RoundData round, Consumer<Boolean> callback) {
         if (!PaperContext.hasPlugin()) return;
-        // kept here at once, so whoever reads the list next sees the change rather than the version from
-        // before it - the launcher's answer only comes back a moment later
-        if (round != null && round.getId() != null) rounds.put(round.getId(), round);
         PaperContext.async(() -> {
             boolean stored = saveBlocking(round);
             if (callback == null) return;

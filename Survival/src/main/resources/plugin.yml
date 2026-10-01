@@ -2,6 +2,7 @@ name: Survival
 version: '1.0-SNAPSHOT'
 main: de.schnorrenbergers.survival.Survival
 api-version: '26.3'
+softdepend: [CoreProtect]
 commands:
   lotto:
     description: Lotto 4 aus 15 - mit Bits tippen, wer alle vier trifft, bekommt den Topf
