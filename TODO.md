@@ -514,7 +514,7 @@ Discord mit Admin-Rechten, **S** = Spieler.
 **Survival-Kleinigkeiten (C)**
 - [ ] `/shop create` kostet 2000 Bits, und erst nachdem Kiste, Team und Chunk passen
 - [ ] Team umbenennen: Teamkasse und Shops ziehen mit. Team auflösen: Anführer bekommt die Kasse
-- [ ] Paper 26.3 Build 134: alle Server starten ohne Exception in der Konsole
+- [ ] Paper 26.3 Build 140: alle Server starten im Netzwerk ohne Exception in der Konsole
 
 **Von außen erreichbar, bewusst nicht geändert**
 - [ ] Velocitys eingebautes `/server <name>` ist für **jeden Spieler** offen (Velocity sperrt es nur bei

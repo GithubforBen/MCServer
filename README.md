@@ -9,7 +9,7 @@ Alles läuft auf **Minecraft 26.3** (Stand 2026-09-28, jeweils die neueste Versi
 
 | Teil | Version | Status |
 |------|---------|--------|
-| Paper | 26.3 (build 134) | **BETA** — der erste Beta-Build für 26.3, einen stabilen gibt es noch nicht |
+| Paper | 26.3 (build 140) | **BETA** — neuester Build vom 29.09., einen stabilen gibt es für 26.3 noch nicht |
 | Velocity | 4.2.0 (build 30) | stabil, neue Hauptversion (Config 2.9, API 4) |
 | WorldEdit | 7.4.6-beta-02 | **Beta** — das einzige WorldEdit für 26.3 |
 | WorldGuard | 7.0.19 | Release, für 26.3 freigegeben |
@@ -21,7 +21,7 @@ Alles läuft auf **Minecraft 26.3** (Stand 2026-09-28, jeweils die neueste Versi
 sich auf 26.3 selbst abschaltet). Der Launcher lädt es deshalb über einen Dropbox-Link in `FileType`.
 **Wird der Link gelöscht oder läuft er ab, scheitert der Download** - dann einen neuen Link eintragen.
 Gebaut wird weiter gegen die API von 24.1 aus Maven; alles, was der Code davon aufruft, gibt es in 25.0
-unverändert (API-Version 13, mit dem 25.0-Jar kompiliert). Geprüft auf Paper 26.3 Build 134: startet,
+unverändert (API-Version 13, mit dem 25.0-Jar kompiliert). Geprüft auf Paper 26.3 Build 134 und 140: startet,
 `/co status` antwortet, fährt sauber herunter.
 
 **Unsere Plugins schreiben selbst nach CoreProtect** (`de.hems.paper.CoreProtectLog`), wo sie die
@@ -123,7 +123,7 @@ alten `start.sh` läuft, muss einmal von Hand beendet und neu gestartet werden, 
 ## Chunks vorladen (Chunky)
 
 Chunky ist auf **jedem** Paper-Server installiert (es gehört zu den Basis-Plugins aller Vorlagen) und
-läuft auf 26.3 - geprüft auf Build 134: 441 Chunks in 14 Sekunden. Vorladen spart Lag, wenn Spieler
+läuft auf 26.3 - geprüft auf Build 134 und 140: 441 Chunks in 14 Sekunden. Vorladen spart Lag, wenn Spieler
 zum ersten Mal in neue Gegenden kommen; am sinnvollsten auf Survival, vor einem End-Event auch für das
 End.
 
