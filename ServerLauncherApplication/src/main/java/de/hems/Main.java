@@ -231,6 +231,8 @@ public class Main {
         startConfiguredServers();
         // servers created for an event are nobody's job to clean up, so the launcher does it
         idleServerWatchdog = new IdleServerWatchdog(serverHandler);
+        // the lobby and survival come back on their own after a crash
+        new de.hems.utils.server.AutostartWatchdog(serverHandler);
         startWebServer();
         if (jda != null) discordTickets.ensurePanel();
         if (jda != null) discordInfo.refreshAll();

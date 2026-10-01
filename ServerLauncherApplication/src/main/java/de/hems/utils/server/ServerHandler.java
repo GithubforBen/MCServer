@@ -32,10 +32,17 @@ public class ServerHandler {
     private static final String CONFIG_ROOT = "servers";
 
     private final List<ServerInstance> instances = new CopyOnWriteArrayList<>();
+    /**
+     * Servers somebody stopped on purpose - an admin, a restart of the network, the idle watchdog. A server
+     * that is gone without being in here crashed, which is what the {@link AutostartWatchdog} asks.
+     */
+    private final Set<String> stoppedOnPurpose = java.util.concurrent.ConcurrentHashMap.newKeySet();
     /** Set once the launcher has one, so a granted slot is given back when its server starts. */
     private MemoryWatch memoryWatch;
 
     public ServerHandler() throws Exception {
+        // the launcher hands out the ports; what the plugins send about them must not overwrite that
+        ListenerAdapter.ServerName.claimPortAuthority();
         loadKnownServers();
         startNewInstance(ListenerAdapter.ServerName.VELOCITY, ServerTemplate.PROXY, null, new FileType.PLUGIN[0]);
     }
@@ -177,6 +184,7 @@ public class ServerHandler {
         // the slot this server was granted before it existed is now the server itself
         if (memoryWatch != null) memoryWatch.release(memory);
         instance.start();
+        stoppedOnPurpose.remove(name.toString());
         rememberServer(name, memory, jarFile, template, resolved);
         announceRegistered(instance);
     }
@@ -235,6 +243,21 @@ public class ServerHandler {
      */
     public void setMemoryWatch(MemoryWatch memoryWatch) {
         this.memoryWatch = memoryWatch;
+    }
+
+    /**
+     * @param name a server that is being stopped by somebody, not by a crash
+     */
+    void markStoppedOnPurpose(ListenerAdapter.ServerName name) {
+        stoppedOnPurpose.add(name.toString());
+    }
+
+    /**
+     * @param name a server
+     * @return whether its last stop was asked for
+     */
+    public boolean wasStoppedOnPurpose(ListenerAdapter.ServerName name) {
+        return stoppedOnPurpose.contains(name.toString());
     }
 
     public boolean doesInstanceExist(ListenerAdapter.ServerName name) {

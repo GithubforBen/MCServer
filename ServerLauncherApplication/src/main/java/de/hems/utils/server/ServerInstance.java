@@ -215,6 +215,8 @@ public class ServerInstance {
     public void stop() throws IOException {
         System.out.println("Stopping server " + name);
         stopRequested = true;
+        ServerHandler handler = de.hems.Main.getInstance() == null ? null : de.hems.Main.getInstance().getServerHandler();
+        if (handler != null) handler.markStoppedOnPurpose(name);
         progress.onStopping();
         executeCommand("stop");
         stopConsoleCapture();

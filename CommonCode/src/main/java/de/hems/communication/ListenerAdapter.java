@@ -444,10 +444,23 @@ public class ListenerAdapter implements Receiver {
         /**
          * Keeps one instance per name after deserialization and adopts the port the sender knew about.
          */
+        /**
+         * Makes this process the one that decides the ports - the launcher. From then on a name that arrives
+         * over the network does not change the port this process knows: every plugin carries the fixed ports
+         * it was compiled with, and a survival server whose port was moved in the config would otherwise be
+         * set back to 3000 by the first event its own plugin sends - after which the launcher probed whatever
+         * else listens on 3000 and took it for survival being up.
+         */
+        public static void claimPortAuthority() {
+            portAuthority = true;
+        }
+
+        private static volatile boolean portAuthority;
+
         private Object readResolve() {
             ServerName existing = REGISTRY.putIfAbsent(name, this);
             if (existing == null) return this;
-            if (port != NO_PORT) existing.port = port;
+            if (port != NO_PORT && !portAuthority) existing.port = port;
             return existing;
         }
     }
