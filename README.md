@@ -215,6 +215,11 @@ einmal.
 Passwörter liegen als PBKDF2-Hash in der `main-config.yml`, nie im Klartext. Die Session hängt an einem
 `HttpOnly`-Cookie, ändernde Requests brauchen zusätzlich den CSRF-Token aus der Session.
 
+**Passwort vergessen:** `./admin-passwort.sh` zeigt die Accounts und setzt für einen davon ein neues
+Passwort (eingetippt oder zufällig erzeugt), auf Wunsch auch einen neuen 2FA-Schlüssel mit QR-Code. Das alte
+Passwort lässt sich nicht anzeigen, gespeichert ist nur der Hash. Das geht auch, während das Netzwerk läuft:
+der Launcher liest die Accounts beim nächsten Login neu aus der Datei.
+
 ### Panels
 
 | Panel | Was es kann |
@@ -413,6 +418,13 @@ Verbindung kämen die Teams nie an, und `/backpack` würde bis zum Serverneustar
 geladen" antworten - lautlos, denn die Aktualisierung bricht in dem Fall ohne Meldung ab. Der Server steht
 dann zweimal im JGroups-Cluster; das kostet einen Teilnehmer mehr und sonst nichts, weil Events ohnehin an
 alle gehen und jede Verbindung nur mit ihren eigenen Handlern antwortet.
+
+Der Cluster läuft über **TCP auf 127.0.0.1** (`CommonCode/src/main/resources/mcserver-jgroups.xml`, Ports ab
+7800), nicht über das Multicast, das JGroups von Haus aus nimmt: das verwerfen viele Hoster, und dann steht
+jeder Server allein in seinem Cluster - jede Frage an den Launcher endet mit „Der Host antwortet nicht“
+(`/verify`, `/servermanager`, Geld, Lotto, …). Ob alle sich sehen, steht beim Start im Log:
+`[JGroups] Connected as 'LOBBY' … View=… [HOST, VELOCITY, LOBBY]`. Die `jgroups.*`-System-Properties
+überschreiben die Datei, etwa für ein Netzwerk über mehrere Rechner.
 
 **Die Größe hängt davon ab, wer zahlt:** sobald die zahlenden Mitglieder eines Teams in der *Mehrheit*
 sind, wird aus der Kiste (27 Slots) eine Doppelkiste (54). Gleichstand zählt nicht als Mehrheit - ein
@@ -1286,6 +1298,7 @@ Servern - ohne Neustart. Wer nicht auf der Whitelist steht, bekommt beim Joinen 
 | Wo | Was |
 |----|-----|
 | `/regeln` (ohne Login) | Regeln lesen, akzeptieren, Namen eintragen. Ein Versuch alle 10 Sekunden pro Adresse |
+| Discord `/regeln` | Zeigt die Regeln (nur dem, der fragt) mit einem Knopf zu dieser Seite |
 | Admin-Website → Whitelist | Regeln schreiben, Whitelist an/aus, Selbst-Eintragen an/aus, öffentlicher Link, Liste mit Entfernen |
 | Admin-Website → Einstellungen | Namen, die Admins von Hand eintragen (wie bisher `whitelist` in der `main-config.yml`) |
 
@@ -1411,6 +1424,17 @@ möglich (längere werden an einem Absatz geteilt).
 **Wer ein Feature baut, ergänzt den passenden Text.** Geprüft mit
 `ServerLauncherApplication/src/test/java/de/hems/utils/bot/info/InfoTextCheck.java` (Aufruf wie bei
 `RewardCheck`, aus einem leeren Verzeichnis starten).
+
+## Lobby-Schutz und Portal
+
+In der Lobby verändert niemand die Karte, außer im Kreativmodus: kein Block abgebaut oder gesetzt, kein
+Eimer, keine Rahmen, Bilder oder Rüstungsständer, kein zertrampeltes Feld, keine Blumentöpfe oder
+Notenblöcke. Von selbst ändert sich auch nichts - Explosionen, Feuer, Laubzerfall und schmelzendes Eis sind
+aus, Mobs spawnen nicht und das Wetter bleibt. Das ersetzt die Vanilla-Spawn-Protection, die Ops ausnimmt
+und nach 16 Blöcken endet.
+
+Ein **Netherportal** in der Lobby führt auf Survival (wie `/warp SURVIVAL`, wartet also auf einen Server,
+der gerade startet).
 
 ## Lobby-NPCs
 

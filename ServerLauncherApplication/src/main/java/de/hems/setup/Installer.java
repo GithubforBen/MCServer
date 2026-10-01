@@ -5,6 +5,7 @@ import de.hems.utils.QrCode;
 import de.hems.utils.bot.verification.DiscordOwner;
 import de.hems.utils.server.MemoryLimits;
 import de.hems.utils.types.RunningMode;
+import de.hems.utils.webconsole.auth.AdminAccount;
 import de.hems.utils.webconsole.auth.AuthService;
 import de.hems.utils.webconsole.auth.Passwords;
 import de.hems.utils.webconsole.auth.Totp;
@@ -56,7 +57,66 @@ public final class Installer {
     private boolean passwordGenerated;
 
     public static void main(String[] args) throws Exception {
+        if (args.length > 0 && args[0].equals("passwort")) {
+            new Installer().password();
+            return;
+        }
         new Installer().run();
+    }
+
+    /**
+     * {@code ./admin-passwort.sh}: shows the website accounts and sets a new password for one of them, the
+     * 2FA key too if asked to. The old password can not be shown - only its hash is stored, which is the
+     * point of storing a hash.
+     * <p>
+     * A running launcher takes the change on the next login (see {@link Configuration#adopt}).
+     */
+    private void password() {
+        title("Admin-Website: Passwort");
+        AuthService auth = new AuthService(configuration);
+        List<String> accounts = auth.listAccounts();
+        if (accounts.isEmpty()) {
+            System.out.println("Es gibt noch keinen Account - es wird einer angelegt.");
+        } else {
+            System.out.println("Accounts: " + String.join(", ", accounts));
+            System.out.println("Ein Passwort lässt sich nicht anzeigen, gespeichert ist nur sein Hash. Es wird neu gesetzt.");
+        }
+        String name = ask("Benutzername", accounts.isEmpty() ? "admin" : accounts.get(0),
+                value -> value.matches("[A-Za-z0-9_.-]{1,32}") ? null : "Nur Buchstaben, Ziffern, _ . und -.");
+        AdminAccount existing = auth.findAccount(name);
+        if (existing != null) name = existing.getUsername();
+        else name = name.toLowerCase(Locale.ROOT);
+
+        String password;
+        boolean generated = false;
+        while (true) {
+            password = secret("Neues Passwort (leer = zufällig erzeugen)", false);
+            if (password.isEmpty()) {
+                password = Passwords.generate(20);
+                generated = true;
+                break;
+            }
+            if (password.length() < 12) {
+                System.out.println("  Mindestens 12 Zeichen.");
+                continue;
+            }
+            if (!password.equals(secret("Passwort wiederholen", false))) {
+                System.out.println("  Die beiden stimmen nicht überein.");
+                continue;
+            }
+            break;
+        }
+        boolean newKey = existing == null || existing.getTotpSecret() == null
+                || yes("Auch 2FA neu einrichten (z.B. Handy verloren)?", false);
+        String totpSecret = newKey ? Totp.generateSecret() : existing.getTotpSecret();
+        auth.saveAccount(name, password, totpSecret);
+
+        title("Gespeichert");
+        System.out.println("  Benutzer: " + name);
+        if (generated) System.out.println("  Passwort: " + password);
+        if (newKey) printAuthenticator(auth, name, totpSecret);
+        else System.out.println("  2FA bleibt wie bisher.");
+        System.out.println();
     }
 
     private void run() throws IOException {
@@ -86,24 +146,28 @@ public final class Installer {
             System.out.println();
             System.out.println("  Admin-Website: " + accountName);
             if (passwordGenerated) System.out.println("  Passwort:      " + accountPassword);
-            System.out.println("  2FA-Schlüssel: " + totpSecret);
-            String uri = auth.toAuthenticatorUri(accountName, totpSecret);
-            String qr = QrCode.terminal(uri, "  ");
-            if (qr != null) {
-                System.out.println("  Mit Google Authenticator scannen (\"+\" -> QR-Code scannen):");
-                System.out.println();
-                System.out.print(qr);
-                System.out.println();
-            }
-            System.out.println("  Oder den Schlüssel von Hand eingeben bzw. diesen Link öffnen:");
-            System.out.println("  " + uri);
-            System.out.println("  Das wird nur jetzt angezeigt - bitte sofort sichern.");
+            printAuthenticator(auth, accountName, totpSecret);
         }
         for (String note : notes) {
             System.out.println();
             System.out.println("  Hinweis: " + note);
         }
         System.out.println();
+    }
+
+    private static void printAuthenticator(AuthService auth, String name, String totpSecret) {
+        System.out.println("  2FA-Schlüssel: " + totpSecret);
+        String uri = auth.toAuthenticatorUri(name, totpSecret);
+        String qr = QrCode.terminal(uri, "  ");
+        if (qr != null) {
+            System.out.println("  Mit Google Authenticator scannen (\"+\" -> QR-Code scannen):");
+            System.out.println();
+            System.out.print(qr);
+            System.out.println();
+        }
+        System.out.println("  Oder den Schlüssel von Hand eingeben bzw. diesen Link öffnen:");
+        System.out.println("  " + uri);
+        System.out.println("  Das wird nur jetzt angezeigt - bitte sofort sichern.");
     }
 
     // --- the questions ---------------------------------------------------------------------------------
