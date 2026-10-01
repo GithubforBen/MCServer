@@ -20,6 +20,22 @@ import java.util.List;
 import java.util.UUID;
 
 public class PaperConfigurator extends ServerConfigurator {
+    /**
+     * The version paper writes into its config files. A file written before the first start carries it, so
+     * paper takes it as current and only fills in what is missing - without it, paper would take the file
+     * for one from before its first migration and run every one of them over it.
+     */
+    private static final int PAPER_CONFIG_VERSION = 31;
+
+    /** What anti-xray hides, overworld and nether - one list, since engine mode 1 picks the cover per world. */
+    private static final List<String> HIDDEN_ORES = List.of(
+            "coal_ore", "deepslate_coal_ore", "copper_ore", "deepslate_copper_ore", "raw_copper_block",
+            "iron_ore", "deepslate_iron_ore", "raw_iron_block", "gold_ore", "deepslate_gold_ore",
+            "redstone_ore", "deepslate_redstone_ore", "lapis_ore", "deepslate_lapis_ore",
+            "diamond_ore", "deepslate_diamond_ore", "emerald_ore", "deepslate_emerald_ore",
+            "nether_gold_ore", "nether_quartz_ore", "ancient_debris",
+            "chest", "trapped_chest", "barrel", "spawner", "amethyst_cluster");
+
     /** The seed the survival world is generated from. */
     private static final String SURVIVAL_SEED = "8750345191364376078";
 
@@ -101,6 +117,7 @@ public class PaperConfigurator extends ServerConfigurator {
         // when the world is created, an existing one stays as it is
         if (template == ServerTemplate.SURVIVAL) {
             setProperty("server.properties", "level-seed", SURVIVAL_SEED);
+            survivalRules();
         }
 
         overwriteToFile("eula.txt", "eula=true", true);
@@ -144,5 +161,40 @@ public class PaperConfigurator extends ServerConfigurator {
         setProperty("server.properties", "enforce-whitelist", enforced);
         writeToYmlConfiguration("spigot.yml", "messages.whitelist", WhitelistSync.kickMessage(), true);
         System.out.println("Configured server " + name + " on port " + port);
+    }
+
+    /**
+     * What survival plays by, written at every start - so it holds on a server that was just created as much
+     * as on one that has been running for months:
+     * <ul>
+     *     <li>anti-xray on. Engine mode 1 sends the ores nobody can see as stone (netherrack in the nether),
+     *     which leaves an x-ray texture pack nothing to show; §2.3 of the rules forbids it, this enforces it.</li>
+     *     <li>the dupes the rules allow (§2.2): TNT, carpet and rail dupers (piston duplication), sand and
+     *     gravel through the end portal, and string through tripwire hooks. Paper switches all three off by
+     *     default.</li>
+     * </ul>
+     */
+    private void survivalRules() throws Exception {
+        String world = "config/paper-world-defaults.yml";
+        String global = "config/paper-global.yml";
+        stamp(world);
+        stamp(global);
+        writeToYmlConfiguration(world, "anticheat.anti-xray.enabled", true, true);
+        writeToYmlConfiguration(world, "anticheat.anti-xray.engine-mode", 1, true);
+        // the nether's ancient debris goes up to 119; the overworld's ores above this are on mountain faces
+        writeToYmlConfiguration(world, "anticheat.anti-xray.max-block-height", 128, true);
+        writeToYmlConfiguration(world, "anticheat.anti-xray.hidden-blocks", HIDDEN_ORES, true);
+        writeToYmlConfiguration(global, "unsupported-settings.allow-piston-duplication", true, true);
+        writeToYmlConfiguration(global, "unsupported-settings.allow-unsafe-end-portal-teleportation", true, true);
+        writeToYmlConfiguration(global, "unsupported-settings.skip-tripwire-hook-placement-validation", true, true);
+    }
+
+    /**
+     * Gives a config file that paper has not written yet the version paper would, see
+     * {@link #PAPER_CONFIG_VERSION}.
+     */
+    private void stamp(String file) throws Exception {
+        if (new File(this.directory, file).exists()) return;
+        writeToYmlConfiguration(file, "_version", PAPER_CONFIG_VERSION, true);
     }
 }
