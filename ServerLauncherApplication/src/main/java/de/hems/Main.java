@@ -186,7 +186,8 @@ public class Main {
                             new de.hems.utils.bot.verification.OpCommand(accountLinkStore),
                             new PayingPlayerCommand(),
                             new SetLoggingChannel(),
-                            discordInfo)
+                            discordInfo,
+                            new de.hems.utils.bot.info.RulesCommand())
                     .setActivity(Activity.playing("Playing on " + getPublicAddress()))
                     .build();
             jda.awaitReady();
@@ -206,6 +207,7 @@ public class Main {
                     .addCommands(
                             Commands.slash("setadmininfochannel", "Postet hier das Handbuch für Admins").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
                             ))
+                    .addCommands(Commands.slash("regeln", "Zeigt die Regeln des Servers und den Link, um auf die Whitelist zu kommen"))
                     .addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true))
                     .addCommands(
                             Commands.slash("op", "Gib einem Spieler Operator-Rechte (nur der Besitzer)")
