@@ -1395,6 +1395,11 @@ sie auch seinen Minecraft-Namen.
 Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
 steht in der Klasse, aus einem leeren Verzeichnis starten).
 
+**Ohne Discord:** Ein zweiter Rechner mit einer Kopie des Netzwerks (zum Testen) darf sich nicht mit
+demselben Bot anmelden - beide würden auf jeden Befehl antworten, und ein `/verify`-Code vom einen wäre
+dem anderen unbekannt. `MCSERVER_DISCORD=off` in der `.env.local` dieses Rechners startet den Launcher ohne
+Bot.
+
 ## Info-Kanäle
 
 Der Bot erklärt das Netzwerk auf Discord: einmal für Spieler (alle Features und ihre Befehle), einmal
