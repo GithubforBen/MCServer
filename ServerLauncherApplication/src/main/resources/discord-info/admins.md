@@ -65,6 +65,7 @@ Vorlagen: `LOBBY`, `SURVIVAL`, `BEDWARS`, `EVENT`. Jeder Name kann gestartet wer
 
 - `/banane <spieler> <HACKING|GRIEFING|OTHER> <zahl> <m|h|d|w>`: zeitlich begrenzter Bann (Survival)
 - `/verify wer <spieler>`: wer das auf Discord ist (`network.verify.lookup`)
+- **CoreProtect** (auf jedem Server): `/co inspect` zeigt, wer einen Block gesetzt oder abgebaut hat, `/co rollback` macht Griefing rückgängig. Die Abfrage geht auch über die Website.
 
 **Admin-Aktionen werden geloggt.** Auf Survival landen `gamemode`, `give`, `tp`, `kill`, `ban`, `kick`, `clear`, `fill`, `setblock` und ähnliche Befehle von Ops im Logging-Kanal, ebenso jeder Spielmoduswechsel. Begründen lässt sich das nachträglich mit `/legitimize <uuid|@all> "<grund>"` (`network.adminabuse.legitimize`). Unter jedem Log-Eintrag auf Discord steht ein Knopf, der ein Ticket zu genau dieser Aktion öffnet.
 
@@ -130,6 +131,5 @@ Jede passende Belohnung wird ausgezahlt. Bedwars-, Pokernacht- und Hunger-Games-
 
 ## Bekannte Einschränkungen
 
-- **CoreProtect läuft auf Minecraft 26.3 nicht.** Bis es ein Update gibt, wird nichts geloggt und es gibt **kein Rollback** von Griefing.
 - Paper 26.3 und WorldEdit sind noch **Beta**-Versionen.
 - Backups vor einem Versionswechsel macht der Launcher selbst. Gelöscht werden sie nie, also auf den Plattenplatz achten.

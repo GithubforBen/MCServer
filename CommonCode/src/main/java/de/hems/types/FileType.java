@@ -180,8 +180,11 @@ public class FileType implements Serializable {
                         "https://cdn.modrinth.com/data/1u6JkXh5/versions/J1eeOh6C/worldedit-bukkit-7.4.6-beta-02.jar";
                 case WORLD_GUARD ->
                         "https://cdn.modrinth.com/data/DKY9btbd/versions/TtfwTyi6/worldguard-bukkit-7.0.19.jar";
+                // CoreProtect 25.0, the first build for 26.3. Not on Modrinth or maven.playpro.com (both end
+                // at 24.1, which switches itself off on 26.3), so it comes from this link. The api it is
+                // compiled against stays 24.1 in the poms - our calls exist unchanged in 25.0 (API 13)
                 case CORE_PROTECT ->
-                        "https://cdn.modrinth.com/data/Lu3KuzdV/versions/3sehX6Sg/CoreProtect-CE-24.1.jar";
+                        "https://www.dropbox.com/scl/fi/3e5qgkrfqnjoldx09k8w1/CoreProtect-25.0.jar?rlkey=vusyaidwm3mhacq2x2nh75o00&st=e3ufdrt1&dl=1";
                 case CHUNKY ->
                         "https://cdn.modrinth.com/data/fALzjamp/versions/MdY6JATr/Chunky-Bukkit-1.5.3.jar";
                 case SIMPLE_VOICECHAT_PAPER ->
@@ -192,7 +195,8 @@ public class FileType implements Serializable {
         }
 
         public static String getFileName(PLUGIN type) {
-            String url = getFileURL(type);
+            // a share link carries its key after the "?", which is no part of a file name
+            String url = getFileURL(type).split("\\?")[0];
             return url.split("/")[url.split("/").length - 1];
         }
 

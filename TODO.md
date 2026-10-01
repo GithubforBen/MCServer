@@ -142,7 +142,13 @@ Offen:
       über `./poker-world` — mit zwei 26.3-Servern nacheinander geprüft
 - [x] Hunger Games: eine 26.1-Karte als `./hungergames-world` wird auf 26.3 hochgestuft, `hungergames.yml`
       gefunden; der Nether wird entladen, weil `allow-nether=false` ihn auf 26.3 nicht mehr aufhält
-- [ ] **CoreProtect gibt es nicht für 26.3** — es schaltet sich ab. Neue Version eintragen, sobald sie da ist
+- [x] **CoreProtect gibt es nicht für 26.3** — es schaltet sich ab. Neue Version eintragen, sobald sie da ist
+      → 2026-10-01: 25.0 eingetragen (Dropbox-Link, nicht öffentlich), auf Paper 26.3 Build 134 gestartet
+- [ ] CoreProtect 25.0 im Netzwerk: Block abbauen, `/co inspect` zeigt ihn, `/co rollback` stellt ihn
+      wieder her, CoreProtect-Abfrage der Admin-Website liefert Treffer
+- [ ] Alte `database.db` von Survival (falls vorhanden): mit `/co migrate-db` nach DuckDB übernehmen
+      oder `database-type: sqlite` setzen - entscheiden
+- [ ] Sobald 25.0 (oder neuer) öffentlich auf Modrinth liegt: Link dorthin umstellen
 - [ ] Auf Paper 26.3 stable und WorldEdit 7.4.6 (Release) wechseln, sobald es sie gibt
 - [ ] Die `backups/` werden nie aufgeräumt
 

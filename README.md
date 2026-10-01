@@ -13,15 +13,21 @@ Alles läuft auf **Minecraft 26.3** (Stand 2026-09-28, jeweils die neueste Versi
 | Velocity | 4.2.0 (build 30) | stabil, neue Hauptversion (Config 2.9, API 4) |
 | WorldEdit | 7.4.6-beta-02 | **Beta** — das einzige WorldEdit für 26.3 |
 | WorldGuard | 7.0.19 | Release, für 26.3 freigegeben |
-| CoreProtect | 24.1 | Release, aber **nur bis 26.2** — schaltet sich auf 26.3 selbst ab |
+| CoreProtect | 25.0 | erster Build für 26.3, **nicht öffentlich** - kommt über einen Dropbox-Link |
 | Chunky | 1.5.3 | Release, für 26.3 freigegeben |
 | Simple Voicechat | 2.6.24 (Paper) / 2.6.18 (Velocity) | Release / neuestes Proxy-Plugin |
 
-**CoreProtect läuft auf 26.3 nicht.** Es prüft die Version selbst und meldet „Minecraft 26.3 is not
-supported“. Bis es eine Version für 26.3 gibt, loggt niemand Blöcke und es gibt kein Rollback; die
-CoreProtect-Abfrage der Admin-Website sagt dann „CoreProtect ist nicht verfügbar“. Sobald eine neue
-Version erscheint, ist das eine Zeile in `FileType` (plus `coreprotect` in `CommonCode/pom.xml` und
-`Survival/pom.xml`).
+**CoreProtect 25.0** gibt es weder auf Modrinth noch auf `maven.playpro.com` (beide enden bei 24.1, das
+sich auf 26.3 selbst abschaltet). Der Launcher lädt es deshalb über einen Dropbox-Link in `FileType`.
+**Wird der Link gelöscht oder läuft er ab, scheitert der Download** - dann einen neuen Link eintragen.
+Gebaut wird weiter gegen die API von 24.1 aus Maven; alles, was der Code davon aufruft, gibt es in 25.0
+unverändert (API-Version 13, mit dem 25.0-Jar kompiliert). Geprüft auf Paper 26.3 Build 134: startet,
+`/co status` antwortet, fährt sauber herunter.
+
+25.0 speichert standardmäßig in **DuckDB** (`database.duckdb`), nicht mehr in SQLite. Eine alte
+`database.db` wird nicht von selbst übernommen; dafür gibt es `/co migrate-db`. Wer lieber bei SQLite
+bleibt, setzt `database-type: sqlite` in `plugins/CoreProtect/config.yml`. Beim ersten Start lädt Paper
+die DuckDB-Bibliothek von Maven Central nach.
 
 Paper braucht **Java 25** - sowohl zum Bauen als auch zum Starten. Die Downloads stehen alle in
 `CommonCode/src/main/java/de/hems/types/FileType.java`, ein Update ist also ein Update dieser einen Datei
