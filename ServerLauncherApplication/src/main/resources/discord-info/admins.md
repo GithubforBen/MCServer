@@ -12,6 +12,8 @@ Alles, was Admins und Ops auf dem Netzwerk steuern können. Was Spieler können,
 - `/setloggingchannel`: Hier landen Admin-Aktionen aus dem Spiel
 - `/setinfochannel`: Hier landet die Erklärung für Spieler
 - `/setadmininfochannel`: Hier landet dieses Handbuch
+- `/setruleschannel`: Hier landen die Regeln zum Durchblättern
+- Steht im Kanal schon etwas, wird er archiviert (umbenannt in „…-archiv“, versteckt) und ein frischer Kanal kommt an seine Stelle
 
 Beide Info-Texte aktualisiert der Bot bei jedem Start des Launchers selbst.
 

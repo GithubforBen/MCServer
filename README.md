@@ -1298,7 +1298,7 @@ Servern - ohne Neustart. Wer nicht auf der Whitelist steht, bekommt beim Joinen 
 | Wo | Was |
 |----|-----|
 | `/regeln` (ohne Login) | Regeln lesen, akzeptieren, Namen eintragen. Ein Versuch alle 10 Sekunden pro Adresse |
-| Discord `/regeln` | Zeigt die Regeln (nur dem, der fragt) mit einem Knopf zu dieser Seite |
+| Discord `/regeln` | Zeigt die Regeln (nur dem, der fragt) zum Durchblättern, mit einem Knopf zu dieser Seite |
 | Admin-Website → Whitelist | Regeln schreiben, Whitelist an/aus, Selbst-Eintragen an/aus, öffentlicher Link, Liste mit Entfernen |
 | Admin-Website → Einstellungen | Namen, die Admins von Hand eintragen (wie bisher `whitelist` in der `main-config.yml`) |
 
@@ -1398,19 +1398,30 @@ steht in der Klasse, aus einem leeren Verzeichnis starten).
 ## Info-Kanäle
 
 Der Bot erklärt das Netzwerk auf Discord: einmal für Spieler (alle Features und ihre Befehle), einmal
-für Admins (Admin-Befehle, Website, Neustart, Events, Moderation, bekannte Einschränkungen).
+für Admins (Admin-Befehle, Website, Neustart, Events, Moderation, bekannte Einschränkungen), und die Regeln.
 
-| Befehl (Discord, Administrator) | Was er macht |
-|---------------------------------|--------------|
-| `/setinfochannel` | Postet hier die Erklärung für Spieler |
-| `/setadmininfochannel` | Postet hier das Handbuch für Admins |
+| Befehl (Discord) | Was er macht |
+|------------------|--------------|
+| `/setinfochannel` (Administrator) | Die Erklärung für Spieler kommt in diesen Kanal |
+| `/setadmininfochannel` (Administrator) | Das Handbuch für Admins kommt in diesen Kanal |
+| `/setruleschannel` (Administrator) | Die Regeln kommen in diesen Kanal, mit Knopf zur Regeln-Seite |
+| `/regeln` (jeder) | Zeigt die Regeln nur dem, der fragt, zum Durchblättern |
 
-Jeder `##`-Abschnitt wird eine eigene Nachricht, damit man auf „Lotto“ verlinken kann statt auf eine
-Wand. Der Bot merkt sich seine Nachrichten (`info-channel-messages` bzw. `admin-info-channel-messages`
-in der `main-config.yml`) und bringt sie **bei jedem Start** auf den neuen Stand: ein geänderter
-Abschnitt wird bearbeitet, nur wenn sich die Zahl der Abschnitte ändert oder eine Nachricht fehlt,
-postet er alles neu. Löschen tut er nur seine eigenen Info-Nachrichten. Ein neuer Kanal räumt die
-Nachrichten im alten weg.
+Jeder Text ist **eine Nachricht zum Durchblättern**: sie zeigt den ersten Teil, darunter „◀ Zurück“,
+„Weiter ▶“ und ein Menü „Springe zu …“ mit allen Teilen. Wer klickt, bekommt den Text nur für sich
+angezeigt (ephemeral) und blättert darin weiter - so dreht niemand jemand anderem die Seite um. Jeder
+`##`-Abschnitt ist ein Teil, bei den Regeln jeder Paragraph (`§1 - …`); Unterparagraphen (`§2.1`) stehen
+fett darin. Die Texte werden bei jedem Klick frisch gelesen, geänderte Regeln sind also sofort da.
+
+Der Bot merkt sich seine Nachricht (`info-channel-messages`, `admin-info-channel-messages`,
+`rules-channel-messages` in der `main-config.yml`) und bringt sie **bei jedem Start** auf den neuen Stand.
+
+**Kanal mit Nachrichten darin:** Wird ein `/set…channel` in einem Kanal benutzt, in dem schon andere
+Nachrichten stehen, postet der Bot nicht dazwischen. Der Kanal wird in `<name>-archiv` umbenannt, für
+alle versteckt und nach unten geschoben; eine frische Kopie (gleicher Name, gleiche Kategorie, gleiche
+Rechte) kommt an seinen Platz und bekommt die Nachricht. Dafür braucht der Bot „Kanäle verwalten“ und
+„Berechtigungen verwalten“, sonst sagt er das und nimmt nur leere Kanäle. Ein neuer Kanal räumt die
+Nachricht im alten weg.
 
 Die Texte liegen in `ServerLauncherApplication/src/main/resources/discord-info/` (`spieler.md`,
 `admins.md`). Wer sie ohne Build ändern will, legt eine Datei gleichen Namens in `./discord-info/`
@@ -1418,8 +1429,8 @@ neben den Launcher, die gewinnt. `{adresse}` und `{regeln}` werden mit der Adres
 dem Link zur Regeln-Seite gefüllt - die Adresse aus `public-address` in der `main-config.yml`
 (fragt das Setup ab, z.B. `mc.ben-schnorr.com`), sonst die IP, auf die der Proxy hört. Ist eines
 davon nur lokal (`localhost`), fällt die Zeile weg.
-Discord zeigt keine Tabellen. Deshalb sind die Texte Listen, und pro Abschnitt sind höchstens 4096 Zeichen
-möglich (längere werden an einem Absatz geteilt).
+Discord zeigt keine Tabellen. Deshalb sind die Texte Listen, und pro Teil sind höchstens 4096 Zeichen
+möglich (längere werden an einem Absatz geteilt). Das Menü fasst höchstens 25 Teile.
 
 **Wer ein Feature baut, ergänzt den passenden Text.** Geprüft mit
 `ServerLauncherApplication/src/test/java/de/hems/utils/bot/info/InfoTextCheck.java` (Aufruf wie bei
