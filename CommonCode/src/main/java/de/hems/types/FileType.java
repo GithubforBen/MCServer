@@ -23,9 +23,9 @@ public class FileType implements Serializable {
 
         public static String getFileURL(SERVER type) {
             return switch (type) {
-                // Paper 26.3 build 134 - the newest there is, and the first BETA build of 26.3
+                // Paper 26.3 build 140 (2026-09-29) - the newest there is, still BETA like every 26.3 build
                 case SERVER.PAPER ->
-                        "https://fill-data.papermc.io/v1/objects/16c5494aed1015de4e7c6e5aefece74e0b398f733bd3fcd8975c820598c19bca/paper-26.3-134.jar";
+                        "https://fill-data.papermc.io/v1/objects/98aabc113a80b9b5e183475e839a17cf99c39c915a1f46b8f35a5e89fd5de0f1/paper-26.3-140.jar";
                 // Velocity 4.2.0 build 30 (stable)
                 case SERVER.VELOCITY ->
                         "https://fill-data.papermc.io/v1/objects/35a5596a5468a035d8a32c8de5ebb0dc6b8d8f0cc3ff5169d514aca762af8aa8/velocity-4.2.0-30.jar";
@@ -180,8 +180,11 @@ public class FileType implements Serializable {
                         "https://cdn.modrinth.com/data/1u6JkXh5/versions/J1eeOh6C/worldedit-bukkit-7.4.6-beta-02.jar";
                 case WORLD_GUARD ->
                         "https://cdn.modrinth.com/data/DKY9btbd/versions/TtfwTyi6/worldguard-bukkit-7.0.19.jar";
+                // CoreProtect 25.0, the first build for 26.3. Not on Modrinth or maven.playpro.com (both end
+                // at 24.1, which switches itself off on 26.3), so it comes from this link. The api it is
+                // compiled against stays 24.1 in the poms - our calls exist unchanged in 25.0 (API 13)
                 case CORE_PROTECT ->
-                        "https://cdn.modrinth.com/data/Lu3KuzdV/versions/3sehX6Sg/CoreProtect-CE-24.1.jar";
+                        "https://www.dropbox.com/scl/fi/3e5qgkrfqnjoldx09k8w1/CoreProtect-25.0.jar?rlkey=vusyaidwm3mhacq2x2nh75o00&st=e3ufdrt1&dl=1";
                 case CHUNKY ->
                         "https://cdn.modrinth.com/data/fALzjamp/versions/MdY6JATr/Chunky-Bukkit-1.5.3.jar";
                 case SIMPLE_VOICECHAT_PAPER ->
@@ -192,7 +195,8 @@ public class FileType implements Serializable {
         }
 
         public static String getFileName(PLUGIN type) {
-            String url = getFileURL(type);
+            // a share link carries its key after the "?", which is no part of a file name
+            String url = getFileURL(type).split("\\?")[0];
             return url.split("/")[url.split("/").length - 1];
         }
 

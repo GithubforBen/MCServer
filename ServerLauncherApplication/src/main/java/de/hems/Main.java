@@ -22,6 +22,7 @@ import de.hems.utils.team.TeamStore;
 import de.hems.utils.bot.adminabuse.*;
 import de.hems.utils.bot.payingplayer.PayingPlayerCommand;
 import de.hems.utils.bot.tickets.DiscordTickets;
+import de.hems.utils.bot.info.DiscordInfo;
 import de.hems.utils.ticket.TicketEvents;
 import de.hems.utils.ticket.TicketMigration;
 import de.hems.utils.ticket.TicketService;
@@ -75,6 +76,7 @@ public class Main {
     private TicketService ticketService;
     private de.hems.utils.lotto.LottoService lottoService;
     private DiscordTickets discordTickets;
+    private DiscordInfo discordInfo;
     private de.hems.utils.poker.PokerStatsStore pokerStatsStore;
     private JDA jda;
     private WebServer webServer;
@@ -166,6 +168,8 @@ public class Main {
         ticketService = new TicketService(ticketStore, accountLinkStore);
         new TicketEvents(ticketService);
         discordTickets = new DiscordTickets(ticketService, accountLinkStore, configuration);
+        // what the network has, explained in a channel for the players and one for the admins
+        discordInfo = new DiscordInfo(configuration);
         new StartServerEvent();
         new RestartServerEvent();
         new StopServerEvent();
@@ -181,7 +185,8 @@ public class Main {
                             new OnAccountVerifyCommand(accountLinkStore),
                             new de.hems.utils.bot.verification.OpCommand(accountLinkStore),
                             new PayingPlayerCommand(),
-                            new SetLoggingChannel())
+                            new SetLoggingChannel(),
+                            discordInfo)
                     .setActivity(Activity.playing("Playing on " + getIp()))
                     .build();
             jda.awaitReady();
@@ -194,6 +199,12 @@ public class Main {
                             ))
                     .addCommands(
                             Commands.slash("setloggingchannel", "Set the channel for admin abuse logging").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
+                            ))
+                    .addCommands(
+                            Commands.slash("setinfochannel", "Postet hier die Erklärung aller Features für Spieler").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
+                            ))
+                    .addCommands(
+                            Commands.slash("setadmininfochannel", "Postet hier das Handbuch für Admins").setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
                             ))
                     .addCommands(Commands.slash("verify", "Verbinde deinen account mit deinem Minecraft account!").addOption(OptionType.STRING, "minecraftname", "Dein Minecraft name hier einfügen.", true))
                     .addCommands(
@@ -222,6 +233,7 @@ public class Main {
         idleServerWatchdog = new IdleServerWatchdog(serverHandler);
         startWebServer();
         if (jda != null) discordTickets.ensurePanel();
+        if (jda != null) discordInfo.refreshAll();
     }
 
     /**

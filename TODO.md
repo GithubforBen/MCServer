@@ -142,7 +142,13 @@ Offen:
       über `./poker-world` — mit zwei 26.3-Servern nacheinander geprüft
 - [x] Hunger Games: eine 26.1-Karte als `./hungergames-world` wird auf 26.3 hochgestuft, `hungergames.yml`
       gefunden; der Nether wird entladen, weil `allow-nether=false` ihn auf 26.3 nicht mehr aufhält
-- [ ] **CoreProtect gibt es nicht für 26.3** — es schaltet sich ab. Neue Version eintragen, sobald sie da ist
+- [x] **CoreProtect gibt es nicht für 26.3** — es schaltet sich ab. Neue Version eintragen, sobald sie da ist
+      → 2026-10-01: 25.0 eingetragen (Dropbox-Link, nicht öffentlich), auf Paper 26.3 Build 134 gestartet
+- [ ] CoreProtect 25.0 im Netzwerk: Block abbauen, `/co inspect` zeigt ihn, `/co rollback` stellt ihn
+      wieder her, CoreProtect-Abfrage der Admin-Website liefert Treffer
+- [ ] Alte `database.db` von Survival (falls vorhanden): mit `/co migrate-db` nach DuckDB übernehmen
+      oder `database-type: sqlite` setzen - entscheiden
+- [ ] Sobald 25.0 (oder neuer) öffentlich auf Modrinth liegt: Link dorthin umstellen
 - [ ] Auf Paper 26.3 stable und WorldEdit 7.4.6 (Release) wechseln, sobald es sie gibt
 - [ ] Die `backups/` werden nie aufgeräumt
 
@@ -181,7 +187,8 @@ Gefunden, bewusst nicht geändert — **Entscheidung nötig**:
       wiederholen, regelmäßig nachladen); vier davon leerten ihre Kopie beim Nachladen kurz komplett
 - [x] `NetworkPlugin.connect` — Netzwerk-Start der sechs Plugins. Dabei: Op-Änderungen aus Discord gelten
       jetzt auch auf Bedwars-, Casino-, Arena- und Run-Servern sofort; `/rs` hing noch an der alten Falle
-- [ ] Die Doku sagt `TableCheck` hat 57 Prüfungen, er meldet 41
+- [x] Die Doku sagt `TableCheck` hat 57 Prüfungen, er meldet 41
+      → 2026-10-01: er meldet 38, README korrigiert
 
 ### 1.5 Lobby
 - [x] Eventsystem in der Lobby verfügbar (`/events`, Kalender, Join-Hinweis)
@@ -403,6 +410,11 @@ andere handelt. Für einen Kill heißt das: der eine greift an, der andere wehrt
 - [x] Rundenadmin kickt den zweiten Account, der danach wieder joinen will
 - [x] Private Runde: der zweite Account warpt ohne Einladung direkt auf den Servernamen
       → 4 von 5 Versuchen abgewiesen. Beim allerersten blieb er drin - nicht reproduzierbar
+      → 2026-10-01 im Code gefunden, warum das passieren kann, und behoben (nochmal testen, siehe 2.3):
+        (1) das Zurückschicken war nur eine Bitte an den Proxy - ging sie verloren, blieb der Spieler.
+        Jetzt wird nach 3 Sekunden hart gekickt. (2) Bekam der Rundenserver beim Start keine Antwort vom
+        Launcher, galt die Runde als „keine Runde“ und stand allen offen. Jetzt ist sie zu, bis es
+        feststeht
 - [x] `/admin join`: sieht der zweite Account Name über dem Kopf, Skin und Tabliste der Admin-Gestalt?
 
 ### 2.2 Muss von Spielern getestet werden
@@ -424,6 +436,90 @@ liefert.
 - [ ] Tinte auf einer vollen Runde: kostet es TPS?
 - [ ] Tickets im Alltag: Sind die Hinweise im Spiel für Admins zu viele? Ist `/ticket neu` mit Titel
       und Text im Chat verständlich genug für jemanden, der es zum ersten Mal benutzt?
+
+---
+
+### 2.3 Neu seit 2026-09-28 — noch ohne einen einzigen Test
+
+Stand 2026-10-01. Für diese Features gab es bisher gar keinen Punkt in dieser Liste. In Klammern steht,
+wer es testen kann: **C** = Claude mit einem Client, **C2** = Claude mit zwei Accounts, **D** = braucht
+Discord mit Admin-Rechten, **S** = Spieler.
+
+**Fixes vom 2026-10-01 (zuerst testen)**
+- [ ] (C) `/neustart 10`: Titel „In 10 Minuten wird der Server neu starten“ beim Planen und an jeder
+      Marke (5, 3, 2, 1 Min, 30 s), danach der Sekunden-Countdown wie bisher
+- [ ] (C) Während eines geplanten Neustarts joinen (auch auf einem anderen Server per `/warp`): Titel und
+      Chatzeile kommen etwa 2 Sekunden nach dem Join
+- [ ] (C) `/neustart 10 update` und `/neustart 10 aus`: Text im Titel passt („für ein Update neu
+      starten“, „heruntergefahren“)
+- [ ] (C2) Private Runde: zweiter Account warpt ohne Einladung, **fünfmal hintereinander**, einmal
+      davon gleich nach dem Start des Rundenservers. Jedes Mal zurück in der Lobby oder spätestens nach
+      3 Sekunden gekickt
+- [ ] (C2) Derselbe Account wird danach eingeladen (`/runde einladen` **in der Lobby**) und kommt rein.
+      Vorher ging beides nicht: Lobby-Einladungen kamen beim Rundenserver nie an, und wer einmal
+      abgewiesen wurde, blieb für immer draußen
+- [ ] (C2) Einladung über den Knopf im Rundenmenü: kommt rein, auch nach einem früheren Rauswurf
+- [ ] (C2) Rundenadmin wirft jemanden raus: bleibt draußen (unverändert)
+
+**Info-Kanäle (D)**
+- [ ] `/setinfochannel` und `/setadmininfochannel`: 16 bzw. 12 Nachrichten, in der richtigen
+      Reihenfolge, Listen und Fettschrift werden dargestellt
+- [ ] Launcher neu starten, ohne Textänderung: nichts wird neu gepostet oder als „bearbeitet“ markiert
+- [ ] Einen Abschnitt in `./discord-info/spieler.md` ändern, Launcher neu starten: nur diese Nachricht
+      wird bearbeitet
+- [ ] Eine Info-Nachricht von Hand löschen, Launcher neu starten: alles wird einmal neu gepostet,
+      keine doppelten
+- [ ] Kanal wechseln: die alten Nachrichten im alten Kanal sind weg
+- [ ] Bot ohne Schreibrecht im Kanal: Fehlermeldung statt Bestätigung
+- [ ] `running-mode: LOCAL`: Zeilen mit Adresse und Regeln-Link fehlen, Rest steht
+
+**Whitelist und Regeln**
+- [ ] (C) `/regeln` im Browser ohne Login: Regeln lesen, Haken, Name eintragen, danach sofort joinen,
+      ohne Serverneustart
+- [ ] (C) Name, den es bei Mojang nicht gibt: Fehlermeldung, nichts eingetragen
+- [ ] (C) Zweimal innerhalb von 10 Sekunden eintragen: zweiter Versuch abgelehnt
+- [ ] (C2) Whitelist im Panel einschalten: ein nicht eingetragener Account wird abgewiesen und bekommt den
+      Link genannt, Ops kommen rein
+- [ ] (C2) Eintrag im Panel entfernen: der Spieler fliegt sofort vom Server
+- [ ] (C) Regeln ändern: alte Einträge stehen im Panel als „alte Regeln“
+
+**Admin-Website: Netzwerk und Einstellungen (C)**
+- [ ] Netzwerk-Panel: Neustart planen und absagen, Commit und letztes Update werden angezeigt
+- [ ] Passwort ändern: andere Sitzungen desselben Accounts sind danach abgemeldet
+- [ ] 2FA neu einrichten: alter Code gilt, bis ein Code aus dem neuen eingegeben wurde
+- [ ] Admin-Account anlegen und löschen: der gelöschte ist überall abgemeldet
+- [ ] Ops/Autostart/Whitelist-Namen ändern: steht in der `main-config.yml` und gilt nach einem Neustart
+
+**install.sh (C, auf einem frischen Rechner oder in einem leeren Container)**
+- [ ] Erster Lauf: fragt alles ab, QR-Code für den Authenticator erscheint, Netzwerk startet
+- [ ] Zweiter Lauf: zeigt die aktuellen Werte, Enter behält sie, ein neuer Token wird übernommen
+
+**Lobby-NPCs (C)**
+- [ ] `/npc warp SURVIVAL`: Klick bringt einen hin, über dem Kopf stehen Status und Spielerzahl
+- [ ] Warp-NPC auf einen Server, der gerade startet: wartet und verbindet dann
+- [ ] `/npc events`: Klick öffnet den Kalender, Countdown über dem Kopf zählt
+- [ ] Lobby neu starten und Chunk entladen/laden: genau ein NPC pro Eintrag, keine Doppelten
+- [ ] `/npc skin <id> <spieler>`: Skin kommt an
+
+**Tabliste (C, Bedwars/HG mit C2)**
+- [ ] Kopf: Netzwerk-Zähler stimmt über zwei Server hinweg
+- [ ] Je Modus die eigenen Zeilen (Lobby/Survival: Bits, Survival: Team und Chunks, Bedwars: Team und
+      Bett, HG: Lebende); TPS-Zeile nur für Ops
+
+**Bedwars-Maps Lighthouse, Orbit, Aquarium (C2, Gefühl: S)**
+- [ ] Jede Map einmal anspielen: Spawn, Händler erreichbar, Generatoren droppen, Bett abbaubar
+- [ ] Aquarium: der Diamant-Generator, der einen Block höher steht, droppt erreichbar
+- [ ] (S) Spielen sich die Maps fair, steht ein Händler ungünstig?
+
+**Survival-Kleinigkeiten (C)**
+- [ ] `/shop create` kostet 2000 Bits, und erst nachdem Kiste, Team und Chunk passen
+- [ ] Team umbenennen: Teamkasse und Shops ziehen mit. Team auflösen: Anführer bekommt die Kasse
+- [ ] Paper 26.3 Build 140: alle Server starten im Netzwerk ohne Exception in der Konsole
+
+**Von außen erreichbar, bewusst nicht geändert**
+- [ ] Velocitys eingebautes `/server <name>` ist für **jeden Spieler** offen (Velocity sperrt es nur bei
+      ausdrücklichem `FALSE`, und es gibt kein Rechte-Plugin). Es umgeht `/warp`, aber nicht die
+      Prüfung auf dem Zielserver. Zumachen? (Ein Eintrag im VelocityPlugin)
 
 ---
 
