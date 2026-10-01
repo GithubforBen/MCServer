@@ -72,20 +72,24 @@ public final class LobbyWorld {
             return;
         }
         plugin.getLogger().info("Lobby world is " + world.getName());
-        noMobs(world);
+        settle(world);
     }
 
     /**
-     * Nothing spawns in the lobby by itself. It is a built hub, not a world to play in: a zombie in the
+     * Nothing spawns in the lobby by itself, and the weather does not change. It is a built hub, not a world to play in: a zombie in the
      * parkour or a phantom over the spawn only gets in the way. Set on every start, because the world is
      * restored from the map each time and whatever the map says comes back with it.
      */
-    private static void noMobs(World world) {
+    private static void settle(World world) {
         world.setGameRule(org.bukkit.GameRules.SPAWN_MOBS, false);
         world.setGameRule(org.bukkit.GameRules.SPAWN_PHANTOMS, false);
         world.setGameRule(org.bukkit.GameRules.SPAWN_PATROLS, false);
         world.setGameRule(org.bukkit.GameRules.SPAWN_WANDERING_TRADERS, false);
         world.setGameRule(org.bukkit.GameRules.SPAWN_WARDENS, false);
+        // and the weather stays as the map has it - rain over the hub is only grey
+        world.setGameRule(org.bukkit.GameRules.ADVANCE_WEATHER, false);
+        world.setStorm(false);
+        world.setThundering(false);
     }
 
     /**

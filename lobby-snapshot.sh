@@ -32,7 +32,7 @@ trap 'rm -rf "$TMP"' EXIT
 # the map: the world without who was on it and without the identity of this installation
 cp -r "$WORLD" "$TMP/lobby-world"
 rm -rf "$TMP/lobby-world/players" "$TMP/lobby-world/playerdata" "$TMP/lobby-world/stats" \
-       "$TMP/lobby-world/advancements" "$TMP/lobby-world/session.lock" "$TMP/lobby-world/uid.dat"
+       "$TMP/lobby-world/advancements" "$TMP/lobby-world/session.lock" "$TMP/lobby-world/uid.dat" "$TMP/lobby-world/level.dat_old"
 
 # what the plugin keeps about the map; a file that is not there is shipped as nothing
 mkdir -p "$TMP/plugins/LobbyPlugin"

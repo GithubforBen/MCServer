@@ -109,7 +109,7 @@ public class FileType implements Serializable {
                 case BEDWARS_SPEEDWAY -> "3";
                 case BEDWARS_LIGHTHOUSE, BEDWARS_ORBIT, BEDWARS_AQUARIUM -> "1";
                 // 2: the spawn point of the map was set (it stood in the void)
-                case LOBBY_SPAWN -> "2";
+                case LOBBY_SPAWN -> "3";
             };
         }
 
