@@ -1,0 +1,39 @@
+<!--
+    How the launcher, the proxy and the servers talk to each other. They all run on one machine, so this is
+    TCP over 127.0.0.1: nothing leaves the machine, and nothing depends on multicast - which the default
+    stack of jgroups uses and which most hosters drop, leaving every server alone in a cluster of its own
+    (and every question to the launcher unanswered).
+
+    Each member takes the first free port from 7800 on; TCPPING looks for the others on that range.
+    The jgroups.* system properties still override this, e.g. for a network spread over several machines.
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:org:jgroups"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups.xsd">
+    <TCP bind_addr="${jgroups.bind_addr:127.0.0.1}"
+         bind_port="${jgroups.bind_port:7800}"
+         port_range="${jgroups.tcp.port_range:40}"
+         thread_pool.min_threads="0"
+         thread_pool.max_threads="200"
+         thread_pool.keep_alive_time="30000"/>
+    <NON_BLOCKING_SENDS/>
+    <TCPPING async_discovery="true"
+             initial_hosts="${jgroups.tcpping.initial_hosts:127.0.0.1[7800]}"
+             port_range="${jgroups.tcp.port_range:40}"/>
+    <MERGE3 min_interval="10s"
+            max_interval="30s"/>
+    <FD_SOCK2/>
+    <FD_ALL3 timeout="40s" interval="5s"/>
+    <VERIFY_SUSPECT2 timeout="1.5s"/>
+    <BARRIER/>
+    <pbcast.NAKACK2 use_mcast_xmit="false"/>
+    <UNICAST3/>
+    <pbcast.STABLE desired_avg_gossip="50s"
+                   max_bytes="4M"/>
+    <pbcast.GMS print_local_addr="false" join_timeout="2s"/>
+    <MFC max_credits="10M"
+         min_threshold="0.4"/>
+    <UFC max_credits="10M"
+         min_threshold="0.4"/>
+    <FRAG2 frag_size="60K"/>
+</config>

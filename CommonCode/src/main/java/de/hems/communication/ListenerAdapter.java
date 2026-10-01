@@ -38,13 +38,21 @@ public class ListenerAdapter implements Receiver {
         if (isInitialized) return;
         ListenerAdapter.name = name;
         isInitialized = true;
-        jChannel = new JChannel();
+        jChannel = channel();
         jChannel.setName(name.toString());
         jChannel.setReceiver(this);
         jChannel.connect("MCServer");
         System.out.println("[JGroups] Connected as '" + name + "' to cluster MCServer. View=" + jChannel.getView());
         shutdownHook = new Thread(ListenerAdapter::disconnect, "jgroups-shutdown");
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+    }
+
+    /** The stack in {@code mcserver-jgroups.xml}: TCP on 127.0.0.1, see the comment in the file. */
+    private static JChannel channel() throws Exception {
+        try (java.io.InputStream stack = ListenerAdapter.class.getResourceAsStream("/mcserver-jgroups.xml")) {
+            if (stack == null) throw new IllegalStateException("mcserver-jgroups.xml is missing from the jar");
+            return new JChannel(stack);
+        }
     }
 
     /**
