@@ -85,7 +85,7 @@ fi
 
 "$JAVA_BIN" -cp "$JAR" de.hems.setup.Installer || exit 1
 
-if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+if pgrep -f "java -jar $JAR" >/dev/null; then
   echo "Das Netzwerk läuft schon in der tmux-Session '$SESSION_NAME'. Die neuen Einstellungen gelten nach"
   echo "einem Neustart (/neustart 1 im Spiel). Ansehen mit: tmux attach -t $SESSION_NAME"
   exit 0
