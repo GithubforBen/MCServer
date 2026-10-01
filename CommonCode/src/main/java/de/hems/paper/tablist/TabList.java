@@ -33,9 +33,6 @@ public final class TabList {
 
     /** What the network is called at the top of the list. */
     public static final String NETWORK_NAME = "MCSERVER";
-    /** Whoever may see how the server is doing. */
-    public static final String DIAGNOSTICS_PERMISSION = "network.tablist.tps";
-
     /** How often the network is asked how many are online, in ticks - it is a round trip through the proxy. */
     private static final long NETWORK_REFRESH_TICKS = 20L * 10L;
     private static final Duration PROXY_TIMEOUT = Duration.ofSeconds(2);
@@ -106,17 +103,16 @@ public final class TabList {
         if (events != null) lines.add(events);
         String hint = mode.hint();
         if (hint != null) lines.add(Component.text(hint, NamedTextColor.DARK_GRAY));
-        if (viewer.hasPermission(DIAGNOSTICS_PERMISSION)) {
-            double tps = Math.min(20.0, Bukkit.getServer().getTPS()[0]);
-            NamedTextColor color = tps >= 19.0 ? NamedTextColor.GREEN : tps >= 15.0 ? NamedTextColor.YELLOW
-                    : NamedTextColor.RED;
-            lines.add(Component.text(ListenerAdapter.isInitialized() ? String.valueOf(ListenerAdapter.getName()) : "?",
-                            NamedTextColor.DARK_GRAY)
-                    .append(Component.text("  TPS ", NamedTextColor.DARK_GRAY))
-                    .append(Component.text(String.format(Locale.ROOT, "%.1f", tps), color))
-                    .append(Component.text("  " + Math.round(Bukkit.getServer().getAverageTickTime()) + " ms",
-                            NamedTextColor.DARK_GRAY)));
-        }
+        // for everybody: a player who feels the server lag should be able to see that it is the server
+        double tps = Math.min(20.0, Bukkit.getServer().getTPS()[0]);
+        NamedTextColor color = tps >= 19.0 ? NamedTextColor.GREEN : tps >= 15.0 ? NamedTextColor.YELLOW
+                : NamedTextColor.RED;
+        lines.add(Component.text(ListenerAdapter.isInitialized() ? String.valueOf(ListenerAdapter.getName()) : "?",
+                        NamedTextColor.DARK_GRAY)
+                .append(Component.text("  TPS ", NamedTextColor.DARK_GRAY))
+                .append(Component.text(String.format(Locale.ROOT, "%.1f", tps), color))
+                .append(Component.text("  " + Math.round(Bukkit.getServer().getAverageTickTime()) + " ms",
+                        NamedTextColor.DARK_GRAY)));
         lines.add(Component.empty());
         return join(lines);
     }
