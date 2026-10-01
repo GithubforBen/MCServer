@@ -93,7 +93,7 @@ public class WhitelistStore {
 
             §5 - Verbindungsoptionen
 
-            Die Server-Internetprotokoll-Adresse ist << mc.samiuen.com >>.
+            Die Server-Internetprotokoll-Adresse ist << mc.ben-schnorr.com >>.
 
             §6 - Definitionen
 
