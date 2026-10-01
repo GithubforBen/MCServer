@@ -1,0 +1,13 @@
+#!/bin/bash
+# cmd <a|b> "/command" - types a command and checks a server logged it; retries
+S="$(cd "$(dirname "$0")" && pwd)"
+acc=$1; shift; c="$*"
+name=$( [ "$acc" = a ] && echo LongRangeMissile || echo for_sale )
+for try in 1 2 3; do
+  $S/mc $acc say "$c"; sleep 1.2
+  for s in $(tmux ls | cut -d: -f1 | grep "^server-"); do
+    tmux capture-pane -p -J -t $s -S -6 | grep -qF "$name issued server command: $c" && exit 0
+  done
+  $S/mc $acc key Escape; sleep 0.5; $S/ready $acc; sleep 0.3
+done
+echo "cmd failed: $c" >&2; exit 1

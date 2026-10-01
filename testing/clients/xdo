@@ -1,0 +1,4 @@
+#!/bin/bash
+# xdo <xdotool args> - xdotool from the copy setup.sh unpacked (no sudo needed)
+X=${MCTEST_DIR:-$HOME/.cache/mctest}/x
+LD_LIBRARY_PATH=$X/usr/lib/x86_64-linux-gnu exec $X/usr/bin/xdotool "$@"

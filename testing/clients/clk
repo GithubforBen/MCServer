@@ -1,0 +1,5 @@
+#!/bin/bash
+# clk <window> <x> <y> [button] - pointer there, press, hold, release
+S="$(cd "$(dirname "$0")" && pwd)"
+$S/xdo mousemove --window $1 $2 $3; sleep 0.2
+$S/xdo mousedown ${4:-1}; sleep 0.18; $S/xdo mouseup ${4:-1}

@@ -1,0 +1,8 @@
+#!/bin/bash
+# joinb - for_sale (Lunar): title screen -> Multiplayer -> Direct Connection -> localhost
+S="$(cd "$(dirname "$0")" && pwd)"
+$S/mc b click 640 358; sleep 2.5
+$S/mc b click 638 593; sleep 1.5; $S/mc b key End
+for i in $(seq 25); do $S/xdo key BackSpace; done
+$S/xdo type --delay 30 localhost; $S/xdo key Return; sleep 9
+tmux capture-pane -p -t server-VELOCITY -S -6 | grep for_sale | tail -1

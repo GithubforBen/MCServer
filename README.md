@@ -81,6 +81,9 @@ Von Hand:
 Der Launcher startet zuerst den Proxy und danach die Server aus `autostart` in der `main-config.yml`
 (Standard: `LOBBY` und `SURVIVAL`).
 
+**Testen:** Wie man das Netzwerk lokal startet und Features mit echten, per Skript gesteuerten Clients prüft
+(inkl. Rezepten für jedes Feature), steht in [`testing/README.md`](testing/README.md).
+
 ## Neustart und Updates
 
 `/neustart` startet das ganze Netzwerk zu einer festen Zeit neu - von jedem Server aus, nur für Ops.

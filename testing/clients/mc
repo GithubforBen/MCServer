@@ -1,0 +1,21 @@
+#!/bin/bash
+# mc <a|b> focus|say <text>|key <keys...>|click <x> <y> [button]|shot [name]|id
+#   a = LongRangeMissile (vanilla, normal account)   b = for_sale (Lunar, op)
+S="$(cd "$(dirname "$0")" && pwd)"
+case $1 in
+  a) pat='"Minecraft 26\.3' ;;
+  b) pat='"Lunar Client 26\.3' ;;
+  *) echo "account a|b"; exit 1 ;;
+esac
+ACC=$1; W=$(xwininfo -root -tree | grep -E "$pat" | grep '"com.mojang.minecraft"' | awk '{print $1}' | head -1)
+[ -z "$W" ] && { echo "no window for $1"; exit 1; }
+shift
+cmd=$1; shift
+case $cmd in
+  focus) $S/xdo windowactivate $W 2>/dev/null; $S/xdo windowfocus $W ;;
+  say)   $S/ready $ACC; $S/xdo windowactivate $W 2>/dev/null; $S/xdo windowfocus $W; sleep 0.3; $S/xdo key t; sleep 0.7; $S/xdo type --delay 25 -- "$*"; sleep 0.2; $S/xdo key Return ;;
+  key)   [ "$1" != Escape ] && $S/ready $ACC; $S/xdo windowactivate $W 2>/dev/null; $S/xdo windowfocus $W; sleep 0.2; $S/xdo key --delay 80 "$@" ;;
+  click) $S/xdo windowactivate $W 2>/dev/null; $S/xdo windowfocus $W; sleep 0.25; $S/clk $W $1 $2 ${3:-1} ;;
+  shot)  import -silent -window $W ${MCTEST_SHOTS:-/tmp}/${1:-shot}.png ;;
+  id)    echo $W ;;
+esac

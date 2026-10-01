@@ -1,0 +1,7 @@
+#!/bin/bash
+# rejoina - vanilla client (854x480) from "Connection Lost" back onto localhost
+S="$(cd "$(dirname "$0")" && pwd)"
+$S/hclk a 426 297; sleep 2
+$S/hclk a 426 395; sleep 1.5
+$S/mc a key ctrl+a; $S/xdo type --delay 30 localhost; $S/mc a key Return; sleep 12
+tmux capture-pane -p -t server-VELOCITY -S -10 | grep "LongRangeMissile.*has connected" | tail -1

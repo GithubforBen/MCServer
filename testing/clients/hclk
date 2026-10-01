@@ -1,0 +1,8 @@
+#!/bin/bash
+# hclk <a|b> <x> <y> - hover first, then click (menus ignore a click that comes without a move)
+S="$(cd "$(dirname "$0")" && pwd)"
+W=$($S/mc $1 id)
+$S/xdo windowactivate $W 2>/dev/null; sleep 0.2
+$S/xdo mousemove --window $W $(($2-8)) $(($3-6)); sleep 0.25
+$S/xdo mousemove --window $W $2 $3; sleep 0.25
+$S/xdo click 1

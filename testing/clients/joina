@@ -1,0 +1,9 @@
+#!/bin/bash
+# joina - LongRangeMissile: title screen -> Multiplayer -> Direct Connection -> localhost
+S="$(cd "$(dirname "$0")" && pwd)"
+$S/mc a click 426 283; sleep 2.5
+$S/mc a shot ja
+$S/mc a click 426 395; sleep 1.5; $S/mc a key End
+for i in $(seq 25); do $S/xdo key BackSpace; done
+$S/xdo type --delay 30 localhost; $S/xdo key Return; sleep 9
+tmux capture-pane -p -t server-VELOCITY -S -6 | grep LongRange | tail -1
