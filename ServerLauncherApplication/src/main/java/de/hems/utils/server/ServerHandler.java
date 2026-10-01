@@ -50,6 +50,8 @@ public class ServerHandler {
         if (section == null) return;
         for (String name : section.getKeys(false)) {
             int port = section.getInt(name + ".port", ListenerAdapter.ServerName.NO_PORT);
+            // a fixed server takes the port from here too, so one changed by hand - a box that already
+            // uses 3000 for something else - is what the proxy and the server get
             ListenerAdapter.ServerName.of(name, port);
         }
     }
@@ -102,15 +104,7 @@ public class ServerHandler {
         if (name.isReserved()) return;
         YamlConfiguration config = Main.getInstance().getConfiguration().getConfig();
         int stored = config.getInt(CONFIG_ROOT + "." + name + ".port", ListenerAdapter.ServerName.NO_PORT);
-        if (name.isJoinable()) {
-            // the fixed servers bring a port of their own, but the machine decides what is free on it: a port
-            // written into the config by hand wins, so a box that already uses 3000 can still run survival
-            if (stored != ListenerAdapter.ServerName.NO_PORT && stored != name.getPort()) {
-                System.out.println(name + " uses port " + stored + " from the config instead of " + name.getPort());
-                name.setPort(stored);
-            }
-            return;
-        }
+        if (name.isJoinable()) return;
         if (stored != ListenerAdapter.ServerName.NO_PORT) {
             name.setPort(stored);
             return;
