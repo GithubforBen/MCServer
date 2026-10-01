@@ -777,7 +777,7 @@ Jeder Server hat dieselbe Tabliste (`de.hems.paper.tablist.TabList`) mit dem Inh
 - **Kopf:** Netzwerkname, Spielmodus in seiner Farbe, wie viele im ganzen Netzwerk online sind (alle
   10 Sekunden vom Proxy geholt) und wie viele davon hier.
 - **Fuß:** was der Modus zu sagen hat, darunter das laufende oder nächste Event, die wichtigsten Befehle
-  und - nur mit `network.tablist.tps` (Standard: Ops) - Servername, TPS und Tickzeit.
+  und für alle Servername, TPS und Tickzeit.
 
 | Modus | Eigene Zeilen | Namen in der Liste |
 |-------|---------------|--------------------|

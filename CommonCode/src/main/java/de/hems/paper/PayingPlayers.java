@@ -43,6 +43,18 @@ public final class PayingPlayers {
     private static volatile long nextRefreshAt = 0L;
     private static final AtomicBoolean refreshing = new AtomicBoolean(false);
 
+    static {
+        // a change on discord or the website arrives at once, instead of with the next refresh
+        ListenerAdapter.register(de.hems.communication.events.configs.PayingPlayersChangedEvent.class, event -> {
+            Set<UUID> parsed = parse(((de.hems.communication.events.configs.PayingPlayersChangedEvent) event)
+                    .getPlayers());
+            if (parsed == null) return;
+            snapshot = parsed;
+            loaded = true;
+            nextRefreshAt = System.currentTimeMillis() + REFRESH_INTERVAL_MS;
+        });
+    }
+
     private PayingPlayers() {
     }
 
