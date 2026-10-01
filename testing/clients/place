@@ -1,0 +1,8 @@
+#!/bin/bash
+# place <SERVER> <player> <x> <z> - protected teleport onto the surface at x/z (loads the chunk first)
+S="$(cd "$(dirname "$0")" && pwd)"
+$S/con $1 "effect give $2 minecraft:resistance 120 255 true" || exit 1
+$S/con $1 "effect give $2 minecraft:slow_falling 60 0 true"
+$S/con $1 "effect give $2 minecraft:water_breathing 120 0 true"
+$S/con $1 "tp $2 $3.5 250 $4.5"; sleep 4
+$S/con $1 "execute positioned $3 0 $4 positioned over motion_blocking_no_leaves run tp $2 ~ ~ ~"; sleep 1

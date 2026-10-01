@@ -1,0 +1,6 @@
+#!/bin/bash
+# con <SERVER> <command...> - sends a console command only if that server's java process is alive
+T=server-$1; shift
+pane=$(tmux list-panes -t $T -F '#{pane_pid}' 2>/dev/null) || { echo "no session $T" >&2; exit 1; }
+pgrep -P $pane java >/dev/null || { echo "REFUSED: no java running in $T" >&2; exit 1; }
+tmux send-keys -t $T "$*" C-m

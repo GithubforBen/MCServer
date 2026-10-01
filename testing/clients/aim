@@ -1,0 +1,11 @@
+#!/bin/bash
+# aim <server> <player> <x> <y> <z> - turns the player's eyes to that point
+T=server-$1; P=$2
+tmux send-keys -t $T "data get entity $P Pos" C-m; sleep 0.5
+pos=$(tmux capture-pane -p -J -t $T -S -4 | grep -E "$P has the following entity data: \[-?[0-9]" | tail -1 | sed 's/.*entity data: //')
+read yaw pitch < <(python3 -c "
+import math,re
+p=[float(v) for v in re.findall(r'-?[0-9.]+','$pos')]
+dx=$3-p[0]; dy=$4-(p[1]+1.62); dz=$5-p[2]
+print(round(math.degrees(math.atan2(-dx,dz)),2),round(-math.degrees(math.atan2(dy,math.hypot(dx,dz))),2))")
+tmux send-keys -t $T "rotate $P $yaw $pitch" C-m; sleep 0.4

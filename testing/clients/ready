@@ -1,0 +1,12 @@
+#!/bin/bash
+# ready <a|b> - closes the pause menu if it is open
+S="$(cd "$(dirname "$0")" && pwd)"
+W=$($S/mc $1 id)
+if [ "$1" = b ]; then P1="500,143"; P2="780,143"; BX=638; BY=143; else P1="300,155"; P2="550,155"; BX=426; BY=155; fi
+for try in 1 2 3; do
+  import -silent -window $W ${MCTEST_SHOTS:-/tmp}/rd.png
+  g=$(convert ${MCTEST_SHOTS:-/tmp}/rd.png -format "%[pixel:p{$P1}] %[pixel:p{$P2}]" info:)
+  if echo "$g" | grep -qE "^srgb\((10[5-9]|11[0-9]),(10[5-9]|11[0-9]),(10[5-9]|11[0-9])\) srgb\((10[5-9]|11[0-9]),"; then
+    $S/xdo windowactivate $W 2>/dev/null; $S/clk $W $BX $BY; sleep 0.6
+  else exit 0; fi
+done

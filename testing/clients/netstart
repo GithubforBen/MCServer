@@ -1,0 +1,10 @@
+#!/bin/bash
+# netstart - starts the network in tmux and waits until LOBBY and SURVIVAL are up
+cd "$(dirname "$0")/../.." || exit 1
+tmux new-session -d -s server -x 200 -y 50 -c "$PWD"
+tmux send-keys -t server "./run.sh" C-m
+for i in $(seq 120); do
+  tmux capture-pane -p -t server-SURVIVAL -S -100 2>/dev/null | grep -q "Done (" && tmux capture-pane -p -t server-LOBBY -S -100 2>/dev/null | grep -q "Done (" && break
+  sleep 3
+done
+tmux capture-pane -p -J -t server -S -500 | grep -E "Could not start|Starting server (LOBBY|SURVIVAL)" | head -4

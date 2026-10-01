@@ -1,0 +1,15 @@
+#!/bin/bash
+# netstop - stops the launcher with Ctrl-C and waits until no server java process is left. Types nothing
+# into any server pane.
+tmux send-keys -t server C-c 2>/dev/null
+for i in $(seq 120); do
+  left=0
+  for s in $(tmux ls 2>/dev/null | cut -d: -f1 | grep '^server-'); do
+    pane=$(tmux list-panes -t $s -F '#{pane_pid}'); pgrep -P $pane java >/dev/null && left=$((left+1))
+  done
+  launcher=$(pgrep -f '^java -jar ServerLauncherApplication' | head -1)
+  [ $left -eq 0 ] && [ -z "$launcher" ] && break
+  sleep 2
+done
+echo "servers left: $left, launcher: ${launcher:-none}"
+tmux kill-server 2>/dev/null; true
