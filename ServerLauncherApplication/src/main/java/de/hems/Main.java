@@ -56,6 +56,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class Main {
+    /** Set to {@code off} in {@code .env.local} to run the network without the discord bot. */
+    private static final String DISCORD_SWITCH = "MCSERVER_DISCORD";
+
     private static Main instance;
     private Configuration configuration;
     private ListenerAdapter listenerAdapter;
@@ -177,7 +180,11 @@ public class Main {
         new LegitimiseAdminAbuse();
         new RequestServerDataEvent();
         new RequestToLegitimise();
-        if (configuration.getConfig().contains("discord-token")) {
+        if ("off".equalsIgnoreCase(System.getenv(DISCORD_SWITCH))) {
+            // a second copy of the network - a test box - must not log in as the same bot: both would answer
+            // every command, and a /verify code handed out by one is unknown to the other
+            System.out.println("Discord is switched off on this machine (" + DISCORD_SWITCH + "=off).");
+        } else if (configuration.getConfig().contains("discord-token")) {
             jda = JDABuilder.createDefault(configuration.getConfig().getString("discord-token"))
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                     .addEventListeners(

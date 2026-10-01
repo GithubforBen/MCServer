@@ -30,7 +30,7 @@ public class AdminAbuse {
 
     public void send() {
         String string = Main.getInstance().getConfiguration().getConfig().getString("logging-channel");
-        if (string == null) return;
+        if (string == null || Main.getInstance().getJda() == null) return;
         hasBeenSent = true;
         TextChannel textChannelById = Main.getInstance().getJda().getTextChannelById(string);
         EmbedBuilder embedBuilder = Main.getEmbedBuilder();
