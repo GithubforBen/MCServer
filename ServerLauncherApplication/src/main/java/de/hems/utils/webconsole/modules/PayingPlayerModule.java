@@ -146,6 +146,7 @@ public class PayingPlayerModule implements WebModule {
         for (UUID uuid : players) stored.add(uuid.toString());
         Main.getInstance().getConfiguration().getConfig().set(CONFIG_KEY, stored);
         Main.getInstance().getConfiguration().save();
+        de.hems.utils.bot.payingplayer.PayingPlayerCommand.announce();
     }
 
     /**
