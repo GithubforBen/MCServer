@@ -187,7 +187,7 @@ public class Main {
                             new PayingPlayerCommand(),
                             new SetLoggingChannel(),
                             discordInfo)
-                    .setActivity(Activity.playing("Playing on " + getIp()))
+                    .setActivity(Activity.playing("Playing on " + getPublicAddress()))
                     .build();
             jda.awaitReady();
             jda.updateCommands().addCommands(Commands.slash("payingplayer", "Schreibe auf, dass ein spieler für den Server zahlt!").addOption(OptionType.STRING, "minecraftname", "Den Minecraft name hier einfügen.", true))
@@ -396,6 +396,16 @@ public class Main {
 
     public StashStore getStashStore() {
         return stashStore;
+    }
+
+    /**
+     * The address players type in: {@code public-address} from the config (a domain, set in the setup), and
+     * the address the proxy binds to when there is none. The bind address is often only an ip, or one that is
+     * not reachable from outside at all, so it is the fallback rather than what gets shown.
+     */
+    public String getPublicAddress() throws IOException {
+        String named = configuration.getConfig().getString("public-address", "");
+        return named != null && !named.isBlank() ? named.trim() : getIp();
     }
 
     public String getIp() throws IOException {

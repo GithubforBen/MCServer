@@ -80,7 +80,7 @@ public final class WhitelistSync {
         if (store != null && store.getPublicUrl() != null) return store.getPublicUrl();
         String host;
         try {
-            host = Main.getInstance().getIp();
+            host = Main.getInstance().getPublicAddress();
         } catch (IOException | RuntimeException e) {
             host = "localhost";
         }
