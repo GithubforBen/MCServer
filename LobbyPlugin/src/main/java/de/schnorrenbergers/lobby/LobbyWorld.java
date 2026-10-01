@@ -72,6 +72,20 @@ public final class LobbyWorld {
             return;
         }
         plugin.getLogger().info("Lobby world is " + world.getName());
+        noMobs(world);
+    }
+
+    /**
+     * Nothing spawns in the lobby by itself. It is a built hub, not a world to play in: a zombie in the
+     * parkour or a phantom over the spawn only gets in the way. Set on every start, because the world is
+     * restored from the map each time and whatever the map says comes back with it.
+     */
+    private static void noMobs(World world) {
+        world.setGameRule(org.bukkit.GameRules.SPAWN_MOBS, false);
+        world.setGameRule(org.bukkit.GameRules.SPAWN_PHANTOMS, false);
+        world.setGameRule(org.bukkit.GameRules.SPAWN_PATROLS, false);
+        world.setGameRule(org.bukkit.GameRules.SPAWN_WANDERING_TRADERS, false);
+        world.setGameRule(org.bukkit.GameRules.SPAWN_WARDENS, false);
     }
 
     /**
