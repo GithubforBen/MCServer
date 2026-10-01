@@ -54,6 +54,7 @@ public final class NetworkPlugin {
     public static boolean connect(JavaPlugin plugin, ListenerAdapter.ServerName name) {
         new CustomInventoryListener(plugin);
         ServerConnector.register(plugin);
+        JoinQuitMessages.register(plugin);
         for (Map.Entry<String, Supplier<CommandExecutor>> command : WAYS_OUT.entrySet()) {
             if (plugin.getCommand(command.getKey()) != null) {
                 PluginCommands.register(plugin, command.getKey(), command.getValue().get());
