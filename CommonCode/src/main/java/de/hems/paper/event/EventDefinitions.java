@@ -1,10 +1,7 @@
 package de.hems.paper.event;
 
-import de.hems.types.event.BedwarsEventSettings;
 import de.hems.types.event.EventType;
-import de.hems.types.event.HungerGamesSettings;
 import de.hems.types.event.PokerEventSettings;
-import de.hems.types.event.UhcSettings;
 import org.bukkit.Material;
 
 import java.util.EnumMap;
@@ -25,9 +22,12 @@ public final class EventDefinitions {
         register(EventDefinition.of(EventType.SIMPLE, Material.PAPER));
         register(EventDefinition.of(EventType.OTHER_WORLD, Material.GRASS_BLOCK));
         register(EventDefinition.of(EventType.END, Material.END_PORTAL_FRAME));
-        register(EventDefinition.of(EventType.UHC_BOSSES, Material.NETHER_STAR).settings(UhcSettings.SETTINGS));
-        register(EventDefinition.of(EventType.UHC_DRAGON, Material.DRAGON_HEAD).settings(UhcSettings.SETTINGS));
-        register(EventDefinition.of(EventType.BEDWARS, Material.RED_BED).settings(BedwarsEventSettings.SETTINGS));
+        register(EventDefinition.of(EventType.UHC_BOSSES, Material.NETHER_STAR)
+                .settings(EventType.UHC_BOSSES.getSettings()));
+        register(EventDefinition.of(EventType.UHC_DRAGON, Material.DRAGON_HEAD)
+                .settings(EventType.UHC_DRAGON.getSettings()));
+        register(EventDefinition.of(EventType.BEDWARS, Material.RED_BED)
+                .settings(EventType.BEDWARS.getSettings()));
         // the poker knobs lean on each other - the qualifying volume follows the buy-in - so they keep their
         // own panel, reached through the same button as everybody else's
         register(EventDefinition.of(EventType.POKER, Material.PLAYER_HEAD)
@@ -41,7 +41,8 @@ public final class EventDefinitions {
                             "Blinds: " + poker.getSmallBlind() + "/" + poker.getBigBlind(),
                             "Haus: " + poker.getRakeText());
                 }));
-        register(EventDefinition.of(EventType.HUNGER_GAMES, Material.BOW).settings(HungerGamesSettings.SETTINGS));
+        register(EventDefinition.of(EventType.HUNGER_GAMES, Material.BOW)
+                .settings(EventType.HUNGER_GAMES.getSettings()));
     }
 
     private EventDefinitions() {

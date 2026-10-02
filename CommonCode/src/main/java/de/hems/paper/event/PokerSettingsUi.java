@@ -28,14 +28,13 @@ import java.util.function.Consumer;
  */
 public final class PokerSettingsUi {
 
-    private static final int[] BUY_INS = {100, 250, 500, 1000, 2500, 5000, 10000};
-    private static final int[] SMALL_BLINDS = {1, 5, 10, 25, 50, 100, 250};
-    /** Zero is a table that takes nothing, which is a decision an admin is allowed to make. */
-    private static final int[] RAKES_PERMILLE = {0, 5, 10, 20, 30, 50, 75, 100};
-    private static final int[] RAKE_CAPS_BB = {0, 10, 25, 50, 100};
-    private static final int[] BOT_FEES = {0, 50, 100, 250, 500, 1000};
-    private static final int[] MIN_HANDS = {0, 5, 10, 20, 30, 50, 100};
-    private static final int[] BLIND_UPS = {5, 8, 10, 12, 15, 20, 30};
+    private static final int[] BUY_INS = PokerEventSettings.BUY_IN_STEPS;
+    private static final int[] SMALL_BLINDS = PokerEventSettings.SMALL_BLIND_STEPS;
+    private static final int[] RAKES_PERMILLE = PokerEventSettings.RAKE_PERMILLE_STEPS;
+    private static final int[] RAKE_CAPS_BB = PokerEventSettings.RAKE_CAP_BB_STEPS;
+    private static final int[] BOT_FEES = PokerEventSettings.BOT_FEE_STEPS;
+    private static final int[] MIN_HANDS = PokerEventSettings.MIN_HANDS_STEPS;
+    private static final int[] BLIND_UPS = PokerEventSettings.BLIND_UP_STEPS;
 
     private PokerSettingsUi() {
     }
@@ -185,8 +184,8 @@ public final class PokerSettingsUi {
                     int buyIn = settings.getBuyIn();
                     int steps = Math.max(1, settings.getMinVolume() / Math.max(1, buyIn));
                     steps += forward(click.getClick()) ? 1 : -1;
-                    if (steps > 10) steps = 0;
-                    if (steps < 0) steps = 10;
+                    if (steps > PokerEventSettings.MAX_MIN_VOLUME_BUY_INS) steps = 0;
+                    if (steps < 0) steps = PokerEventSettings.MAX_MIN_VOLUME_BUY_INS;
                     settings.setMinVolume(steps * buyIn);
                     reopen.run();
                 }));

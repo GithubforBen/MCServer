@@ -78,6 +78,21 @@ public final class PokerEventSettings {
      */
     public static final int DEFAULT_MIN_VOLUME_BUY_INS = 0;
 
+    /*
+     * The values a number steps through, in the game and on the website alike. Kept here rather than in the
+     * panel, so the two can never offer different stakes.
+     */
+    public static final int[] BUY_IN_STEPS = {100, 250, 500, 1000, 2500, 5000, 10000};
+    public static final int[] SMALL_BLIND_STEPS = {1, 5, 10, 25, 50, 100, 250};
+    /** Zero is a table that takes nothing, which is a decision an admin is allowed to make. */
+    public static final int[] RAKE_PERMILLE_STEPS = {0, 5, 10, 20, 30, 50, 75, 100};
+    public static final int[] RAKE_CAP_BB_STEPS = {0, 10, 25, 50, 100};
+    public static final int[] BOT_FEE_STEPS = {0, 50, 100, 250, 500, 1000};
+    public static final int[] MIN_HANDS_STEPS = {0, 5, 10, 20, 30, 50, 100};
+    public static final int[] BLIND_UP_STEPS = {5, 8, 10, 12, 15, 20, 30};
+    /** The highest qualifying volume that can be set, counted in buy-ins. */
+    public static final int MAX_MIN_VOLUME_BUY_INS = 10;
+
     private final EventData event;
 
     public PokerEventSettings(EventData event) {
