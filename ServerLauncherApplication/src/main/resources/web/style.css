@@ -1103,3 +1103,25 @@ datalist {
 a.secret {
     color: var(--bone);
 }
+
+/* ---------------------------------------------------------------- event editor */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s3);
+}
+
+.reward-card {
+    background: var(--panel-hi);
+    border-left: 2px solid var(--bone);
+    border-radius: 0 var(--r) var(--r) 0;
+    padding: var(--s3) var(--s4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s3);
+}
+
+.inline-form .field.time {
+    min-width: 210px;
+}

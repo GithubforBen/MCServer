@@ -8,12 +8,18 @@ import de.hems.types.event.EventSetting;
 import de.hems.types.event.EventStanding;
 import de.hems.types.event.EventType;
 import de.hems.types.event.HungerGamesSettings;
+import de.hems.types.event.PokerEventSettings;
 import de.hems.types.event.PrizeData;
 import de.hems.types.event.RewardRule;
+import de.hems.types.event.RunData;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -43,6 +49,8 @@ public final class RewardCheck {
         storeKeepsDottedKeys();
         payoutAndResults();
         claimOnce();
+        teamsShareTheirPlace();
+        websiteForm();
         System.out.println(passed + " passed, " + failed + " failed");
         if (failed > 0) System.exit(1);
     }
@@ -220,6 +228,100 @@ public final class RewardCheck {
         awards.release(award.getId(), "SURVIVAL");
         check("the one that did can", awards.claim(award.getId(), "LOBBY"), true);
         file.delete();
+    }
+
+    private static void teamsShareTheirPlace() {
+        UUID eventId = UUID.randomUUID();
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        UUID c = UUID.randomUUID();
+        UUID d = UUID.randomUUID();
+        UUID e = UUID.randomUUID();
+        // fastest first, the way the store hands them out: team ab twice, then team cd, then e alone
+        RunData fastest = finished(eventId, Set.of(a, b));
+        RunData again = finished(eventId, Set.of(a, b));
+        RunData second = finished(eventId, Set.of(c, d));
+        RunData third = finished(eventId, Set.of(e));
+        Map<UUID, Integer> places = new java.util.HashMap<>();
+        for (EventStanding standing : EventSettlement.standingsOf(List.of(fastest, again, second, third))) {
+            places.put(standing.getPlayer(), standing.getPlace());
+        }
+        check("both of the best team are first", places.get(a) + "," + places.get(b), "1,1");
+        check("the second team is second, not third", places.get(c) + "," + places.get(d), "2,2");
+        check("the third team is third", places.get(e), 3);
+
+        EventData event = new EventData("UHC", EventType.UHC_DRAGON, 0, 1);
+        EventRewards.set(event, List.of(RewardRule.place(1, new PrizeData(500)),
+                RewardRule.place(2, new PrizeData(200))));
+        List<EventRewards.Earned> earned = EventRewards.evaluate(event,
+                EventSettlement.standingsOf(List.of(fastest, again, second, third)));
+        check("first and second prize go to two players each", earned.size(), 4);
+    }
+
+    private static RunData finished(UUID eventId, Set<UUID> team) {
+        RunData run = new RunData(eventId, team);
+        run.finish(RunData.State.FINISHED);
+        return run;
+    }
+
+    private static void websiteForm() {
+        EventData bedwars = new EventData("BW", EventType.BEDWARS, 0, 1);
+        EventForm.applyDefaults(bedwars);
+        check("defaults are written on create", bedwars.getSetting("team-size", null), "2");
+        check("a known value is taken",
+                EventForm.applySettings(bedwars, new JSONObject().put("team-size", "4")), null);
+        check("and written", bedwars.getSetting("team-size", null), "4");
+        check("a value off the list is refused",
+                EventForm.applySettings(bedwars, new JSONObject().put("team-size", "40")) != null, true);
+        check("and changes nothing", bedwars.getSetting("team-size", null), "4");
+        bedwars.setSetting("server", "BEDWARS_1");
+        EventForm.applySettings(bedwars, new JSONObject().put("server", "LOBBY"));
+        check("the server of a round cannot be changed from the form", bedwars.getSetting("server", null),
+                "BEDWARS_1");
+
+        EventData poker = new EventData("Poker", EventType.POKER, 0, 1);
+        EventForm.applyDefaults(poker);
+        check("poker takes buy-in and volume in one go", EventForm.applySettings(poker, new JSONObject()
+                .put("poker.buy-in", "500").put("poker.min-volume", "2").put("poker.bots", false)), null);
+        PokerEventSettings settings = new PokerEventSettings(poker);
+        check("the volume is counted in the new buy-in", settings.getMinVolume(), 1000);
+        check("a toggle sent as a boolean is read", settings.isBotsAllowed(), false);
+        check("a buy-in off the presets is refused",
+                EventForm.applySettings(poker, new JSONObject().put("poker.buy-in", "123456")) != null, true);
+
+        JSONArray rewards = new JSONArray()
+                .put(new JSONObject().put("who", "PLACE").put("from", 1).put("to", 1).put("money", 500)
+                        .put("items", new JSONArray().put(new JSONObject().put("material", "minecraft:diamond")
+                                .put("amount", 3))))
+                .put(new JSONObject().put("who", "PLACE").put("from", 4).put("to", 0).put("money", 10))
+                .put(new JSONObject().put("who", "KILLS").put("kills", 5).put("money", 50));
+        check("rewards are taken", EventForm.applyRewards(bedwars, rewards, List::of), null);
+        List<RewardRule> rules = EventRewards.of(bedwars);
+        check("all three are there", rules.size(), 3);
+        check("the item name is put the way bukkit spells it",
+                rules.get(0).getPrize().getItems().get("DIAMOND"), 3);
+        check("an open range stays open", rules.get(1).describeWho(), "ab Platz 4");
+        check("the form reads them back", EventForm.describeRewards(bedwars).getJSONObject(2).getString("label"),
+                "ab 5 Kills");
+
+        EventData race = new EventData("UHC", EventType.UHC_DRAGON, 0, 1);
+        check("a kill reward on an event without kills is refused", EventForm.applyRewards(race,
+                new JSONArray().put(new JSONObject().put("who", "KILLS").put("kills", 1).put("money", 5)),
+                List::of) != null, true);
+        check("an empty reward is refused", EventForm.applyRewards(race,
+                new JSONArray().put(new JSONObject().put("who", "PARTICIPATION")), List::of) != null, true);
+        check("an unknown item is refused when the list is known", EventForm.applyRewards(race,
+                new JSONArray().put(new JSONObject().put("who", "PARTICIPATION").put("items", new JSONArray()
+                        .put(new JSONObject().put("material", "DIAMANT").put("amount", 1)))),
+                () -> List.of("DIAMOND")) != null, true);
+        check("a range the wrong way round is refused", EventForm.applyRewards(race,
+                new JSONArray().put(new JSONObject().put("who", "PLACE").put("from", 5).put("to", 2)
+                        .put("money", 5)), List::of) != null, true);
+        EventData simple = new EventData("Info", EventType.SIMPLE, 0, 1);
+        check("an event that ranks nobody takes no rewards", EventForm.applyRewards(simple,
+                new JSONArray().put(new JSONObject().put("who", "PARTICIPATION").put("money", 5)),
+                List::of) != null, true);
+        check("but an empty list is fine", EventForm.applyRewards(simple, new JSONArray(), List::of), null);
     }
 
     private static int count(List<EventRewards.Earned> earned, UUID player) {

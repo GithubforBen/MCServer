@@ -5,13 +5,16 @@ import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.event.EventUpdatedEvent;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
+import de.hems.utils.event.EventForm;
 import de.hems.utils.event.EventStore;
+import de.hems.utils.webconsole.AdminNetwork;
 import de.hems.utils.webconsole.ApiContext;
 import de.hems.utils.webconsole.WebModule;
 import de.hems.utils.webconsole.WebServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,7 +36,7 @@ public class EventModule implements WebModule {
 
     @Override
     public String getDescription() {
-        return "Zeigt den Eventkalender und legt neue Events an.";
+        return "Zeigt den Eventkalender, legt Events an und bearbeitet sie - mit Einstellungen und Belohnungen.";
     }
 
     @Override
@@ -41,6 +44,7 @@ public class EventModule implements WebModule {
         server.get("/api/events", ctx -> ctx.ok("events", listEvents()));
         server.get("/api/events/types", ctx -> ctx.ok("types", listTypes()));
         server.post("/api/events", this::create);
+        server.post("/api/events/{event}", this::edit);
         server.post("/api/events/{event}/cancel", this::cancel);
         server.delete("/api/events/{event}", this::delete);
     }
@@ -62,7 +66,14 @@ public class EventModule implements WebModule {
                     .put("state", event.getState().name())
                     .put("stateTitle", event.getState().getTitle())
                     .put("cancelled", event.isCancelled())
-                    .put("revision", event.getRevision());
+                    .put("applied", event.isApplied())
+                    .put("started", System.currentTimeMillis() >= event.getStartsAt())
+                    .put("ranked", event.getType().isRanked())
+                    .put("countsKills", event.getType().countsKills())
+                    // as a string: a long does not survive the trip through a javascript number unharmed
+                    .put("revision", String.valueOf(event.getRevision()))
+                    .put("fields", EventForm.describeSettings(event))
+                    .put("rewards", EventForm.describeRewards(event));
             JSONObject settings = new JSONObject();
             for (Map.Entry<String, String> setting : event.getSettings().entrySet()) {
                 settings.put(setting.getKey(), setting.getValue());
@@ -83,6 +94,8 @@ public class EventModule implements WebModule {
                     .put("title", type.getTitle())
                     .put("onlyOnce", type.isOnlyOnce())
                     .put("timed", type.isTimed())
+                    .put("ranked", type.isRanked())
+                    .put("countsKills", type.countsKills())
                     .put("hasMechanics", type.hasMechanics()));
         }
         return array;
@@ -104,29 +117,121 @@ public class EventModule implements WebModule {
             ctx.error(400, "Unbekannter Eventtyp.");
             return;
         }
-        long startsAt = (long) ctx.integer("startsAt", 0);
-        long endsAt = (long) ctx.integer("endsAt", 0);
-        // the browser sends milliseconds, which does not survive an int - read them as strings instead
-        try {
-            startsAt = Long.parseLong(ctx.string("startsAt", String.valueOf(startsAt)));
-            endsAt = Long.parseLong(ctx.string("endsAt", String.valueOf(endsAt)));
-        } catch (NumberFormatException e) {
-            ctx.error(400, "Anfang und Ende müssen Zeitstempel sein.");
-            return;
-        }
-        if (endsAt <= startsAt) {
-            ctx.error(400, "Das Event endet vor seinem Anfang.");
-            return;
-        }
-        EventData event = new EventData(name, type, startsAt, endsAt);
+        long[] times = times(ctx, 0L, 0L);
+        if (times == null) return;
+        EventData event = new EventData(name, type, times[0], times[1]);
         event.setDescription(ctx.string("description", ""));
+        // the same defaults the create panel in the game writes, so the form shows what is stored
+        EventForm.applyDefaults(event);
         EventStore.Result result = store().put(event, true);
         if (!result.successful()) {
             ctx.error(409, result.message());
             return;
         }
         announce(result.event().getId(), result.event());
-        ctx.ok(name + " wurde angelegt.");
+        ctx.ok(new JSONObject()
+                .put("ok", true)
+                .put("message", name + " wurde angelegt.")
+                .put("id", result.event().getId().toString()));
+    }
+
+    /**
+     * Changes an event: its name, description and times, its settings and its rewards, all in one save.
+     * <p>
+     * The form says which revision it was opened on. If the event was changed in the meantime - in the game,
+     * or in another tab - the save is refused instead of quietly undoing that change.
+     *
+     * @param ctx the request being answered
+     */
+    private void edit(ApiContext ctx) {
+        EventData stored = resolve(ctx);
+        if (stored == null) return;
+        if (stored.isApplied()) {
+            ctx.error(409, stored.getName() + " ist schon abgerechnet - eine Änderung hätte keine Wirkung mehr.");
+            return;
+        }
+        long revision;
+        try {
+            revision = Long.parseLong(ctx.string("revision", ""));
+        } catch (NumberFormatException e) {
+            ctx.error(400, "Es fehlt die Revision, auf der die Änderung beruht.");
+            return;
+        }
+        String name = ctx.string("name", "").trim();
+        if (name.isEmpty()) {
+            ctx.error(400, "Es fehlt der Name des Events.");
+            return;
+        }
+        long[] times = times(ctx, stored.getStartsAt(), stored.getEndsAt());
+        if (times == null) return;
+        // a game that is already being played cannot start later or earlier than it did. The end can still
+        // move - that is how an event is extended, or cut short
+        if (times[0] != stored.getStartsAt() && System.currentTimeMillis() >= stored.getStartsAt()) {
+            ctx.error(409, "Das Event hat schon angefangen - der Anfang lässt sich nicht mehr verschieben.");
+            return;
+        }
+
+        EventData edited = stored.copy();
+        edited.setRevision(revision);
+        edited.setName(name);
+        edited.setDescription(ctx.string("description", ""));
+        edited.setStartsAt(times[0]);
+        edited.setEndsAt(times[1]);
+
+        String problem = EventForm.applySettings(edited, ctx.body().optJSONObject("settings"));
+        if (problem == null) {
+            problem = EventForm.applyRewards(edited, ctx.body().optJSONArray("rewards"),
+                    EventModule::knownMaterials);
+        }
+        if (problem != null) {
+            ctx.error(400, problem);
+            return;
+        }
+        EventStore.Result result = store().put(edited, false);
+        if (!result.successful()) {
+            ctx.error(409, result.message());
+            return;
+        }
+        announce(result.event().getId(), result.event());
+        ctx.ok(name + " wurde gespeichert.");
+    }
+
+    /**
+     * Reads the start and the end of an event from a request.
+     *
+     * @param ctx            the request being answered
+     * @param startsFallback what to use when no start was sent
+     * @param endsFallback   what to use when no end was sent
+     * @return start and end, or {@code null} after an error was already sent
+     */
+    private static long[] times(ApiContext ctx, long startsFallback, long endsFallback) {
+        long startsAt;
+        long endsAt;
+        // the browser sends milliseconds, which does not survive an int - read them as strings instead
+        try {
+            startsAt = Long.parseLong(ctx.string("startsAt", String.valueOf(startsFallback)));
+            endsAt = Long.parseLong(ctx.string("endsAt", String.valueOf(endsFallback)));
+        } catch (NumberFormatException e) {
+            ctx.error(400, "Anfang und Ende müssen Zeitstempel sein.");
+            return null;
+        }
+        if (endsAt <= startsAt) {
+            ctx.error(400, "Das Event endet vor seinem Anfang.");
+            return null;
+        }
+        return new long[]{startsAt, endsAt};
+    }
+
+    /**
+     * @return every item name, or an empty list when no game server could be asked - the name is then only
+     *         checked for its form, and a game server skips an item it does not know when it hands it out
+     */
+    private static List<String> knownMaterials() {
+        try {
+            return AdminNetwork.materials();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     /**

@@ -1150,6 +1150,22 @@ Das Event-Panel eines bestehenden Events hat dieselben zwei Knöpfe an denselben
 Änderung sofort gespeichert, beim Anlegen erst mit **Anlegen**. Spieler sehen beide Knöpfe auch, können
 sie aber nicht ändern — so sieht jeder, worum gespielt wird.
 
+### Auf der Website
+
+Modul **Events** → **Bearbeiten** an einem Event öffnet ein Formular mit allem auf einmal: Name,
+Beschreibung, Anfang, Ende, die Einstellungen des Typs (dieselben Stufen wie im Spiel, als Auswahlliste)
+und die Belohnungen (wer: Platzierung von/bis, ab X Kills oder Teilnahme; was: Bits und beliebig viele
+Items mit Anzahl, Itemnamen werden aus der Liste eines laufenden Spielservers vorgeschlagen und geprüft).
+Gespeichert wird alles mit einem Klick auf **Speichern**. Ein neu angelegtes Event öffnet direkt dieses
+Formular.
+
+- Wurde das Event inzwischen im Spiel oder in einem anderen Tab geändert, wird das Speichern abgelehnt
+  („bitte nochmal öffnen“) statt die andere Änderung zu überschreiben.
+- Hat das Event schon angefangen, lässt sich der Anfang nicht mehr verschieben; das Ende schon.
+- Ein schon abgerechnetes Event kann nicht mehr bearbeitet werden, nur noch gelöscht.
+- Der Typ eines Events lässt sich nicht ändern — dafür ein neues anlegen.
+- Belohnungen gibt es nur bei Typen, die jemanden werten (Tabelle unten).
+
 ### Belohnungen
 
 Eine Belohnung ist: **was** (Bits und Items) und **wer** sie bekommt. Angelegt wird sie in dieser
@@ -1172,7 +1188,7 @@ Welche Events überhaupt jemanden werten:
 
 | Typ | Platz | Kills |
 |-----|-------|-------|
-| UHC (Bosse / Drache) | nach Zeit, das Team teilt sich den Platz | – |
+| UHC (Bosse / Drache) | nach Zeit, das Team teilt sich den Platz; läuft dieselbe Gruppe mehrmals, zählt nur ihr bester Lauf | – |
 | Pokernacht | nach Gewinn, nur wer die Mindesthände hat | – |
 | Hunger Games | in der Reihenfolge, in der die Leute rausfliegen | ja |
 | Bedwars | nach Team, in der Reihenfolge, in der die Teams ausscheiden; das Team teilt sich den Platz | ja, pro Spieler, Final Kills zählen mit |

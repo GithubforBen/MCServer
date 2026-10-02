@@ -1,6 +1,7 @@
 package de.hems.types.event;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * The kinds of event the network knows.
@@ -121,6 +122,22 @@ public enum EventType implements Serializable {
      */
     public boolean hasMechanics() {
         return this != SIMPLE;
+    }
+
+    /**
+     * The knobs of this kind, the one list the settings panel in the game and the website both draw from.
+     * The poker night is not in here: its knobs lean on each other and are described by
+     * {@link PokerEventSettings} instead.
+     *
+     * @return its settings, empty for a kind that has none
+     */
+    public List<EventSetting> getSettings() {
+        return switch (this) {
+            case UHC_BOSSES, UHC_DRAGON -> UhcSettings.SETTINGS;
+            case BEDWARS -> BedwarsEventSettings.SETTINGS;
+            case HUNGER_GAMES -> HungerGamesSettings.SETTINGS;
+            default -> List.of();
+        };
     }
 
     /**

@@ -281,16 +281,20 @@ public class EventSettlement {
      * that wins takes home four first prizes rather than a quarter each. Somebody who ran more than once
      * keeps their best placing, and somebody who never finished is still there, unranked, for the rewards
      * that are only for taking part.
+     * <p>
+     * A slower run of people who all hold a placing already takes no place of its own. Otherwise a team that
+     * finished twice would sit on first and second, and the next team would be paid as third although it
+     * was the second best team.
      *
      * @param board the runs, fastest first
      * @return one standing per player
      */
-    private static List<EventStanding> standingsOf(List<RunData> board) {
+    static List<EventStanding> standingsOf(List<RunData> board) {
         Map<UUID, Integer> best = new LinkedHashMap<>();
         int place = 0;
         for (RunData run : board) {
             int placing = EventStanding.UNRANKED;
-            if (run.isRanked()) placing = ++place;
+            if (run.isRanked() && !allPlaced(run, best)) placing = ++place;
             for (UUID member : run.getParticipants()) {
                 int known = best.getOrDefault(member, EventStanding.UNRANKED);
                 boolean better = known == EventStanding.UNRANKED
@@ -303,6 +307,18 @@ public class EventSettlement {
             standings.add(new EventStanding(entry.getKey(), entry.getValue(), 0));
         }
         return standings;
+    }
+
+    /**
+     * @param run  a finished run
+     * @param best the placings handed out so far
+     * @return whether everybody on it already holds a placing, which is then a better one
+     */
+    private static boolean allPlaced(RunData run, Map<UUID, Integer> best) {
+        for (UUID member : run.getParticipants()) {
+            if (best.getOrDefault(member, EventStanding.UNRANKED) == EventStanding.UNRANKED) return false;
+        }
+        return true;
     }
 
     /**

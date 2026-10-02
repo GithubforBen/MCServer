@@ -162,6 +162,13 @@ public final class EventSetting implements Serializable {
     }
 
     /**
+     * @return the values a number may take, in order - zero and one for a toggle
+     */
+    public int[] getChoices() {
+        return choices.clone();
+    }
+
+    /**
      * Fills every setting that is not there yet.
      *
      * @param event    the event
