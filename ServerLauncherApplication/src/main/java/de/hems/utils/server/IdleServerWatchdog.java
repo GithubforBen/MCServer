@@ -6,9 +6,11 @@ import de.hems.communication.events.server.RequestProxyPlayersEvent;
 import de.hems.communication.events.server.RespondProxyPlayersEvent;
 import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.types.ServerPhase;
+import de.hems.types.ServerTemplate;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.time.Duration;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,8 +31,9 @@ import java.util.concurrent.TimeUnit;
  * runs on the server itself.
  * <p>
  * Only servers that were created on the fly are touched. The hub and the survival world are meant to be
- * empty at four in the morning and still be there in the morning, so anything named in {@code autostart}
- * is left alone.
+ * empty at four in the morning and still be there in the morning, so they are left alone by their template,
+ * whether or not they are named in {@code autostart} - a network that starts survival by hand still wants
+ * it to stay up. Anything else named in {@code autostart} is left alone as well.
  */
 public class IdleServerWatchdog {
 
@@ -40,6 +43,8 @@ public class IdleServerWatchdog {
     private static final Duration ANSWER_TIMEOUT = Duration.ofSeconds(5);
     /** How long a server stays up with nobody on it, unless the config says otherwise. */
     private static final int DEFAULT_IDLE_MINUTES = 10;
+    /** Templates whose servers hold a world people come back to, so they are never stopped for being empty. */
+    private static final Set<ServerTemplate> PERSISTENT_TEMPLATES = EnumSet.of(ServerTemplate.LOBBY, ServerTemplate.SURVIVAL);
 
     private final ServerHandler servers;
     private final ScheduledExecutorService scheduler =
@@ -70,7 +75,8 @@ public class IdleServerWatchdog {
             config.set("idle-shutdown-minutes", DEFAULT_IDLE_MINUTES);
             config.setComments("idle-shutdown-minutes", List.of(
                     "How many minutes a server that was created on the fly may stay empty before it is",
-                    "stopped again. Servers listed in autostart are never stopped. 0 switches this off."));
+                    "stopped again. Lobby, survival and servers listed in autostart are never stopped.",
+                    "0 switches this off."));
             Main.getInstance().getConfiguration().save();
         }
         return config.getInt("idle-shutdown-minutes", DEFAULT_IDLE_MINUTES);
@@ -110,7 +116,8 @@ public class IdleServerWatchdog {
             for (ServerInstance instance : servers.getInstances()) {
                 String name = instance.getName().toString();
                 known.add(name);
-                if (instance.getName().isReserved() || protectedNames.contains(name)) continue;
+                if (instance.getName().isReserved() || protectedNames.contains(name)
+                        || PERSISTENT_TEMPLATES.contains(instance.getTemplate())) continue;
                 // a server that is still coming up has not had the chance to be joined yet, and
                 // isStarting() keeps that true for the first minutes, which is the grace a server needs
                 // between being ready and the players that ordered it actually arriving
