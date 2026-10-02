@@ -172,6 +172,10 @@ public class PaperConfigurator extends ServerConfigurator {
      *     <li>the dupes the rules allow (§2.2): TNT, carpet and rail dupers (piston duplication), sand and
      *     gravel through the end portal, and string through tripwire hooks. Paper switches all three off by
      *     default.</li>
+     *     <li>attribute swapping, as vanilla has it: vanilla only picks up the attributes of the hand a moment
+     *     after the hotbar slot changes, and a hit in that moment combines two items - a spear with a sword,
+     *     an axe or a mace. Paper refreshes the equipment on every player action and so takes that away by
+     *     default.</li>
      * </ul>
      */
     private void survivalRules() throws Exception {
@@ -187,6 +191,7 @@ public class PaperConfigurator extends ServerConfigurator {
         writeToYmlConfiguration(global, "unsupported-settings.allow-piston-duplication", true, true);
         writeToYmlConfiguration(global, "unsupported-settings.allow-unsafe-end-portal-teleportation", true, true);
         writeToYmlConfiguration(global, "unsupported-settings.skip-tripwire-hook-placement-validation", true, true);
+        writeToYmlConfiguration(global, "unsupported-settings.update-equipment-on-player-actions", false, true);
     }
 
     /**

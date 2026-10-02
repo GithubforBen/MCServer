@@ -4,7 +4,10 @@ import de.hems.paper.PayingPlayers;
 import de.schnorrenbergers.survival.Survival;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
@@ -25,8 +28,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * Now a single timer samples the tps, smooths it, and only writes a distance to a player when that player's
  * value actually has to change. Going down happens right away, going back up needs the tps to stay clearly
  * above the threshold for a while, so the distance does not flicker.
+ * <p>
+ * On top of that every player can set a limit of their own with {@code /sichtweite}. The distance never goes
+ * above it, so somebody who settles for less than the limiter would give them only sees a change when the lag
+ * pushes below their limit - and not every time the server recovers a little. The limit sits on the player,
+ * like the claim title: it is a matter of taste, and it holds even with the limiter switched off.
  */
 public class ChunkLimiter {
+
+    /** The range minecraft accepts for a view distance, and so for a personal limit. */
+    public static final int MIN_DISTANCE = 2;
+    public static final int MAX_DISTANCE = 32;
+
+    /** Where a player's own limit is kept. Absent means none. */
+    private static final NamespacedKey LIMIT_KEY = new NamespacedKey("survival", "view-distance-limit");
 
     private static ChunkLimiter instance;
 
@@ -191,9 +206,15 @@ public class ChunkLimiter {
      * @param announce whether the player may be told about the change
      */
     public void apply(Player player, boolean announce) {
-        if (!settings.isEnabled() || player == null || !player.isOnline()) return;
+        if (player == null || !player.isOnline()) return;
+        Integer limit = getPersonalLimit(player);
+        if (!settings.isEnabled()) {
+            applyWithoutLimiter(player, limit);
+            return;
+        }
         ChunkLimiterSettings.Group group = groupOf(player);
-        int viewDistance = Math.min(group.viewDistanceFor(currentPenalty), Bukkit.getViewDistance());
+        int automatic = automaticViewDistance(player);
+        int viewDistance = limit == null ? automatic : Math.min(automatic, limit);
         Integer previous = appliedViewDistance.get(player.getUniqueId());
         if (previous != null && previous == viewDistance
                 && player.getViewDistance() == viewDistance
@@ -206,6 +227,62 @@ public class ChunkLimiter {
         if (announce && previous != null && previous != viewDistance) {
             notify(player, previous, viewDistance);
         }
+    }
+
+    /**
+     * With the limiter switched off only the personal limit is left. A player without one gets the server's
+     * distances back, but only if this class changed them before - otherwise it keeps its hands off.
+     *
+     * @param player the player to adjust
+     * @param limit  their personal limit, or {@code null}
+     */
+    private void applyWithoutLimiter(Player player, Integer limit) {
+        if (limit == null) {
+            if (appliedViewDistance.remove(player.getUniqueId()) == null) return;
+            player.setViewDistance(Bukkit.getViewDistance());
+            player.setSimulationDistance(Bukkit.getSimulationDistance());
+            return;
+        }
+        int viewDistance = Math.min(limit, Bukkit.getViewDistance());
+        player.setViewDistance(viewDistance);
+        player.setSimulationDistance(Math.min(viewDistance, Bukkit.getSimulationDistance()));
+        appliedViewDistance.put(player.getUniqueId(), viewDistance);
+    }
+
+    /**
+     * @param player the player to look at
+     * @return the distance the limiter would give them right now, before their personal limit
+     */
+    public int automaticViewDistance(Player player) {
+        if (!settings.isEnabled()) return Bukkit.getViewDistance();
+        return Math.min(groupOf(player).viewDistanceFor(currentPenalty), Bukkit.getViewDistance());
+    }
+
+    /**
+     * @param player the player to look at
+     * @return the limit they set themselves, or {@code null} if they did not
+     */
+    public static Integer getPersonalLimit(Player player) {
+        Integer limit = player.getPersistentDataContainer().get(LIMIT_KEY, PersistentDataType.INTEGER);
+        if (limit == null) return null;
+        return Math.max(MIN_DISTANCE, Math.min(MAX_DISTANCE, limit));
+    }
+
+    /**
+     * Stores a player's own limit and gives them the distance that follows from it right away.
+     *
+     * @param player the player who chose it
+     * @param limit  the limit in chunks, or {@code null} to remove it
+     */
+    public void setPersonalLimit(Player player, Integer limit) {
+        PersistentDataContainer data = player.getPersistentDataContainer();
+        if (limit == null) {
+            data.remove(LIMIT_KEY);
+        } else {
+            data.set(LIMIT_KEY, PersistentDataType.INTEGER, Math.max(MIN_DISTANCE, Math.min(MAX_DISTANCE, limit)));
+        }
+        // the player asked for this, so there is nothing to announce
+        apply(player, false);
     }
 
     /**

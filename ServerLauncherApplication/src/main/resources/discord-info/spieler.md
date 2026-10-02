@@ -43,7 +43,7 @@ Auf Survival spielst du im Team. Mit `/cteam` öffnet sich der Team-Manager, dor
 - `/cteam invite <spieler>`, `/cteam invite accept|reject`: Einladungen
 - `/cteam join <team>`: einem offenen Team beitreten
 - `/cteam leave`, `/cteam info [team]`, `/cteam list`
-- `/cteam sethome`, `/cteam home`: Team-Home (kurz stillstehen, Bewegen bricht ab)
+- `/cteam sethome`, `/cteam home`: Team-Home. Jeder Teleport kostet **500 Bits** (5 Diamanten) von deinem eigenen Konto. Du musst kurz stillstehen; wenn du dich bewegst, bricht der Teleport ab und du zahlst nichts.
 
 **Grundstücke (Claims):** `/cteam claim` kauft den Chunk, in dem du stehst, mit Bits. Jeder weitere Chunk kostet etwas mehr. `/cteam unclaim` gibt ihn wieder frei.
 - `/cteam chunks`: Karte mit einer Farbe pro Team
@@ -51,6 +51,17 @@ Auf Survival spielst du im Team. Mit `/cteam` öffnet sich der Team-Manager, dor
 - Beim Betreten eines Grundstücks erscheint der Teamname als Titel. `/cteam titel` schaltet das für dich ab.
 
 Unter *Einstellungen* im Team-Manager legt euer Team selbst fest, wie viele Mitglieder ihr aufnehmt, ob Friendly Fire an ist, ob jeder beitreten darf und wer claimen und einladen darf.
+
+## Survival: Sichtweite und Kampf
+
+**Sichtweite:** Wenn Survival laggt, senkt der Server deine Sichtweite automatisch und hebt sie wieder an, sobald es besser läuft. Wem das zu unruhig ist, der setzt ein **eigenes Limit**. Über diesen Wert geht deine Sichtweite dann nie, und du merkst nur noch etwas, wenn der Lag sie noch weiter drückt.
+- `/sichtweite`: zeigt deine Sichtweite, dein Limit und was der Server dir ohne Limit gerade gäbe
+- `/sichtweite <2-32>`: setzt dein Limit in Chunks, zum Beispiel `/sichtweite 8`
+- `/sichtweite aus`: nimmt das Limit wieder weg
+
+Das Limit bleibt gespeichert, auch nach dem Ausloggen und nach Neustarts. Ein Limit, das so hoch ist wie das, was du bei Lag noch bekommst, ändert sich praktisch nie. Ein niedrigeres Limit kann außerdem auf schwachen Rechnern die FPS verbessern.
+
+**Attribute Swapping ist erlaubt:** Wie in Vanilla kann ein Schlag die Werte von zwei Items verbinden, wenn du im richtigen Moment in der Hotbar wechselst. Ein Beispiel ist der **Speer** zusammen mit Schwert, Axt oder Streitkolben. Das ist kein Bug, sondern bewusst freigeschaltet, und es gilt nur auf Survival.
 
 ## Geld (Bits)
 
@@ -78,7 +89,7 @@ Normalerweise hat er 27 Plätze (eine Kiste). Sind die **Unterstützer** in dein
 ## Unterstützer
 
 Wer den Server finanziell unterstützt, bekommt:
-- **volle Sichtweite**, auch wenn Survival laggt. Ohne Unterstützung wird die Sichtweite bei Lag gesenkt, damit der Server spielbar bleibt.
+- **volle Sichtweite**, auch wenn Survival laggt. Ohne Unterstützung wird die Sichtweite bei Lag gesenkt, damit der Server spielbar bleibt. Ein eigenes Limit mit `/sichtweite` kann trotzdem jeder setzen.
 - zusammen mit dem Team einen **größeren Rucksack** (siehe Team-Rucksack)
 
 Eingetragen wird man von den Admins. Frag einfach per Ticket nach.

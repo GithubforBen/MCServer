@@ -32,6 +32,7 @@ public class TeamRules {
     private boolean allowPublicJoin;
     private int homeCooldownSeconds;
     private int homeWarmupSeconds;
+    private int homeCost;
 
     public TeamRules() {
         file = new File("./configs/team.yml");
@@ -74,6 +75,8 @@ public class TeamRules {
                 "How long a player has to wait between two uses of the team home.");
         homeWarmupSeconds = get("home.warmup-seconds", 3,
                 "How long a player has to stand still before the teleport happens. 0 disables the wait.");
+        homeCost = Math.max(0, get("home.cost", 500,
+                "What one teleport to the team home costs the player, in bits. 500 are five diamonds. 0 is free."));
         save();
     }
 
@@ -161,5 +164,9 @@ public class TeamRules {
 
     public int getHomeWarmupSeconds() {
         return homeWarmupSeconds;
+    }
+
+    public int getHomeCost() {
+        return homeCost;
     }
 }

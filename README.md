@@ -349,7 +349,7 @@ Danach wird die alte Datei als migriert markiert (nicht gelöscht).
 | `/cteam join <team>` | Einem offenen Team beitreten |
 | `/cteam leave` · `kick <spieler>` · `transfer <spieler>` | Mitgliederverwaltung |
 | `/cteam rename <name>` · `tag <tag>` · `disband` | Team umbenennen, Tag ändern, auflösen |
-| `/cteam sethome` · `home` | Team-Home setzen und nutzen |
+| `/cteam sethome` · `home` | Team-Home setzen und nutzen (Teleport kostet 500 Bits) |
 | `/cteam info [team]` · `list` | Team-Infos, alle Teams im Netzwerk |
 | `/cteam claim` · `unclaim` · `chunks` | Chunks kaufen, freigeben, Karte anzeigen |
 | `/cteam grenze` | Zeichnet die Chunk-Grenzen um dich herum zehn Sekunden lang mit Partikeln |
@@ -404,7 +404,11 @@ permissions:
 home:
   cooldown-seconds: 60
   warmup-seconds: 3     # Bewegen bricht ab
+  cost: 500             # Bits pro Teleport (5 Diamanten), 0 = gratis
 ```
+
+Das Home zahlt der Spieler selbst, nicht die Teamkasse. Ob er genug hat, wird vor der Wartezeit gefragt,
+abgebucht wird aber erst im Moment des Teleports - wer sich bewegt und so abbricht, zahlt nichts.
 
 Eine neue Einstellung ist ein Eintrag in `TeamSettings.Key` - der Manager baut seine Buttons aus dem Enum,
 Speicherung und Netzwerk-Übertragung ändern sich nicht.
@@ -551,6 +555,28 @@ Die uuid bleibt die eigene. Geld, Teams, Cosmetics und Bans wissen also weiterhi
 und das Adminabuse-Log bekommt bewusst den echten Namen: ein Log, in dem alles „Admin" getan hat,
 beantwortet die einzige Frage nicht, für die es existiert.
 
+## Survival: Paper-Einstellungen
+
+Was Survival anders spielt als ein frischer Paper-Server, schreibt der Launcher bei **jedem Start** in
+die Configs (`PaperConfigurator#survivalRules`). Von Hand in `paper-global.yml` geändert, wäre es beim
+nächsten Start wieder weg - geändert wird es also dort im Code.
+
+| Einstellung | Wert | Warum |
+|---|---|---|
+| `anticheat.anti-xray` (world-defaults) | an, Engine-Modus 1 | §2.3 der Regeln verbietet X-Ray |
+| `unsupported-settings.allow-piston-duplication` | `true` | TNT-, Carpet- und Rail-Duper sind erlaubt (§2.2) |
+| `unsupported-settings.allow-unsafe-end-portal-teleportation` | `true` | Sand- und Gravel-Duper (§2.2) |
+| `unsupported-settings.skip-tripwire-hook-placement-validation` | `true` | String-Duper (§2.2) |
+| `unsupported-settings.update-equipment-on-player-actions` | `false` | Attribute Swapping wie in Vanilla |
+
+**Attribute Swapping:** In Vanilla werden die Attribute der Hand erst einen Moment nach einem
+Hotbar-Wechsel aktualisiert, und ein Schlag in diesem Moment verbindet die Werte zweier Items - etwa Speer
+mit Schwert, Axt oder Streitkolben. Paper aktualisiert die Ausrüstung bei jeder Spieleraktion sofort und
+nimmt das damit weg. Auf Survival ist es
+gewollt, deshalb steht der Schalter auf `false`. Er gilt für alle Items, nicht nur für Speere; Paper
+kennt nur diesen einen Schalter. Bedwars, Hunger Games und die anderen Server bleiben beim
+Paper-Standard.
+
 ## Chunk Limiter
 
 Damit ein ruckelnder Server spielbar bleibt, senkt der Survival-Server bei Lag die Sichtweite - aber nur
@@ -569,6 +595,15 @@ Discord-Befehl `/payingplayer` gepflegt. Der Survival-Server holt die Liste im H
 der zuletzt erfolgreich geholten Fassung weiter, wenn eine Anfrage mal keine Antwort bekommt - eine
 langsame Antwort darf keinen zahlenden Spieler herunterstufen. Solange die Liste noch nie angekommen ist,
 wird niemand begrenzt.
+
+**Eigenes Limit (`/sichtweite`):** Jeder Spieler kann eine Obergrenze für seine Sichtweite setzen
+(`/sichtweite <2-32>`, `/sichtweite aus`, ohne Argument zeigt es den Stand). Der Limiter rechnet wie
+oben und nimmt dann das Kleinere aus seinem Wert und dem Limit. Wer sein Limit auf das legt, was er bei Lag
+ohnehin bekommt, sieht also keine Änderungen mehr - genau dafür ist es da: die Sichtweite soll nicht
+ständig hin und her springen. Das Limit liegt wie der Claim-Titel im PersistentDataContainer des Spielers
+(`survival:view-distance-limit`), übersteht also Logout und Neustart, und es gilt auch mit
+`enabled: false`; dann ist es die einzige Grenze, und wer sein Limit wegnimmt, bekommt die
+Server-Werte zurück. Code: `ChunkLimiter#setPersonalLimit`, Befehl in `ViewDistanceCommand`.
 
 Eingestellt wird das in `configs/chunklimiter.yml` auf dem Survival-Server:
 

@@ -94,6 +94,7 @@ public final class Survival extends JavaPlugin {
         chunkLimiter = new ChunkLimiter(new ChunkLimiterSettings());
         chunkLimiter.start();
         new ChunkLimiterListener();
+        PluginCommands.register(this, "sichtweite", new ViewDistanceCommand());
         new JoinListener();
         RunService.init(this);
         // the calendar is open here as well, and a poker ranking that is empty everywhere but the lobby
