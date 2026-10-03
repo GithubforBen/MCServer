@@ -12,6 +12,7 @@ import de.hems.types.event.PokerEventSettings;
 import de.hems.types.event.PrizeData;
 import de.hems.types.event.RewardRule;
 import de.hems.types.event.RunData;
+import de.hems.types.item.ItemCatalog;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -60,7 +61,7 @@ public final class RewardCheck {
         check("#1 reads as #1", first.describeWho(), "#1");
         RewardRule back = RewardRule.parse(first.serialize());
         check("a rule survives being written out", back.serialize(), first.serialize());
-        check("its prize survives too", back.getPrize().getItems().get("DIAMOND"), 3);
+        check("its prize survives too", back.getPrize().amountOf("DIAMOND"), 3);
 
         RewardRule top = RewardRule.places(1, 10, new PrizeData(10));
         check("top ten reads as a range", top.describeWho(), "Platz 1-10");
@@ -295,11 +296,11 @@ public final class RewardCheck {
                                 .put("amount", 3))))
                 .put(new JSONObject().put("who", "PLACE").put("from", 4).put("to", 0).put("money", 10))
                 .put(new JSONObject().put("who", "KILLS").put("kills", 5).put("money", 50));
-        check("rewards are taken", EventForm.applyRewards(bedwars, rewards, List::of), null);
+        check("rewards are taken", EventForm.applyRewards(bedwars, rewards, ItemCatalog::empty), null);
         List<RewardRule> rules = EventRewards.of(bedwars);
         check("all three are there", rules.size(), 3);
         check("the item name is put the way bukkit spells it",
-                rules.get(0).getPrize().getItems().get("DIAMOND"), 3);
+                rules.get(0).getPrize().amountOf("DIAMOND"), 3);
         check("an open range stays open", rules.get(1).describeWho(), "ab Platz 4");
         check("the form reads them back", EventForm.describeRewards(bedwars).getJSONObject(2).getString("label"),
                 "ab 5 Kills");
@@ -307,21 +308,21 @@ public final class RewardCheck {
         EventData race = new EventData("UHC", EventType.UHC_DRAGON, 0, 1);
         check("a kill reward on an event without kills is refused", EventForm.applyRewards(race,
                 new JSONArray().put(new JSONObject().put("who", "KILLS").put("kills", 1).put("money", 5)),
-                List::of) != null, true);
+                ItemCatalog::empty) != null, true);
         check("an empty reward is refused", EventForm.applyRewards(race,
-                new JSONArray().put(new JSONObject().put("who", "PARTICIPATION")), List::of) != null, true);
+                new JSONArray().put(new JSONObject().put("who", "PARTICIPATION")), ItemCatalog::empty) != null, true);
         check("an unknown item is refused when the list is known", EventForm.applyRewards(race,
                 new JSONArray().put(new JSONObject().put("who", "PARTICIPATION").put("items", new JSONArray()
                         .put(new JSONObject().put("material", "DIAMANT").put("amount", 1)))),
-                () -> List.of("DIAMOND")) != null, true);
+                () -> catalogOf("DIAMOND")) != null, true);
         check("a range the wrong way round is refused", EventForm.applyRewards(race,
                 new JSONArray().put(new JSONObject().put("who", "PLACE").put("from", 5).put("to", 2)
-                        .put("money", 5)), List::of) != null, true);
+                        .put("money", 5)), ItemCatalog::empty) != null, true);
         EventData simple = new EventData("Info", EventType.SIMPLE, 0, 1);
         check("an event that ranks nobody takes no rewards", EventForm.applyRewards(simple,
                 new JSONArray().put(new JSONObject().put("who", "PARTICIPATION").put("money", 5)),
-                List::of) != null, true);
-        check("but an empty list is fine", EventForm.applyRewards(simple, new JSONArray(), List::of), null);
+                ItemCatalog::empty) != null, true);
+        check("but an empty list is fine", EventForm.applyRewards(simple, new JSONArray(), ItemCatalog::empty), null);
     }
 
     private static int count(List<EventRewards.Earned> earned, UUID player) {
@@ -339,6 +340,12 @@ public final class RewardCheck {
             }
         }
         return null;
+    }
+
+    private static ItemCatalog catalogOf(String... materials) {
+        List<ItemCatalog.Material> known = new ArrayList<>();
+        for (String material : materials) known.add(new ItemCatalog.Material(material, false, 64, 0));
+        return new ItemCatalog(known, List.of(), List.of(), 1L);
     }
 
     private static void check(String what, Object actual, Object expected) {

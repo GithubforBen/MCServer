@@ -3,15 +3,13 @@ package de.hems.utils.webconsole.modules;
 import de.hems.types.admin.ItemData;
 import de.hems.types.admin.StashData;
 import de.hems.utils.admin.StashStore;
+import de.hems.utils.item.SlotJson;
 import de.hems.utils.webconsole.ApiContext;
 import de.hems.utils.webconsole.WebModule;
 import de.hems.utils.webconsole.WebServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 /**
  * The admin stash, seen from the browser.
@@ -64,13 +62,7 @@ public class StashModule implements WebModule {
      */
     private static JSONObject toJson(StashData stash) {
         JSONArray items = new JSONArray();
-        for (ItemData item : stash.getItems()) {
-            items.put(new JSONObject()
-                    .put("slot", item.getSlot())
-                    .put("material", item.getMaterial())
-                    .put("amount", item.getAmount())
-                    .put("raw", item.getRawBase64() == null ? JSONObject.NULL : item.getRawBase64()));
-        }
+        for (ItemData item : stash.getItems()) items.put(SlotJson.toJson(item));
         return new JSONObject()
                 .put("id", stash.getId())
                 .put("size", stash.getSize())
@@ -86,8 +78,12 @@ public class StashModule implements WebModule {
             ctx.error(400, "Es fehlt die Revision - bitte die Ablage neu laden.");
             return;
         }
-        StashData stash = new StashData(StashData.GLOBAL, size,
-                readItems(body.optJSONArray("items"), size), revision);
+        SlotJson.Result read = SlotJson.read(body.optJSONArray("items"), size);
+        if (read.problem() != null) {
+            ctx.error(400, read.problem());
+            return;
+        }
+        StashData stash = new StashData(StashData.GLOBAL, size, read.items(), revision);
         StashStore.Result result = stashes.put(stash);
         if (!result.successful()) {
             ctx.json(new JSONObject()
@@ -100,38 +96,5 @@ public class StashModule implements WebModule {
                 .put("ok", true)
                 .put("message", result.message())
                 .put("revision", result.revision()));
-    }
-
-    /**
-     * Reads the slots the browser sent back.
-     *
-     * @param raw  the items as json
-     * @param size how many slots the stash has
-     * @return the items, skipping empty and out of range slots
-     */
-    private static List<ItemData> readItems(JSONArray raw, int size) {
-        List<ItemData> items = new ArrayList<>();
-        if (raw == null) return items;
-        for (int i = 0; i < raw.length(); i++) {
-            JSONObject entry = raw.optJSONObject(i);
-            if (entry == null) continue;
-            String material = entry.optString("material", "");
-            int slot = entry.optInt("slot", -1);
-            if (material.isBlank() || "AIR".equalsIgnoreCase(material) || slot < 0 || slot >= size) continue;
-            ItemData item = new ItemData();
-            item.setSlot(slot);
-            item.setMaterial(material.toUpperCase(Locale.ROOT));
-            item.setAmount(Math.max(1, entry.optInt("amount", 1)));
-            String base64 = entry.optString("raw", null);
-            if (base64 != null && !base64.isBlank() && !"null".equals(base64)) {
-                try {
-                    item.setRawBase64(base64);
-                } catch (IllegalArgumentException e) {
-                    // a mangled payload just means the item is rebuilt plain instead of restored
-                }
-            }
-            items.add(item);
-        }
-        return items;
     }
 }

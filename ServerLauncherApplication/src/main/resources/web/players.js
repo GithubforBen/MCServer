@@ -59,17 +59,24 @@
             if (label) node.appendChild(el('span', {className: 'slot-label', text: label}));
         } else {
             node.classList.add(hueClassOf(item.material));
-            if (item.enchantments && item.enchantments.length) node.classList.add('enchanted');
+            var enchanted = item.spec ? (item.spec.enchantments || []).length : (item.enchantments || []).length;
+            if (enchanted) node.classList.add('enchanted');
             node.appendChild(el('span', {className: 'slot-name', text: prettyMaterial(item.material)}));
             if (item.amount > 1) {
                 node.appendChild(el('span', {className: 'slot-amount', text: String(item.amount)}));
             }
-            var tooltip = prettyMaterial(item.material);
-            if (item.displayName) tooltip += '\n"' + item.displayName + '"';
-            if (item.enchantments && item.enchantments.length) {
-                tooltip += '\n' + item.enchantments.join(', ');
+            var tooltip;
+            if (item.spec) {
+                tooltip = McItems.describe(Object.assign({}, item.spec, {amount: item.amount}))
+                    .split(' · ').join('\n');
+            } else {
+                tooltip = prettyMaterial(item.material);
+                if (item.displayName) tooltip += '\n"' + item.displayName + '"';
+                if (item.enchantments && item.enchantments.length) {
+                    tooltip += '\n' + item.enchantments.join(', ');
+                }
+                if (item.damage) tooltip += '\nSchaden: ' + item.damage + '/' + item.maxDurability;
             }
-            if (item.damage) tooltip += '\nSchaden: ' + item.damage + '/' + item.maxDurability;
             node.title = tooltip;
         }
         node.addEventListener('click', function () {
@@ -179,6 +186,22 @@
         updateSaveBar();
     }
 
+    /**
+     * One slot as the server wants it back: the bytes it came as, and the description - which the server
+     * only puts onto the item when the editor marked it as changed.
+     */
+    function slotPayload(item, slot) {
+        var spec = item.spec ? Object.assign({}, item.spec, {amount: item.amount}) : null;
+        return {
+            slot: slot,
+            material: item.material,
+            amount: item.amount,
+            raw: item.raw || null,
+            spec: spec,
+            modified: !!item.modified
+        };
+    }
+
     /* ------------------------------------------------------------------ saving */
 
     var saveBar = null;
@@ -252,45 +275,49 @@
     /* ------------------------------------------------------------------ item editor */
 
     /**
-     * The little form that opens when a slot is clicked. Only material and amount can be changed; anything
-     * else the item carries is kept by sending its original bytes back untouched.
+     * The item editor that opens when a slot is clicked - the same one event prizes are made with.
+     *
+     * An item keeps the bytes the game server read it as. Changing only how many there are, or nothing at
+     * all, sends those bytes back untouched, so plugin data the editor knows nothing about survives. Only
+     * when the item itself was changed - name, enchantments, attributes, material - is it marked, and the
+     * game server then puts the changes onto the item it rebuilds from those bytes.
      */
     function openSlotEditor(container, slot, item, state, redraw) {
         var existing = document.getElementById('slot-editor');
         if (existing) existing.remove();
 
-        var materialInput = el('input', {
-            type: 'text', id: 'slot-material', placeholder: 'z.B. DIAMOND_SWORD',
-            value: item ? item.material : ''
-        });
-        materialInput.setAttribute('list', 'material-options');
-        var amountInput = el('input', {
-            type: 'number', id: 'slot-amount', value: item ? String(item.amount) : '1'
-        });
-        amountInput.min = '1';
-        amountInput.max = '99';
+        var original = item
+            ? (item.spec || {material: item.material, amount: item.amount})
+            : {material: '', amount: 1};
+        var itemEditor = McItems.editor(original, {maxAmount: 99});
 
         var applyButton = el('button', {text: 'Übernehmen', type: 'button', className: 'small'});
         var clearButton = el('button', {text: 'Slot leeren', type: 'button', className: 'small danger'});
         var cancelButton = el('button', {text: 'Abbrechen', type: 'button', className: 'small secondary'});
 
         applyButton.addEventListener('click', function () {
-            var material = materialInput.value.trim().toUpperCase();
-            if (!material) {
-                toast('Bitte ein Material angeben.', 'error');
+            var problem = itemEditor.problem();
+            if (problem) {
+                toast(problem, 'error');
                 return;
             }
-            var amount = Math.max(1, parseInt(amountInput.value, 10) || 1);
+            var spec = itemEditor.value();
             var previous = state.items[slot];
+            var sameMaterial = previous && previous.material === spec.material;
+            // an item that was only counted differently is still the item it was
+            var changed = !previous || !McItems.sameItem(original, spec) || !!previous.modified;
             state.items[slot] = {
                 slot: slot,
-                material: material,
-                amount: amount,
-                // keep the original bytes only while the material stays the same, so enchantments survive
-                raw: previous && previous.material === material ? previous.raw : null,
-                displayName: previous && previous.material === material ? previous.displayName : null,
-                enchantments: previous && previous.material === material ? previous.enchantments : [],
-                damage: previous && previous.material === material ? previous.damage : 0,
+                material: spec.material,
+                amount: spec.amount,
+                raw: sameMaterial ? previous.raw : null,
+                spec: spec,
+                modified: changed,
+                displayName: spec.name || null,
+                enchantments: (spec.enchantments || []).map(function (enchantment) {
+                    return enchantment.key + ' ' + enchantment.level;
+                }),
+                damage: spec.damage || 0,
                 maxDurability: previous ? previous.maxDurability : 0
             };
             state.dirty = true;
@@ -311,18 +338,18 @@
 
         var editor = el('div', {className: 'slot-editor card', id: 'slot-editor'}, [
             el('h4', {text: 'Slot ' + slot}),
-            el('div', {className: 'inline-form'}, [
-                el('div', {className: 'field'}, [el('label', {text: 'Material'}), materialInput]),
-                el('div', {className: 'field narrow'}, [el('label', {text: 'Anzahl'}), amountInput])
-            ]),
-            item && item.enchantments && item.enchantments.length
-                ? el('p', {className: 'hint', text: 'Verzauberungen: ' + item.enchantments.join(', ')
-                    + ' - bleiben erhalten, solange das Material gleich bleibt.'})
+            // without a description the editor only knows material and amount; changing more would
+            // overwrite what it cannot see
+            item && !item.spec && item.raw
+                ? el('p', {className: 'hint', text: 'Von diesem Item sind nur Material und Anzahl bekannt. '
+                    + 'Wer hier mehr ändert, ersetzt Name, Verzauberungen und Attribute, die es schon hat. '
+                    + 'Einmal im Spiel geöffnet und gespeichert, ist es vollständig bekannt.'})
                 : null,
+            itemEditor.node,
             el('div', {className: 'actions'}, [applyButton, clearButton, cancelButton])
         ]);
         container.appendChild(editor);
-        materialInput.focus();
+        itemEditor.focus();
     }
 
     /* ------------------------------------------------------------------ container view */
@@ -394,18 +421,13 @@
             var payload = {
                 kind: inventory.kind,
                 containerId: inventory.containerId,
-                size: container.size,
-                items: container.items.filter(Boolean).map(function (item, index) {
-                    return item;
-                }).map(function (item) {
-                    return {slot: item.slot, material: item.material, amount: item.amount, raw: item.raw};
-                })
+                size: container.size
             };
             // the slot each item sits in is the array index, not whatever it carried when it was read
             payload.items = [];
             container.items.forEach(function (item, slot) {
                 if (!item) return;
-                payload.items.push({slot: slot, material: item.material, amount: item.amount, raw: item.raw});
+                payload.items.push(slotPayload(item, slot));
             });
             return api('/api/players/' + encodeURIComponent(uuid) + '/inventory',
                 {method: 'POST', body: payload}).then(function (data) {
@@ -478,7 +500,7 @@
                 var payload = {size: container.size, revision: container.revision, items: []};
                 container.items.forEach(function (item, slot) {
                     if (!item) return;
-                    payload.items.push({slot: slot, material: item.material, amount: item.amount, raw: item.raw});
+                    payload.items.push(slotPayload(item, slot));
                 });
                 return api('/api/stash', {method: 'POST', body: payload}).then(function (data) {
                     container.revision = data.revision;
@@ -541,19 +563,6 @@
         var detailHost = el('div');
         var allPlayers = [];
         var selected = null;
-
-        // the datalist the item editor completes materials from
-        var materialOptions = el('datalist', {id: 'material-options'});
-        panel.appendChild(materialOptions);
-        api('/api/materials').then(function (data) {
-            (data.materials || []).forEach(function (material) {
-                var option = el('option');
-                option.value = material.name;
-                materialOptions.appendChild(option);
-            });
-        }).catch(function () {
-            /* the editor still works by typing the name out */
-        });
 
         search.addEventListener('input', function () {
             renderList();

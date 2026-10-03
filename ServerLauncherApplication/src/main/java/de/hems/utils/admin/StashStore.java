@@ -3,6 +3,7 @@ package de.hems.utils.admin;
 import de.hems.utils.YamlFiles;
 import de.hems.types.admin.ItemData;
 import de.hems.types.admin.StashData;
+import de.hems.types.item.ItemSpec;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -21,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * whichever server the admin happens to be standing on both have to reach the same chest.
  * <p>
  * The launcher never looks inside the contents - it has no bukkit to make sense of them with - it only
- * stores the bytes and hands them back.
+ * stores the bytes and the description a game server or the item editor made, and hands them back.
  */
 public class StashStore {
 
@@ -111,6 +112,10 @@ public class StashStore {
             entry.put("material", item.getMaterial());
             entry.put("amount", item.getAmount());
             if (item.getRawBase64() != null) entry.put("raw", item.getRawBase64());
+            // the description is what the website shows - and, when it was edited there, what the game
+            // server still has to put onto the item when it takes it out
+            if (item.getSpec() != null) entry.put("spec", item.getSpec().encode());
+            if (item.isModified()) entry.put("modified", true);
             items.add(entry);
         }
         config.set(path + ".items", items.isEmpty() ? null : items);
@@ -139,6 +144,9 @@ public class StashStore {
                     // a mangled blob only costs this item its extra data, not the whole stash
                 }
             }
+            Object spec = stored.get("spec");
+            if (spec != null) item.setSpec(ItemSpec.decode(String.valueOf(spec)));
+            item.setModified(item.getSpec() != null && Boolean.TRUE.equals(stored.get("modified")));
             if (item.getSlot() >= 0) items.add(item);
         }
         return items;

@@ -9,6 +9,7 @@ import de.hems.utils.webconsole.modules.AuthModule;
 import de.hems.utils.webconsole.modules.ConsoleModule;
 import de.hems.utils.webconsole.modules.CoreProtectModule;
 import de.hems.utils.webconsole.modules.EventModule;
+import de.hems.utils.webconsole.modules.ItemModule;
 import de.hems.utils.webconsole.modules.NetworkModule;
 import de.hems.utils.webconsole.modules.PayingPlayerModule;
 import de.hems.utils.webconsole.modules.PlayerModule;
@@ -109,6 +110,7 @@ public class WebServer {
         add(new NetworkModule());
         add(new EventModule());
         add(new PlayerModule());
+        add(new ItemModule());
         add(new CoreProtectModule());
         add(new PayingPlayerModule());
         add(new WhitelistModule());
