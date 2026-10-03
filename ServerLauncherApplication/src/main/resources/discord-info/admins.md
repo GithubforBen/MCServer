@@ -78,7 +78,7 @@ Vorlagen: `LOBBY`, `SURVIVAL`, `BEDWARS`, `EVENT`. Jeder Name kann gestartet wer
 ## Admin-Ablage und Geld
 
 - `/admin` (Survival): öffnet die **Admin-Ablage**, eine Kiste, die netzwerkweit dieselbe ist. Items aus Spielerinventaren zieht man auf der Website hinein.
-- `/admin join`: Du trittst als „Admin“ auf, mit Name, Skin und der Ablage als Inventar. Nochmal tippen schaltet zurück. Das Log nennt trotzdem deinen echten Namen.
+- `/admin join`: Du trittst als „Admin“ auf, mit Name, Skin und der Ablage als Inventar. Nochmal tippen schaltet zurück. Ort und Gamemode merkt sich jede Gestalt selbst: Als Admin bist du wieder im Gamemode vom letzten Mal (z. B. Creative), als Spieler wieder in deinem. Das Log nennt trotzdem deinen echten Namen.
 - `/admin money add|remove <spieler> <betrag>` und `/admin money query <spieler>`: Bits verwalten
 
 ## Events anlegen

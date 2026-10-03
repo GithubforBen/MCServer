@@ -4,7 +4,7 @@ Testplan für die Änderungen aus fünf Runden: Serverstart und Warp, Shop und A
 die mitgelieferte Bedwars-Map, die Speichergrenzen — und die Korrekturen an Map, Kampf,
 Werkzeugen und Nachrichten sowie der Parkour, die danach dazugekommen sind.
 
-Stand: 2026-08-30 · 115 Prüfungen in neunzehn Phasen
+Stand: 2026-10-03 · 122 Prüfungen in zwanzig Phasen
 
 Die Phasen bauen aufeinander auf — ohne laufenden Launcher lässt sich über RunPlugin nichts
 sagen, und ohne aktives RunPlugin nichts über Warp und Fortschritt. Also von oben nach unten.
@@ -732,6 +732,54 @@ Neu und noch nie gelaufen. Es gibt beim ersten Start keine Strecke — die muss 
   - Ablauf: Mitten im Lauf `/warp survival`, dann zurück in die Lobby
   - Erwartet: Kein laufender Lauf mehr, keine absurde Zeit. `/parkour leave` bricht ebenfalls
     ab und setzt zurück an den Spawn.
+
+---
+
+## 20 — Survival: Attribute Swapping, eigene Sichtweite, Home-Preis
+
+Speer-Kombos wie in Vanilla, und ein Limit, mit dem die Sichtweite nicht mehr dauernd springt.
+
+- [ ] **20.1 Schalter steht nach dem Start** · `WICHTIG`
+  - Ablauf: Survival über den Launcher neu starten, dann `servers/SURVIVAL/config/paper-global.yml`
+    öffnen
+  - Erwartet: Unter `unsupported-settings` steht `update-equipment-on-player-actions: false`. Von Hand
+    auf `true` gestellt, steht es nach dem nächsten Start wieder auf `false`.
+
+- [ ] **20.2 Attribute Swapping mit dem Speer** · `WICHTIG`
+  - Ablauf: Speer in Slot 1, Netherite-Schwert mit Schärfe V in Slot 2. Einen Zombie schlagen und im
+    selben Moment zwischen den Slots wechseln. Zum Vergleich jedes Item einzeln benutzen.
+  - Erwartet: Der Schlag mit Wechsel verbindet beide Items (anderer Schaden bzw. Schärfe-Partikel
+    als mit einem Item allein), wie im Einzelspieler. Auf Bedwars oder in der Lobby geht das nicht.
+
+- [ ] **20.3 `/sichtweite` zeigt den Stand** · `NORMAL`
+  - Ablauf: `/sichtweite` ohne Argument
+  - Erwartet: Aktuelle Sichtweite, „Eigenes Limit: keins“, was der Server gerade gäbe, und der
+    Hinweis auf `/sichtweite <2-32>` und `aus`. Tab-Vervollständigung schlägt `aus`, 4 bis 12 vor.
+
+- [ ] **20.4 Limit greift sofort** · `WICHTIG`
+  - Ablauf: `/sichtweite 4`
+  - Erwartet: Die Sichtweite ist sofort 4 Chunks (F3 bzw. sichtbar am Nebel). `/sichtweite 1`,
+    `/sichtweite 40` und `/sichtweite abc` werden mit einer Meldung abgelehnt.
+
+- [ ] **20.5 Keine Änderungen mehr bei Lag** · `WICHTIG`
+  - Ablauf: Limit unter die `min-view-distance` der eigenen Gruppe setzen (Standard: frei 4,
+    zahlend 8), dann Lag erzeugen (z. B. viele Entities spawnen) und wieder abbauen
+  - Erwartet: Die Sichtweite bleibt die ganze Zeit beim Limit, und es kommen keine Chat-Meldungen
+    „Sichtweite gesenkt“ / „läuft wieder rund“. Ohne Limit kommen sie wie bisher.
+
+- [ ] **20.6 Limit bleibt und lässt sich entfernen** · `NORMAL`
+  - Ablauf: Mit gesetztem Limit ausloggen, Survival neu starten, wieder einloggen. Dann
+    `/sichtweite aus`
+  - Erwartet: Nach dem Neustart gilt das Limit noch. Nach `aus` ist die Sichtweite wieder die
+    automatische. Mit `enabled: false` in `configs/chunklimiter.yml` gilt das Limit weiterhin, und
+    nach `aus` bekommt man die View-Distance des Servers.
+
+- [ ] **20.7 Team-Home kostet 500 Bits** · `WICHTIG`
+  - Ablauf: Mit mindestens 500 Bits `/cteam home`, stillstehen. Dann mit weniger als 500 Bits
+    nochmal. Dann mit genug Bits starten und während der Wartezeit loslaufen.
+  - Erwartet: Erster Teleport klappt, danach sind genau 500 Bits weniger auf dem Konto (Tabliste).
+    Mit zu wenig Bits kommt sofort eine Meldung und keine Wartezeit. Beim Loslaufen kein Teleport
+    und kein Abzug. In `configs/team.yml` steht `home.cost: 500`.
 
 ---
 

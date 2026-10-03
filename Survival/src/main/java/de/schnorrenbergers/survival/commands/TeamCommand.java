@@ -8,6 +8,7 @@ import de.schnorrenbergers.survival.featrues.team.ClaimDisplay;
 import de.schnorrenbergers.survival.featrues.team.ClaimManager;
 import de.schnorrenbergers.survival.featrues.team.TeamManager;
 import de.schnorrenbergers.survival.featrues.team.TeamManagerUi;
+import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import de.schnorrenbergers.survival.utils.Inventorys;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -246,23 +247,47 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
             player.sendMessage(ChatColor.RED + "❌ Noch " + left + " Sekunden.");
             return;
         }
+        int cost = Survival.getInstance().getTeamRules().getHomeCost();
+        // asked before the wait as well, so nobody stands still for nothing
+        if (cost > 0 && MoneyHandler.getMoney(player.getUniqueId()) < cost) {
+            player.sendMessage(ChatColor.RED + "❌ Der Teleport zum Team-Home kostet " + cost
+                    + " Bits, so viel hast du nicht.");
+            return;
+        }
         int warmup = Survival.getInstance().getTeamRules().getHomeWarmupSeconds();
         if (warmup <= 0) {
-            homeCooldown.put(player.getUniqueId(), System.currentTimeMillis());
-            player.teleport(home);
+            payAndTeleport(player, home, cost);
             return;
         }
         Location standing = player.getLocation();
-        player.sendMessage(ChatColor.GRAY + "Nicht bewegen - Teleport in " + warmup + " Sekunden.");
+        player.sendMessage(ChatColor.GRAY + "Nicht bewegen - Teleport in " + warmup + " Sekunden"
+                + (cost > 0 ? " für " + cost + " Bits." : "."));
         Bukkit.getScheduler().runTaskLater(Survival.getInstance(), () -> {
             if (!player.isOnline()) return;
             if (player.getLocation().distanceSquared(standing) > 1.0d) {
-                player.sendMessage(ChatColor.RED + "❌ Du hast dich bewegt - kein Teleport.");
+                player.sendMessage(ChatColor.RED + "❌ Du hast dich bewegt - kein Teleport, nichts bezahlt.");
                 return;
             }
-            homeCooldown.put(player.getUniqueId(), System.currentTimeMillis());
-            player.teleport(home);
+            payAndTeleport(player, home, cost);
         }, warmup * 20L);
+    }
+
+    /**
+     * Takes the price only at the moment of the teleport, so a teleport that is called off costs nothing.
+     *
+     * @param player who teleports and pays
+     * @param home   where to
+     * @param cost   the price in bits, 0 for free
+     */
+    private void payAndTeleport(Player player, Location home, int cost) {
+        if (cost > 0 && !MoneyHandler.removeMoney(cost, player.getUniqueId())) {
+            player.sendMessage(ChatColor.RED + "❌ Der Teleport zum Team-Home kostet " + cost
+                    + " Bits, die Bezahlung hat nicht geklappt.");
+            return;
+        }
+        homeCooldown.put(player.getUniqueId(), System.currentTimeMillis());
+        player.teleport(home);
+        if (cost > 0) player.sendMessage(ChatColor.GRAY + "Teleport zum Team-Home: " + cost + " Bits.");
     }
 
     private void info(Player player, String[] args) {

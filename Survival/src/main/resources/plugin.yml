@@ -50,6 +50,10 @@ commands:
   banane:
     description: Sperrt einen Spieler für eine bestimmte Zeit
     usage: /banane <spieler> <grund> time <m|h|d|w>
+  sichtweite:
+    description: Ein eigenes Limit für die Sichtweite, damit sie sich bei Lag nicht dauernd ändert
+    usage: /sichtweite [<2-32>|aus]
+    aliases: [viewdistance]
   warp:
     description: Auf einen anderen Server springen
     usage: /warp [server]
