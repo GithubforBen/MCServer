@@ -28,6 +28,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,6 +74,8 @@ public class WebServer {
         int port = config.getInt("web.port", 8080);
         String bind = config.getString("web.bind", "0.0.0.0");
         this.authService = new AuthService(configuration);
+        // logins outlive a restart of the launcher - only hashes of the tokens are written
+        authService.persistSessions(new File("./web-sessions.yml"));
         this.authService.ensureAccountExists();
 
         this.app = Javalin.create(cfg -> {

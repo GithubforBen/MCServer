@@ -28,6 +28,12 @@
                maxlength="8" autocomplete="one-time-code" required>
         <p class="hint">Ohne diesen Code wird das Passwort gar nicht erst geprüft.</p>
 
+        <label class="checkbox" for="login-remember">
+            <input id="login-remember" name="remember" type="checkbox"> <span id="login-remember-text">Angemeldet bleiben (7 Tage)</span>
+        </label>
+        <p class="hint">Nur auf eigenen Geräten. Ohne Haken endet die Anmeldung mit dem Browser oder nach einer
+            Weile ohne Nutzung.</p>
+
         <button id="login-submit" type="submit">Anmelden</button>
         <p id="login-message" class="message hidden"></p>
     </form>

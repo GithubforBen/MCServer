@@ -4,6 +4,7 @@ import de.hems.utils.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -33,8 +34,18 @@ public class AuthService {
     private final Totp totp;
     private final long graceMillis;
     private final long sessionTimeoutMillis;
+    /** How long a login with "Angemeldet bleiben" lasts, counted from the login and not pushed back by use. */
+    private final long rememberMillis;
     private final String issuer;
 
+    /** Where sessions wait out a restart, {@code null} when they live in memory only. */
+    private volatile SessionStore store;
+    /** When the sessions were last written, so a session pushed back on every click is not written every time. */
+    private volatile long lastSaved;
+    /** How often a session that is only being used gets its new expiry written. */
+    private static final long SAVE_INTERVAL_MILLIS = 60_000L;
+
+    /** The sessions by id, the hash of their token. */
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
     /** When the grace period of a given key - account or address - runs out. */
     private final Map<String, Long> graceUntil = new ConcurrentHashMap<>();
@@ -50,6 +61,7 @@ public class AuthService {
         YamlConfiguration config = configuration.getConfig();
         this.graceMillis = Math.max(0L, config.getLong("web.grace-period-seconds", 3L)) * 1000L;
         this.sessionTimeoutMillis = Math.max(1L, config.getLong("web.session-timeout-minutes", 60L)) * 60_000L;
+        this.rememberMillis = Math.max(1L, config.getLong("web.remember-days", 7L)) * 86_400_000L;
         this.issuer = config.getString("web.totp.issuer", "MCServer");
         this.totp = new Totp(
                 config.getInt("web.totp.digits", 6),
@@ -68,9 +80,11 @@ public class AuthService {
      * @param password   the password
      * @param token      the number from the authenticator app - without it nothing is checked
      * @param clientKey  something identifying the caller, used to keep grace periods apart
+     * @param remember   whether "Angemeldet bleiben" was ticked
      * @return how the attempt ended
      */
-    public LoginResult login(String username, String password, String token, String clientKey) {
+    public LoginResult login(String username, String password, String token, String clientKey,
+                             boolean remember) {
         long startedAt = System.currentTimeMillis();
         String account = normalize(username);
 
@@ -124,7 +138,7 @@ public class AuthService {
             }
 
             usedTotpStep.put(account, step);
-            return LoginResult.success(createSession(admin.getUsername()));
+            return LoginResult.success(createSession(admin, remember));
         } finally {
             // every outcome leaves through here, so they all take the same time ...
             waitOutGracePeriod(startedAt);
@@ -195,34 +209,66 @@ public class AuthService {
         return graceMillis / 1000L;
     }
 
-    private Session createSession(String username) {
+    /**
+     * Keeps sessions in a file from now on, and takes over the ones it holds - so a restart of the launcher
+     * does not log everybody out.
+     *
+     * @param file where the sessions are kept
+     */
+    public void persistSessions(File file) {
+        SessionStore loaded = new SessionStore(file);
+        for (Session session : loaded.load()) sessions.put(session.getId(), session);
+        store = loaded;
+        save();
+    }
+
+    private Session createSession(AdminAccount admin, boolean remember) {
         cleanUpSessions();
-        Session session = new Session(Passwords.randomToken(), Passwords.randomToken(), username,
-                System.currentTimeMillis() + sessionTimeoutMillis);
-        sessions.put(session.getToken(), session);
+        long now = System.currentTimeMillis();
+        Session session = new Session(Passwords.randomToken(), Passwords.randomToken(), admin.getUsername(),
+                now + (remember ? rememberMillis : sessionTimeoutMillis), remember, stampOf(admin));
+        sessions.put(session.getId(), session);
+        save();
         return session;
     }
 
     /**
-     * Looks a session up and pushes its expiry back, so an admin that is working is not thrown out.
+     * Looks a session up. One without "Angemeldet bleiben" is pushed back, so an admin that is working is
+     * not thrown out; one with it ends at the time it was given at the login, however much it is used.
+     * <p>
+     * A session also ends when its account is gone or has another password than at the login - whichever
+     * way that happened, also by {@code ./admin-passwort.sh} while the launcher was off.
      *
      * @param token the token from the cookie
      * @return the session, or {@code null} if it is unknown or has run out
      */
     public Session getSession(String token) {
         if (token == null || token.isEmpty()) return null;
-        Session session = sessions.get(token);
+        String id = Session.hash(token);
+        Session session = sessions.get(id);
         if (session == null) return null;
-        if (session.isExpired()) {
-            sessions.remove(token);
+        AdminAccount admin = session.isExpired() ? null : findAccount(session.getUsername());
+        if (admin == null || !admin.isUsable() || !stampOf(admin).equals(session.getAccountStamp())) {
+            sessions.remove(id);
+            save();
             return null;
         }
-        session.setExpiresAt(System.currentTimeMillis() + sessionTimeoutMillis);
+        if (!session.isRemember()) {
+            session.setExpiresAt(System.currentTimeMillis() + sessionTimeoutMillis);
+            if (System.currentTimeMillis() - lastSaved > SAVE_INTERVAL_MILLIS) save();
+        }
         return session;
     }
 
-    public void logout(String token) {
-        if (token != null) sessions.remove(token);
+    /**
+     * Ends one session.
+     *
+     * @param session the session, may be {@code null}
+     */
+    public void logout(Session session) {
+        if (session == null) return;
+        sessions.remove(session.getId());
+        save();
     }
 
     /**
@@ -271,19 +317,39 @@ public class AuthService {
 
     /**
      * Logs an account out everywhere - after its password changed, so a session somebody else holds with
-     * the old one ends too.
+     * the old one ends too. The session that is kept is moved on to the account as it is now, or it would
+     * end on its next request for the very change it made.
      *
-     * @param username    the account
-     * @param exceptToken a session to keep, the one that made the change, or {@code null}
+     * @param username the account
+     * @param exceptId the id of a session to keep, the one that made the change, or {@code null}
      */
-    public void endSessions(String username, String exceptToken) {
+    public void endSessions(String username, String exceptId) {
         String account = normalize(username);
         sessions.values().removeIf(session -> normalize(session.getUsername()).equals(account)
-                && !session.getToken().equals(exceptToken));
+                && !session.getId().equals(exceptId));
+        AdminAccount admin = findAccount(username);
+        Session kept = exceptId == null ? null : sessions.get(exceptId);
+        if (kept != null && admin != null) kept.setAccountStamp(stampOf(admin));
+        save();
     }
 
     private void cleanUpSessions() {
         sessions.values().removeIf(Session::isExpired);
+    }
+
+    private void save() {
+        SessionStore current = store;
+        if (current == null) return;
+        lastSaved = System.currentTimeMillis();
+        current.save(sessions.values());
+    }
+
+    /**
+     * @param admin an account
+     * @return something that changes whenever its password does, without being the password hash itself
+     */
+    private static String stampOf(AdminAccount admin) {
+        return Session.hash("stamp:" + admin.getPasswordHash());
     }
 
     /**
@@ -291,6 +357,13 @@ public class AuthService {
      */
     public long getSessionTimeoutSeconds() {
         return sessionTimeoutMillis / 1000L;
+    }
+
+    /**
+     * @return how long "Angemeldet bleiben" lasts, in days
+     */
+    public long getRememberDays() {
+        return rememberMillis / 86_400_000L;
     }
 
     /**
