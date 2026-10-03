@@ -7,14 +7,13 @@ import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
 import de.hems.utils.event.EventForm;
 import de.hems.utils.event.EventStore;
-import de.hems.utils.webconsole.AdminNetwork;
+import de.hems.utils.item.ItemCatalogStore;
 import de.hems.utils.webconsole.ApiContext;
 import de.hems.utils.webconsole.WebModule;
 import de.hems.utils.webconsole.WebServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -181,7 +180,7 @@ public class EventModule implements WebModule {
         String problem = EventForm.applySettings(edited, ctx.body().optJSONObject("settings"));
         if (problem == null) {
             problem = EventForm.applyRewards(edited, ctx.body().optJSONArray("rewards"),
-                    EventModule::knownMaterials);
+                    () -> ItemCatalogStore.get().catalog());
         }
         if (problem != null) {
             ctx.error(400, problem);
@@ -220,18 +219,6 @@ public class EventModule implements WebModule {
             return null;
         }
         return new long[]{startsAt, endsAt};
-    }
-
-    /**
-     * @return every item name, or an empty list when no game server could be asked - the name is then only
-     *         checked for its form, and a game server skips an item it does not know when it hands it out
-     */
-    private static List<String> knownMaterials() {
-        try {
-            return AdminNetwork.materials();
-        } catch (Exception e) {
-            return List.of();
-        }
     }
 
     /**

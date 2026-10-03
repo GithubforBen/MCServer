@@ -295,6 +295,9 @@
                 + 'ist nicht platziert.'
         };
 
+        /** Twenty-seven stacks of sixty-four, a full chest - the same bound the server keeps. */
+        var MAX_ITEM_AMOUNT = 27 * 64;
+
         var WHO = [
             {value: 'PLACE', label: 'Platzierung'},
             {value: 'KILLS', label: 'Kills', kills: true},
@@ -350,28 +353,6 @@
             ]);
         }
 
-        var materialList = null;
-
-        /**
-         * The item names the reward form completes from. Asked for once - the list comes from a game server
-         * and does not change while it runs. Without one the names can still be typed out.
-         */
-        function materialOptions() {
-            if (materialList) return materialList;
-            materialList = el('datalist', {id: 'event-material-options'});
-            panel.appendChild(materialList);
-            api('/api/materials').then(function (data) {
-                (data.materials || []).forEach(function (material) {
-                    var option = el('option');
-                    option.value = material.name;
-                    materialList.appendChild(option);
-                });
-            }).catch(function () {
-                /* typing the name out still works */
-            });
-            return materialList;
-        }
-
         function closeEditor() {
             clear(editorHost);
             editorHost.className = 'card hidden';
@@ -383,7 +364,6 @@
          * meantime, the server says so instead of one of the two changes quietly getting lost.
          */
         function openEditor(event) {
-            materialOptions();
             clear(editorHost);
             editorHost.className = 'card';
 
@@ -394,8 +374,9 @@
                     to: reward.to,
                     kills: reward.kills,
                     money: reward.money,
+                    // the whole item, enchantments and all - the editor works on a copy of it
                     items: (reward.items || []).map(function (item) {
-                        return {material: item.material, amount: item.amount};
+                        return JSON.parse(JSON.stringify(item));
                     })
                 };
             });
@@ -460,6 +441,65 @@
                 });
             }
 
+            /** The item whose editor is open, so a redraw of the list keeps it open. */
+            var openItem = null;
+
+            /**
+             * One item of a reward: a line saying what it is, and the item editor below it while it is
+             * being changed. Every change goes straight into the reward, so "Speichern" sends what is shown.
+             */
+            function renderItem(reward, item, itemIndex) {
+                var summary = el('div', {className: 'grow item-line', text: McItems.describe(item)});
+                var editorSlot = el('div');
+                var toggle = el('button', {text: 'Bearbeiten', type: 'button', className: 'small secondary'});
+                var row = el('div', {className: 'item-row'}, [
+                    el('div', {className: 'item-row-head'}, [
+                        summary,
+                        toggle,
+                        el('button', {
+                            text: 'Entfernen', type: 'button', className: 'small secondary',
+                            onClick: function () {
+                                reward.items.splice(itemIndex, 1);
+                                if (openItem === item) openItem = null;
+                                renderRewards();
+                            }
+                        })
+                    ]),
+                    editorSlot
+                ]);
+
+                function show(focus) {
+                    var itemEditor = McItems.editor(item, {
+                        maxAmount: MAX_ITEM_AMOUNT,
+                        summary: false,
+                        onChange: function (value) {
+                            // replaced in place, so the reward keeps pointing at the same item
+                            Object.keys(item).forEach(function (key) {
+                                delete item[key];
+                            });
+                            Object.assign(item, value);
+                            summary.textContent = McItems.describe(item);
+                        }
+                    });
+                    editorSlot.appendChild(itemEditor.node);
+                    toggle.textContent = 'Fertig';
+                    if (focus) itemEditor.focus();
+                }
+
+                toggle.addEventListener('click', function () {
+                    if (openItem === item) {
+                        openItem = null;
+                        clear(editorSlot);
+                        toggle.textContent = 'Bearbeiten';
+                        return;
+                    }
+                    openItem = item;
+                    renderRewards();
+                });
+                if (openItem === item) show(!item.material);
+                return row;
+            }
+
             function renderReward(reward, index) {
                 var title = el('h4', {text: (index + 1) + '. ' + describeWho(reward)});
                 function retitle() {
@@ -515,26 +555,7 @@
                 whoFields.push(field('Bits', moneyInput, 'narrow'));
 
                 var itemRows = reward.items.map(function (item, itemIndex) {
-                    var materialInput = el('input', {type: 'text', value: item.material, placeholder: 'z.B. DIAMOND'});
-                    materialInput.setAttribute('list', 'event-material-options');
-                    materialInput.addEventListener('input', function () {
-                        item.material = materialInput.value.trim().toUpperCase();
-                    });
-                    var amountInput = numberInput(item.amount, 1);
-                    amountInput.addEventListener('input', function () {
-                        item.amount = parseInt(amountInput.value, 10) || 0;
-                    });
-                    return el('div', {className: 'inline-form'}, [
-                        field('Item', materialInput),
-                        field('Anzahl', amountInput, 'narrow'),
-                        el('button', {
-                            text: 'Entfernen', type: 'button', className: 'small secondary',
-                            onClick: function () {
-                                reward.items.splice(itemIndex, 1);
-                                renderRewards();
-                            }
-                        })
-                    ]);
+                    return renderItem(reward, item, itemIndex);
                 });
 
                 return el('div', {className: 'reward-card'}, [
@@ -546,6 +567,7 @@
                             text: 'Item hinzufügen', type: 'button', className: 'small secondary',
                             onClick: function () {
                                 reward.items.push({material: '', amount: 1});
+                                openItem = reward.items[reward.items.length - 1];
                                 renderRewards();
                             }
                         }),
@@ -610,7 +632,7 @@
                             money: reward.money,
                             items: reward.items.filter(function (item) {
                                 return item.material;
-                            })
+                            }).map(McItems.clean)
                         };
                     });
                 }

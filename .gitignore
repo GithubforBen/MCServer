@@ -53,6 +53,8 @@ dependency-reduced-pom.xml
 teams.yml
 backpacks.yml
 stashes.yml
+item-catalog.json
+web-sessions.yml
 events.yml
 runs.yml
 awards.yml

@@ -1,5 +1,6 @@
 package de.hems.paper.admin;
 
+import de.hems.paper.item.ItemSpecs;
 import de.hems.types.admin.ItemData;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -14,9 +15,10 @@ import java.util.Map;
 /**
  * Translates between bukkit items and the shape the website works with.
  * <p>
- * Every item keeps the bytes bukkit serialises it into. The browser only ever changes material and amount;
- * anything it left alone is rebuilt from those bytes, so enchantments, custom names and plugin data are not
- * quietly lost by a round trip through a web form.
+ * Every item keeps the bytes bukkit serialises it into, next to an {@link de.hems.types.item.ItemSpec} the
+ * item editor works on. An item the browser left alone is rebuilt from those bytes alone, so custom names and
+ * plugin data are not quietly lost by a round trip through a web form; one it edited is rebuilt from them
+ * too and then given what the editor changed.
  */
 public final class ItemCodec {
 
@@ -72,8 +74,15 @@ public final class ItemCodec {
             raw = null;
         }
 
-        return new ItemData(slot, item.getType().name(), item.getAmount(), displayName, lore,
+        ItemData data = new ItemData(slot, item.getType().name(), item.getAmount(), displayName, lore,
                 enchantments, damage, item.getType().getMaxDurability(), raw);
+        try {
+            data.setSpec(ItemSpecs.read(item));
+        } catch (RuntimeException e) {
+            // the editor then only offers material and amount for this one, the bytes still carry the rest
+            data.setSpec(null);
+        }
+        return data;
     }
 
     /**
@@ -101,22 +110,27 @@ public final class ItemCodec {
      */
     public static ItemStack toItem(ItemData data) {
         if (data == null) return null;
-        Material material = data.getMaterial() == null ? null : Material.matchMaterial(data.getMaterial());
+        boolean edited = data.isModified() && data.getSpec() != null;
+        String name = edited ? data.getSpec().getMaterial() : data.getMaterial();
+        Material material = name == null ? null : Material.matchMaterial(name);
         if (material == null || material.isAir()) return null;
-        int amount = Math.max(1, Math.min(material.getMaxStackSize(), data.getAmount()));
+        int amount = Math.max(1, Math.min(material.getMaxStackSize(), edited ? data.getSpec().getAmount()
+                : data.getAmount()));
 
-        // an untouched item comes back exactly as it was, with everything the browser never saw
+        // an untouched item comes back exactly as it was, with everything the browser never saw - and an
+        // edited one starts from there too, so only what the editor covers changes
+        ItemStack item = null;
         if (data.getRaw() != null && data.getRaw().length > 0) {
             try {
                 ItemStack restored = ItemStack.deserializeBytes(data.getRaw());
-                if (restored != null && restored.getType() == material) {
-                    restored.setAmount(amount);
-                    return restored;
-                }
+                if (restored != null && restored.getType() == material) item = restored;
             } catch (RuntimeException e) {
                 // the bytes no longer deserialise - fall through and build a plain item
             }
         }
-        return new ItemStack(material, amount);
+        if (item == null) item = new ItemStack(material, amount);
+        if (edited) ItemSpecs.apply(item, data.getSpec());
+        item.setAmount(amount);
+        return item;
     }
 }

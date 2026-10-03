@@ -11,12 +11,13 @@ import de.hems.communication.events.admin.RespondInventoryEvent;
 import de.hems.communication.events.admin.RespondMaterialsEvent;
 import de.hems.communication.events.admin.RespondPlayersEvent;
 import de.hems.paper.PaperContext;
+import de.hems.paper.item.ItemSpecs;
 import de.hems.types.admin.InventoryData;
 import de.hems.types.admin.ItemData;
 import de.hems.types.admin.PlayerSnapshot;
+import de.hems.types.item.ItemCatalog;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -45,6 +46,8 @@ public class PlayerAdminHandler {
     private static final long SYNC_TIMEOUT_MS = 5_000L;
 
     private static BackpackProvider backpackProvider;
+    /** What items can be made of here, worked out on the first question. */
+    private static volatile ItemCatalog catalog;
 
     public PlayerAdminHandler(Plugin plugin) {
         PaperContext.setPlugin(plugin);
@@ -152,13 +155,13 @@ public class PlayerAdminHandler {
      * Sends the materials of this server's registry, which is the only place a usable list exists.
      */
     private void onMaterials(RequestMaterialsEvent request) throws Exception {
-        ArrayList<String> materials = new ArrayList<>();
-        for (Material material : Material.values()) {
-            if (!material.isItem() || material.isAir()) continue;
-            materials.add(material.name());
+        ItemCatalog built = catalog;
+        if (built == null) {
+            // the registries do not change while the server runs, so this is worked out once
+            built = ItemSpecs.catalog();
+            catalog = built;
         }
-        ListenerAdapter.sendListeners(new RespondMaterialsEvent(
-                request.getSender(), materials, request.getEventId()));
+        ListenerAdapter.sendListeners(new RespondMaterialsEvent(request.getSender(), built, request.getEventId()));
     }
 
     /* ------------------------------------------------------------------ inventories */

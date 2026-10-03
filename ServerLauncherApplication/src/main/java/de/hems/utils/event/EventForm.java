@@ -7,20 +7,20 @@ import de.hems.types.event.EventType;
 import de.hems.types.event.PokerEventSettings;
 import de.hems.types.event.PrizeData;
 import de.hems.types.event.RewardRule;
+import de.hems.types.item.ItemCatalog;
+import de.hems.types.item.ItemSpec;
 import de.hems.types.poker.PokerFormat;
+import de.hems.utils.item.ItemForm;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 /**
  * The settings and rewards of an event as the website edits them.
@@ -33,8 +33,6 @@ import java.util.regex.Pattern;
  */
 public final class EventForm {
 
-    /** What an item name has to look like before it is even compared with the real list. */
-    private static final Pattern MATERIAL = Pattern.compile("[A-Z0-9_]+");
     /** Plenty for a prize, and far below anything that overflows when it is added up. */
     private static final int MAX_MONEY = 1_000_000_000;
     /** Twenty-seven stacks of sixty-four, a full chest. */
@@ -277,9 +275,7 @@ public final class EventForm {
         JSONArray array = new JSONArray();
         for (RewardRule rule : EventRewards.of(event)) {
             JSONArray items = new JSONArray();
-            for (Map.Entry<String, Integer> item : rule.getPrize().getItems().entrySet()) {
-                items.put(new JSONObject().put("material", item.getKey()).put("amount", item.getValue()));
-            }
+            for (ItemSpec item : rule.getPrize().getItems()) items.put(item.toJson());
             array.put(new JSONObject()
                     .put("who", rule.getCondition().name())
                     .put("from", rule.getFrom())
@@ -297,12 +293,11 @@ public final class EventForm {
      *
      * @param event     the event to change, a copy
      * @param rewards   the rewards in order, as the form sent them
-     * @param materials the item names that exist, or an empty list when no game server could say - only
-     *                  asked for when there is an item to check, because asking can take a moment
+     * @param catalog what items can be made of, empty when no game server ever said - only asked for when
+     *                there is an item to check, because asking can take a moment
      * @return what is wrong, or {@code null} when they were written
      */
-    public static String applyRewards(EventData event, JSONArray rewards,
-                                      Supplier<? extends Collection<String>> materials) {
+    public static String applyRewards(EventData event, JSONArray rewards, Supplier<ItemCatalog> catalog) {
         if (rewards == null) return null;
         EventType type = event.getType();
         if (!type.isRanked() && !rewards.isEmpty()) {
@@ -312,7 +307,12 @@ public final class EventForm {
             return "Höchstens " + EventRewards.MAX_RULES + " Belohnungen pro Event.";
         }
         List<RewardRule> rules = new ArrayList<>();
-        Collection<String> known = null;
+        // asked once for the whole form, and only when there is an item at all
+        ItemCatalog[] known = new ItemCatalog[1];
+        Supplier<ItemCatalog> once = () -> {
+            if (known[0] == null) known[0] = catalog == null ? ItemCatalog.empty() : catalog.get();
+            return known[0];
+        };
         for (int i = 0; i < rewards.length(); i++) {
             String where = "Belohnung " + (i + 1) + ": ";
             JSONObject json = rewards.optJSONObject(i);
@@ -327,18 +327,11 @@ public final class EventForm {
                 for (int j = 0; j < items.length(); j++) {
                     JSONObject item = items.optJSONObject(j);
                     if (item == null) return where + "ein Item kann nicht gelesen werden.";
-                    String material = normaliseMaterial(item.optString("material", ""));
-                    if (material.isEmpty()) continue;
-                    if (known == null) known = materials.get();
-                    if (!MATERIAL.matcher(material).matches() || (!known.isEmpty() && !known.contains(material))) {
-                        return where + "'" + material + "' ist kein Minecraft-Item.";
-                    }
-                    int amount = item.optInt("amount", 0);
-                    if (amount < 1 || amount > MAX_ITEM_AMOUNT) {
-                        return where + "die Anzahl von " + material + " muss zwischen 1 und " + MAX_ITEM_AMOUNT
-                                + " liegen.";
-                    }
-                    prize.withItem(material, amount);
+                    // a row left empty in the form is not an item, and not a mistake either
+                    if (ItemSpec.normaliseMaterial(item.optString("material", "")).isEmpty()) continue;
+                    ItemForm.Result read = ItemForm.read(item, MAX_ITEM_AMOUNT, once);
+                    if (!read.ok()) return where + read.problem();
+                    prize.withItem(read.item());
                 }
             }
             if (prize.isEmpty()) return where + "gibt weder Geld noch Items.";
@@ -370,15 +363,5 @@ public final class EventForm {
         }
         EventRewards.set(event, rules);
         return null;
-    }
-
-    /**
-     * @param text an item name as somebody typed it, with or without the namespace
-     * @return it the way bukkit spells it
-     */
-    static String normaliseMaterial(String text) {
-        String material = text == null ? "" : text.trim().toUpperCase(Locale.ROOT).replace(' ', '_');
-        if (material.startsWith("MINECRAFT:")) material = material.substring("MINECRAFT:".length());
-        return material;
     }
 }

@@ -4,6 +4,7 @@ import de.hems.communication.events.admin.RequestPlayerActionEvent;
 import de.hems.types.admin.InventoryData;
 import de.hems.types.admin.ItemData;
 import de.hems.types.admin.PlayerSnapshot;
+import de.hems.utils.item.SlotJson;
 import de.hems.utils.webconsole.AdminNetwork;
 import de.hems.utils.webconsole.ApiContext;
 import de.hems.utils.webconsole.WebModule;
@@ -11,7 +12,6 @@ import de.hems.utils.webconsole.WebServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -51,7 +51,6 @@ public class PlayerModule implements WebModule {
         server.get("/api/players/{uuid}/inventory", this::readInventory);
         server.post("/api/players/{uuid}/inventory", this::writeInventory);
         server.post("/api/players/{uuid}/action", this::action);
-        server.get("/api/materials", this::materials);
     }
 
     /* ------------------------------------------------------------------ list */
@@ -150,19 +149,7 @@ public class PlayerModule implements WebModule {
      */
     private static JSONObject inventoryToJson(InventoryData inventory) {
         JSONArray items = new JSONArray();
-        for (ItemData item : inventory.getItems()) {
-            items.put(new JSONObject()
-                    .put("slot", item.getSlot())
-                    .put("material", item.getMaterial())
-                    .put("amount", item.getAmount())
-                    .put("displayName", item.getDisplayName() == null ? JSONObject.NULL : item.getDisplayName())
-                    .put("lore", item.getLore() == null ? new JSONArray() : new JSONArray(item.getLore()))
-                    .put("enchantments", item.getEnchantments() == null
-                            ? new JSONArray() : new JSONArray(item.getEnchantments()))
-                    .put("damage", item.getDamage())
-                    .put("maxDurability", item.getMaxDurability())
-                    .put("raw", item.getRawBase64() == null ? JSONObject.NULL : item.getRawBase64()));
-        }
+        for (ItemData item : inventory.getItems()) items.put(SlotJson.toJson(item));
         return new JSONObject()
                 .put("playerId", String.valueOf(inventory.getPlayerId()))
                 .put("playerName", inventory.getPlayerName())
@@ -182,29 +169,12 @@ public class PlayerModule implements WebModule {
         String container = body.optString("containerId", null);
         int size = body.optInt("size", kind == InventoryData.Kind.ENDER_CHEST ? 27 : PLAYER_INVENTORY_SIZE);
 
-        List<ItemData> items = new ArrayList<>();
-        JSONArray raw = body.optJSONArray("items");
-        if (raw != null) {
-            for (int i = 0; i < raw.length(); i++) {
-                JSONObject entry = raw.optJSONObject(i);
-                if (entry == null) continue;
-                String material = entry.optString("material", "");
-                if (material.isBlank() || "AIR".equalsIgnoreCase(material)) continue;
-                ItemData item = new ItemData();
-                item.setSlot(entry.optInt("slot", -1));
-                item.setMaterial(material.toUpperCase(Locale.ROOT));
-                item.setAmount(Math.max(1, entry.optInt("amount", 1)));
-                String base64 = entry.optString("raw", null);
-                if (base64 != null && !base64.isBlank() && !"null".equals(base64)) {
-                    try {
-                        item.setRawBase64(base64);
-                    } catch (IllegalArgumentException e) {
-                        // a mangled payload just means the item is rebuilt plain instead of restored
-                    }
-                }
-                items.add(item);
-            }
+        SlotJson.Result read = SlotJson.read(body.optJSONArray("items"), size);
+        if (read.problem() != null) {
+            ctx.error(400, read.problem());
+            return;
         }
+        List<ItemData> items = read.items();
 
         InventoryData inventory = new InventoryData(uuid, null, kind, container, null, size, items);
         String editor = ctx.session() == null ? "web" : ctx.session().getUsername();
@@ -236,23 +206,6 @@ public class PlayerModule implements WebModule {
             return;
         }
         ctx.ok(message);
-    }
-
-    /**
-     * The materials the item editor offers.
-     * <p>
-     * Fetched from a game server rather than read from this jvm's own paper api: bukkit's registry is only
-     * filled inside a running server, so {@code Material.values()} here throws instead of answering.
-     */
-    private void materials(ApiContext ctx) throws Exception {
-        String filter = ctx.queryParam("q");
-        String needle = filter == null ? "" : filter.trim().toUpperCase(Locale.ROOT);
-        JSONArray array = new JSONArray();
-        for (String name : AdminNetwork.materials()) {
-            if (!needle.isEmpty() && !name.contains(needle)) continue;
-            array.put(new JSONObject().put("name", name));
-        }
-        ctx.ok("materials", array);
     }
 
     /* ------------------------------------------------------------------ helpers */

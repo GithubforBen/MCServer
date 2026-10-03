@@ -151,7 +151,7 @@ public class SettingsModule implements WebModule {
         AdminAccount account = auth.findAccount(username);
         auth.saveAccount(account.getUsername(), next, account.getTotpSecret());
         // whoever else is logged in as this account did so with the old password
-        auth.endSessions(username, ctx.session().getToken());
+        auth.endSessions(username, ctx.session().getId());
         ctx.ok("Passwort geändert. Andere Sitzungen dieses Accounts wurden abgemeldet.");
     }
 
@@ -166,7 +166,7 @@ public class SettingsModule implements WebModule {
             return;
         }
         String secret = Totp.generateSecret();
-        pendingSecrets.put(ctx.session().getToken(), secret);
+        pendingSecrets.put(ctx.session().getId(), secret);
         ctx.ok(authenticator(auth, username, secret));
     }
 
@@ -175,7 +175,7 @@ public class SettingsModule implements WebModule {
      */
     private void confirmTotp(ApiContext ctx) {
         AuthService auth = ctx.server().getAuthService();
-        String secret = pendingSecrets.get(ctx.session().getToken());
+        String secret = pendingSecrets.get(ctx.session().getId());
         if (secret == null) {
             ctx.error(409, "Es wird gerade kein neuer Schlüssel eingerichtet.");
             return;
@@ -184,7 +184,7 @@ public class SettingsModule implements WebModule {
             ctx.error(400, "Der Code passt nicht zum neuen Schlüssel. Der alte gilt weiter.");
             return;
         }
-        pendingSecrets.remove(ctx.session().getToken());
+        pendingSecrets.remove(ctx.session().getId());
         AdminAccount account = auth.findAccount(ctx.session().getUsername());
         config(ctx).set("web.admins." + account.getUsername() + ".totp-secret", secret);
         ctx.server().getConfiguration().save();
