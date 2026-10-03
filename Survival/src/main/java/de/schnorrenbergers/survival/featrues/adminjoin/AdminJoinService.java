@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -42,6 +43,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * admin last stood, the player where the player last stood, and neither of them ever appears exactly
  * where the other just vanished. Without that the disguise gives itself away in one line of chat -
  * somebody leaves, somebody arrives, and both of them at the same fence post.
+ * <p>
+ * The game mode goes the same way: the admin flies in creative or watches in spectator, the player is back
+ * in survival, each in whatever they had when that shape was last taken off. An admin who never had one
+ * keeps the mode they stepped in with.
  * <p>
  * What they carry while they are the admin is the admin stash - the same chest the website drops things
  * into. It is <em>taken</em> rather than copied: the stash is emptied on the launcher the moment somebody
@@ -209,6 +214,7 @@ public final class AdminJoinService implements Listener {
         // away from where the player was last seen, and to wherever the admin was last seen - or the
         // spawn, which is where anybody arrives who has never been here before
         player.teleport(remembered("admins." + player.getUniqueId() + ".location", player));
+        switchGameMode(player, "admins." + player.getUniqueId() + ".gamemode");
 
         player.getInventory().setContents(new ItemStack[player.getInventory().getSize()]);
         player.getInventory().setStorageContents(packed(stash));
@@ -304,7 +310,9 @@ public final class AdminJoinService implements Listener {
         // the admin's place is kept for the next time, and it outlives the disguise on purpose: it is the
         // one thing that has to still be there when the same admin comes back tomorrow
         config.set("admins." + id + ".location", player.getLocation());
+        config.set("admins." + id + ".gamemode", player.getGameMode().name());
         player.teleport(remembered("players." + id + ".player-location", player));
+        switchGameMode(player, "players." + id + ".player-gamemode");
         player.getInventory().setContents(restore(player));
         clear(id);
         if (original != null) {
@@ -374,7 +382,24 @@ public final class AdminJoinService implements Listener {
         config.set(path + ".real-name", realName);
         config.set(path + ".inventory", Arrays.asList(player.getInventory().getContents()));
         config.set(path + ".player-location", player.getLocation());
+        config.set(path + ".player-gamemode", player.getGameMode().name());
         save();
+    }
+
+    /**
+     * Puts one of the two shapes back into its game mode.
+     *
+     * @param player whoever is changing shape
+     * @param path   where that shape's game mode is written down; nothing there leaves the mode as it is
+     */
+    private void switchGameMode(Player player, String path) {
+        String stored = config.getString(path);
+        if (stored == null) return;
+        try {
+            player.setGameMode(GameMode.valueOf(stored));
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("admin-join.yml holds a game mode that does not exist: " + stored);
+        }
     }
 
     /**

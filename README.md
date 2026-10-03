@@ -546,6 +546,12 @@ Verkleidung in einer Zeile Chat - einer geht, einer kommt, beide am selben Zaunp
 die Admin-Gestalt noch keinen Ort - beim ersten Mal -, ist es der Spawn, also genau das, was ein
 echter Join tut.
 
+Mit dem Gamemode ist es genauso: jede Gestalt bekommt den, den sie beim letzten Ablegen hatte. Der
+Admin fliegt also wieder im Creative oder schaut im Spectator zu, der Spieler ist zurück im Survival,
+ohne dass jemand `/gamemode` tippen muss. Beim allerersten Mal behält die Admin-Gestalt den Gamemode,
+mit dem man eingestiegen ist. Gespeichert wird beides in `plugins/survival/admin-join.yml`
+(`players.<uuid>.player-gamemode` und `admins.<uuid>.gamemode`).
+
 Sein eigenes Inventar liegt so lange in `plugins/survival/admin-join.yml`, nicht im Speicher: ein
 Neustart mitten in der Verkleidung darf niemandem seine Sachen kosten. Nach dem Neustart ist er
 weiterhin der Admin und bekommt die Gestalt beim Join wieder aufgesetzt. Stirbt er in der
