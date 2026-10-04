@@ -443,8 +443,10 @@ public class TeamManager {
             player.sendMessage(ChatColor.RED + "❌ Du bist in keinem Team.");
             return;
         }
-        if (!mayClaim(player)) {
-            player.sendMessage(ChatColor.RED + "❌ Nur der Anführer darf Chunks claimen.");
+        // anybody in the team: whoever claims pays for the chunk out of their own pocket, so a member who
+        // claims is a member who gives the team land - there is nothing here a leader has to guard
+        if (!isInTeam(player)) {
+            player.sendMessage(ChatColor.RED + "❌ Du gehörst nicht zu diesem Team.");
             return;
         }
         int limit = rules().getMaxClaimsPerTeam();
@@ -477,8 +479,9 @@ public class TeamManager {
      */
     public void unclaimChunk(Chunk chunk, Player player) {
         if (!exists()) return;
-        if (!mayClaim(player)) {
-            player.sendMessage(ChatColor.RED + "❌ Nur der Anführer darf Chunks freigeben.");
+        if (!mayUnclaim(player)) {
+            player.sendMessage(ChatColor.RED + "❌ Chunks freigeben darf nur der Anführer - oder jeder, wenn "
+                    + "er es in den Team-Einstellungen erlaubt.");
             return;
         }
         if (!data.getClaims().contains(ClaimManager.keyOf(chunk))) {
@@ -576,7 +579,16 @@ public class TeamManager {
                 && data.getSettings().getFlag(TeamSettings.Key.MEMBERS_MAY_INVITE));
     }
 
-    private boolean mayClaim(Player source) {
+    private boolean isInTeam(Player source) {
+        return data.isLeader(source.getUniqueId()) || data.hasMember(source.getUniqueId());
+    }
+
+    /**
+     * Giving a chunk up is not the mirror of claiming one. It takes land from the whole team and pays the
+     * refund to whoever does it, so a member could sell off what the others paid for - which is why this
+     * one stays with the leader unless the team says otherwise.
+     */
+    private boolean mayUnclaim(Player source) {
         return data.isLeader(source.getUniqueId())
                 || (data.hasMember(source.getUniqueId())
                 && data.getSettings().getFlag(TeamSettings.Key.MEMBERS_MAY_CLAIM));
