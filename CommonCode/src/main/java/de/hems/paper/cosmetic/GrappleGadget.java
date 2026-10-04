@@ -38,7 +38,7 @@ public class GrappleGadget implements Gadget, Listener {
     /** How hard it pulls when nobody set anything, in tenths of a block per tick. */
     private static final int DEFAULT_POWER = 12;
     /** How long before it can be used again, in ticks. */
-    private static final int DEFAULT_COOLDOWN_TICKS = 60;
+    private static final int DEFAULT_COOLDOWN_TICKS = Integer.parseInt(Cosmetics.GRAPPLE_COOLDOWN_TICKS);
     /** How long after a throw its owner cannot take fall damage, in milliseconds. */
     private static final String SETTING_NO_FALL_MILLIS = "no-fall-millis";
     private static final int DEFAULT_NO_FALL_MILLIS = 6000;
