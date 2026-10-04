@@ -36,6 +36,18 @@ public class PaperConfigurator extends ServerConfigurator {
             "nether_gold_ore", "nether_quartz_ore", "ancient_debris",
             "chest", "trapped_chest", "barrel", "spawner", "amethyst_cluster");
 
+    /** The folder the main world of a server lies in. */
+    private static final String OVERWORLD = "world";
+    /** What the overworld is called wherever a setting is filed by dimension. */
+    private static final String OVERWORLD_KEY = "minecraft:overworld";
+    /** How many chunks around a player the overworld of survival simulates. */
+    private static final int OVERWORLD_SIMULATION_DISTANCE = 6;
+    /**
+     * How far from every player a mob of the overworld despawns at once: half a chunk inside what is
+     * simulated, so it is gone before it could walk out of it.
+     */
+    private static final int OVERWORLD_DESPAWN_BLOCKS = OVERWORLD_SIMULATION_DISTANCE * 16 - 8;
+
     /** The seed the survival world is generated from. */
     private static final String SURVIVAL_SEED = "8750345191364376078";
 
@@ -118,6 +130,7 @@ public class PaperConfigurator extends ServerConfigurator {
         if (template == ServerTemplate.SURVIVAL) {
             setProperty("server.properties", "level-seed", SURVIVAL_SEED);
             survivalRules();
+            survivalPerformance();
         }
 
         overwriteToFile("eula.txt", "eula=true", true);
@@ -192,6 +205,84 @@ public class PaperConfigurator extends ServerConfigurator {
         writeToYmlConfiguration(global, "unsupported-settings.allow-unsafe-end-portal-teleportation", true, true);
         writeToYmlConfiguration(global, "unsupported-settings.skip-tripwire-hook-placement-validation", true, true);
         writeToYmlConfiguration(global, "unsupported-settings.update-equipment-on-player-actions", false, true);
+    }
+
+    /**
+     * What keeps survival at twenty ticks a second, written at every start like the rules above.
+     * <p>
+     * A profile of the server with fourteen players showed 85 milliseconds a tick, and none of it in a
+     * plugin: 44 percent was mobs being ticked, 28 percent the server trying to spawn more of them - in every
+     * chunk, every tick, because the limit of seventy monsters a player is never reached - and 9 percent the
+     * random ticks of ten chunks around everybody. So this is about the overworld, where all of that was:
+     * <ul>
+     *     <li>six chunks around a player are simulated instead of ten. What is seen stays ten.</li>
+     *     <li>45 monsters a player instead of 70, tried every second tick; one bat instead of fifteen; fish
+     *     and bats tried twice a second. A player in ordinary terrain is at the limit most of the time, and
+     *     at the limit the server stops trying, which is where the time goes.</li>
+     *     <li>what despawns is gone at 88 blocks rather than 128. With six chunks simulated a mob further
+     *     out is not ticked and so never despawns by itself: it stands there and counts against the limit
+     *     until nothing spawns any more.</li>
+     * </ul>
+     * <b>The nether and the end are left exactly as they were.</b> That is where the farms are that a server
+     * lives on - gold from zombified piglins, wither skeletons, blazes, endermen - and they are built to
+     * the numbers of the game: ten chunks, seventy monsters, a spawn attempt every tick, 128 blocks. Nobody
+     * was in either of them while the server lagged, so leaving them alone costs nothing. A farm in the
+     * overworld keeps half of its spawn attempts and loses nothing to the lower limit, unless it holds more
+     * than 45 mobs at once.
+     * <p>
+     * For every world: a mob is pushed about by two others at most rather than eight, which is what a
+     * chunk with 140 chickens in it spends its time on - what dies of being crammed is counted before that
+     * and still dies.
+     * <p>
+     * Deliberately not touched: how far away a mob still moves, and whether a villager nobody is near keeps
+     * thinking. Both are the usual advice and both are what breaks farms - a mob that does not move never
+     * reaches the drop, and a villager that does not think calls no iron golem. Paper's tick rates for
+     * villagers are left alone for another reason: they only reach the sensors, which are a third of a
+     * percent of a tick.
+     */
+    private void survivalPerformance() throws Exception {
+        String defaults = "config/paper-world-defaults.yml";
+        stamp(defaults);
+        writeToYmlConfiguration(defaults, "collisions.max-entity-collisions", 2, true);
+
+        // filed under the key of the dimension, not under the name of its folder: spigot.yml has gone by
+        // "minecraft:overworld" since the dimensions moved into one world, and a section called "world" is
+        // read by nothing
+        writeToYmlConfiguration("spigot.yml", "world-settings." + OVERWORLD_KEY + ".simulation-distance",
+                OVERWORLD_SIMULATION_DISTANCE, true);
+
+        String overworld = overworldConfig();
+        if (overworld == null) {
+            // paper puts the file there when it creates the world. Writing it first would mean creating
+            // the world's folder before the server does, and a folder that is there already is a world to it
+            System.out.println("The overworld of " + name + " has no paper-world.yml yet - its spawn limits are "
+                    + "written at the next start.");
+            return;
+        }
+        String spawning = "entities.spawning.";
+        writeToYmlConfiguration(overworld, spawning + "spawn-limits.monster", 45, true);
+        writeToYmlConfiguration(overworld, spawning + "spawn-limits.ambient", 1, true);
+        writeToYmlConfiguration(overworld, spawning + "ticks-per-spawn.monster", 2, true);
+        writeToYmlConfiguration(overworld, spawning + "ticks-per-spawn.ambient", 10, true);
+        writeToYmlConfiguration(overworld, spawning + "ticks-per-spawn.water_ambient", 10, true);
+        for (String category : List.of("monster", "ambient", "water_ambient", "water_creature",
+                "underground_water_creature", "axolotls")) {
+            writeToYmlConfiguration(overworld, spawning + "despawn-ranges." + category + ".hard",
+                    OVERWORLD_DESPAWN_BLOCKS, true);
+        }
+    }
+
+    /**
+     * @return where paper keeps the settings of the overworld alone, relative to the server, or {@code null}
+     *         while the world has not been created
+     */
+    private String overworldConfig() {
+        // where a world's own settings are since the dimensions moved into one folder, and before that
+        for (String candidate : List.of(OVERWORLD + "/dimensions/minecraft/overworld/paper-world.yml",
+                OVERWORLD + "/paper-world.yml")) {
+            if (new File(this.directory, candidate).isFile()) return candidate;
+        }
+        return null;
     }
 
     /**
