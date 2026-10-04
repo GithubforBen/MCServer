@@ -14,7 +14,9 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The panel of a run event: what the rules are, who is waiting, and who was fastest.
@@ -101,19 +103,18 @@ public final class UhcEventUi {
             boolean paused = active.getState() == RunData.State.PAUSED;
             lore.add((paused ? ChatColor.YELLOW : ChatColor.GREEN) + "Zeit: "
                     + RunData.formatTicks(active.getElapsedTicks()));
-            if (!paused) {
-                ui.setItem(20, new ItemApi(Material.CLOCK, ChatColor.GREEN + "Dein Lauf läuft", lore).build(),
-                        SimpleItemAction.display());
-                return;
-            }
-            lore.add(ChatColor.GRAY + "Die Zeit steht still, solange niemand spielt.");
+            if (paused) lore.add(ChatColor.GRAY + "Die Zeit steht still, solange niemand spielt.");
             lore.add("");
-            lore.add(ChatColor.GREEN + "Klicken zum Weiterspielen");
-            ui.setItem(20, new ItemApi(Material.CLOCK, ChatColor.YELLOW + "Lauf pausiert", lore).build(),
+            // a running one is clickable as well: its server may be gone without the run knowing, and
+            // then this is the only way back onto it
+            lore.add(ChatColor.GREEN + (paused ? "Klicken zum Weiterspielen" : "Klicken, um hinzuspringen"));
+            ui.setItem(20, new ItemApi(Material.CLOCK, paused ? ChatColor.YELLOW + "Lauf pausiert"
+                            : ChatColor.GREEN + "Dein Lauf läuft", lore).build(),
                     new SimpleItemAction(click -> {
                         player.sendMessage(ChatColor.AQUA + RunQueue.resume(event, player));
                         player.closeInventory();
                     }));
+            drawAbort(ui, player, event, active);
             return;
         }
 
@@ -140,6 +141,38 @@ public final class UhcEventUi {
                         player.closeInventory();
                     }));
         }
+    }
+
+    /** How long the second click on "abbrechen" is waited for. */
+    private static final long ABORT_CONFIRM_MS = 10_000L;
+    /** Who clicked "abbrechen" once and when, so the second click is what does it. */
+    private static final Map<UUID, Long> abortAsked = new ConcurrentHashMap<>();
+
+    /**
+     * The way out of an open run. Two clicks, because it ends the run for the whole team and cannot be
+     * taken back.
+     */
+    private static void drawAbort(CustomInventory ui, Player player, EventData event, RunData active) {
+        Long asked = abortAsked.get(player.getUniqueId());
+        boolean armed = asked != null && System.currentTimeMillis() - asked <= ABORT_CONFIRM_MS;
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.GRAY + "Beendet den Lauf für das ganze Team.");
+        lore.add(ChatColor.GRAY + "Danach könnt ihr einen neuen starten.");
+        lore.add(active.getElapsedTicksRaw() > 0 ? ChatColor.YELLOW + "Der Versuch zählt trotzdem."
+                : ChatColor.GRAY + "Er hat noch nicht begonnen und kostet keinen Versuch.");
+        lore.add("");
+        lore.add(armed ? ChatColor.RED + "Nochmal klicken zum Bestätigen" : ChatColor.RED + "Klicken zum Abbrechen");
+        ui.setItem(24, new ItemApi(armed ? Material.TNT : Material.BARRIER,
+                ChatColor.RED + (armed ? "Wirklich abbrechen?" : "Lauf abbrechen"), lore).build(),
+                new SimpleItemAction(click -> {
+                    if (!armed) {
+                        abortAsked.put(player.getUniqueId(), System.currentTimeMillis());
+                    } else {
+                        abortAsked.remove(player.getUniqueId());
+                        player.sendMessage(ChatColor.AQUA + RunQueue.abort(event, player));
+                    }
+                    player.openInventory(build(player, event).getInventory());
+                }));
     }
 
     /**

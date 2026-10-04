@@ -73,6 +73,15 @@ Lebenszyklus (erledigt):
 - [x] Bei der Abwicklung werden die Verzeichnisse der Run-Server gelöscht und ihre
       Port-Reservierung freigegeben (30 s Karenz, damit der Prozess die Dateien loslässt)
 
+- [x] Jeder Versuch bekommt einen eigenen Server (`RUN_<event>_<lauf>`). Vorher bekam ein neuer Lauf den
+      Namen eines gestoppten Run-Servers und damit dessen alte Welt, samt dem Toten vom letzten Mal
+- [x] Ist ein Lauf vorbei (Tod, Ziel, Abbruch), geht sein Server aus, sobald der letzte Spieler weg ist
+- [x] Server gescheiterter und abgebrochener Läufe werden gleich weggeräumt, nicht erst beim Eventende
+- [x] Lauf abbrechen: `/reset` auf dem Run-Server oder Knopf im Event-Panel, je mit Bestätigung. Zählt als
+      Versuch, außer er hatte noch nicht begonnen
+- [x] Ein laufender Lauf ist im Panel anklickbar (hinspringen bzw. Server wieder starten), und ein Lauf,
+      der zu ist, wird durch eine verspätete Meldung seines Servers nicht wieder geöffnet
+
 Erledigt:
 - [x] Ein Lauf, den niemand fortsetzt, wird nach 24 Stunden ohne Anfassen als ABGEBROCHEN
       geschlossen und sein Server weggeräumt (`runs.abandon-after-hours`, `0` = nie)
@@ -85,8 +94,8 @@ Offen:
 
 ### 1.4 Event-Server — erledigt
 - [x] Pro Lauf eine eigene Instanz über `ServerApi.createEventServer`
-- [x] Neues Modul `RunPlugin` mit `/reset` (Welten löschen und neu generieren,
-      Bestätigung durch zweimaliges Eingeben)
+- [x] Neues Modul `RunPlugin` mit `/reset` (bricht den Lauf ab, Bestätigung durch zweimaliges
+      Eingeben; das Löschen der Welten an Ort und Stelle ging nie, die Hauptwelt lässt sich nicht entladen)
 - [x] `RunPlugin` wertet Bosskills aus, erzwingt Hardcore und zeigt den Timer
       in der Actionbar
 - [x] Als `FileType.PLUGIN.RUN` registriert und im `EVENT`-Template installiert

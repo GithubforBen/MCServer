@@ -32,6 +32,9 @@ import java.util.UUID;
  * middle of an attempt and pick it up days later: the time in between is not part of their run. That is
  * also why the server is allowed to shut itself down once nobody has been on for a while - the world stays
  * on disk, and starting the server again continues the same run.
+ * <p>
+ * A run that is over is different: there is nothing to come back to, so the server goes the moment the
+ * last player has left it.
  */
 public class RunTracker implements Listener {
 
@@ -41,6 +44,8 @@ public class RunTracker implements Listener {
     private static final long IDLE_SHUTDOWN_MS = 10L * 60L * 1000L;
     /** How long a finished run is left standing before everyone is sent back to the lobby. */
     private static final long RETURN_DELAY_TICKS = 20L * 15L;
+    /** How long a run that was called off is left standing - there is nothing to look at. */
+    private static final long ABORT_RETURN_DELAY_TICKS = 20L * 3L;
 
     private final Plugin plugin;
 
@@ -52,6 +57,8 @@ public class RunTracker implements Listener {
     private long lastActive = System.currentTimeMillis();
     /** Set once the shutdown has been asked for, so it is not asked for again every tick. */
     private boolean shuttingDown;
+    /** Set once the end of the run has been announced here and everybody is on the way out. */
+    private boolean ended;
 
     public RunTracker(Plugin plugin) {
         this.plugin = plugin;
@@ -95,11 +102,99 @@ public class RunTracker implements Listener {
     }
 
     /**
+     * @return whether this server hosts a run that is still open
+     */
+    public boolean hasOpenRun() {
+        RunData current = run();
+        return current != null && current.isOpen();
+    }
+
+    /**
+     * @param player a player
+     * @return whether they are on the run of this server
+     */
+    public boolean isParticipant(UUID player) {
+        RunData current = run();
+        return current != null && current.getParticipants().contains(player);
+    }
+
+    /**
+     * Calls the run off: it is closed without a time, everybody goes back to the lobby and the server
+     * follows them out.
+     *
+     * @param by the name of who called it off
+     * @return whether there was a run to call off
+     */
+    public boolean abort(String by) {
+        RunData current = run();
+        if (current == null || !current.isOpen()) return false;
+        writePendingTicks(current);
+        current.finish(RunData.State.ABANDONED);
+        RunService.save(current);
+        ended = true;
+        broadcast(Component.text(by + " hat den Lauf abgebrochen.", NamedTextColor.YELLOW));
+        returnToLobby(ABORT_RETURN_DELAY_TICKS);
+        return true;
+    }
+
+    /**
+     * Stops the clock when the server goes down with the run still open - switched off by an admin, or
+     * with the whole network. Nobody quits before a plugin is disabled, so without this the run would stay
+     * "running" on a server that is off.
+     */
+    public void close() {
+        RunData current = run;
+        if (current == null || !current.isOpen()) return;
+        if (current.getState() == RunData.State.PAUSED && pendingTicks <= 0) return;
+        writePendingTicks(current);
+        current.pause();
+        RunService.saveNow(current);
+    }
+
+    /**
+     * Takes over an end the run was given somewhere else: called off from the event panel, or given up
+     * on by the launcher. What this server holds is its own copy, and it would otherwise keep counting.
+     *
+     * @param current the run as this server knows it
+     */
+    private void followTheNetwork(RunData current) {
+        RunData known = RunService.getRun(current.getId());
+        if (known == null || known == current || known.isOpen()) return;
+        current.finish(known.getState());
+        current.setFinishedAt(known.getFinishedAt());
+    }
+
+    /**
+     * What is left to do once the run is over: say so if nothing here has yet, and switch the server off
+     * as soon as it is empty.
+     *
+     * @param current the run, closed
+     */
+    private void afterTheEnd(RunData current) {
+        if (!ended) {
+            // it was not closed by anything that happened here, so nobody on this server has been told
+            ended = true;
+            pendingTicks = 0;
+            broadcast(Component.text(current.getState() == RunData.State.ABANDONED
+                    ? "Der Lauf wurde abgebrochen." : "Der Lauf ist vorbei.", NamedTextColor.YELLOW));
+            returnToLobby(ABORT_RETURN_DELAY_TICKS);
+        }
+        if (!shuttingDown && Bukkit.getOnlinePlayers().isEmpty()) {
+            shutDown(current, "The run is over and everybody has left");
+        }
+    }
+
+    /**
      * One tick of the clock, plus the timer everybody sees and the idle shutdown.
      */
     private void tick() {
         RunData current = run();
-        if (current == null || !current.isOpen()) return;
+        if (current == null) return;
+        if (current.isOpen()) followTheNetwork(current);
+        if (!current.isOpen()) {
+            afterTheEnd(current);
+            return;
+        }
 
         if (hasParticipantOnline()) {
             lastActive = System.currentTimeMillis();
@@ -119,7 +214,7 @@ public class RunTracker implements Listener {
             pause(current, "Niemand ist mehr da - die Zeit steht.");
         }
         if (!shuttingDown && System.currentTimeMillis() - lastActive > IDLE_SHUTDOWN_MS) {
-            shutDown(current);
+            shutDown(current, "No participants for 10 minutes");
         }
     }
 
@@ -137,17 +232,20 @@ public class RunTracker implements Listener {
     }
 
     /**
-     * Asks the launcher to switch this server off. The world stays where it is, so the same team can pick
-     * the run up again later and simply carry on.
+     * Asks the launcher to switch this server off. The world of an open run stays where it is, so the same
+     * team can pick the run up again later and simply carry on.
      *
      * @param current the run
+     * @param reason  why, for the log
      */
-    private void shutDown(RunData current) {
+    private void shutDown(RunData current, String reason) {
         shuttingDown = true;
-        writePendingTicks(current);
-        RunService.save(current);
+        if (current.isOpen()) {
+            writePendingTicks(current);
+            RunService.save(current);
+        }
         String self = ListenerAdapter.getName().toString();
-        Bukkit.getLogger().info("No participants for 10 minutes - stopping " + self);
+        Bukkit.getLogger().info(reason + " - stopping " + self);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 ServerApi.stopServer(self);
@@ -200,9 +298,10 @@ public class RunTracker implements Listener {
         writePendingTicks(current);
         if (current.hasCompletedAll(required)) {
             current.finish(RunData.State.FINISHED);
+            ended = true;
             broadcast(Component.text("Geschafft! Zeit: " + RunData.formatTicks(current.getElapsedTicks()),
                     NamedTextColor.GOLD));
-            returnToLobby();
+            returnToLobby(RETURN_DELAY_TICKS);
         } else {
             StringBuilder left = new StringBuilder();
             for (UhcObjective open : current.getRemaining(required)) {
@@ -227,6 +326,7 @@ public class RunTracker implements Listener {
 
         writePendingTicks(current);
         current.finish(RunData.State.FAILED);
+        ended = true;
         RunService.save(current);
         broadcast(Component.text(event.getPlayer().getName() + " ist gestorben - der Lauf ist vorbei.",
                 NamedTextColor.RED));
@@ -236,7 +336,7 @@ public class RunTracker implements Listener {
                 if (online != null) online.setGameMode(GameMode.SPECTATOR);
             }
         });
-        returnToLobby();
+        returnToLobby(RETURN_DELAY_TICKS);
     }
 
     /**
@@ -245,14 +345,16 @@ public class RunTracker implements Listener {
      * Not straight away: the last thing that happened is worth a moment to look at, and the time needs to
      * be readable before the screen changes. Without this players are simply left standing on a server
      * that has nothing left for them.
+     *
+     * @param delay how many ticks to wait first
      */
-    private void returnToLobby() {
+    private void returnToLobby(long delay) {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 player.sendMessage(Component.text("Zurück in die Lobby ...", NamedTextColor.GRAY));
                 ServerConnector.connect(player, ListenerAdapter.ServerName.LOBBY);
             }
-        }, RETURN_DELAY_TICKS);
+        }, delay);
     }
 
     /**

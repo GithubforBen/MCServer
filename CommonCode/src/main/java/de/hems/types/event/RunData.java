@@ -197,6 +197,19 @@ public class RunData implements Serializable {
     }
 
     /**
+     * Whether this run uses up one of the attempts of the people on it.
+     * <p>
+     * Every run does, however it ended - calling one off must not be a way to roll a better world for
+     * free. The one exception is a run nobody ever played a tick of: its server never came up, and that
+     * is nothing a player should pay for.
+     *
+     * @return whether it counts against the limit of attempts
+     */
+    public boolean countsAsAttempt() {
+        return getState() != State.ABANDONED || elapsedTicks > 0;
+    }
+
+    /**
      * Closes the run.
      *
      * @param state how it ended

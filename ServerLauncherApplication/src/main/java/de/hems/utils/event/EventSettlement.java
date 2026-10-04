@@ -78,6 +78,7 @@ public class EventSettlement {
                 }
                 try {
                     abandonForgottenRuns();
+                    discardLostRuns();
                 } catch (Exception e) {
                     System.out.println("Could not tidy up the runs: " + e.getMessage());
                 }
@@ -202,6 +203,54 @@ public class EventSettlement {
                     + " hours and is given up on.");
         }
         discardServers(forgotten);
+    }
+
+    /** Servers of lost runs that were seen switched off once, and go the next time round. */
+    private final Set<String> lostAndOff = new java.util.HashSet<>();
+
+    /**
+     * Throws away the servers of runs that ended without a time.
+     * <p>
+     * A run that failed or was called off leaves a world nobody enters again, and an event people die in
+     * every few minutes would pile those up until it is settled. The run server switches itself off once
+     * its players have left, so this only collects what is already off - and only the second time it sees
+     * it off, because a server closes its port before it is done writing its world. A finished run keeps
+     * its world until the event is settled.
+     */
+    public void discardLostRuns() {
+        Set<String> lost = new LinkedHashSet<>();
+        Set<String> needed = new LinkedHashSet<>();
+        for (RunData run : runs.getRuns()) {
+            if (run.getServerName() == null) continue;
+            boolean over = run.getState() == RunData.State.FAILED || run.getState() == RunData.State.ABANDONED;
+            (over ? lost : needed).add(run.getServerName());
+        }
+        // runs from before every attempt had a server of its own can share one with a run that is not lost
+        lost.removeAll(needed);
+        lostAndOff.retainAll(lost);
+        for (String server : lost) {
+            if (!new File("./servers/" + server + "/").exists() || isUp(server)) {
+                lostAndOff.remove(server);
+                continue;
+            }
+            if (!lostAndOff.add(server)) {
+                lostAndOff.remove(server);
+                discardServer(server);
+            }
+        }
+    }
+
+    /**
+     * @param server the name of a server
+     * @return whether it is running
+     */
+    private static boolean isUp(String server) {
+        try {
+            return Main.getInstance().getServerHandler()
+                    .doesInstanceExist(ListenerAdapter.ServerName.valueOf(server));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
