@@ -108,7 +108,7 @@ public final class Gadgets {
      */
     public static @Nullable CosmeticData worn(Player player) {
         GadgetSlot here = slot;
-        if (player == null || here == null || !guard.test(player)) return null;
+        if (player == null || here == null || !guard.test(player) || CosmeticEffects.isOff(player)) return null;
         CosmeticData chosen = CosmeticService.getSelected(player.getUniqueId(), CosmeticType.GADGET, here);
         if (chosen == null) return null;
         // a choice outlives the version that allowed it: a gadget that used to work here and no longer

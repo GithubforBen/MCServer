@@ -94,6 +94,7 @@ public class SnowballCannonGadget implements Gadget, Listener {
     public void onHit(ProjectileHitEvent event) {
         if (!marked(event.getEntity())) return;
         if (!(event.getHitEntity() instanceof Player hit)) return;
+        if (CosmeticEffects.isOff(hit)) return;
 
         Vector push = event.getEntity().getVelocity();
         if (push.lengthSquared() < 0.0001d) return;

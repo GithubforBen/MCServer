@@ -1,6 +1,10 @@
 package de.hems.paper.cosmetic;
 
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 /**
  * Everything a game server has to switch on to make the cosmetics work.
@@ -15,8 +19,31 @@ import org.bukkit.plugin.Plugin;
 public final class CosmeticEffects {
 
     private static boolean initialized;
+    /** Who is somewhere cosmetics have no business. Nobody, until a game mode names such a place. */
+    private static volatile Predicate<Player> off = player -> false;
 
     private CosmeticEffects() {
+    }
+
+    /**
+     * Names the players cosmetics stay away from, on a server that otherwise has them.
+     * <p>
+     * A parkour is the case: a time on a course is only worth something if everybody ran it with the same
+     * legs, so a double jump is out, and so is a jump pad somebody else laid onto the course. Everything
+     * goes rather than only what helps - a runner should not have to wonder which of their things count.
+     *
+     * @param off who is in such a place right now, {@code null} for nobody
+     */
+    public static void setOff(@Nullable Predicate<Player> off) {
+        CosmeticEffects.off = off == null ? player -> false : off;
+    }
+
+    /**
+     * @param player somebody
+     * @return whether cosmetics are to leave them alone right now - their own and everybody else's
+     */
+    public static boolean isOff(Player player) {
+        return player != null && off.test(player);
     }
 
     /**

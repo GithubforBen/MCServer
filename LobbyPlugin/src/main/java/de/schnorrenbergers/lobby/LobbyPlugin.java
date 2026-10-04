@@ -72,6 +72,8 @@ public final class LobbyPlugin extends JavaPlugin {
         CosmeticEffects.init(this);
         // and the gadgets: the effects are the same everywhere, the answer to who may use one here is not
         new de.schnorrenbergers.lobby.cosmetic.GadgetListener(this);
+        // none of it on a course: a time only counts if everybody ran it with the same legs
+        CosmeticEffects.setOff(player -> parkour.runOf(player) != null);
         PluginCommands.register(this, "cosmetics", new CosmeticsCommand());
         PluginCommands.register(this, "bwdebug", new BedwarsDebugCommand());
         // the lotto stand: the villager and its sign go up here, the slip itself is the same on every server

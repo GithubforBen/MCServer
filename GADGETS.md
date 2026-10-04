@@ -48,6 +48,12 @@ Angefasst dafür:
   `persistent = false` und werden über `GadgetEntities` geführt, das sie beim Ablegen, beim
   Weltwechsel und beim Ausloggen einsammelt.
 
+## Parkour
+
+Im Lobby-Parkour ist während eines Laufs jedes Cosmetic aus, nicht nur was hilft: Gadgets, Partikelspur,
+und fremde Sprungpads und Schneebälle wirken auf Läufer nicht (`CosmeticEffects.setOff`, gesetzt vom
+`LobbyPlugin`). Vorher nahm der Parkour nur die Items weg, der Doppelsprung lief weiter.
+
 ## Offen
 
 - Preise sind gesetzt, aber nicht erprobt: 800 bis 5000 Bits, mit der Endlos-Perle bei 5000 als
