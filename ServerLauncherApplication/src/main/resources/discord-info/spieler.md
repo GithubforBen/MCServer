@@ -168,6 +168,19 @@ Du kannst in der Lobby und auf Survival je ein Gadget tragen. In Bedwars gibt es
 
 Ein Tipp kostet standardmäßig 100 Bits, die Chance liegt bei 1 zu 1365. Der Gewinn geht direkt aufs Konto, auch wenn du offline bist.
 
+## Lotto: so wird gezogen
+
+**Wann:** Zum festen Termin zieht der Server von selbst, niemand muss dafür online sein. War der Server zu dem Zeitpunkt aus, wird gezogen, sobald er wieder läuft. Bis zur Ziehung kannst du tippen. Was danach kommt, zählt für die nächste Runde.
+
+**Wie:** Aus den Zahlen 1 bis 15 werden vier verschiedene gezogen, eine nach der anderen und ohne Zurücklegen. Jede Zahl ist gleich wahrscheinlich. Der Zufall kommt aus einem sicheren Zufallsgenerator, den niemand vorhersagen oder beeinflussen kann, auch die Admins nicht. Die Reihenfolge ist egal, es zählt nur, welche vier Zahlen es sind.
+
+**Wer gewinnt:** Nur ein Tipp mit allen vier Zahlen gewinnt. Für drei Richtige gibt es nichts.
+- **Ein Gewinner:** Er bekommt den ganzen Topf.
+- **Mehrere Gewinner:** Der Topf wird gleichmäßig auf die Gewinner-Tipps verteilt. Wer zweimal dieselben richtigen Zahlen getippt hat, bekommt zwei Anteile. Was sich nicht glatt teilen lässt, bleibt im Topf.
+- **Kein Gewinner:** Der ganze Topf geht in die nächste Runde.
+
+Hat in einer Runde niemand getippt, wird nicht gezogen und der Topf wartet auf den nächsten Termin. Nach jeder Ziehung stehen die Zahlen und die Gewinner im Chat, später zeigt `/lotto info` sie noch einmal.
+
 ## Hilfe: Tickets
 
 Bug gefunden, jemanden melden, eine Idee oder eine Frage? Schreib ein Ticket.

@@ -32,6 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CosmeticStore {
 
+    /** Which shipped defaults the file was last brought up to, see {@link #migrate}. */
+    private static final String VERSION = "defaults-version";
+
     private final File file;
     private final YamlConfiguration config;
     private final Map<String, CosmeticData> catalog = new LinkedHashMap<>();
@@ -46,6 +49,7 @@ public class CosmeticStore {
         this.config = YamlFiles.load(file);
         load();
         seed();
+        migrate();
     }
 
     private void load() {
@@ -87,6 +91,26 @@ public class CosmeticStore {
             added = true;
         }
         if (added) save();
+    }
+
+    /**
+     * Changes a shipped number in a file that still has the old one.
+     * <p>
+     * The file wins over what a version ships, and that is right for everything an admin touched. A
+     * default that turned out wrong is the exception: it sits in every file written back then without
+     * anybody having chosen it. So it is replaced once, and only where it still is the old default -
+     * whoever set their own number keeps it, and whoever sets the old one again afterwards keeps that too.
+     */
+    private void migrate() {
+        if (config.getInt(VERSION, 1) >= 2) return;
+        // three seconds between two throws made the grappling hook a thing to wait for, not to move with
+        CosmeticData grapple = catalog.get(key(Cosmetics.GADGET_GRAPPLE));
+        if (grapple != null && "60".equals(grapple.getSettings().get(Cosmetics.SETTING_COOLDOWN_TICKS))) {
+            grapple.getSettings().put(Cosmetics.SETTING_COOLDOWN_TICKS, Cosmetics.GRAPPLE_COOLDOWN_TICKS);
+            write(grapple);
+        }
+        config.set(VERSION, 2);
+        save();
     }
 
     private static CosmeticData read(String id, ConfigurationSection entry) {
