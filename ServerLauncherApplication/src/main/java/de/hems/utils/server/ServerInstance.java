@@ -91,8 +91,11 @@ public class ServerInstance {
         stopRequested = false;
         progress.reset();
         createSession();
-        String command = quote(javaBinary()) + " -jar -Xmx" + allocatedMemoryMB + "m "
-                + quote(FileType.SERVER.getFileName(jarFile));
+        // the proxy keeps the plain start it always had: it holds no world, and its heap is small either way
+        String jvm = jarFile == FileType.SERVER.PAPER
+                ? String.join(" ", JvmFlags.forGameServer(allocatedMemoryMB))
+                : "-Xmx" + allocatedMemoryMB + "m";
+        String command = quote(javaBinary()) + " " + jvm + " -jar " + quote(FileType.SERVER.getFileName(jarFile));
         ProcessBuilder pb = new ProcessBuilder("tmux", "send-keys", "-t", session(), command, "C-m").directory(directory);
         System.out.println(pb.command());
         pb.redirectErrorStream(true);

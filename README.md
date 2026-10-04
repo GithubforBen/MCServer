@@ -583,6 +583,49 @@ gewollt, deshalb steht der Schalter auf `false`. Er gilt für alle Items, nicht 
 kennt nur diesen einen Schalter. Bedwars, Hunger Games und die anderen Server bleiben beim
 Paper-Standard.
 
+### Performance (`PaperConfigurator#survivalPerformance`)
+
+Ein Spark-Profil mit 14 Spielern zeigte 85 ms pro Tick (11,5 TPS) - nichts davon in einem Plugin: 44 % kostete
+das Ticken der Mobs, 28 % die Spawn-Versuche (jeden Tick in jedem Chunk, weil das Limit von 70 Monstern pro
+Spieler nie voll wird) und 9 % die Zufalls-Ticks von zehn Chunks um jeden herum. Auch diese Werte werden bei
+jedem Start geschrieben:
+
+| Einstellung | Wert | Gilt für |
+|---|---|---|
+| `simulation-distance` (`spigot.yml`, `world-settings.minecraft:overworld`) | 6 statt 10 | nur Oberwelt |
+| `spawn-limits.monster` (`paper-world.yml` der Oberwelt) | 45 statt 70 pro Spieler | nur Oberwelt |
+| `spawn-limits.ambient` | 1 statt 15 (Fledermäuse) | nur Oberwelt |
+| `ticks-per-spawn.monster` | jeder 2. Tick statt jeder | nur Oberwelt |
+| `ticks-per-spawn.ambient`, `.water_ambient` | alle 10 Ticks | nur Oberwelt |
+| `despawn-ranges.*.hard` | 88 statt 128 Blöcke | nur Oberwelt |
+| `collisions.max-entity-collisions` (world-defaults) | 2 statt 8 | alle Welten |
+
+**Nether und End bleiben vollständig Vanilla** (10 Chunks, 70 Monster, Spawn-Versuch jeden Tick, 128 Blöcke).
+Dort stehen die Farmen, die auf genau diese Zahlen gebaut sind: Gold (Zombie-Piglins), Wither-Skelette,
+Blazes, Endermen. Farmen in der Oberwelt behalten die Hälfte ihrer Spawn-Versuche; das niedrigere Limit
+merken sie nur, wenn sie mehr als 45 Mobs gleichzeitig halten. Was weiter als 96 Blöcke vom Spieler weg
+ist, läuft in der Oberwelt nicht mehr.
+
+Die 88 Blöcke gehören zur Simulation-Distance: Ein Mob außerhalb der sechs Chunks wird nicht mehr getickt,
+verschwindet also nie von selbst und zählt weiter gegen das Limit, bis nichts mehr spawnt.
+
+Bewusst **nicht** angefasst: die Aktivierungsreichweiten (`entity-activation-range`) und
+`tick-inactive-villagers`. Beides ist der übliche Rat und beides macht Farmen kaputt - ein Mob, der sich
+nicht bewegt, erreicht den Fallschacht nicht, und ein Villager, der nicht denkt, ruft keinen Eisengolem.
+
+Die Spawn-Werte der Oberwelt stehen in `world/dimensions/minecraft/overworld/paper-world.yml`. Die Datei
+legt Paper beim Erzeugen der Welt an; auf einer frischen Installation gelten sie deshalb ab dem zweiten
+Start.
+
+### JVM-Flags
+
+Jeder Paper-Server startet mit `-Xms` = `-Xmx` und den G1-Flags, auf die sich die Minecraft-Community
+geeinigt hat („Aikar's Flags“, `JvmFlags`): große junge Generation, feste Heap-Größe. Ohne sie pausierte
+Survival alle 20 Sekunden für rund 90 ms. `AlwaysPreTouch` fehlt absichtlich - der Launcher fährt mehrere
+Server auf einer Maschine, und keiner soll sein Maximum belegen, bevor er es braucht. Ab 12 GB Heap gelten
+die Werte für große Heaps. Mehr Heap ist nicht besser: Survival nutzte im Profil 3,3 von 20 GB, **8 GB
+(`servers.SURVIVAL.memory: 8192`) reichen** und halten die Pausen kurz.
+
 ## Chunk Limiter
 
 Damit ein ruckelnder Server spielbar bleibt, senkt der Survival-Server bei Lag die Sichtweite - aber nur
