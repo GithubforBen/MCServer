@@ -77,8 +77,16 @@ public final class Cosmetics {
 
     /** How much longer the endless pearl's cooldown is than a normal one, in ticks. */
     public static final String SETTING_COOLDOWN_TICKS = "cooldown-ticks";
-    /** How long the grappling hook rests between two throws when nobody set anything: one second. */
-    public static final String GRAPPLE_COOLDOWN_TICKS = "20";
+    /** How long the grappling hook rests between two throws when nobody set anything: 0.65 seconds. */
+    public static final String GRAPPLE_COOLDOWN_TICKS = "13";
+    /** How hard the grappling hook pulls when nobody set anything, in tenths of a block per tick. */
+    public static final String GRAPPLE_POWER = "16";
+    /**
+     * How long the confetti cannon rests between two shots when nobody set anything. A held right click
+     * repeats every four ticks, so this is as good as none - and still one burst at a time rather than
+     * two in the same tick.
+     */
+    public static final String CONFETTI_COOLDOWN_TICKS = "5";
     /** How hard a gadget throws its owner, in tenths of a block per tick. */
     public static final String SETTING_POWER = "power";
     /** How long an effect keeps going, in ticks. */
@@ -143,7 +151,7 @@ public final class Cosmetics {
         CosmeticData grapple = new CosmeticData(GADGET_GRAPPLE, CosmeticType.GADGET,
                 "Enterhaken", "Eine Angel, die dich dorthin zieht, wo der Haken gelandet ist",
                 "FISHING_ROD", 5000, false);
-        grapple.getSettings().put(SETTING_POWER, "12");
+        grapple.getSettings().put(SETTING_POWER, GRAPPLE_POWER);
         grapple.getSettings().put(SETTING_COOLDOWN_TICKS, GRAPPLE_COOLDOWN_TICKS);
         shipped.add(grapple);
 
@@ -190,7 +198,7 @@ public final class Cosmetics {
 
         shipped.add(gadget(GADGET_CONFETTI, "Konfetti-Kanone",
                 "Rechtsklick, und es regnet Farbe", "FIREWORK_STAR", 1500,
-                SETTING_COOLDOWN_TICKS, "40"));
+                SETTING_COOLDOWN_TICKS, CONFETTI_COOLDOWN_TICKS));
 
         shipped.add(gadget(GADGET_WEATHER, "Eigenes Wetter",
                 "Dein eigener Himmel - sonst sieht ihn niemand", "CLOCK", 2000));

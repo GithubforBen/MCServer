@@ -34,6 +34,8 @@ public class CosmeticStore {
 
     /** Which shipped defaults the file was last brought up to, see {@link #migrate}. */
     private static final String VERSION = "defaults-version";
+    /** Counts up whenever {@link #migrate} learns a default that changed. */
+    private static final int DEFAULTS_VERSION = 3;
 
     private final File file;
     private final YamlConfiguration config;
@@ -102,15 +104,31 @@ public class CosmeticStore {
      * whoever set their own number keeps it, and whoever sets the old one again afterwards keeps that too.
      */
     private void migrate() {
-        if (config.getInt(VERSION, 1) >= 2) return;
-        // three seconds between two throws made the grappling hook a thing to wait for, not to move with
-        CosmeticData grapple = catalog.get(key(Cosmetics.GADGET_GRAPPLE));
-        if (grapple != null && "60".equals(grapple.getSettings().get(Cosmetics.SETTING_COOLDOWN_TICKS))) {
-            grapple.getSettings().put(Cosmetics.SETTING_COOLDOWN_TICKS, Cosmetics.GRAPPLE_COOLDOWN_TICKS);
-            write(grapple);
-        }
-        config.set(VERSION, 2);
+        if (config.getInt(VERSION, 1) >= DEFAULTS_VERSION) return;
+        // every step names the defaults it replaces, so a file from any earlier version ends up at today's
+        // numbers in one go - and a number that is none of them was set by somebody and is left alone.
+        // Three seconds between two throws, then one, made the grappling hook a thing to wait for
+        replace(Cosmetics.GADGET_GRAPPLE, Cosmetics.SETTING_COOLDOWN_TICKS, Set.of("60", "20"),
+                Cosmetics.GRAPPLE_COOLDOWN_TICKS);
+        replace(Cosmetics.GADGET_GRAPPLE, Cosmetics.SETTING_POWER, Set.of("12"), Cosmetics.GRAPPLE_POWER);
+        // two seconds between two bursts of confetti is a long time for something that does nothing
+        replace(Cosmetics.GADGET_CONFETTI, Cosmetics.SETTING_COOLDOWN_TICKS, Set.of("40"),
+                Cosmetics.CONFETTI_COOLDOWN_TICKS);
+        config.set(VERSION, DEFAULTS_VERSION);
         save();
+    }
+
+    /**
+     * @param id      a cosmetic
+     * @param setting one of its settings
+     * @param old     what the setting shipped as before
+     * @param now     what it ships as today
+     */
+    private void replace(String id, String setting, Set<String> old, String now) {
+        CosmeticData cosmetic = catalog.get(key(id));
+        if (cosmetic == null || !old.contains(cosmetic.getSettings().get(setting))) return;
+        cosmetic.getSettings().put(setting, now);
+        write(cosmetic);
     }
 
     private static CosmeticData read(String id, ConfigurationSection entry) {

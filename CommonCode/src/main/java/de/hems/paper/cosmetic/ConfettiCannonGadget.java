@@ -29,7 +29,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ConfettiCannonGadget implements Gadget, Listener {
 
     /** How long before it can be fired again, in ticks. */
-    private static final int DEFAULT_COOLDOWN_TICKS = 40;
+    private static final int DEFAULT_COOLDOWN_TICKS = Integer.parseInt(Cosmetics.CONFETTI_COOLDOWN_TICKS);
     /** How many specks of colour one shot is. */
     private static final int SPECKS = 60;
     /** How big the cloud is, in blocks. */
