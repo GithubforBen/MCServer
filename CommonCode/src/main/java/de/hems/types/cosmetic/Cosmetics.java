@@ -200,7 +200,7 @@ public final class Cosmetics {
                 SETTING_DURATION_TICKS, "100"));
 
         shipped.add(gadget(GADGET_EMOTES, "Emotes",
-                "Ein Menü mit Gesten, die alle in der Nähe sehen", "NAME_TAG", 1800,
+                "Acht Emotes, bei denen du dich wirklich bewegst - winken, tanzen, verbeugen und mehr", "NAME_TAG", 1800,
                 SETTING_COOLDOWN_TICKS, "40"));
 
         return shipped;

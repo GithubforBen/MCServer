@@ -970,7 +970,7 @@ Dazu die Gadgets. Sie stehen in derselben Liste, haben aber eine Spalte mehr: wo
 | Konfetti-Kanone | Lobby, Survival | Rechtsklick, und es regnet Farbe |
 | Eigenes Wetter | Lobby, Survival | Eigene Tageszeit und eigenes Wetter, nur im eigenen Client |
 | Chat-Blase | Lobby, Survival | Die eigene Chatnachricht steht kurz über dem Kopf |
-| Emotes | Lobby, Survival | Menü mit Gesten, die alle in der Nähe sehen |
+| Emotes | Lobby, Survival | Menü mit acht Emotes, bei denen sich der Spieler wirklich bewegt: Winken, Klatschen, Jubeln, Verbeugen, Lachen, Tanzen, Pirouette, Hinlegen |
 
 Es gibt vier Arten: Sieges-Effekt, Kill-Effekt, Partikelspur, Gadget. Von den ersten dreien trägt
 man höchstens eine, und sie sind Bilder - sie laufen auf jedem Server. Gadgets nicht: sie greifen
