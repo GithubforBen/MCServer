@@ -136,6 +136,7 @@ public final class Bedwars extends JavaPlugin {
         new SuddenDeathListener(this);
         new SpectatorListener(this);
         new RulesListener(this);
+        new de.schnorrenbergers.bedwars.listener.OldCombatListener(this);
         // the placings and kills of an event round go to the launcher, which pays the rewards out of them
         new de.schnorrenbergers.bedwars.listener.EventResultReporter(this);
         new de.schnorrenbergers.bedwars.round.RoundStateListener(this);

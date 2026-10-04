@@ -14,16 +14,20 @@ import java.util.Locale;
 public enum Feature {
 
     /**
-     * Combat the way 1.8 played it: no attack cooldown and no sweep. Every player is given an attack
-     * speed nothing can recharge, so hitting fast is worth as much as hitting at the right moment. On by
-     * default - it is how bedwars is meant to be played here.
+     * Combat the way 1.8 played it. Every player is given an attack speed nothing can recharge, so hitting
+     * fast is worth as much as hitting at the right moment - and everything 1.9 changed underneath is put
+     * back as well, see {@link de.schnorrenbergers.bedwars.listener.OldCombatListener}: what a weapon
+     * deals, what armour takes off, how a hit throws, how fast a full food bar heals, and the off hand.
+     * On by default - it is how bedwars is meant to be played here.
      */
     OLD_PVP("1.8 PvP", Material.IRON_SWORD, true,
-            "How a swing of a sword works.",
+            "How a fight works.",
             "",
-            "On: no cooldown bar, no sweep. Hitting fast",
-            "is worth as much as hitting at the right",
-            "moment - combat the way it played before 1.9.",
+            "On: combat the way it played before 1.9.",
+            "No cooldown bar, no sweep, no off hand.",
+            "Swords, axes, armour, knockback and",
+            "healing use the 1.8 numbers, and a jump",
+            "hit crits while sprinting too.",
             "Off: the modern one, where a swing has to",
             "recharge before it does full damage."),
 
