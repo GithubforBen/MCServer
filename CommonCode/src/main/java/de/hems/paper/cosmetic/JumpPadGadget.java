@@ -108,6 +108,8 @@ public class JumpPadGadget implements Gadget, Listener {
         if (!pads.containsKey(block(event.getTo()))) return;
 
         Player player = event.getPlayer();
+        // a pad throws whoever steps on it, not only its owner - except somebody cosmetics are off for
+        if (CosmeticEffects.isOff(player)) return;
         double power = DEFAULT_POWER / 10.0d;
         CosmeticData gadget = CosmeticService.get(getId());
         if (gadget != null) {

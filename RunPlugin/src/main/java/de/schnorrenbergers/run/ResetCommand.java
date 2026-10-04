@@ -1,11 +1,7 @@
 package de.schnorrenbergers.run;
 
-import de.hems.files.FileTrees;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.WorldCreator;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,78 +10,55 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 
 /**
- * Wipes this event server so it can host the next attempt.
+ * Calls the run of this server off, so its team can start the next one.
  * <p>
- * A run server is cheap to make but not free, and a race needs untouched terrain - so rather than throwing
- * the server away after every attempt, the worlds are deleted and generated again with a new seed.
+ * A reset is what a speedrunner does with an attempt that is going nowhere. Here that is not wiping the
+ * world in place - the main world of a running server cannot be unloaded, and every attempt gets a server
+ * of its own anyway - but ending the attempt: the run is closed without a time, everybody goes back to
+ * the lobby, and this server and its world are thrown away behind them.
  */
 public class ResetCommand implements CommandExecutor, TabCompleter {
 
     /** Typing the command twice within this window is what confirms it. */
     private static final long CONFIRM_WINDOW_MS = 15_000L;
 
-    private long askedAt = 0L;
+    private final RunTracker tracker;
+    /** Who asked and when - per sender, so nobody confirms what somebody else typed. */
+    private final Map<String, Long> askedAt = new HashMap<>();
+
+    public ResetCommand(RunTracker tracker) {
+        this.tracker = tracker;
+    }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
                              @NotNull String @NotNull [] args) {
-        if (!sender.isOp()) {
-            sender.sendMessage(Component.text("Das darfst du nicht.", NamedTextColor.RED));
+        if (!tracker.hasOpenRun()) {
+            sender.sendMessage(Component.text("Auf diesem Server läuft kein Lauf, den man abbrechen könnte.",
+                    NamedTextColor.RED));
+            return true;
+        }
+        // the run belongs to its team; an admin may end it as well, a spectator may not
+        if (sender instanceof Player player && !tracker.isParticipant(player.getUniqueId()) && !sender.isOp()) {
+            sender.sendMessage(Component.text("Nur wer mitläuft, darf den Lauf abbrechen.", NamedTextColor.RED));
             return true;
         }
         long now = System.currentTimeMillis();
-        if (now - askedAt > CONFIRM_WINDOW_MS) {
-            askedAt = now;
-            sender.sendMessage(Component.text(
-                    "Das löscht die Welten dieses Servers. /reset nochmal zum Bestätigen.",
-                    NamedTextColor.YELLOW));
+        Long asked = askedAt.get(sender.getName());
+        if (asked == null || now - asked > CONFIRM_WINDOW_MS) {
+            askedAt.put(sender.getName(), now);
+            sender.sendMessage(Component.text("Das bricht den Lauf für das ganze Team ab, er zählt trotzdem "
+                    + "als Versuch. /" + label + " nochmal zum Bestätigen.", NamedTextColor.YELLOW));
             return true;
         }
-        askedAt = 0L;
-        reset(sender);
+        askedAt.remove(sender.getName());
+        tracker.abort(sender.getName());
         return true;
-    }
-
-    /**
-     * Unloads every world, deletes it and generates it again.
-     *
-     * @param sender who asked for it
-     */
-    private void reset(CommandSender sender) {
-        World main = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().getFirst();
-        if (main == null) {
-            sender.sendMessage(Component.text("Dieser Server hat keine Welt.", NamedTextColor.RED));
-            return;
-        }
-        // players have to be out of a world before it can be unloaded, and there is nowhere else to put
-        // them on a server whose only world is about to go
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.kick(Component.text("Der Server wird zurückgesetzt. Komm gleich wieder.",
-                    NamedTextColor.YELLOW));
-        }
-
-        long seed = new Random().nextLong();
-        for (World world : List.copyOf(Bukkit.getWorlds())) {
-            String name = world.getName();
-            File folder = world.getWorldFolder();
-            // false: the point is to throw the world away, saving it first would only slow that down
-            if (!Bukkit.unloadWorld(world, false)) {
-                sender.sendMessage(Component.text("Konnte " + name + " nicht entladen.", NamedTextColor.RED));
-                continue;
-            }
-            if (!FileTrees.deleteQuietly(folder)) {
-                sender.sendMessage(Component.text("Konnte " + name + " nicht löschen.", NamedTextColor.RED));
-                continue;
-            }
-            Bukkit.createWorld(new WorldCreator(name).seed(seed));
-            Bukkit.getLogger().info("Reset world " + name);
-        }
-        sender.sendMessage(Component.text("Der Server ist zurückgesetzt.", NamedTextColor.GREEN));
     }
 
     @Override

@@ -126,7 +126,12 @@ public class EventEvents {
      * @param request the run to store
      */
     private void onSaveRun(SaveRunEvent request) throws Exception {
-        RunData stored = runs.put(request.getRun());
+        RunData incoming = request.getRun();
+        RunData known = incoming == null ? null : runs.getRun(incoming.getId());
+        // a run that is over stays over. It can be called off in the lobby while its server is still
+        // counting, and the clock that server sends a moment later must not open it again - the answer
+        // is what the run really is, which is how that server learns of it
+        RunData stored = known != null && !known.isOpen() && incoming.isOpen() ? known : runs.put(incoming);
         if (stored == null) return;
         try {
             ListenerAdapter.sendListeners(new RunUpdatedEvent(stored.getId(), stored));

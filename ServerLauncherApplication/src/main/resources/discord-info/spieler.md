@@ -102,7 +102,7 @@ Eingetragen wird man von den Admins. Frag einfach per Ticket nach.
 - **Bedwars:** Eine Runde zur festen Zeit. Wer in der Lobby ist, wird mitgenommen.
 - **Hunger Games:** Siehe eigener Abschnitt.
 - **Pokernacht:** Siehe eigener Abschnitt.
-- **UHC: Alle Bosse / Enderdrache:** Ein Speedrun gegen die Uhr. Jeder Versuch läuft auf einem eigenen Server im Hardcore-Modus, die schnellste Zeit gewinnt.
+- **UHC: Alle Bosse / Enderdrache:** Ein Speedrun gegen die Uhr. Jeder Versuch läuft auf einem eigenen Server im Hardcore-Modus, die schnellste Zeit gewinnt. Ein Lauf, der nichts mehr wird, lässt sich abbrechen: `/reset` auf dem Run-Server oder „Lauf abbrechen“ im Event-Menü. Er zählt trotzdem als Versuch, danach kann der nächste starten.
 - **Das End öffnet:** Ab diesem Event ist das End auf Survival offen.
 - **Einfaches Event / Andere Welt:** Ankündigungen der Admins
 

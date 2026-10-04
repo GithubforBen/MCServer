@@ -956,7 +956,7 @@ Dazu die Gadgets. Sie stehen in derselben Liste, haben aber eine Spalte mehr: wo
 
 | Gadget | Wirkt in | Was es macht |
 |--------|----------|--------------|
-| Endlos-Perle | Lobby, Survival | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden. Im Lobby-Parkour bricht ein Wurf den Lauf ab |
+| Endlos-Perle | Lobby, Survival | Enderperle, die nach dem Cooldown zurückkommt, statt verbraucht zu werden |
 | Enterhaken | Lobby, Survival | Angel, die den Träger dorthin zieht, wo der Haken gelandet ist |
 | Doppelsprung | Lobby | Zweiter Sprung in der Luft, weiche Landung |
 | Raketenstiefel | Lobby | Rechtsklick wirft nach oben, runter geht es langsam |
@@ -979,6 +979,11 @@ Es gibt vier Arten: Sieges-Effekt, Kill-Effekt, Partikelspur, Gadget. Von den er
 man höchstens eine, und sie sind Bilder - sie laufen auf jedem Server. Gadgets nicht: sie greifen
 ins Spiel ein, also schaltet jeder Spielmodus sie einzeln frei (`Gadgets.setGuard`) und sagt dabei,
 welcher Slot er ist.
+
+Im Lobby-Parkour ist alles davon aus, solange ein Lauf läuft (`CosmeticEffects.setOff`): keine Gadgets,
+keine Partikelspur, und auch das Sprungpad oder die Schneebälle eines anderen wirken auf einen Läufer
+nicht. Eine Zeit zählt nur, wenn alle mit denselben Beinen gelaufen sind. Nach dem Lauf ist alles
+wieder da.
 
 Slots sind der Grund, warum ein Spieler mehr als ein Gadget tragen kann: einen für Lobby, einen für
 Survival, einen für Bedwars. Ohne das würde der Doppelsprung in der Lobby den Erntehelfer auf

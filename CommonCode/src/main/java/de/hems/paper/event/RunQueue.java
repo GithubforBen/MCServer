@@ -135,8 +135,11 @@ public final class RunQueue {
         PaperContext.async(() -> {
             String serverName;
             try {
-                serverName = ListenerAdapter.ServerName.valueOf(
-                        ServerApi.freeName("RUN_" + shortId(event.getId()))).toString();
+                // the run is part of the name: a free name alone is only free among the servers that are
+                // up, and the one of an attempt that is over would hand its old world to the next team -
+                // with whoever died on it still lying there
+                serverName = ListenerAdapter.ServerName.valueOf(ServerApi.freeName(
+                        "RUN_" + shortId(event.getId()) + "_" + shortId(run.getId()))).toString();
             } catch (Exception e) {
                 Bukkit.getLogger().warning("Could not name a run server: " + e.getMessage());
                 PaperContext.sync(() -> tell(participants,
@@ -161,11 +164,12 @@ public final class RunQueue {
     }
 
     /**
-     * Picks a paused run back up.
+     * Picks an open run back up.
      * <p>
      * The server keeps its name, and with it its directory, so starting it again brings back the same
      * world with the same progress. The clock starts moving again the moment somebody who belongs to the
-     * run is standing on it.
+     * run is standing on it. A run that still counts as running is picked up the same way: its server may
+     * have gone without saying so, and then this is what brings it back.
      *
      * @param event  the event the run belongs to
      * @param player who wants to carry on
@@ -186,6 +190,33 @@ public final class RunQueue {
         // new one - and a server that is already running is simply waited for and warped to
         ServerStartup.ensureAndWarp(onlineOf(participants), run.getServerName(), ServerTemplate.EVENT);
         return "Der Server wird gestartet.";
+    }
+
+    /**
+     * Calls an open run off, for everybody on it.
+     * <p>
+     * This is the way out of a run nobody wants to finish - a bad start, a world that is no fun, a server
+     * that never came up. Without it the run stays open, and an open run is what keeps its team from
+     * starting the next one. The run server notices by itself, sends whoever is still on it back to the
+     * lobby and switches itself off.
+     *
+     * @param event  the event the run belongs to
+     * @param player who is calling it off
+     * @return what to tell them
+     */
+    public static String abort(EventData event, Player player) {
+        RunData run = RunService.getActiveRunOf(event.getId(), player.getUniqueId());
+        if (run == null) {
+            return "Du hast keinen offenen Lauf.";
+        }
+        boolean counts = run.getElapsedTicksRaw() > 0;
+        run.finish(RunData.State.ABANDONED);
+        RunService.save(run);
+        Set<UUID> others = new LinkedHashSet<>(run.getParticipants());
+        others.remove(player.getUniqueId());
+        tell(others, player.getName() + " hat euren Lauf abgebrochen.", NamedTextColor.YELLOW);
+        return counts ? "Der Lauf ist abgebrochen. Er zählt als Versuch."
+                : "Der Lauf ist abgebrochen. Er hatte noch nicht begonnen und kostet keinen Versuch.";
     }
 
     /**

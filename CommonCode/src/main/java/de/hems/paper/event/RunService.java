@@ -66,6 +66,14 @@ public final class RunService {
     }
 
     /**
+     * @param id a run
+     * @return the run as the network last announced it, or {@code null} if there is none
+     */
+    public static RunData getRun(UUID id) {
+        return id == null ? null : runs.get(id);
+    }
+
+    /**
      * @param eventId the event to look at
      * @return its runs, fastest finished first
      */
@@ -128,7 +136,8 @@ public final class RunService {
     public static int countRunsOf(UUID eventId, UUID player) {
         int count = 0;
         for (RunData run : runs.values()) {
-            if (eventId.equals(run.getEventId()) && run.getParticipants().contains(player)) count++;
+            if (!eventId.equals(run.getEventId()) || !run.getParticipants().contains(player)) continue;
+            if (run.countsAsAttempt()) count++;
         }
         return count;
     }
@@ -161,6 +170,22 @@ public final class RunService {
                 Bukkit.getLogger().warning("Could not save the run: " + e.getMessage());
             }
         });
+    }
+
+    /**
+     * Stores a run from the calling thread, for the one moment nothing can be scheduled any more: a server
+     * that is being switched off.
+     *
+     * @param run the run to store
+     */
+    public static void saveNow(RunData run) {
+        if (run == null || run.getId() == null) return;
+        runs.put(run.getId(), run);
+        try {
+            ListenerAdapter.sendListeners(new SaveRunEvent(run));
+        } catch (Exception e) {
+            Bukkit.getLogger().warning("Could not save the run: " + e.getMessage());
+        }
     }
 
     public static void refreshAsync() {

@@ -179,7 +179,8 @@ public class RunStore {
     public int countRunsOf(UUID eventId, UUID player) {
         int count = 0;
         for (RunData run : runs.values()) {
-            if (run.getEventId().equals(eventId) && run.getParticipants().contains(player)) count++;
+            if (!run.getEventId().equals(eventId) || !run.getParticipants().contains(player)) continue;
+            if (run.countsAsAttempt()) count++;
         }
         return count;
     }

@@ -88,6 +88,7 @@ public final class Trails {
      */
     private static boolean draws(Player player) {
         if (player.getGameMode() == GameMode.SPECTATOR) return false;
+        if (CosmeticEffects.isOff(player)) return false;
         // an invisible player who leaves a line of flames behind them is not invisible
         return !player.hasPotionEffect(PotionEffectType.INVISIBILITY);
     }
