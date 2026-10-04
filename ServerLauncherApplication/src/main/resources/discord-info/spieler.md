@@ -45,12 +45,12 @@ Auf Survival spielst du im Team. Mit `/cteam` öffnet sich der Team-Manager, dor
 - `/cteam leave`, `/cteam info [team]`, `/cteam list`
 - `/cteam sethome`, `/cteam home`: Team-Home. Jeder Teleport kostet **500 Bits** (5 Diamanten) von deinem eigenen Konto. Du musst kurz stillstehen; wenn du dich bewegst, bricht der Teleport ab und du zahlst nichts.
 
-**Grundstücke (Claims):** `/cteam claim` kauft den Chunk, in dem du stehst, mit Bits. Jeder weitere Chunk kostet etwas mehr. `/cteam unclaim` gibt ihn wieder frei.
+**Grundstücke (Claims):** `/cteam claim` kauft den Chunk, in dem du stehst, mit Bits von deinem eigenen Konto. Das darf **jedes Mitglied** des Teams. Jeder weitere Chunk kostet etwas mehr. `/cteam unclaim` gibt ihn wieder frei; das darf der Anführer, und die Mitglieder nur, wenn er es in den Einstellungen erlaubt.
 - `/cteam chunks`: Karte mit einer Farbe pro Team
 - `/cteam grenze`: zeigt zehn Sekunden lang die Chunk-Grenzen um dich herum
 - Beim Betreten eines Grundstücks erscheint der Teamname als Titel. `/cteam titel` schaltet das für dich ab.
 
-Unter *Einstellungen* im Team-Manager legt euer Team selbst fest, wie viele Mitglieder ihr aufnehmt, ob Friendly Fire an ist, ob jeder beitreten darf und wer claimen und einladen darf.
+Unter *Einstellungen* im Team-Manager legt euer Team selbst fest, wie viele Mitglieder ihr aufnehmt, ob Friendly Fire an ist, ob jeder beitreten darf, wer einladen darf und ob Mitglieder Chunks freigeben dürfen.
 
 ## Survival: Sichtweite und Kampf
 

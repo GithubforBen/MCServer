@@ -51,6 +51,20 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
     private static final int MAP_SIZE = 11;
     /** Where the player is looking, starting at yaw 0 - which is south, and south is down on a map. */
     private static final String[] ARROWS = {"↓", "↙", "←", "↖", "↑", "↗", "→", "↘"};
+    private static final String[] DIRECTIONS = {"Süden", "Südwesten", "Westen", "Nordwesten",
+            "Norden", "Nordosten", "Osten", "Südosten"};
+    /**
+     * What the squares of the map are drawn with: claimed land, free land, and where the player stands.
+     * <p>
+     * Chat is not a grid. Every character is as wide as its picture in the font, and a map drawn with a
+     * dot (two pixels), a block (nine) and arrows (six, eight, or twice that for the diagonal ones the font
+     * does not have) has columns that lean further apart with every claim in a row. These three are all
+     * nine pixels wide, and a line of chat is nine pixels high - so with nothing between them the squares
+     * are squares and the columns are columns.
+     */
+    private static final String CLAIMED = "█";
+    private static final String FREE = "▒";
+    private static final String HERE = "▄";
 
     /** Where a pending invite is remembered on the invited player. */
     private static final String INVITE_KEY = "pending-team-invite";
@@ -366,6 +380,18 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
         player.sendMessage(Component.text("Chunks um dich herum", NamedTextColor.GOLD)
                 .append(Component.text(" (" + MAP_SIZE + "×" + MAP_SIZE + ", Norden oben)",
                         NamedTextColor.DARK_GRAY)));
+        // the arrow used to be the middle square. An arrow is not as wide as a square, so it says in
+        // words here what it said there, and the square is one that fits the grid
+        int facing = facing(player);
+        TeamData standingOn = ClaimManager.getTeamDataOfChunk(world, centreX, centreZ);
+        player.sendMessage(Component.text()
+                .append(Component.text(HERE, NamedTextColor.WHITE))
+                .append(Component.text(" du, Blick nach " + DIRECTIONS[facing] + " " + ARROWS[facing] + " · ",
+                        NamedTextColor.GRAY))
+                .append(standingOn == null
+                        ? Component.text("Wildnis", NamedTextColor.GRAY)
+                        : Component.text(standingOn.getName(), ClaimDisplay.colourOf(standingOn)))
+                .build());
         int reach = MAP_SIZE / 2;
         for (int z = centreZ - reach; z <= centreZ + reach; z++) {
             TextComponent.Builder row = Component.text();
@@ -375,7 +401,7 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
                     seen.merge(owner.getName(), 1, Integer::sum);
                     teams.putIfAbsent(owner.getName(), owner);
                 }
-                row.append(cell(player, owner, x, z, x == centreX && z == centreZ));
+                row.append(cell(owner, x, z, x == centreX && z == centreZ));
             }
             player.sendMessage(row.build());
         }
@@ -385,35 +411,35 @@ public class TeamCommand implements TabCompleter, CommandExecutor {
     /**
      * One square of the map.
      *
-     * @param player who is looking, for the direction the arrow points
-     * @param owner  whose chunk it is, or {@code null}
-     * @param here   whether the player is standing in it
+     * @param owner whose chunk it is, or {@code null}
+     * @param here  whether the player is standing in it
      */
-    private static Component cell(Player player, @Nullable TeamData owner, int x, int z, boolean here) {
+    private static Component cell(@Nullable TeamData owner, int x, int z, boolean here) {
         NamedTextColor colour = owner == null ? NamedTextColor.DARK_GRAY : ClaimDisplay.colourOf(owner);
-        String glyph = here ? arrow(player) : (owner == null ? "·" : "█");
+        String glyph = here ? HERE : (owner == null ? FREE : CLAIMED);
         Component hover = Component.text()
                 .append(owner == null
                         ? Component.text("Wildnis", NamedTextColor.GRAY)
                         : Component.text(owner.getName(), colour))
+                .append(here ? Component.text(" · hier stehst du", NamedTextColor.WHITE) : Component.empty())
                 .append(Component.newline())
                 .append(Component.text("Chunk " + x + " / " + z, NamedTextColor.DARK_GRAY))
                 .append(Component.text(" · Block " + (x << 4) + " / " + (z << 4), NamedTextColor.DARK_GRAY))
                 .build();
-        return Component.text(glyph + " ", here ? NamedTextColor.WHITE : colour)
+        // nothing after the square: a space is four pixels, and four pixels between squares that are
+        // nine high is what made the map twice as wide as it was tall
+        return Component.text(glyph, here ? NamedTextColor.WHITE : colour)
                 .hoverEvent(HoverEvent.showText(hover));
     }
 
     /**
      * @param player who is looking
-     * @return the arrow for the way they are facing, drawn as it lies on a map with north at the top
+     * @return which of the eight directions they face, counted from south the way yaw is
      */
-    private static String arrow(Player player) {
-        // yaw 0 is south, which is downwards on a map whose top edge is north - hence the table starting
-        // there rather than at the arrow anybody would write first
+    private static int facing(Player player) {
         float yaw = player.getLocation().getYaw() % 360.0f;
         if (yaw < 0.0f) yaw += 360.0f;
-        return ARROWS[Math.round(yaw / 45.0f) & 7];
+        return Math.round(yaw / 45.0f) & 7;
     }
 
     /**

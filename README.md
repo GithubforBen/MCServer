@@ -373,14 +373,17 @@ Claims sind unterwegs sichtbar, nicht nur auf Befehl:
 - **`/cteam grenze`.** Zeichnet die Kanten des eigenen Chunks und der angrenzenden Claims in
   Teamfarbe, zehn Sekunden lang, und nur für den, der gefragt hat. Der Chunk, in dem man selbst
   steht, ist immer dabei - weiß, wenn er noch frei ist.
-- **`/cteam chunks`.** Die Karte zeigt eine Farbe **pro Team** statt nur grün und rot, in der Mitte
-  einen Pfeil in Blickrichtung, und darunter eine Legende mit den Teams, die gerade zu sehen sind.
-  Norden ist oben. Der Mauszeiger über einem Feld nennt Team und Koordinaten.
+- **`/cteam chunks`.** Die Karte zeigt eine Farbe **pro Team** statt nur grün und rot und darunter eine
+  Legende mit den Teams, die gerade zu sehen sind. Norden ist oben. Der Mauszeiger über einem Feld nennt
+  Team und Koordinaten. Alle Felder sind gleich breit (`█` geclaimt, `▒` frei, `▄` hier stehst du - im
+  Minecraft-Font jeweils 9 Pixel, so hoch wie eine Chatzeile), die Karte ist also ein echtes Quadrat.
+  Die Blickrichtung steht als Text über der Karte, weil ein Pfeil schmaler ist als ein Feld.
 
 ### Einstellbar
 
 Was **das Team** selbst festlegt, steht im Manager unter *Einstellungen* und liegt beim Team:
-maximale Mitglieder, Friendly Fire, offener Beitritt, ob Mitglieder claimen oder einladen dürfen, ob der
+maximale Mitglieder, Friendly Fire, offener Beitritt, ob Mitglieder einladen und Chunks freigeben dürfen (claimen darf jedes Mitglied, bezahlt
+wird vom eigenen Konto), ob der
 Rucksack aktiv ist und ob Mitglieder daraus entnehmen dürfen, Team-Home, Beitritts-Ankündigungen.
 
 Was **der Server** vorgibt, steht in `configs/team.yml` auf dem Survival-Server:

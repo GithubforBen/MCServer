@@ -23,8 +23,12 @@ public class TeamSettings implements Serializable {
         FRIENDLY_FIRE("Friendly Fire", Type.FLAG, false),
         /** Whether anybody may join without an invite. */
         PUBLIC_JOIN("Offener Beitritt", Type.FLAG, false),
-        /** Whether members other than the leader may claim chunks for the team. */
-        MEMBERS_MAY_CLAIM("Mitglieder dürfen claimen", Type.FLAG, false),
+        /**
+         * Whether members other than the leader may give chunks up again. Claiming is open to every member
+         * and needs no switch; the name is from when it covered both, and stays because it is what the
+         * teams have stored.
+         */
+        MEMBERS_MAY_CLAIM("Mitglieder dürfen Chunks freigeben", Type.FLAG, false),
         /** Whether members other than the leader may invite. */
         MEMBERS_MAY_INVITE("Mitglieder dürfen einladen", Type.FLAG, false),
         /** Whether the shared backpack can be opened at all. */
