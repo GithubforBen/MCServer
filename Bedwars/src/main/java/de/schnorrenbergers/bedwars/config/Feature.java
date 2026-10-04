@@ -94,6 +94,19 @@ public enum Feature {
             "The upgrade keeper closes with it."),
 
     /**
+     * Whether anything can be crafted. Off, because everything a round is played with has a price: planks
+     * out of the shop turned into sticks, ladders and buttons are items nobody paid for.
+     */
+    CRAFTING("Crafting", Material.CRAFTING_TABLE, false,
+            "Whether anything can be crafted.",
+            "",
+            "Off by default: neither the four slots in",
+            "the inventory nor a crafting table make",
+            "anything. What a round is played with is",
+            "what the shop sells, at the shop's price.",
+            "On gives the vanilla recipes back."),
+
+    /**
      * Whether the waiting lobby starts the round by itself once it is full enough.
      * <p>
      * Off is what a round somebody is hosting wants: the lobby fills up, and whoever is running it says

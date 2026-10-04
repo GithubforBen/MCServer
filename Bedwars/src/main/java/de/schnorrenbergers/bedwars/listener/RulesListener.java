@@ -17,6 +17,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -29,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * What the switches of {@code features.yml} do while the round runs.
  * <p>
  * The parts that cannot be a game rule or an attribute live here: the sweep attack that 1.8 did not have,
- * the food bar, and the compass that points at whoever is closest.
+ * crafting, the food bar, and the compass that points at whoever is closest.
  */
 public class RulesListener implements Listener {
 
@@ -60,6 +64,38 @@ public class RulesListener implements Listener {
     public void onSweep(EntityDamageEvent event) {
         if (!features().is(Feature.OLD_PVP)) return;
         if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK) event.setCancelled(true);
+    }
+
+    /**
+     * Leaves the result of a recipe empty while crafting is switched off.
+     * <p>
+     * This is the half a player sees: the grid takes what is put into it and nothing comes out, in the
+     * inventory as much as at a table. There is nothing to cancel here - the event only says what would
+     * come out.
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPrepareCraft(PrepareItemCraftEvent event) {
+        if (features().is(Feature.CRAFTING)) return;
+        event.getInventory().setResult(null);
+    }
+
+    /**
+     * The half that holds: a result that was taken anyway is not handed over. A client that fills the grid
+     * from the recipe book asks for the item without ever having been shown one.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onCraft(CraftItemEvent event) {
+        if (features().is(Feature.CRAFTING)) return;
+        event.setCancelled(true);
+    }
+
+    /**
+     * Keeps a crafting table on a map from opening, so nobody stands in front of a grid that does nothing.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onOpenTable(InventoryOpenEvent event) {
+        if (features().is(Feature.CRAFTING)) return;
+        if (event.getInventory().getType() == InventoryType.WORKBENCH) event.setCancelled(true);
     }
 
     /**
