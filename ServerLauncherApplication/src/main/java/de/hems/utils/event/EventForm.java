@@ -5,6 +5,7 @@ import de.hems.types.event.EventRewards;
 import de.hems.types.event.EventSetting;
 import de.hems.types.event.EventType;
 import de.hems.types.event.PokerEventSettings;
+import de.hems.types.cosmetic.Cosmetics;
 import de.hems.types.event.PrizeData;
 import de.hems.types.event.RewardRule;
 import de.hems.types.item.ItemCatalog;
@@ -37,6 +38,8 @@ public final class EventForm {
     private static final int MAX_MONEY = 1_000_000_000;
     /** Twenty-seven stacks of sixty-four, a full chest. */
     private static final int MAX_ITEM_AMOUNT = 27 * 64;
+    /** More cosmetics than this in one reward is a mistake rather than a prize. */
+    private static final int MAX_COSMETICS = 16;
 
     private EventForm() {
     }
@@ -276,6 +279,8 @@ public final class EventForm {
         for (RewardRule rule : EventRewards.of(event)) {
             JSONArray items = new JSONArray();
             for (ItemSpec item : rule.getPrize().getItems()) items.put(item.toJson());
+            JSONArray cosmetics = new JSONArray();
+            for (String cosmetic : rule.getPrize().getCosmetics()) cosmetics.put(cosmetic);
             array.put(new JSONObject()
                     .put("who", rule.getCondition().name())
                     .put("from", rule.getFrom())
@@ -283,7 +288,8 @@ public final class EventForm {
                     .put("kills", rule.getKills())
                     .put("label", rule.describeWho())
                     .put("money", rule.getPrize().getMoney())
-                    .put("items", items));
+                    .put("items", items)
+                    .put("cosmetics", cosmetics));
         }
         return array;
     }
@@ -334,7 +340,20 @@ public final class EventForm {
                     prize.withItem(read.item());
                 }
             }
-            if (prize.isEmpty()) return where + "gibt weder Geld noch Items.";
+            JSONArray cosmetics = json.optJSONArray("cosmetics");
+            if (cosmetics != null) {
+                if (cosmetics.length() > MAX_COSMETICS) {
+                    return where + "höchstens " + MAX_COSMETICS + " Cosmetics pro Belohnung.";
+                }
+                for (int j = 0; j < cosmetics.length(); j++) {
+                    String id = cosmetics.optString(j, "").trim();
+                    if (id.isEmpty()) continue;
+                    // only what the network ships: an id nothing answers to would be a prize of nothing
+                    if (Cosmetics.byId(id) == null) return where + "das Cosmetic \"" + id + "\" gibt es nicht.";
+                    prize.withCosmetic(id);
+                }
+            }
+            if (prize.isEmpty()) return where + "gibt weder Geld noch Items noch ein Cosmetic.";
 
             RewardRule.Condition condition;
             try {

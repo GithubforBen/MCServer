@@ -1195,8 +1195,9 @@ sie aber nicht ändern — so sieht jeder, worum gespielt wird.
 
 Modul **Events** → **Bearbeiten** an einem Event öffnet ein Formular mit allem auf einmal: Name,
 Beschreibung, Anfang, Ende, die Einstellungen des Typs (dieselben Stufen wie im Spiel, als Auswahlliste)
-und die Belohnungen (wer: Platzierung von/bis, ab X Kills oder Teilnahme; was: Bits und beliebig viele
-Items mit Anzahl, Itemnamen werden aus der Liste eines laufenden Spielservers vorgeschlagen und geprüft).
+und die Belohnungen (wer: Platzierung von/bis, ab X Kills oder Teilnahme; was: Bits, beliebig viele
+Items mit Anzahl und Cosmetics; Itemnamen werden aus der Liste eines laufenden Spielservers vorgeschlagen
+und geprüft, Cosmetics kommen aus einer Auswahlliste).
 Gespeichert wird alles mit einem Klick auf **Speichern**. Ein neu angelegtes Event öffnet direkt dieses
 Formular.
 
@@ -1209,7 +1210,8 @@ Formular.
 
 ### Belohnungen
 
-Eine Belohnung ist: **was** (Bits und Items) und **wer** sie bekommt. Angelegt wird sie in dieser
+Eine Belohnung ist: **was** (Bits, Items und Cosmetics) und **wer** sie bekommt. Cosmetics lassen sich
+nur auf der Website dazulegen (Auswahlliste „Cosmetic hinzufügen“); im Spiel werden sie angezeigt. Angelegt wird sie in dieser
 Reihenfolge — Neue Belohnung, Geld durchklicken und Items aus der Hand dazulegen, dann wählen, wer:
 
 | Auswahl | Wer sie bekommt |
@@ -1223,7 +1225,9 @@ Reihenfolge — Neue Belohnung, Geld durchklicken und Items aus der Hand dazuleg
 
 **Jede Belohnung, die passt, wird ausgezahlt.** Wer Platz 1 und 5 Kills hat, bekommt die Belohnung für
 `#1` und die für „ab 5 Kills“. Ausgezahlt wird beim Abrechnen des Events; wer offline ist, bekommt sie
-beim nächsten Join (Geld nur auf einem Server mit Wirtschaft, wie bisher).
+beim nächsten Join (Geld nur auf einem Server mit Wirtschaft, wie bisher). Ein Cosmetic schreibt der
+Launcher beim Abholen gut, es braucht keinen Platz im Inventar; wer es schon hat, bekommt dafür nichts
+anderes.
 
 Welche Events überhaupt jemanden werten:
 
@@ -1249,7 +1253,7 @@ bleiben die stehenden Teams ohne Platz: Kills und Teilnahme zählen, ein Platz n
 `/runde` melden nichts.
 
 Gespeichert werden Belohnungen als `reward.<n>` in den Einstellungen des Events, z.B.
-`who=place:4:10;money=100;items=DIAMOND:2`. Events von vorher mit `prize.place.1..3` und
+`who=place:4:10;money=100;items=DIAMOND:2;cosmetics=trail-flame,win-ink`. Events von vorher mit `prize.place.1..3` und
 `prize.participation` werden als die Regeln gelesen, die sie meinten, und beim ersten Speichern
 umgeschrieben.
 

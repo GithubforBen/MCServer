@@ -318,6 +318,24 @@ public final class RewardCheck {
         check("a range the wrong way round is refused", EventForm.applyRewards(race,
                 new JSONArray().put(new JSONObject().put("who", "PLACE").put("from", 5).put("to", 2)
                         .put("money", 5)), ItemCatalog::empty) != null, true);
+        check("a cosmetic is a reward of its own", EventForm.applyRewards(race,
+                new JSONArray().put(new JSONObject().put("who", "PLACE").put("from", 1).put("to", 1)
+                        .put("cosmetics", new JSONArray().put("trail-flame").put("Trail-Flame").put("win-ink"))),
+                ItemCatalog::empty), null);
+        PrizeData cosmeticPrize = EventRewards.of(race).get(0).getPrize();
+        check("each cosmetic is in it once", cosmeticPrize.getCosmetics(), List.of("trail-flame", "win-ink"));
+        check("it is not an empty prize", cosmeticPrize.isEmpty(), false);
+        check("it reads by its name", cosmeticPrize.describe().get(0), "Cosmetic: Flammenspur");
+        check("it survives being written out", PrizeData.parse(cosmeticPrize.serialize()).getCosmetics(),
+                List.of("trail-flame", "win-ink"));
+        check("the form reads it back", EventForm.describeRewards(race).getJSONObject(0)
+                .getJSONArray("cosmetics").getString(1), "win-ink");
+        check("money, items and cosmetics go together", PrizeData.parse(
+                new PrizeData(50).withItem("DIAMOND", 2).withCosmetic("win-ink").serialize()).describe(),
+                List.of("50 Bits", new PrizeData().withItem("DIAMOND", 2).describe().get(0), "Cosmetic: Tinte"));
+        check("a cosmetic nobody ships is refused", EventForm.applyRewards(race,
+                new JSONArray().put(new JSONObject().put("who", "PARTICIPATION")
+                        .put("cosmetics", new JSONArray().put("gibt-es-nicht"))), ItemCatalog::empty) != null, true);
         EventData simple = new EventData("Info", EventType.SIMPLE, 0, 1);
         check("an event that ranks nobody takes no rewards", EventForm.applyRewards(simple,
                 new JSONArray().put(new JSONObject().put("who", "PARTICIPATION").put("money", 5)),
