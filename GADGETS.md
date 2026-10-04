@@ -54,7 +54,10 @@ Angefasst dafür:
   oberem Anker. Ob das Verhältnis stimmt, zeigt erst der Betrieb.
 - Der Erntehelfer ist das einzige Gadget der Liste, das auf Survival in den Spielablauf eingreift.
   Wenn er sich als zu bequem zeigt, gehört ein Cooldown in seine Settings - der ist noch nicht da.
-- Das Emote-Rad ist Partikel, Ton und eine Zeile im Chat. Ohne echtes Animationssystem geht mehr
-  nicht, und das sollte es auch nicht vortäuschen.
+- Das Emote-Rad bewegt den echten Spieler: jedes Emote ist eine Choreografie aus dem, was ein Server
+  einem Körper auftragen kann (Arm schwingen, ducken, hüpfen, Riptide-Drehung, flach hinlegen), auf den
+  Tick genau. Einzelne Gliedmaßen frei zu stellen geht ohne Resource Pack nicht. Ducken und Hinlegen sieht
+  man an sich selbst nicht, nur die anderen sehen es - der eigene Client bestimmt die eigene Haltung.
+  Zehn Sekunden nach einem Treffer startet kein Emote, und ein Treffer bricht es ab.
 - In Bedwars gibt es keine Gadgets: ein Gadget darf nie ein Spielvorteil sein. Endlos-Perle und Enterhaken
   wirken nur noch in Lobby und Survival, und die Bedwars-Server schalten Gadgets gar nicht erst ein.
