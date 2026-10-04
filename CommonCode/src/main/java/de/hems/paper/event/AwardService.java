@@ -6,20 +6,17 @@ import de.hems.communication.events.event.ClaimAwardEvent;
 import de.hems.communication.events.event.RequestAwardsEvent;
 import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.paper.PaperContext;
+import de.hems.paper.item.ItemSpecs;
 import de.hems.types.event.AwardData;
 import de.hems.types.event.PrizeData;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.function.BiConsumer;
 
 /**
@@ -165,22 +162,9 @@ public final class AwardService {
      * @return its items, with anything the server does not know left out
      */
     private static List<ItemStack> toStacks(PrizeData prize) {
-        List<ItemStack> stacks = new ArrayList<>();
-        for (Map.Entry<String, Integer> item : prize.getItems().entrySet()) {
-            Material material = Material.matchMaterial(item.getKey().toUpperCase(Locale.ROOT));
-            if (material == null || material.isAir()) {
-                Bukkit.getLogger().warning("Unknown prize item: " + item.getKey());
-                continue;
-            }
-            int left = item.getValue();
-            // a prize may be larger than one stack, so it is split the way the inventory expects
-            while (left > 0) {
-                int amount = Math.min(left, material.getMaxStackSize());
-                stacks.add(new ItemStack(material, amount));
-                left -= amount;
-            }
-        }
-        return stacks;
+        // the same builder the website's item editor feeds, so a prize is exactly the item that was set up -
+        // enchantments, name and all - and split into stacks the way the inventory expects
+        return ItemSpecs.stacks(prize.getItems());
     }
 
     /**

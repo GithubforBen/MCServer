@@ -147,7 +147,7 @@ public class Main {
         de.hems.utils.event.EventResultStore resultStore = new de.hems.utils.event.EventResultStore();
         new de.hems.events.EventResultEvents(resultStore, eventStore);
         eventSettlement = new EventSettlement(eventStore, runStore, awardStore, pokerSettlement, resultStore);
-        new EventEvents(eventStore, runStore, awardStore, eventSettlement);
+        new EventEvents(eventStore, runStore, awardStore, eventSettlement, cosmeticStore);
         // /neustart on any server lands here: countdown, save, stop, and run.sh does the rest
         restartScheduler = new de.hems.utils.restart.RestartScheduler();
         new AdminAbuseHandler();

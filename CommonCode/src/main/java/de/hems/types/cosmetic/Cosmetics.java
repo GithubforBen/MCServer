@@ -77,6 +77,8 @@ public final class Cosmetics {
 
     /** How much longer the endless pearl's cooldown is than a normal one, in ticks. */
     public static final String SETTING_COOLDOWN_TICKS = "cooldown-ticks";
+    /** How long the grappling hook rests between two throws when nobody set anything: one second. */
+    public static final String GRAPPLE_COOLDOWN_TICKS = "20";
     /** How hard a gadget throws its owner, in tenths of a block per tick. */
     public static final String SETTING_POWER = "power";
     /** How long an effect keeps going, in ticks. */
@@ -142,7 +144,7 @@ public final class Cosmetics {
                 "Enterhaken", "Eine Angel, die dich dorthin zieht, wo der Haken gelandet ist",
                 "FISHING_ROD", 5000, false);
         grapple.getSettings().put(SETTING_POWER, "12");
-        grapple.getSettings().put(SETTING_COOLDOWN_TICKS, "60");
+        grapple.getSettings().put(SETTING_COOLDOWN_TICKS, GRAPPLE_COOLDOWN_TICKS);
         shipped.add(grapple);
 
         shipped.add(gadget(GADGET_DOUBLE_JUMP, "Doppelsprung",
@@ -202,6 +204,27 @@ public final class Cosmetics {
                 SETTING_COOLDOWN_TICKS, "40"));
 
         return shipped;
+    }
+
+    /**
+     * @param id a cosmetic
+     * @return the cosmetic the network ships under that id, or {@code null} when there is none
+     */
+    public static CosmeticData byId(String id) {
+        if (id == null) return null;
+        for (CosmeticData cosmetic : shipped()) {
+            if (cosmetic.getId().equalsIgnoreCase(id.trim())) return cosmetic;
+        }
+        return null;
+    }
+
+    /**
+     * @param id a cosmetic
+     * @return what it is called, or the id itself for one this version does not know
+     */
+    public static String nameOf(String id) {
+        CosmeticData cosmetic = byId(id);
+        return cosmetic == null ? String.valueOf(id) : cosmetic.getDisplayName();
     }
 
     /**

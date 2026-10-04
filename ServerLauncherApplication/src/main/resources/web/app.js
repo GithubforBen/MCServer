@@ -189,7 +189,7 @@
         api('/api/login', {
             method: 'POST',
             allowUnauthorized: true,
-            body: {username: username, password: password, token: token}
+            body: {username: username, password: password, token: token, remember: $('login-remember').checked}
         }).then(function (data) {
             state.csrf = data.csrfToken;
             state.username = data.username;
@@ -804,6 +804,10 @@
         api('/api/session', {allowUnauthorized: true}).then(function (data) {
             state.graceSeconds = data.graceSeconds || state.graceSeconds;
             applyBrand(data.brand);
+            if (data.rememberDays) {
+                $('login-remember-text').textContent = 'Angemeldet bleiben (' + data.rememberDays
+                    + (data.rememberDays === 1 ? ' Tag)' : ' Tage)');
+            }
             if (data.authenticated) {
                 state.csrf = data.csrfToken;
                 state.username = data.username;

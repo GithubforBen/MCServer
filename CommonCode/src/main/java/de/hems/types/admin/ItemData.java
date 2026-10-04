@@ -1,5 +1,7 @@
 package de.hems.types.admin;
 
+import de.hems.types.item.ItemSpec;
+
 import java.io.Serializable;
 import java.util.Base64;
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
  */
 public class ItemData implements Serializable {
 
-    private static final long serialVersionUID = 3001L;
+    private static final long serialVersionUID = 3002L;
 
     private int slot;
     private String material;
@@ -26,6 +28,13 @@ public class ItemData implements Serializable {
     private int maxDurability;
     /** What {@code ItemStack.serializeAsBytes()} produced, for a lossless write back. */
     private byte[] raw;
+    /** The item as the item editor shows it, {@code null} where nobody described it yet. */
+    private ItemSpec spec;
+    /**
+     * Whether {@link #spec} was changed by hand and has to be put onto the item. Without that the raw bytes
+     * win, because the description cannot hold everything an item can carry.
+     */
+    private boolean modified;
 
     public ItemData() {
     }
@@ -107,5 +116,21 @@ public class ItemData implements Serializable {
      */
     public void setRawBase64(String base64) {
         this.raw = base64 == null || base64.isBlank() ? null : Base64.getDecoder().decode(base64);
+    }
+
+    public ItemSpec getSpec() {
+        return spec;
+    }
+
+    public void setSpec(ItemSpec spec) {
+        this.spec = spec;
+    }
+
+    public boolean isModified() {
+        return modified;
+    }
+
+    public void setModified(boolean modified) {
+        this.modified = modified;
     }
 }

@@ -52,6 +52,9 @@ public class CoreProtectLookupHandler {
         } catch (NoClassDefFoundError e) {
             // the server runs without CoreProtect at all
             error = "CoreProtect ist auf diesem Server nicht installiert.";
+        } catch (IllegalArgumentException e) {
+            // a question that cannot be asked as it stands, worded for the admin already
+            error = e.getMessage();
         } catch (Exception e) {
             error = "Die Abfrage ist fehlgeschlagen: " + e.getMessage();
         }
@@ -75,9 +78,15 @@ public class CoreProtectLookupHandler {
         List<? extends CoreProtectResult> results;
         if (query.getKind() == LookupQuery.Kind.BLOCK) {
             // a block lookup is always about one specific block, so it needs a place to look at
+            if (!query.hasLocation() || query.getWorld() == null || query.getWorld().isBlank()) {
+                return "Eine Block-Abfrage braucht eine Position (Welt, X, Y, Z).";
+            }
+            if (worldOf(query.getWorld()) == null) return unknownWorld(query.getWorld());
             Block block = resolveBlock(query);
             if (block == null) {
-                return "Eine Block-Abfrage braucht eine Position (Welt, X, Y, Z).";
+                return "Der Block bei " + query.getX() + "/" + query.getY() + "/" + query.getZ() + " in "
+                        + query.getWorld() + " konnte nicht gelesen werden - der Server hat nicht rechtzeitig "
+                        + "geantwortet. Bitte noch einmal versuchen.";
             }
             results = api.blockLookup(block, options);
         } else {
@@ -108,6 +117,10 @@ public class CoreProtectLookupHandler {
                 .limit(Math.max(0, query.getOffset()), Math.min(MAX_LIMIT, Math.max(1, query.getLimit())));
         if (query.getUser() != null && !query.getUser().isBlank()) builder.user(query.getUser().trim());
         Location location = locationOf(query);
+        if (query.hasLocation() && query.getWorld() != null && !query.getWorld().isBlank() && location == null) {
+            // without this the lookup would quietly search everywhere instead of where it was asked to
+            throw new IllegalArgumentException(unknownWorld(query.getWorld()));
+        }
         if (location != null) {
             if (query.getRadius() > 0) {
                 builder.radius(location, query.getRadius());
@@ -138,6 +151,7 @@ public class CoreProtectLookupHandler {
             Thread.currentThread().interrupt();
             return null;
         } catch (Exception e) {
+            Bukkit.getLogger().warning("CoreProtect lookup: could not read the block at " + location + ": " + e);
             return null;
         }
     }
@@ -148,9 +162,44 @@ public class CoreProtectLookupHandler {
      */
     private static Location locationOf(LookupQuery query) {
         if (!query.hasLocation() || query.getWorld() == null || query.getWorld().isBlank()) return null;
-        World world = Bukkit.getWorld(query.getWorld());
+        World world = worldOf(query.getWorld());
         if (world == null) return null;
         return new Location(world, query.getX(), query.getY(), query.getZ());
+    }
+
+    /**
+     * Finds a world the way somebody is likely to name it: by its folder name ({@code world_nether}), by its
+     * key ({@code minecraft:the_nether}, {@code the_nether}), in any case.
+     *
+     * @param name what was typed
+     * @return the world, or {@code null} if this server has none by that name
+     */
+    static World worldOf(String name) {
+        String wanted = name.trim();
+        World world = Bukkit.getWorld(wanted);
+        if (world != null) return world;
+        String lower = wanted.toLowerCase(java.util.Locale.ROOT);
+        String key = lower.contains(":") ? lower : "minecraft:" + lower;
+        for (World candidate : Bukkit.getWorlds()) {
+            if (candidate.getName().equalsIgnoreCase(wanted)) return candidate;
+            if (candidate.getKey().toString().equals(key)) return candidate;
+        }
+        return null;
+    }
+
+    /**
+     * @param name the world that was asked for
+     * @return a message naming the worlds this server does have, so the right one can be typed
+     */
+    private static String unknownWorld(String name) {
+        List<String> names = new ArrayList<>();
+        for (World world : Bukkit.getWorlds()) {
+            String key = world.getKey().toString();
+            names.add(world.getName().equals(key) || ("minecraft:" + world.getName()).equals(key)
+                    ? world.getName() : world.getName() + " (" + key + ")");
+        }
+        return "Die Welt '" + name.trim() + "' gibt es auf diesem Server nicht. Vorhanden: "
+                + String.join(", ", names) + ".";
     }
 
     /**

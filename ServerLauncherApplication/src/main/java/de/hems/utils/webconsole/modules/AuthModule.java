@@ -53,7 +53,8 @@ public class AuthModule implements WebModule {
                 ctx.string("username", ""),
                 ctx.string("password", ""),
                 ctx.string("token", ""),
-                ctx.clientKey());
+                ctx.clientKey(),
+                ctx.body().optBoolean("remember", false));
 
         if (!result.getStatus().isSuccess()) {
             JSONObject json = new JSONObject()
@@ -70,8 +71,12 @@ public class AuthModule implements WebModule {
 
         Session session = result.getSession();
         boolean secure = ctx.server().getConfiguration().getConfig().getBoolean("web.secure-cookie", false);
-        Cookie cookie = new Cookie(WebServer.SESSION_COOKIE, session.getToken(), "/",
-                (int) ctx.server().getAuthService().getSessionTimeoutSeconds(),
+        // with "Angemeldet bleiben" the cookie lives exactly as long as the session; without it, it is gone
+        // when the browser closes, and the server ends the session after a while without use anyway
+        int maxAge = session.isRemember()
+                ? (int) Math.max(1L, (session.getExpiresAt() - System.currentTimeMillis()) / 1000L)
+                : -1;
+        Cookie cookie = new Cookie(WebServer.SESSION_COOKIE, session.getToken(), "/", maxAge,
                 secure, true, "", SameSite.STRICT);
         ctx.raw().cookie(cookie);
         ctx.ok(describe(session, ctx.server()));
@@ -83,7 +88,7 @@ public class AuthModule implements WebModule {
      * @param ctx the request being answered
      */
     private void logout(ApiContext ctx) {
-        ctx.server().getAuthService().logout(ctx.session().getToken());
+        ctx.server().getAuthService().logout(ctx.session());
         ctx.raw().removeCookie(WebServer.SESSION_COOKIE, "/");
         ctx.ok("Abgemeldet.");
     }
@@ -99,7 +104,8 @@ public class AuthModule implements WebModule {
             ctx.ok(new JSONObject()
                     .put("authenticated", false)
                     .put("brand", brandOf(ctx.server()))
-                    .put("graceSeconds", ctx.server().getAuthService().getGraceSeconds()));
+                    .put("graceSeconds", ctx.server().getAuthService().getGraceSeconds())
+                    .put("rememberDays", ctx.server().getAuthService().getRememberDays()));
             return;
         }
         ctx.ok(describe(ctx.session(), ctx.server()));
@@ -146,6 +152,7 @@ public class AuthModule implements WebModule {
                 .put("username", session.getUsername())
                 .put("csrfToken", session.getCsrfToken())
                 .put("expiresIn", (session.getExpiresAt() - System.currentTimeMillis()) / 1000L)
+                .put("remember", session.isRemember())
                 .put("graceSeconds", server.getAuthService().getGraceSeconds());
     }
 }

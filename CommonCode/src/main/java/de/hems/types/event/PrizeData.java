@@ -1,23 +1,27 @@
 package de.hems.types.event;
 
+import de.hems.types.cosmetic.Cosmetics;
+import de.hems.types.item.ItemSpec;
+
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
- * What somebody gets for a placing: some money and a handful of items.
+ * What somebody gets for a placing: some money, a handful of items and cosmetics.
  * <p>
  * Stored as one string in the free settings of an {@link EventData}, so prizes need no table of their own
- * and can be read straight out of the config file. The items are kept as material names rather than as
+ * and can be read straight out of the config file. The items are kept as {@link ItemSpec}s rather than as
  * bukkit types, because the launcher stores them and has no bukkit to resolve them with - the game server
- * turns them into real stacks when it hands them out.
+ * turns them into real stacks, enchantments and all, when it hands them out. The cosmetics are only their
+ * ids, and they never pass through a game server at all: who owns what is the launcher's, so the launcher
+ * writes them down the moment the prize is collected.
  */
 public class PrizeData implements Serializable {
 
-    private static final long serialVersionUID = 4320L;
+    // raised when the items became full item descriptions instead of material names
+    private static final long serialVersionUID = 4321L;
 
     /** The settings key holding the prize for a placing, one to three. */
     public static final String PLACE_KEY = "prize.place.";
@@ -25,10 +29,14 @@ public class PrizeData implements Serializable {
     public static final String PARTICIPATION_KEY = "prize.participation";
     /** How many places can be rewarded separately. */
     public static final int PLACES = 3;
+    /** What an item entry that carries more than material and amount starts with. */
+    private static final String RICH = "~";
 
     private int money;
-    /** Material name to amount, in the order they were added. */
-    private Map<String, Integer> items = new LinkedHashMap<>();
+    /** The items, in the order they were added. */
+    private List<ItemSpec> items = new ArrayList<>();
+    /** The ids of the cosmetics, in the order they were added. */
+    private List<String> cosmetics = new ArrayList<>();
 
     public PrizeData() {
     }
@@ -44,15 +52,59 @@ public class PrizeData implements Serializable {
      */
     public PrizeData withItem(String material, int amount) {
         if (material == null || material.isBlank() || amount <= 0) return this;
-        getItems().merge(material.toUpperCase(Locale.ROOT), amount, Integer::sum);
+        return withItem(new ItemSpec(material, amount));
+    }
+
+    /**
+     * Adds an item, onto one that is the same apart from its amount if there is one.
+     *
+     * @param item the item, with everything it carries
+     * @return this prize, so calls can be chained
+     */
+    public PrizeData withItem(ItemSpec item) {
+        if (item == null || item.getMaterial() == null || item.getMaterial().isEmpty() || item.getAmount() <= 0) {
+            return this;
+        }
+        for (ItemSpec existing : getItems()) {
+            if (existing.isSimilar(item)) {
+                existing.setAmount(existing.getAmount() + item.getAmount());
+                return this;
+            }
+        }
+        getItems().add(item.copy());
         return this;
+    }
+
+    /**
+     * @param id the cosmetic, as the catalogue names it
+     * @return this prize, so calls can be chained
+     */
+    public PrizeData withCosmetic(String id) {
+        if (id == null || id.isBlank()) return this;
+        String cosmetic = id.trim().toLowerCase(Locale.ROOT);
+        // owning something twice is owning it once, so it is listed once
+        if (!getCosmetics().contains(cosmetic)) getCosmetics().add(cosmetic);
+        return this;
+    }
+
+    /**
+     * @param material a bukkit material name
+     * @return how many plain items of it the prize holds - enchanted or named ones are not counted
+     */
+    public int amountOf(String material) {
+        String wanted = ItemSpec.normaliseMaterial(material);
+        int amount = 0;
+        for (ItemSpec item : getItems()) {
+            if (item.isPlain() && wanted.equals(item.getMaterial())) amount += item.getAmount();
+        }
+        return amount;
     }
 
     /**
      * @return whether there is anything to hand out
      */
     public boolean isEmpty() {
-        return money <= 0 && getItems().isEmpty();
+        return money <= 0 && getItems().isEmpty() && getCosmetics().isEmpty();
     }
 
     public int getMoney() {
@@ -63,16 +115,31 @@ public class PrizeData implements Serializable {
         this.money = Math.max(0, money);
     }
 
-    public Map<String, Integer> getItems() {
-        if (items == null) items = new LinkedHashMap<>();
+    public List<ItemSpec> getItems() {
+        if (items == null) items = new ArrayList<>();
         return items;
     }
 
-    public void setItems(Map<String, Integer> items) {
-        this.items = items == null ? new LinkedHashMap<>() : items;
+    public void setItems(List<ItemSpec> items) {
+        this.items = items == null ? new ArrayList<>() : new ArrayList<>(items);
+    }
+
+    public List<String> getCosmetics() {
+        if (cosmetics == null) cosmetics = new ArrayList<>();
+        return cosmetics;
+    }
+
+    public void setCosmetics(List<String> cosmetics) {
+        this.cosmetics = new ArrayList<>();
+        if (cosmetics != null) cosmetics.forEach(this::withCosmetic);
     }
 
     /**
+     * Writes the prize out. A plain item stays readable as {@code MATERIAL:amount}; one that carries more is
+     * written as {@code ~} and the item encoded, which needs no separator the line uses itself. A server
+     * from before items could carry more skips such an entry instead of misreading it, and one from before
+     * cosmetics could be won skips that part.
+     *
      * @return the prize written out, readable in a config file
      */
     public String serialize() {
@@ -80,12 +147,17 @@ public class PrizeData implements Serializable {
         if (!getItems().isEmpty()) {
             text.append(";items=");
             boolean first = true;
-            for (Map.Entry<String, Integer> item : getItems().entrySet()) {
+            for (ItemSpec item : getItems()) {
                 if (!first) text.append(',');
-                text.append(item.getKey()).append(':').append(item.getValue());
+                if (item.isPlain()) {
+                    text.append(item.getMaterial()).append(':').append(item.getAmount());
+                } else {
+                    text.append(RICH).append(item.encode());
+                }
                 first = false;
             }
         }
+        if (!getCosmetics().isEmpty()) text.append(";cosmetics=").append(String.join(",", getCosmetics()));
         return text.toString();
     }
 
@@ -109,7 +181,16 @@ public class PrizeData implements Serializable {
                 }
             } else if (key.equals("items")) {
                 for (String item : value.split(",")) {
-                    String[] spec = item.split(":", 2);
+                    String entry = item.trim();
+                    if (entry.startsWith(RICH)) {
+                        // added as it is, not merged - two identical entries were written as two on purpose
+                        ItemSpec spec = ItemSpec.decode(entry.substring(RICH.length()));
+                        if (spec != null && spec.getMaterial() != null && !spec.getMaterial().isEmpty()) {
+                            prize.getItems().add(spec);
+                        }
+                        continue;
+                    }
+                    String[] spec = entry.split(":", 2);
                     if (spec.length != 2) continue;
                     try {
                         prize.withItem(spec[0].trim(), Integer.parseInt(spec[1].trim()));
@@ -117,6 +198,8 @@ public class PrizeData implements Serializable {
                         // same again - skip the entry, keep the rest
                     }
                 }
+            } else if (key.equals("cosmetics")) {
+                for (String cosmetic : value.split(",")) prize.withCosmetic(cosmetic);
             }
         }
         return prize;
@@ -158,9 +241,8 @@ public class PrizeData implements Serializable {
     public List<String> describe() {
         List<String> lines = new ArrayList<>();
         if (money > 0) lines.add(money + " Bits");
-        for (Map.Entry<String, Integer> item : getItems().entrySet()) {
-            lines.add(item.getValue() + "x " + item.getKey());
-        }
+        for (ItemSpec item : getItems()) lines.add(item.describe());
+        for (String cosmetic : getCosmetics()) lines.add("Cosmetic: " + Cosmetics.nameOf(cosmetic));
         if (lines.isEmpty()) lines.add("nichts");
         return lines;
     }

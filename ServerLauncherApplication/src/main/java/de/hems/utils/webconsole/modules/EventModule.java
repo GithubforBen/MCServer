@@ -3,18 +3,19 @@ package de.hems.utils.webconsole.modules;
 import de.hems.Main;
 import de.hems.communication.ListenerAdapter;
 import de.hems.communication.events.event.EventUpdatedEvent;
+import de.hems.types.cosmetic.CosmeticData;
+import de.hems.types.cosmetic.Cosmetics;
 import de.hems.types.event.EventData;
 import de.hems.types.event.EventType;
 import de.hems.utils.event.EventForm;
 import de.hems.utils.event.EventStore;
-import de.hems.utils.webconsole.AdminNetwork;
+import de.hems.utils.item.ItemCatalogStore;
 import de.hems.utils.webconsole.ApiContext;
 import de.hems.utils.webconsole.WebModule;
 import de.hems.utils.webconsole.WebServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -43,6 +44,7 @@ public class EventModule implements WebModule {
     public void register(WebServer server) {
         server.get("/api/events", ctx -> ctx.ok("events", listEvents()));
         server.get("/api/events/types", ctx -> ctx.ok("types", listTypes()));
+        server.get("/api/events/cosmetics", ctx -> ctx.ok("cosmetics", listCosmetics()));
         server.post("/api/events", this::create);
         server.post("/api/events/{event}", this::edit);
         server.post("/api/events/{event}/cancel", this::cancel);
@@ -97,6 +99,20 @@ public class EventModule implements WebModule {
                     .put("ranked", type.isRanked())
                     .put("countsKills", type.countsKills())
                     .put("hasMechanics", type.hasMechanics()));
+        }
+        return array;
+    }
+
+    /**
+     * @return the cosmetics a reward can hand out, in the order of the catalogue
+     */
+    private static JSONArray listCosmetics() {
+        JSONArray array = new JSONArray();
+        for (CosmeticData cosmetic : Cosmetics.shipped()) {
+            array.put(new JSONObject()
+                    .put("id", cosmetic.getId())
+                    .put("name", cosmetic.getDisplayName())
+                    .put("kind", cosmetic.getType().getDisplayName()));
         }
         return array;
     }
@@ -181,7 +197,7 @@ public class EventModule implements WebModule {
         String problem = EventForm.applySettings(edited, ctx.body().optJSONObject("settings"));
         if (problem == null) {
             problem = EventForm.applyRewards(edited, ctx.body().optJSONArray("rewards"),
-                    EventModule::knownMaterials);
+                    () -> ItemCatalogStore.get().catalog());
         }
         if (problem != null) {
             ctx.error(400, problem);
@@ -220,18 +236,6 @@ public class EventModule implements WebModule {
             return null;
         }
         return new long[]{startsAt, endsAt};
-    }
-
-    /**
-     * @return every item name, or an empty list when no game server could be asked - the name is then only
-     *         checked for its form, and a game server skips an item it does not know when it hands it out
-     */
-    private static List<String> knownMaterials() {
-        try {
-            return AdminNetwork.materials();
-        } catch (Exception e) {
-            return List.of();
-        }
     }
 
     /**

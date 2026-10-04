@@ -28,6 +28,12 @@
                maxlength="8" autocomplete="one-time-code" required>
         <p class="hint">Ohne diesen Code wird das Passwort gar nicht erst geprüft.</p>
 
+        <label class="checkbox" for="login-remember">
+            <input id="login-remember" name="remember" type="checkbox"> <span id="login-remember-text">Angemeldet bleiben (7 Tage)</span>
+        </label>
+        <p class="hint">Nur auf eigenen Geräten. Ohne Haken endet die Anmeldung mit dem Browser oder nach einer
+            Weile ohne Nutzung.</p>
+
         <button id="login-submit" type="submit">Anmelden</button>
         <p id="login-message" class="message hidden"></p>
     </form>
@@ -47,6 +53,8 @@
 </div>
 
 <script src="/app.js"></script>
+<!-- The item editor with its search fields, shared by every panel that makes items. -->
+<script src="/items.js"></script>
 <!-- The player manager, the admin stash and the CoreProtect view, added through the public McAdmin hook. -->
 <script src="/players.js"></script>
 <!-- The event calendar, shown as time spans. -->

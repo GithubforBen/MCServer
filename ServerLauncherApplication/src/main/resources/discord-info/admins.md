@@ -87,7 +87,7 @@ Vorlagen: `LOBBY`, `SURVIVAL`, `BEDWARS`, `EVENT`. Jeder Name kann gestartet wer
 
 **Typen:** Einfaches Event, Andere Welt, Das End öffnet (nur einmal), UHC Alle Bosse, UHC Enderdrache, Bedwars, Pokernacht, Hunger Games
 
-**Belohnungen** bestehen aus Bits und/oder Items aus der Hand und gehen an:
+**Belohnungen** bestehen aus Bits und/oder Items aus der Hand und gehen an (auf der Website kannst du zusätzlich **Cosmetics** als Belohnung dazulegen):
 - `#1`, `#2`, `#3`, Top 10, ab Platz X, einen Bereich (z. B. 4–10)
 - ab X Kills (nur bei Bedwars und Hunger Games)
 - alle Teilnehmer

@@ -9,6 +9,7 @@ import de.hems.utils.webconsole.modules.AuthModule;
 import de.hems.utils.webconsole.modules.ConsoleModule;
 import de.hems.utils.webconsole.modules.CoreProtectModule;
 import de.hems.utils.webconsole.modules.EventModule;
+import de.hems.utils.webconsole.modules.ItemModule;
 import de.hems.utils.webconsole.modules.NetworkModule;
 import de.hems.utils.webconsole.modules.PayingPlayerModule;
 import de.hems.utils.webconsole.modules.PlayerModule;
@@ -27,6 +28,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +74,8 @@ public class WebServer {
         int port = config.getInt("web.port", 8080);
         String bind = config.getString("web.bind", "0.0.0.0");
         this.authService = new AuthService(configuration);
+        // logins outlive a restart of the launcher - only hashes of the tokens are written
+        authService.persistSessions(new File("./web-sessions.yml"));
         this.authService.ensureAccountExists();
 
         this.app = Javalin.create(cfg -> {
@@ -109,6 +113,7 @@ public class WebServer {
         add(new NetworkModule());
         add(new EventModule());
         add(new PlayerModule());
+        add(new ItemModule());
         add(new CoreProtectModule());
         add(new PayingPlayerModule());
         add(new WhitelistModule());

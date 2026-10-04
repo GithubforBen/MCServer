@@ -15,6 +15,7 @@ import de.hems.types.admin.CoreProtectEntry;
 import de.hems.types.admin.InventoryData;
 import de.hems.types.admin.LookupQuery;
 import de.hems.types.admin.PlayerSnapshot;
+import de.hems.types.item.ItemCatalog;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -185,35 +186,24 @@ public final class AdminNetwork {
         return null;
     }
 
-    /** The material list, kept for the life of the process - it cannot change while the servers run. */
-    private static volatile List<String> materialCache;
-
     /**
-     * The materials the item editor offers.
+     * Asks the game servers what items can be made of - materials, enchantments, attributes.
      * <p>
-     * They come from a game server rather than from the launcher's own classpath: bukkit's registry is only
-     * populated inside a running server, so asking {@code Material.values()} here would fail.
+     * They come from a game server rather than from the launcher's own classpath: bukkit's registries are
+     * only populated inside a running server, so asking {@code Material.values()} here would fail. Callers
+     * go through {@link de.hems.utils.item.ItemCatalogStore}, which keeps the answer.
      *
-     * @return every material that can be an item, sorted
+     * @return the first catalog a server sent, or {@code null} if none answered
      */
-    public static List<String> materials() throws Exception {
-        List<String> cached = materialCache;
-        if (cached != null) return cached;
+    public static ItemCatalog requestCatalog() throws Exception {
         RequestMaterialsEvent request = new RequestMaterialsEvent();
         ListenerAdapter.sendListeners(request);
         List<RespondDataEvent> responses = ListenerAdapter.waitForEvents(
-                request.getEventId(), SINGLE_TIMEOUT, event -> event.getData() != null);
+                request.getEventId(), SINGLE_TIMEOUT, event -> event.getData() instanceof ItemCatalog);
         for (RespondDataEvent response : responses) {
-            if (!(response.getData() instanceof List<?> list) || list.isEmpty()) continue;
-            List<String> materials = new ArrayList<>();
-            for (Object entry : list) {
-                if (entry instanceof String name) materials.add(name);
-            }
-            java.util.Collections.sort(materials);
-            materialCache = materials;
-            return materials;
+            if (response.getData() instanceof ItemCatalog catalog && !catalog.isEmpty()) return catalog;
         }
-        return List.of();
+        return null;
     }
 
     /**
