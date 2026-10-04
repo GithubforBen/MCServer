@@ -7,6 +7,7 @@ import de.hems.communication.events.event.RequestEventsEvent;
 import de.hems.communication.events.event.RespondEventSaveEvent;
 import de.hems.communication.events.event.RespondEventsEvent;
 import de.hems.communication.events.event.SaveEventEvent;
+import de.hems.communication.events.cosmetic.PlayerCosmeticsUpdatedEvent;
 import de.hems.communication.events.event.ClaimAwardEvent;
 import de.hems.communication.events.event.RespondClaimAwardEvent;
 import de.hems.communication.events.event.RequestAwardsEvent;
@@ -15,8 +16,11 @@ import de.hems.communication.events.event.RespondAwardsEvent;
 import de.hems.communication.events.event.RespondRunsEvent;
 import de.hems.communication.events.event.RunUpdatedEvent;
 import de.hems.communication.events.event.SaveRunEvent;
+import de.hems.types.cosmetic.PlayerCosmetics;
+import de.hems.types.event.AwardData;
 import de.hems.types.event.EventData;
 import de.hems.types.event.RunData;
+import de.hems.utils.cosmetic.CosmeticStore;
 import de.hems.utils.event.AwardStore;
 import de.hems.utils.event.EventSettlement;
 import de.hems.utils.event.EventStore;
@@ -37,8 +41,16 @@ public class EventEvents {
     private final RunStore runs;
     private final AwardStore awards;
     private final EventSettlement settlement;
+    /** Who owns which cosmetic, for the prizes that are one - or {@code null} on a launcher without. */
+    private final CosmeticStore cosmetics;
 
     public EventEvents(EventStore events, RunStore runs, AwardStore awards, EventSettlement settlement) {
+        this(events, runs, awards, settlement, null);
+    }
+
+    public EventEvents(EventStore events, RunStore runs, AwardStore awards, EventSettlement settlement,
+                       CosmeticStore cosmetics) {
+        this.cosmetics = cosmetics;
         this.events = events;
         this.runs = runs;
         this.awards = awards;
@@ -69,8 +81,37 @@ public class EventEvents {
             return;
         }
         boolean claimed = awards.claim(request.getAwardId(), String.valueOf(request.getSender()));
+        if (claimed) grantCosmetics(awards.get(request.getAwardId()));
         ListenerAdapter.sendListeners(new RespondClaimAwardEvent(request.getSender(), claimed,
                 request.getEventId()));
+    }
+
+    /**
+     * Writes down the cosmetics of a prize that was just collected.
+     * <p>
+     * Here and not on the game server: the items and the money of a prize are handed over where the player
+     * stands, but who owns a cosmetic is kept by the launcher and nowhere else. It happens with the
+     * reservation rather than after the hand-over, because there is nothing to wait for - a cosmetic needs
+     * no room in an inventory. A prize that is given back and collected again grants it a second time,
+     * which changes nothing.
+     *
+     * @param award the prize, reserved a moment ago
+     */
+    private void grantCosmetics(AwardData award) {
+        if (cosmetics == null || award == null || award.getPlayer() == null) return;
+        PlayerCosmetics owned = null;
+        for (String id : award.getPrize().getCosmetics()) {
+            // one that was taken out of the game since is not handed out as a name nothing answers to
+            if (cosmetics.get(id) == null || cosmetics.owns(award.getPlayer(), id)) continue;
+            owned = cosmetics.grant(award.getPlayer(), id);
+            System.out.println("Cosmetic " + id + " won by " + award.getPlayer() + " at " + award.getEventName());
+        }
+        if (owned == null) return;
+        try {
+            ListenerAdapter.sendListeners(new PlayerCosmeticsUpdatedEvent(owned.copy()));
+        } catch (Exception e) {
+            System.out.println("Could not announce the cosmetics of a prize: " + e.getMessage());
+        }
     }
 
     private void onRequestRuns(RequestRunsEvent request) throws Exception {

@@ -207,6 +207,27 @@ public final class Cosmetics {
     }
 
     /**
+     * @param id a cosmetic
+     * @return the cosmetic the network ships under that id, or {@code null} when there is none
+     */
+    public static CosmeticData byId(String id) {
+        if (id == null) return null;
+        for (CosmeticData cosmetic : shipped()) {
+            if (cosmetic.getId().equalsIgnoreCase(id.trim())) return cosmetic;
+        }
+        return null;
+    }
+
+    /**
+     * @param id a cosmetic
+     * @return what it is called, or the id itself for one this version does not know
+     */
+    public static String nameOf(String id) {
+        CosmeticData cosmetic = byId(id);
+        return cosmetic == null ? String.valueOf(id) : cosmetic.getDisplayName();
+    }
+
+    /**
      * One gadget, with its settings.
      *
      * @param id          what it is stored under

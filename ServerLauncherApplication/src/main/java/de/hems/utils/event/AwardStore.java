@@ -163,6 +163,14 @@ public class AwardStore {
     }
 
     /**
+     * @param id a prize
+     * @return it, or {@code null} when there is none by that id
+     */
+    public AwardData get(UUID id) {
+        return id == null ? null : awards.get(id);
+    }
+
+    /**
      * @return every award, for the website
      */
     public List<AwardData> getAwards() {

@@ -1,5 +1,6 @@
 package de.hems.types.event;
 
+import de.hems.types.cosmetic.Cosmetics;
 import de.hems.types.item.ItemSpec;
 
 import java.io.Serializable;
@@ -8,12 +9,14 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * What somebody gets for a placing: some money and a handful of items.
+ * What somebody gets for a placing: some money, a handful of items and cosmetics.
  * <p>
  * Stored as one string in the free settings of an {@link EventData}, so prizes need no table of their own
  * and can be read straight out of the config file. The items are kept as {@link ItemSpec}s rather than as
  * bukkit types, because the launcher stores them and has no bukkit to resolve them with - the game server
- * turns them into real stacks, enchantments and all, when it hands them out.
+ * turns them into real stacks, enchantments and all, when it hands them out. The cosmetics are only their
+ * ids, and they never pass through a game server at all: who owns what is the launcher's, so the launcher
+ * writes them down the moment the prize is collected.
  */
 public class PrizeData implements Serializable {
 
@@ -32,6 +35,8 @@ public class PrizeData implements Serializable {
     private int money;
     /** The items, in the order they were added. */
     private List<ItemSpec> items = new ArrayList<>();
+    /** The ids of the cosmetics, in the order they were added. */
+    private List<String> cosmetics = new ArrayList<>();
 
     public PrizeData() {
     }
@@ -71,6 +76,18 @@ public class PrizeData implements Serializable {
     }
 
     /**
+     * @param id the cosmetic, as the catalogue names it
+     * @return this prize, so calls can be chained
+     */
+    public PrizeData withCosmetic(String id) {
+        if (id == null || id.isBlank()) return this;
+        String cosmetic = id.trim().toLowerCase(Locale.ROOT);
+        // owning something twice is owning it once, so it is listed once
+        if (!getCosmetics().contains(cosmetic)) getCosmetics().add(cosmetic);
+        return this;
+    }
+
+    /**
      * @param material a bukkit material name
      * @return how many plain items of it the prize holds - enchanted or named ones are not counted
      */
@@ -87,7 +104,7 @@ public class PrizeData implements Serializable {
      * @return whether there is anything to hand out
      */
     public boolean isEmpty() {
-        return money <= 0 && getItems().isEmpty();
+        return money <= 0 && getItems().isEmpty() && getCosmetics().isEmpty();
     }
 
     public int getMoney() {
@@ -107,10 +124,21 @@ public class PrizeData implements Serializable {
         this.items = items == null ? new ArrayList<>() : new ArrayList<>(items);
     }
 
+    public List<String> getCosmetics() {
+        if (cosmetics == null) cosmetics = new ArrayList<>();
+        return cosmetics;
+    }
+
+    public void setCosmetics(List<String> cosmetics) {
+        this.cosmetics = new ArrayList<>();
+        if (cosmetics != null) cosmetics.forEach(this::withCosmetic);
+    }
+
     /**
      * Writes the prize out. A plain item stays readable as {@code MATERIAL:amount}; one that carries more is
      * written as {@code ~} and the item encoded, which needs no separator the line uses itself. A server
-     * from before items could carry more skips such an entry instead of misreading it.
+     * from before items could carry more skips such an entry instead of misreading it, and one from before
+     * cosmetics could be won skips that part.
      *
      * @return the prize written out, readable in a config file
      */
@@ -129,6 +157,7 @@ public class PrizeData implements Serializable {
                 first = false;
             }
         }
+        if (!getCosmetics().isEmpty()) text.append(";cosmetics=").append(String.join(",", getCosmetics()));
         return text.toString();
     }
 
@@ -169,6 +198,8 @@ public class PrizeData implements Serializable {
                         // same again - skip the entry, keep the rest
                     }
                 }
+            } else if (key.equals("cosmetics")) {
+                for (String cosmetic : value.split(",")) prize.withCosmetic(cosmetic);
             }
         }
         return prize;
@@ -211,6 +242,7 @@ public class PrizeData implements Serializable {
         List<String> lines = new ArrayList<>();
         if (money > 0) lines.add(money + " Bits");
         for (ItemSpec item : getItems()) lines.add(item.describe());
+        for (String cosmetic : getCosmetics()) lines.add("Cosmetic: " + Cosmetics.nameOf(cosmetic));
         if (lines.isEmpty()) lines.add("nichts");
         return lines;
     }
