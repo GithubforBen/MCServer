@@ -33,7 +33,9 @@ import java.util.concurrent.TimeUnit;
  * Only servers that were created on the fly are touched. The hub and the survival world are meant to be
  * empty at four in the morning and still be there in the morning, so they are left alone by their template,
  * whether or not they are named in {@code autostart} - a network that starts survival by hand still wants
- * it to stay up. Anything else named in {@code autostart} is left alone as well.
+ * it to stay up. Anything else named in {@code autostart} is left alone as well, and so is the ghost server
+ * of a speedrun event: it is empty because it waits for the next run, and it has its own rules for when it
+ * goes.
  */
 public class IdleServerWatchdog {
 
@@ -117,7 +119,10 @@ public class IdleServerWatchdog {
                 String name = instance.getName().toString();
                 known.add(name);
                 if (instance.getName().isReserved() || protectedNames.contains(name)
-                        || PERSISTENT_TEMPLATES.contains(instance.getTemplate())) continue;
+                        || PERSISTENT_TEMPLATES.contains(instance.getTemplate()) || isGhost(name)) {
+                    emptySince.remove(name);
+                    continue;
+                }
                 // a server that is still coming up has not had the chance to be joined yet, and
                 // isStarting() keeps that true for the first minutes, which is the grace a server needs
                 // between being ready and the players that ordered it actually arriving
@@ -144,6 +149,15 @@ public class IdleServerWatchdog {
         } catch (Exception e) {
             System.out.println("The idle check failed: " + e.getMessage());
         }
+    }
+
+    /**
+     * @param name a server
+     * @return whether it is a ghost server that waits for a run
+     */
+    private static boolean isGhost(String name) {
+        Main main = Main.getInstance();
+        return main != null && main.getGhostRunServers() != null && main.getGhostRunServers().isGhost(name);
     }
 
     private void stop(String name, int idleMinutes) {

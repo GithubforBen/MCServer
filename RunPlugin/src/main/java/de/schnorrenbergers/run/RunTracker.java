@@ -3,6 +3,7 @@ package de.schnorrenbergers.run;
 import de.hems.api.ServerApi;
 import de.hems.communication.ListenerAdapter;
 import de.hems.paper.event.EventService;
+import de.hems.paper.event.RunQueue;
 import de.hems.paper.event.RunService;
 import de.hems.paper.warp.ServerConnector;
 import de.hems.types.event.EventData;
@@ -22,7 +23,12 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -35,6 +41,10 @@ import java.util.UUID;
  * <p>
  * A run that is over is different: there is nothing to come back to, so the server goes the moment the
  * last player has left it.
+ * <p>
+ * A server can also be up before it has a run at all: the ghost server the launcher keeps ready for an
+ * event, so the next run does not wait for a world to be generated. Until a run claims it, nothing here
+ * counts, pauses or stops - the launcher looks after it.
  */
 public class RunTracker implements Listener {
 
@@ -46,6 +56,11 @@ public class RunTracker implements Listener {
     private static final long RETURN_DELAY_TICKS = 20L * 15L;
     /** How long a run that was called off is left standing - there is nothing to look at. */
     private static final long ABORT_RETURN_DELAY_TICKS = 20L * 3L;
+    /**
+     * How long a team is kept here after a reset at most. Its next run is sent to the lobby the moment
+     * its server is known, which takes seconds; this only catches the case that never happens.
+     */
+    private static final long MOVE_ON_TIMEOUT_TICKS = 20L * 30L;
 
     private final Plugin plugin;
 
@@ -59,6 +74,11 @@ public class RunTracker implements Listener {
     private boolean shuttingDown;
     /** Set once the end of the run has been announced here and everybody is on the way out. */
     private boolean ended;
+    /**
+     * Who is about to go on to their next run, after a reset. They are not sent to the lobby with
+     * everybody else: they go once their next server is known, so the lobby can send them on to it.
+     */
+    private final Set<UUID> movingOn = new HashSet<>();
 
     public RunTracker(Plugin plugin) {
         this.plugin = plugin;
@@ -78,6 +98,10 @@ public class RunTracker implements Listener {
             for (RunData candidate : RunService.getRunsOf(event.getId())) {
                 if (candidate.isOpen() && self.equals(candidate.getServerName())) {
                     run = candidate;
+                    // a ghost can stand for an hour before it is claimed, and that hour is not its team
+                    // being away - the idle shutdown starts counting now
+                    lastActive = System.currentTimeMillis();
+                    Bukkit.getScheduler().runTask(plugin, this::placePlayers);
                     return run;
                 }
             }
@@ -119,8 +143,15 @@ public class RunTracker implements Listener {
     }
 
     /**
-     * Calls the run off: it is closed without a time, everybody goes back to the lobby and the server
-     * follows them out.
+     * @return whether this server has a run, open or already over
+     */
+    public boolean hasRun() {
+        return run() != null;
+    }
+
+    /**
+     * Calls the run off without a next one: it is closed without a time, everybody goes back to the lobby
+     * and the server follows them out.
      *
      * @param by the name of who called it off
      * @return whether there was a run to call off
@@ -135,6 +166,65 @@ public class RunTracker implements Listener {
         broadcast(Component.text(by + " hat den Lauf abgebrochen.", NamedTextColor.YELLOW));
         returnToLobby(ABORT_RETURN_DELAY_TICKS);
         return true;
+    }
+
+    /**
+     * Ends the run of this server and starts the next one for the team on it - what a speedrunner means by
+     * a reset.
+     * <p>
+     * An open run is called off first and counts as an attempt like any other. A run that is already over -
+     * somebody died, or it is done - is simply followed by the next one. The new run goes through the same
+     * rules as the queue, and it takes the ghost server of the event when nobody else has, which is what
+     * makes a reset quick. The team waits for its new server in the lobby rather than here, so this server
+     * can switch itself off right away instead of holding its memory while the next world is generated.
+     *
+     * @param by the name of who asked for it
+     * @return what to tell whoever asked, or {@code null} when the broadcast says it all
+     */
+    public String reset(String by) {
+        RunData current = run();
+        if (current == null) return "Auf diesem Server gibt es keinen Lauf.";
+        if (!movingOn.isEmpty()) return "Euer neuer Lauf wird schon vorbereitet.";
+        boolean wasOpen = current.isOpen();
+        if (wasOpen) {
+            writePendingTicks(current);
+            current.finish(RunData.State.ABANDONED);
+            RunService.save(current);
+        }
+        ended = true;
+        broadcast(Component.text(by + (wasOpen ? " hat den Lauf abgebrochen - es geht von vorne los."
+                : " startet einen neuen Lauf."), NamedTextColor.YELLOW));
+
+        Set<UUID> team = new LinkedHashSet<>();
+        for (UUID member : current.getParticipants()) {
+            if (Bukkit.getPlayer(member) != null) team.add(member);
+        }
+        if (team.isEmpty()) {
+            // called off from the console or by an admin with nobody of the team here - nobody to restart for
+            returnToLobby(ABORT_RETURN_DELAY_TICKS);
+            return null;
+        }
+        Map<UUID, String> left = new LinkedHashMap<>();
+        String problem = RunQueue.restart(eventOf(current), team, left);
+        for (Map.Entry<UUID, String> entry : left.entrySet()) {
+            Player player = Bukkit.getPlayer(entry.getKey());
+            if (player != null) player.sendMessage(Component.text(entry.getValue(), NamedTextColor.RED));
+        }
+        if (problem != null) {
+            broadcast(Component.text(problem, NamedTextColor.RED));
+            returnToLobby(ABORT_RETURN_DELAY_TICKS);
+            return null;
+        }
+        team.removeAll(left.keySet());
+        movingOn.addAll(team);
+        // spectators and whoever can not come along go now, the team once its next server has a name
+        returnToLobby(ABORT_RETURN_DELAY_TICKS);
+        // if that never happens, the team must not be left standing on a server that is over
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            movingOn.clear();
+            returnToLobby(0L);
+        }, MOVE_ON_TIMEOUT_TICKS);
+        return null;
     }
 
     /**
@@ -351,6 +441,8 @@ public class RunTracker implements Listener {
     private void returnToLobby(long delay) {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
+                // on the way to their next run, sent to the lobby by it
+                if (movingOn.contains(player.getUniqueId())) continue;
                 player.sendMessage(Component.text("Zurück in die Lobby ...", NamedTextColor.GRAY));
                 ServerConnector.connect(player, ListenerAdapter.ServerName.LOBBY);
             }
@@ -364,8 +456,17 @@ public class RunTracker implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         RunData current = run();
-        if (current == null) return;
         Player player = event.getPlayer();
+        if (current == null) {
+            // a ghost, or a run server that has not heard of its run yet: its world belongs to whoever
+            // claims it, untouched. The team is let loose the moment the run is known, see placePlayers()
+            if (RunData.isRunServerName(ListenerAdapter.getName().toString())) {
+                player.setGameMode(GameMode.SPECTATOR);
+                player.sendMessage(Component.text("Dieser Server wartet noch auf seinen Lauf.",
+                        NamedTextColor.GRAY));
+            }
+            return;
+        }
         if (!current.getParticipants().contains(player.getUniqueId())) {
             player.setGameMode(GameMode.SPECTATOR);
             player.sendMessage(Component.text("Hier läuft ein Versuch - du schaust zu.", NamedTextColor.GRAY));
@@ -375,6 +476,26 @@ public class RunTracker implements Listener {
         if (eventData == null) return;
         player.sendMessage(Component.text(eventData.getName() + " - Zeit bisher: "
                 + RunData.formatTicks(current.getElapsedTicks()), NamedTextColor.GOLD));
+    }
+
+    /**
+     * Puts everybody who is already here into the right mode, the moment the run of this server becomes
+     * known. That is the case on a ghost: the team is warped over as soon as it claimed it, and may be
+     * standing here before the run has reached this server.
+     */
+    private void placePlayers() {
+        RunData current = run;
+        if (current == null) return;
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            boolean participant = current.getParticipants().contains(player.getUniqueId());
+            if (participant && player.getGameMode() == GameMode.SPECTATOR) {
+                player.setGameMode(GameMode.SURVIVAL);
+                player.sendMessage(Component.text("Euer Lauf ist da - los geht's!", NamedTextColor.GREEN));
+            } else if (!participant && player.getGameMode() != GameMode.SPECTATOR) {
+                player.setGameMode(GameMode.SPECTATOR);
+                player.sendMessage(Component.text("Hier läuft ein Versuch - du schaust zu.", NamedTextColor.GRAY));
+            }
+        }
     }
 
     /**

@@ -81,6 +81,14 @@ Lebenszyklus (erledigt):
       Versuch, außer er hatte noch nicht begonnen
 - [x] Ein laufender Lauf ist im Panel anklickbar (hinspringen bzw. Server wieder starten), und ein Lauf,
       der zu ist, wird durch eine verspätete Meldung seines Servers nicht wieder geöffnet
+- [x] `/reset` startet nach dem Abbruch sofort den nächsten Lauf für das Team auf dem Server (auch nach
+      Tod oder Ziel, dann ohne Bestätigung). `/abbrechen` bricht nur ab, ohne neuen Lauf. Das Team wartet
+      in der Lobby auf den neuen Server, damit der alte sofort ausgehen kann
+- [x] Ghost-Server: Sind mindestens zwei Spieler auf den Run-Servern eines Events, baut der Launcher
+      nebenher einen Run-Server ohne Lauf (`RUN_<event>_GHOST_<id>`). Der nächste Lauf (Reset oder
+      Warteschlange) bekommt ihn, wenn ihn noch niemand geclaimt hat, und spart das Generieren der Welt.
+      Weg ist er nach drei Minuten unter zwei Spielern, sofort mit dem Eventende
+- [ ] Ghost-Server im Spiel testen (zwei Clients): Claim, Ersatz-Ghost, Abbau unter zwei Spielern
 
 Erledigt:
 - [x] Ein Lauf, den niemand fortsetzt, wird nach 24 Stunden ohne Anfassen als ABGEBROCHEN

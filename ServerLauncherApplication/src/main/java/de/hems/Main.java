@@ -84,6 +84,7 @@ public class Main {
     private JDA jda;
     private WebServer webServer;
     private IdleServerWatchdog idleServerWatchdog;
+    private de.hems.utils.event.GhostRunServers ghostRunServers;
     private MemoryWatch memoryWatch;
     /** Background work for the bot, which must never block discord's reply window. */
     private final java.util.concurrent.ExecutorService background =
@@ -159,6 +160,9 @@ public class Main {
         serverHandler.setMemoryWatch(memoryWatch);
         memoryWatch.start();
         new CapacityEvents(memoryWatch);
+        // the run server the next speedrun attempt takes, built while nobody is waiting for it
+        ghostRunServers = new de.hems.utils.event.GhostRunServers(eventStore, runStore, eventSettlement,
+                serverHandler, memoryWatch);
         // rounds players put up themselves, and the rules an admin allows them under
         roundStore = new RoundStore();
         new RoundEvents(roundStore, serverHandler);
@@ -313,6 +317,7 @@ public class Main {
         System.out.println("Shutting down...");
         configuration.save(); //neccessary
         if (idleServerWatchdog != null) idleServerWatchdog.stop();
+        if (ghostRunServers != null) ghostRunServers.stop();
         if (webServer != null) webServer.stop();
         serverHandler.shutdownNetwork();
         configuration.save();
@@ -353,6 +358,13 @@ public class Main {
 
     public RunStore getRunStore() {
         return runStore;
+    }
+
+    /**
+     * @return the ghost servers of the speedrun events, or {@code null} before the servers are set up
+     */
+    public de.hems.utils.event.GhostRunServers getGhostRunServers() {
+        return ghostRunServers;
     }
 
     public AwardStore getAwardStore() {

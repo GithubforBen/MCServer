@@ -50,6 +50,8 @@ public final class RunService {
         PaperContext.setPlugin(plugin);
         ListenerAdapter.register(RunUpdatedEvent.class, event -> apply((RunUpdatedEvent) event));
         NetworkSync.keepFresh(plugin, RunService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
+        // a team that reset waits for its next server wherever it lands, usually the lobby
+        RunHandOff.register(plugin);
     }
 
     private static void apply(RunUpdatedEvent event) {

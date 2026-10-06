@@ -16,9 +16,11 @@ commands:
     usage: /neustart <minuten> [update|aus] | /neustart abbrechen
     permission: network.restart
   reset:
-    description: Bricht den Lauf auf diesem Server ab, damit ein neuer gestartet werden kann
+    description: Bricht den Lauf auf diesem Server ab und startet sofort einen neuen
     usage: /reset
-    aliases: [abbrechen]
+  abbrechen:
+    description: Bricht den Lauf auf diesem Server ab, ohne einen neuen zu starten
+    usage: /abbrechen
   events:
     description: Den Eventkalender öffnen
     usage: /events

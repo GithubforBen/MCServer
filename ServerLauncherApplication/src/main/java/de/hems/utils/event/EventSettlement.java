@@ -454,10 +454,11 @@ public class EventSettlement {
 
     /**
      * Removes what is left of a run server: its directory and the entry that remembers its port.
+     * Also how a ghost server goes that nobody claimed.
      *
      * @param server the server to discard
      */
-    private void discardServer(String server) {
+    void discardServer(String server) {
         try {
             ListenerAdapter.ServerName name = ListenerAdapter.ServerName.valueOf(server);
             if (Main.getInstance().getServerHandler().doesInstanceExist(name)) {
