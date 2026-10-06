@@ -152,9 +152,11 @@ einer wechselt (1/1), nur Zufällige werden ausgeglichen.
    nach spätestens zwei Minuten weg.
 5. Abbrechen: neuer Versuch, auf dem Run-Server zweimal `/abbrechen` → zurück in die Lobby, Server weg. Oder
    im Panel „Lauf abbrechen“ (zweimal klicken).
-5b. Reset: auf dem Run-Server zweimal `/reset` → „… es geht von vorne los“, der Spieler bleibt stehen, bis der
-   neue Server `RUN_<event>_<lauf>` bereit ist, und wird dann gewarpt; der alte Server geht aus. Im Panel ein
-   Versuch mehr verbraucht. Nach einem Tod startet `/reset` ohne Bestätigung.
+5b. Reset: auf dem Run-Server zweimal `/reset` → „… es geht von vorne los“, nach wenigen Sekunden „Ihr wartet in
+   der Lobby auf euren neuen Server“ und Warp in die Lobby; der alte Server geht sofort aus (Log „The run is
+   over and everybody has left“). In der Lobby „Dein nächster Lauf wird vorbereitet“ mit Fortschrittsbalken,
+   Warp auf `RUN_<event>_<lauf>`, sobald er bereit ist. Im Panel ein Versuch mehr verbraucht. Nach einem Tod
+   startet `/reset` ohne Bestätigung.
 5c. Ghost (braucht beide Konten im Event, Teamgröße 1): a und b starten je einen Lauf. Nach höchstens 30 s
    meldet der Launcher „Building ghost server RUN_…_GHOST_…“. Wer sich dorthin warpt, ist Zuschauer
    („wartet noch auf seinen Lauf“). `/reset` von a → „vorbereiteten Server“, Warp ohne Weltgenerierung,

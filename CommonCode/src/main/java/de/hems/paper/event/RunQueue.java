@@ -133,13 +133,17 @@ public final class RunQueue {
         }
         Set<UUID> participants = new LinkedHashSet<>(queue);
         waiting.remove(event.getId());
-        launch(event, participants);
+        launch(event, participants, false);
         return "Der Lauf wird vorbereitet.";
     }
 
     /**
      * Starts the next run of a team straight away, without going through the queue - what {@code /reset}
      * does once the old run is closed.
+     * <p>
+     * The team is sent to the lobby as soon as its next server is known, and waits there rather than on
+     * the server of the old run: that one can then switch itself off instead of holding its memory while
+     * the new world is generated. The lobby sends them on, see {@link RunHandOff}.
      * <p>
      * The same rules as in the queue: the event has to be running, everybody needs an attempt left and
      * must not be on another run, and a smaller team only goes when the event allows it. Whoever has no
@@ -172,7 +176,7 @@ public final class RunQueue {
             return "Ihr seid nicht mehr genug für einen neuen Lauf (" + participants.size() + "/"
                     + settings.getTeamSize() + ").";
         }
-        launch(event, participants);
+        launch(event, participants, true);
         return null;
     }
 
@@ -185,8 +189,9 @@ public final class RunQueue {
      *
      * @param event        the event to run
      * @param participants who runs
+     * @param viaLobby     whether the team waits in the lobby rather than here
      */
-    private static void launch(EventData event, Set<UUID> participants) {
+    private static void launch(EventData event, Set<UUID> participants, boolean viaLobby) {
         UhcSettings settings = new UhcSettings(event);
         RunData run = new RunData(event.getId(), participants);
         run.setIntendedTeamSize(settings.getTeamSize());
@@ -202,14 +207,25 @@ public final class RunQueue {
                             RunData.serverNameFor(event.getId(), run.getId()))).toString();
                 } catch (Exception e) {
                     Bukkit.getLogger().warning("Could not name a run server: " + e.getMessage());
-                    PaperContext.sync(() -> tell(participants,
-                            "Der Server für den Lauf konnte nicht gestartet werden.", NamedTextColor.RED));
+                    PaperContext.sync(() -> {
+                        tell(participants, "Der Server für den Lauf konnte nicht gestartet werden.",
+                                NamedTextColor.RED);
+                        if (viaLobby) toLobby(participants);
+                    });
                     return;
                 }
             }
             run.setServerName(serverName);
             // a claimed ghost is already written into the run on the launcher, this only says it again
             RunService.save(run);
+            if (viaLobby && ghost == null) {
+                // only started from here - nobody waits on this server, so there is nothing to warp from it
+                try {
+                    ServerApi.createServer(serverName, ServerTemplate.EVENT);
+                } catch (Exception e) {
+                    Bukkit.getLogger().warning("Could not start " + serverName + ": " + e.getMessage());
+                }
+            }
             String target = serverName;
             PaperContext.sync(() -> {
                 tell(participants, ghost != null
@@ -219,6 +235,11 @@ public final class RunQueue {
                 if (run.isUndermanned()) {
                     tell(participants, "Ihr startet zu " + participants.size() + " statt zu "
                             + settings.getTeamSize() + " - das wird schwerer.", NamedTextColor.YELLOW);
+                }
+                if (viaLobby) {
+                    // the lobby warps the team once the server is ready
+                    toLobby(participants);
+                    return;
                 }
                 // the warp is not sent now: a run server needs the better part of a minute to build its
                 // world, and everybody thrown at it before that is bounced straight back by the proxy. A
@@ -326,6 +347,18 @@ public final class RunQueue {
             if (player != null) online.add(player);
         }
         return online;
+    }
+
+    /**
+     * Sends whoever of the team is here to the lobby, where they wait for their next server.
+     *
+     * @param players the team
+     */
+    private static void toLobby(Set<UUID> players) {
+        for (Player player : onlineOf(players)) {
+            player.sendMessage(Component.text("Ihr wartet in der Lobby auf euren neuen Server.", NamedTextColor.GRAY));
+            de.hems.paper.warp.ServerConnector.connect(player, ListenerAdapter.ServerName.LOBBY);
+        }
     }
 
     private static void tell(Set<UUID> players, String message, NamedTextColor color) {

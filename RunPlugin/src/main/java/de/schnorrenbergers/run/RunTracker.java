@@ -57,10 +57,10 @@ public class RunTracker implements Listener {
     /** How long a run that was called off is left standing - there is nothing to look at. */
     private static final long ABORT_RETURN_DELAY_TICKS = 20L * 3L;
     /**
-     * How long a team waits here for the server of its next run before it is sent to the lobby after all -
-     * a little longer than the warp itself waits for a server to come up.
+     * How long a team is kept here after a reset at most. Its next run is sent to the lobby the moment
+     * its server is known, which takes seconds; this only catches the case that never happens.
      */
-    private static final long MOVE_ON_TIMEOUT_TICKS = 20L * 60L * 6L;
+    private static final long MOVE_ON_TIMEOUT_TICKS = 20L * 30L;
 
     private final Plugin plugin;
 
@@ -75,8 +75,8 @@ public class RunTracker implements Listener {
     /** Set once the end of the run has been announced here and everybody is on the way out. */
     private boolean ended;
     /**
-     * Who is waiting here for the server of their next run, after a reset. They are not sent to the lobby:
-     * the warp to the new server is sent from here, and somebody who left would never get it.
+     * Who is about to go on to their next run, after a reset. They are not sent to the lobby with
+     * everybody else: they go once their next server is known, so the lobby can send them on to it.
      */
     private final Set<UUID> movingOn = new HashSet<>();
 
@@ -175,8 +175,8 @@ public class RunTracker implements Listener {
      * An open run is called off first and counts as an attempt like any other. A run that is already over -
      * somebody died, or it is done - is simply followed by the next one. The new run goes through the same
      * rules as the queue, and it takes the ghost server of the event when nobody else has, which is what
-     * makes a reset quick. The team waits here until its server is ready; everybody else goes back to the
-     * lobby, and this server follows them out once it is empty.
+     * makes a reset quick. The team waits for its new server in the lobby rather than here, so this server
+     * can switch itself off right away instead of holding its memory while the next world is generated.
      *
      * @param by the name of who asked for it
      * @return what to tell whoever asked, or {@code null} when the broadcast says it all
@@ -217,9 +217,9 @@ public class RunTracker implements Listener {
         }
         team.removeAll(left.keySet());
         movingOn.addAll(team);
-        // spectators and whoever can not come along go now, the team is warped from here
+        // spectators and whoever can not come along go now, the team once its next server has a name
         returnToLobby(ABORT_RETURN_DELAY_TICKS);
-        // a server that never comes up must not leave the team standing on one that is over
+        // if that never happens, the team must not be left standing on a server that is over
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             movingOn.clear();
             returnToLobby(0L);
@@ -441,7 +441,7 @@ public class RunTracker implements Listener {
     private void returnToLobby(long delay) {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
-                // on the way to their next run, which is warped from here
+                // on the way to their next run, sent to the lobby by it
                 if (movingOn.contains(player.getUniqueId())) continue;
                 player.sendMessage(Component.text("Zurück in die Lobby ...", NamedTextColor.GRAY));
                 ServerConnector.connect(player, ListenerAdapter.ServerName.LOBBY);
