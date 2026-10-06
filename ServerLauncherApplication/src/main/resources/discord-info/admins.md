@@ -110,7 +110,7 @@ Jede passende Belohnung wird ausgezahlt. Bedwars-, Pokernacht- und Hunger-Games-
 
 **Pokernacht:** `/poker setup` legt Tische und Eingang nach einem Umbau neu fest, `/poker karte speichern` sichert die Casino-Welt für die nächste Nacht.
 
-**Speedrun-Server (UHC):** `/reset` (oder `/abbrechen`) bricht den Lauf ab, zweimal eingeben zum Bestätigen. Das darf das Team selbst, Admins auch. Jeder Versuch bekommt einen eigenen Server; nach Tod oder Abbruch geht er aus, sobald alle weg sind, und seine Welt wird gelöscht.
+**Speedrun-Server (UHC):** `/reset` bricht den Lauf ab und startet sofort einen neuen für das Team, `/abbrechen` bricht nur ab. Bei einem offenen Lauf zweimal eingeben zum Bestätigen. Das darf das Team selbst, Admins auch. Jeder Versuch bekommt einen eigenen Server; nach Tod oder Abbruch geht er aus, sobald alle weg sind, und seine Welt wird gelöscht. Sind mindestens zwei Spieler auf den Run-Servern eines Events, hält der Launcher einen fertigen Ghost-Server (`RUN_…_GHOST_…`) bereit: wer zuerst einen neuen Lauf startet, bekommt ihn, danach wird ein neuer gebaut. Er kostet einen Server an Arbeitsspeicher und wird nur gebaut, wenn noch Platz ist.
 
 ## Lobby einrichten
 

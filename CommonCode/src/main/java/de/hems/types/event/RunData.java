@@ -339,6 +339,60 @@ public class RunData implements Serializable {
         this.intendedTeamSize = intendedTeamSize;
     }
 
+    /** What every run server's name starts with, a run's own as well as a ghost's. */
+    public static final String SERVER_PREFIX = "RUN_";
+    /** What marks the name of a ghost server, built before anybody needs it. */
+    private static final String GHOST_MARKER = "_GHOST_";
+
+    /**
+     * The name of the server a run is built on.
+     * <p>
+     * The run is part of the name: a free name alone is only free among the servers that are up, and the
+     * one of an attempt that is over would hand its old world to the next team - with whoever died on it
+     * still lying there.
+     *
+     * @param eventId the event
+     * @param runId   the run
+     * @return the name, still to be made unique against the servers that are up
+     */
+    public static String serverNameFor(UUID eventId, UUID runId) {
+        return SERVER_PREFIX + shortId(eventId) + "_" + shortId(runId);
+    }
+
+    /**
+     * The name of a ghost server of an event. Random, for the same reason a run's server carries the run.
+     *
+     * @param eventId the event
+     * @return the name, still to be made unique against the servers that are up
+     */
+    public static String ghostServerNameFor(UUID eventId) {
+        return SERVER_PREFIX + shortId(eventId) + GHOST_MARKER + shortId(UUID.randomUUID());
+    }
+
+    /**
+     * @param serverName the name of a server
+     * @return whether it was built for a run, as a run's own server or as a ghost
+     */
+    public static boolean isRunServerName(String serverName) {
+        return serverName != null && serverName.startsWith(SERVER_PREFIX);
+    }
+
+    /**
+     * @param serverName the name of a server
+     * @return whether it was built as a ghost - claimed by a run since, or not
+     */
+    public static boolean isGhostServerName(String serverName) {
+        return isRunServerName(serverName) && serverName.contains(GHOST_MARKER);
+    }
+
+    /**
+     * @param id an id
+     * @return its first block, short enough for a server name
+     */
+    private static String shortId(UUID id) {
+        return id.toString().substring(0, 8).toUpperCase(java.util.Locale.ROOT);
+    }
+
     /**
      * Writes a run time the way a speedrun is normally read.
      *

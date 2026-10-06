@@ -2,6 +2,9 @@ package de.hems.paper.event;
 
 import de.hems.api.ServerApi;
 import de.hems.communication.ListenerAdapter;
+import de.hems.communication.events.event.ClaimGhostRunEvent;
+import de.hems.communication.events.event.RespondClaimGhostRunEvent;
+import de.hems.communication.events.types.RespondDataEvent;
 import de.hems.paper.PaperContext;
 import de.hems.paper.warp.ServerStartup;
 import de.hems.types.ServerTemplate;
@@ -29,6 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * exactly what should happen to it.
  */
 public final class RunQueue {
+
+    /** How long the launcher is given to hand out the ghost server before one is built instead. */
+    private static final java.time.Duration GHOST_TIMEOUT = java.time.Duration.ofSeconds(5);
 
     /** Everyone waiting, per event, in the order they clicked. */
     private static final Map<UUID, Set<UUID>> waiting = new ConcurrentHashMap<>();
@@ -127,40 +133,118 @@ public final class RunQueue {
         }
         Set<UUID> participants = new LinkedHashSet<>(queue);
         waiting.remove(event.getId());
+        launch(event, participants);
+        return "Der Lauf wird vorbereitet.";
+    }
 
+    /**
+     * Starts the next run of a team straight away, without going through the queue - what {@code /reset}
+     * does once the old run is closed.
+     * <p>
+     * The same rules as in the queue: the event has to be running, everybody needs an attempt left and
+     * must not be on another run, and a smaller team only goes when the event allows it. Whoever has no
+     * attempt left stays behind rather than holding the others up.
+     *
+     * @param event   the event to run
+     * @param players who wants to go again
+     * @param left    filled with the players that can not come along, with why
+     * @return why nobody goes, or {@code null} when the run is on its way
+     */
+    public static String restart(EventData event, Set<UUID> players, Map<UUID, String> left) {
+        if (event == null || !event.isRunning()) {
+            return "Das Event läuft nicht mehr - es gibt keinen neuen Lauf.";
+        }
+        Set<UUID> participants = new LinkedHashSet<>();
+        for (UUID player : players) {
+            if (RunService.getActiveRunOf(event.getId(), player) != null) {
+                left.put(player, "Du bist schon in einem laufenden Versuch.");
+            } else if (!RunService.hasRunsLeft(event, player)) {
+                left.put(player, "Du hast keine Versuche mehr übrig.");
+            } else {
+                participants.add(player);
+            }
+        }
+        if (participants.isEmpty()) {
+            return "Niemand von euch hat noch einen Versuch übrig.";
+        }
+        UhcSettings settings = new UhcSettings(event);
+        if (participants.size() < settings.getTeamSize() && !settings.isAllowUndermanned()) {
+            return "Ihr seid nicht mehr genug für einen neuen Lauf (" + participants.size() + "/"
+                    + settings.getTeamSize() + ").";
+        }
+        launch(event, participants);
+        return null;
+    }
+
+    /**
+     * Opens a run and gets its team onto a server.
+     * <p>
+     * The ghost server of the event comes first: it was built while nobody needed it, so whoever claims
+     * it skips the wait for a world to be generated. Only when another team claimed it first - or there is
+     * none - a server of its own is built, the way it always was.
+     *
+     * @param event        the event to run
+     * @param participants who runs
+     */
+    private static void launch(EventData event, Set<UUID> participants) {
+        UhcSettings settings = new UhcSettings(event);
         RunData run = new RunData(event.getId(), participants);
         run.setIntendedTeamSize(settings.getTeamSize());
 
-        // the server is created in the background: it takes seconds to boot and must not freeze the tick
+        // the server is found in the background: asking the launcher takes a round trip, building one takes
+        // seconds, and neither may freeze the tick
         PaperContext.async(() -> {
-            String serverName;
-            try {
-                // the run is part of the name: a free name alone is only free among the servers that are
-                // up, and the one of an attempt that is over would hand its old world to the next team -
-                // with whoever died on it still lying there
-                serverName = ListenerAdapter.ServerName.valueOf(ServerApi.freeName(
-                        "RUN_" + shortId(event.getId()) + "_" + shortId(run.getId()))).toString();
-            } catch (Exception e) {
-                Bukkit.getLogger().warning("Could not name a run server: " + e.getMessage());
-                PaperContext.sync(() -> tell(participants,
-                        "Der Server für den Lauf konnte nicht gestartet werden.", NamedTextColor.RED));
-                return;
+            String ghost = claimGhost(run);
+            String serverName = ghost;
+            if (serverName == null) {
+                try {
+                    serverName = ListenerAdapter.ServerName.valueOf(ServerApi.freeName(
+                            RunData.serverNameFor(event.getId(), run.getId()))).toString();
+                } catch (Exception e) {
+                    Bukkit.getLogger().warning("Could not name a run server: " + e.getMessage());
+                    PaperContext.sync(() -> tell(participants,
+                            "Der Server für den Lauf konnte nicht gestartet werden.", NamedTextColor.RED));
+                    return;
+                }
             }
             run.setServerName(serverName);
+            // a claimed ghost is already written into the run on the launcher, this only says it again
             RunService.save(run);
+            String target = serverName;
             PaperContext.sync(() -> {
-                tell(participants, "Euer Lauf startet - ihr werdet verbunden, sobald der Server bereit ist.",
+                tell(participants, ghost != null
+                                ? "Euer Lauf startet auf einem vorbereiteten Server - gleich geht's los."
+                                : "Euer Lauf startet - ihr werdet verbunden, sobald der Server bereit ist.",
                         NamedTextColor.GREEN);
                 if (run.isUndermanned()) {
                     tell(participants, "Ihr startet zu " + participants.size() + " statt zu "
                             + settings.getTeamSize() + " - das wird schwerer.", NamedTextColor.YELLOW);
                 }
                 // the warp is not sent now: a run server needs the better part of a minute to build its
-                // world, and everybody thrown at it before that is bounced straight back by the proxy
-                ServerStartup.createAndWarp(onlineOf(participants), serverName, ServerTemplate.EVENT, null, null);
+                // world, and everybody thrown at it before that is bounced straight back by the proxy. A
+                // ghost may still be on its way up as well, so it is waited for the same way
+                if (ghost != null) {
+                    ServerStartup.ensureAndWarp(onlineOf(participants), target, ServerTemplate.EVENT);
+                } else {
+                    ServerStartup.createAndWarp(onlineOf(participants), target, ServerTemplate.EVENT, null, null);
+                }
             });
         });
-        return "Der Lauf wird vorbereitet.";
+    }
+
+    /**
+     * Asks the launcher for the ghost server of the run's event. Blocks, so never on the main thread.
+     *
+     * @param run the new run
+     * @return the server it got, or {@code null} when there was none to have
+     */
+    private static String claimGhost(RunData run) {
+        RespondDataEvent answer = ListenerAdapter.ask(new ClaimGhostRunEvent(run), GHOST_TIMEOUT);
+        if (answer instanceof RespondClaimGhostRunEvent claimed) return claimed.getServerName();
+        // no answer in time: the launcher may still have said yes, and then the run it announced carries
+        // the ghost - building a second server for it would leave the ghost standing for nobody
+        RunData known = RunService.getRun(run.getId());
+        return known == null ? null : known.getServerName();
     }
 
     /**
@@ -249,13 +333,5 @@ public final class RunQueue {
             Player online = Bukkit.getPlayer(member);
             if (online != null) online.sendMessage(Component.text(message, color));
         }
-    }
-
-    /**
-     * @param id the event
-     * @return the first block of its id, short enough for a server name
-     */
-    private static String shortId(UUID id) {
-        return id.toString().substring(0, 8).toUpperCase(java.util.Locale.ROOT);
     }
 }
