@@ -101,7 +101,27 @@ X-Ray heißt hier: ein **Texturpaket**, das Stein unsichtbar macht und Erze übe
 ### Dupes (Survival)
 Nach dem Start in `servers/SURVIVAL/config/paper-global.yml` unter `unsupported-settings`:
 `allow-piston-duplication`, `allow-unsafe-end-portal-teleportation`,
-`skip-tripwire-hook-placement-validation` alle `true`.
+`skip-tripwire-hook-placement-validation`, `allow-permanent-block-break-exploits` alle `true`.
+
+### Bedrock mit Pistons (Survival)
+Drei Funktionen in einem Datapack (`world/datapacks/bb/data/bb/function/`), nacheinander mit
+`function bb:setup`, `function bb:go`, `function bb:check` aufrufen. `go` muss eine Funktion sein,
+damit beide Befehle im selben Tick laufen:
+```
+# setup
+forceload add 0 0
+setblock 0 100 0 bedrock
+setblock 1 101 0 redstone_block
+setblock 0 101 0 piston[facing=up,extended=true]
+setblock 0 102 0 piston_head[facing=up]
+# go - Strom weg (Piston will einfahren), im selben Tick ein Piston nach unten an seine Stelle
+setblock 1 101 0 air
+setblock 0 101 0 piston[facing=down]
+# check
+execute if block 0 100 0 bedrock run say BEDROCK-STEHT
+execute unless block 0 100 0 bedrock run say BEDROCK-WEG
+```
+Survival → `BEDROCK-WEG`. Gegenprobe: `allow-permanent-block-break-exploits: false` → `BEDROCK-STEHT`.
 
 ### Lobby-Schutz und Block-Updates
 ```

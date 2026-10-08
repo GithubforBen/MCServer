@@ -4,7 +4,7 @@ Testplan für die Änderungen aus fünf Runden: Serverstart und Warp, Shop und A
 die mitgelieferte Bedwars-Map, die Speichergrenzen — und die Korrekturen an Map, Kampf,
 Werkzeugen und Nachrichten sowie der Parkour, die danach dazugekommen sind.
 
-Stand: 2026-10-03 · 122 Prüfungen in zwanzig Phasen
+Stand: 2026-10-08 · 123 Prüfungen in zwanzig Phasen
 
 Die Phasen bauen aufeinander auf — ohne laufenden Launcher lässt sich über RunPlugin nichts
 sagen, und ohne aktives RunPlugin nichts über Warp und Fortschritt. Also von oben nach unten.
@@ -735,7 +735,7 @@ Neu und noch nie gelaufen. Es gibt beim ersten Start keine Strecke — die muss 
 
 ---
 
-## 20 — Survival: Attribute Swapping, eigene Sichtweite, Home-Preis
+## 20 — Survival: Attribute Swapping, eigene Sichtweite, Home-Preis, Bedrock
 
 Speer-Kombos wie in Vanilla, und ein Limit, mit dem die Sichtweite nicht mehr dauernd springt.
 
@@ -780,6 +780,15 @@ Speer-Kombos wie in Vanilla, und ein Limit, mit dem die Sichtweite nicht mehr da
   - Erwartet: Erster Teleport klappt, danach sind genau 500 Bits weniger auf dem Konto (Tabliste).
     Mit zu wenig Bits kommt sofort eine Meldung und keine Wartezeit. Beim Loslaufen kein Teleport
     und kein Abzug. In `configs/team.yml` steht `home.cost: 500`.
+
+- [ ] **20.8 Bedrock lässt sich mit Pistons abbauen** · `WICHTIG`
+  - Ablauf: Survival neu starten, in `servers/SURVIVAL/config/paper-global.yml` nachsehen. Dann im
+    Spiel eine Vanilla-Methode zum Bedrock-Abbauen (Piston-Trick, wie im Einzelspieler) nachbauen.
+    Ohne Spieler-Timing geht es über die Konsole mit dem Datapack aus `testing/README.md`
+    („Bedrock mit Pistons“)
+  - Erwartet: Unter `unsupported-settings` steht `allow-permanent-block-break-exploits: true`. Der
+    Bedrock unter dem neuen Piston ist weg. Ein normal ausgefahrener Piston schiebt Bedrock nicht,
+    TNT sprengt ihn nicht. Auf Bedwars bleibt der Bedrock stehen.
 
 ---
 

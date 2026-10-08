@@ -576,7 +576,17 @@ nächsten Start wieder weg - geändert wird es also dort im Code.
 | `unsupported-settings.allow-piston-duplication` | `true` | TNT-, Carpet- und Rail-Duper sind erlaubt (§2.2) |
 | `unsupported-settings.allow-unsafe-end-portal-teleportation` | `true` | Sand- und Gravel-Duper (§2.2) |
 | `unsupported-settings.skip-tripwire-hook-placement-validation` | `true` | String-Duper (§2.2) |
+| `unsupported-settings.allow-permanent-block-break-exploits` | `true` | Bedrock mit Pistons abbauen wie in Vanilla |
 | `unsupported-settings.update-equipment-on-player-actions` | `false` | Attribute Swapping wie in Vanilla |
+
+**Bedrock abbauen:** In Vanilla lässt sich Bedrock mit einem Piston-Trick entfernen: ein ausgefahrener
+Piston wird im selben Tick, in dem er einfährt, durch einen Piston ersetzt, der in die andere Richtung
+zeigt - beim Einfahren verschwindet der Block vor dessen Kopf, auch Bedrock. Paper verhindert das
+standardmäßig, mit dem Schalter geht es wieder. Der Schalter gibt nur das Vanilla-Verhalten zurück:
+Bedrock (und Endportal-Rahmen, Barrieren usw.) lässt sich weiterhin nicht schieben, abbauen oder
+sprengen. Geprüft auf Paper 26.3 Build 140: ohne Schalter bleibt der Bedrock stehen, mit verschwindet er;
+ein normaler Piston schiebt Bedrock auch mit Schalter nicht, TNT sprengt ihn nicht.
+`allow-headless-pistons` bleibt bewusst aus (kopflose Pistons sind ein eigener Glitch).
 
 **Attribute Swapping:** In Vanilla werden die Attribute der Hand erst einen Moment nach einem
 Hotbar-Wechsel aktualisiert, und ein Schlag in diesem Moment verbindet die Werte zweier Items - etwa Speer

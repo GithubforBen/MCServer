@@ -185,6 +185,11 @@ public class PaperConfigurator extends ServerConfigurator {
      *     <li>the dupes the rules allow (§2.2): TNT, carpet and rail dupers (piston duplication), sand and
      *     gravel through the end portal, and string through tripwire hooks. Paper switches all three off by
      *     default.</li>
+     *     <li>bedrock breaking with pistons, as vanilla has it: a piston that is replaced by one facing the
+     *     other way in the same tick still retracts, and takes the block in front of the new head with it -
+     *     bedrock included. Paper stops that by default and also keeps bedrock, end portal frames and the
+     *     like from ever being removed by the game; with this on, those blocks behave as in vanilla again,
+     *     which means they still cannot be pushed, mined or blown up.</li>
      *     <li>attribute swapping, as vanilla has it: vanilla only picks up the attributes of the hand a moment
      *     after the hotbar slot changes, and a hit in that moment combines two items - a spear with a sword,
      *     an axe or a mace. Paper refreshes the equipment on every player action and so takes that away by
@@ -204,6 +209,7 @@ public class PaperConfigurator extends ServerConfigurator {
         writeToYmlConfiguration(global, "unsupported-settings.allow-piston-duplication", true, true);
         writeToYmlConfiguration(global, "unsupported-settings.allow-unsafe-end-portal-teleportation", true, true);
         writeToYmlConfiguration(global, "unsupported-settings.skip-tripwire-hook-placement-validation", true, true);
+        writeToYmlConfiguration(global, "unsupported-settings.allow-permanent-block-break-exploits", true, true);
         writeToYmlConfiguration(global, "unsupported-settings.update-equipment-on-player-actions", false, true);
     }
 
