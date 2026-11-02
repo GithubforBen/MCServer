@@ -60,7 +60,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 3.1 Add the buyback switch and a price stepper to the offer menu
+- [x] 3.1 Add the buyback switch and a price stepper to the offer menu
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 
 ## 4. Marketplace
