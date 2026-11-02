@@ -51,11 +51,31 @@ public final class ShopUi {
         List<ItemForSale> offers = new ArrayList<>();
         for (ItemForSale offer : shop.getItems()) if (offer.isValid()) offers.add(offer);
         fillPage(inventory, offers, page,
-                offer -> withLoreOnTop(offer.getItemClone(),
+                offer -> offer.isBuyback()
+                        ? withLoreOnTop(offer.getItemClone(),
+                        "Preis: " + offer.getPrice() + " Bits",
+                        "Auf Lager: " + shop.getStock(offer) + "x",
+                        "Rückkauf: " + offer.getBuybackPrice() + " Bits (Rechtsklick verkauft)")
+                        : withLoreOnTop(offer.getItemClone(),
                         "Preis: " + offer.getPrice() + " Bits",
                         "Auf Lager: " + shop.getStock(offer) + "x"),
                 offer -> new SimpleItemAction(event -> {
                     Player buyer = (Player) event.getWhoClicked();
+                    // right click sells into the shop, everything else keeps buying
+                    if (event.getClick().isRightClick()) {
+                        if (offer.isBuyback()) {
+                            // the sale ends in the host's answer, so redraw then - but only if this very
+                            // menu is still open, or a closed shop would be thrown back at the player
+                            var shown = event.getInventory();
+                            shop.sellItem(buyer, offer, () -> {
+                                if (buyer.isOnline() && buyer.getOpenInventory().getTopInventory() == shown) {
+                                    CustomInventory.show(buyer, build(shop, page));
+                                }
+                            });
+                        }
+                        else buyer.sendMessage(BuybackRules.Refusal.BUYBACK_OFF.message());
+                        return;
+                    }
                     shop.buyItem(buyer, offer);
                     // the shop stays open and redraws itself, so buying twice does not mean walking up to
                     // the villager again. Next tick, because the chest has not changed yet inside the click
