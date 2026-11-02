@@ -118,6 +118,22 @@ public final class UhcEventUi {
             return;
         }
 
+        // what a click would only answer in the chat, which this menu covers - a button that looks like
+        // it works and then does nothing is the worst way to say no
+        String closed = queued ? null : whyNot(player, event);
+        if (closed != null) {
+            lore.add("");
+            lore.add(ChatColor.RED + closed);
+            if (!RunService.hasRunsLeft(event, player.getUniqueId())) {
+                lore.add(ChatColor.GRAY + "Jeder Lauf zählt, auch ein gescheiterter");
+                lore.add(ChatColor.GRAY + "oder abgebrochener.");
+                if (player.isOp()) lore.add(ChatColor.YELLOW + "Mehr gibt es unter Einstellungen → Versuche.");
+            }
+            ui.setItem(20, new ItemApi(Material.BARRIER, ChatColor.RED + "Mitmachen geht gerade nicht", lore)
+                    .build(), SimpleItemAction.display());
+            return;
+        }
+
         lore.add("");
         lore.add(queued ? ChatColor.YELLOW + "Klicken zum Verlassen" : ChatColor.GREEN + "Klicken zum Mitmachen");
         ui.setItem(20, new ItemApi(queued ? Material.RED_BED : Material.GREEN_BED,
@@ -141,6 +157,15 @@ public final class UhcEventUi {
                         player.closeInventory();
                     }));
         }
+    }
+
+    /**
+     * @return why this player cannot join the queue right now, or {@code null} if they can
+     */
+    private static String whyNot(Player player, EventData event) {
+        if (!event.isRunning()) return "Dieses Event läuft gerade nicht.";
+        if (!RunService.hasRunsLeft(event, player.getUniqueId())) return "Du hast alle Versuche verbraucht.";
+        return null;
     }
 
     /** How long the second click on "abbrechen" is waited for. */
