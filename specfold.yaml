@@ -92,7 +92,7 @@ stats:
 
 # Files whose `spec: <capability>#<scenario>` comments count as tests (specfold trace, gate G15).
 trace:
-  test_globs: ["**/*.test.*", "**/*.spec.*", "**/*_test.*", "**/test/**", "**/tests/**", "**/spec/**"]
+  test_globs: ["**/*.test.*", "**/*.spec.*", "**/*_test.*", "**/test/**", "**/tests/**", "**/spec/**", "testing/**"]
 
 # Extra commands per git hook, run after Specfold's own checks.
 hooks:
