@@ -59,6 +59,19 @@ events.yml
 runs.yml
 awards.yml
 whitelist.yml
+capacity.yml
+cosmetics.yml
+hungergames-loot.yml
+links.yml
+lotto.yml
+money.yml
+poker.yml
+results.yml
+rounds.yml
+tickets.yml
+main-config.yml.bak
+/backups/
+/poker-world/
 
 # Scratch files of the IDE database tool
 .idea/queries/
