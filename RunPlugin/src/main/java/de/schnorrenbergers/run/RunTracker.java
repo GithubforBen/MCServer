@@ -73,16 +73,25 @@ public class RunTracker implements Listener {
     private RunData run() {
         if (run != null) return run;
         String self = ListenerAdapter.getName().toString();
+        RunData lost = null;
         for (EventData event : EventService.getEvents()) {
             if (!event.getType().isTimed()) continue;
             for (RunData candidate : RunService.getRunsOf(event.getId())) {
-                if (candidate.isOpen() && self.equals(candidate.getServerName())) {
+                if (!self.equals(candidate.getServerName())) continue;
+                if (candidate.isOpen()) {
                     run = candidate;
                     return run;
                 }
+                if (candidate.getState() == RunData.State.FAILED
+                        || candidate.getState() == RunData.State.ABANDONED) {
+                    lost = candidate;
+                }
             }
         }
-        return null;
+        // called off while this server was still coming up: there is nothing left to host, and taking the
+        // run on as it is sends whoever was warped here back and switches the server off again
+        run = lost;
+        return run;
     }
 
     private static EventData eventOf(RunData run) {
