@@ -900,6 +900,20 @@ Team und Chunk passen. Rechtsklick auf den Händler öffnet den Laden,
 Schleich-Rechtsklick für das Team die Einstellungen: Kiste wechseln, Händler versetzen, Angebote, Preise
 und Mengen. `/shop` öffnet den Marktplatz über alle Shops.
 
+**Rückkauf.** Ein Angebot kann auch Ware zurückkaufen: Wer einen Diamantblock hat und ein Angebot
+„Diamantblock für 900 Bits“ findet, bekommt mit Rechtsklick darauf Bits für den Block. Das Team schaltet
+das pro Angebot in den Einstellungen ein, **ab Werk ist es aus**, bestehende Shops ändern sich nicht.
+Der Rückkaufpreis ist ein eigener Preis (0 bis 1.000.000 Bits); beim Einschalten steht er auf dem
+Verkaufspreis, das Team kann ihn ändern, und spätere Änderungen am Verkaufspreis lassen ihn in Ruhe.
+Bezahlt wird vom Teamkonto, die Ware landet in der Lagerkiste, es entstehen keine neuen Bits. Pro Klick
+geht ein Los (die Menge des Angebots), nur Items, die dem Angebots-Item genau gleichen (umbenannt oder
+verzaubert zählt nicht). Reicht das Teamkonto nicht oder ist die Kiste voll, lehnt der Shop mit einer
+Meldung ab und nichts wechselt den Besitzer; antwortet der Launcher nicht, bekommt der Spieler die Ware
+zurück. Auch Teammitglieder dürfen an den eigenen Shop verkaufen, ein einzelnes Mitglied kann das Teamkonto
+also über einen hohen Preis leerräumen. Linksklick kauft wie bisher. Der Marktplatz zeigt je Eintrag den
+höchsten Rückkaufpreis pro Item, die Angebotsliste den Preis je Angebot, und ein Rechtsklick dort verkauft
+ebenfalls.
+
 | Klasse | Aufgabe |
 |--------|---------|
 | `Shopkeeper` | Ein Shop: Villager, Lager, Verkauf - sonst nichts |
