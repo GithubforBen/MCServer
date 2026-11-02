@@ -11,6 +11,10 @@ ops:
     type: Decision
     summary: Rückkauf zahlt die Teamkasse über den bestätigten Weg, auch das eigene Team darf verkaufen.
   - op: update
+    path: domain/bits.md
+    type: Term
+    summary: Bestätigte Abbuchungen haben eine Frist, danach verwirft der Launcher sie.
+  - op: update
     path: architecture/survival.md
     type: Component
     summary: Shops kaufen jetzt optional an.
