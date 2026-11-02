@@ -93,7 +93,7 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 5.1 Document buyback in the README and add a recipe to `testing/README.md`
+- [x] 5.1 Document buyback in the README and add a recipe to `testing/README.md`
   - Done when: both files describe the feature
 - [ ] 5.2 Add `testing/shop-buyback/recipe.sh` naming, with a `spec: shop-buyback#<scenario>` comment, every scenario no check file covers
   - Done when: `specfold trace --change shop-buyback` reports 0 uncovered

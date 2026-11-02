@@ -194,6 +194,14 @@ Lauf an und startet seinen Server; nach dem Hochfahren zeigt `state <lauf-id>` `
 im Log des Run-Servers „The run is over and everybody has left - stopping“, im Launcher nach ein bis zwei
 Minuten „Discarded run server“. Die Probe-Läufe danach aus `runs.yml` nehmen (Launcher aus).
 
+### Shop-Rückkauf (Survival)
+`testing/shop-buyback/recipe.sh` druckt die Schritte als Checkliste (es prüft nichts selbst und endet mit
+Exit 2). Gebraucht werden zwei Konten im selben Team, ein Angebot „Diamantblock für 900“ und Bits- und
+Item-Stände vor und nach jedem Verkauf. Das Teamkonto lässt sich nicht per Konsole setzen: Netzwerk mit
+`netstop` stoppen, in `money.yml` beim Launcher `balances.<Team>` ändern, mit `netstart` starten. „Der Host
+antwortet nicht“ geht mit `kill -STOP` auf den Launcher-Prozess für wenige Sekunden, danach `kill -CONT`;
+nie `kill -9`. Neustart-Szenarien nur über `netstop` und `netstart`.
+
 ### Team-Farbe (Survival, /cteam)
 `/cteam create Name TAG`, `/cteam` → Farb-Knopf (Wolle) → jede Farbe hat ihre Wolle, die aktuelle trägt
 „✔ Aktuelle Farbe“; der Team-Tag im Chat erscheint in der Farbe.
