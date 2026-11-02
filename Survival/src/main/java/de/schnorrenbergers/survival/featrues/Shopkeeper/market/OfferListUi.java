@@ -2,6 +2,7 @@ package de.schnorrenbergers.survival.featrues.Shopkeeper.market;
 
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.SimpleItemAction;
+import de.schnorrenbergers.survival.featrues.Shopkeeper.BuybackRules;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -50,6 +51,20 @@ public class OfferListUi {
         for (int i = 0; i < PAGE_SIZE && i < offers.size(); i++) {
             MarketOffer offer = offers.get(i);
             inventory.setItem(CONTENT_START + i, icon(offer, best), new SimpleItemAction(event -> {
+                // right click sells into the shop through the one sale path; left click keeps buying
+                if (event.getClick().isRightClick()) {
+                    if (!offer.offer().isBuyback()) {
+                        player.sendMessage(BuybackRules.Refusal.BUYBACK_OFF.message());
+                        return;
+                    }
+                    var shown = event.getInventory();
+                    offer.shopkeeper().sellItem(player, offer.offer(), () -> {
+                        if (player.isOnline() && player.getOpenInventory().getTopInventory() == shown) {
+                            parent.openLater(() -> new OfferListUi(player, parent, listing).build());
+                        }
+                    });
+                    return;
+                }
                 if (offer.stock() <= 0) {
                     player.sendMessage("Dieser Anbieter ist gerade ausverkauft.");
                     return;
@@ -88,10 +103,14 @@ public class OfferListUi {
             lore.add("Ausverkauft");
         } else if (cheapest) {
             lore.add("Günstigster Anbieter");
-            lore.add("Klicken zum Kaufen");
+            lore.add("Linksklick: kaufen");
         } else {
             lore.add("Teurer als das beste Angebot");
-            lore.add("Klicken zum Kaufen");
+            lore.add("Linksklick: kaufen");
+        }
+        if (offer.offer().isBuyback()) {
+            lore.add(stock <= 0 ? "Kauft trotzdem zurück" : "Kauft auch zurück");
+            lore.add("Rechtsklick: verkaufen");
         }
         NamedTextColor color = stock <= 0 ? NamedTextColor.GRAY
                 : (cheapest ? NamedTextColor.GREEN : NamedTextColor.WHITE);
