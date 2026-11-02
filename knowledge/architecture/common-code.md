@@ -26,3 +26,4 @@ Die Bibliothek, auf der alle anderen Module aufbauen, und mit 310 Java-Dateien d
 
 - [Launcher](/architecture/launcher.md)
 - [Cosmetic](/domain/cosmetic.md)
+- [Netzwerk lokal testen](/runbooks/local-client-testing.md)

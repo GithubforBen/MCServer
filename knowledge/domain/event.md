@@ -24,3 +24,4 @@ Eine Veranstaltung, die Admins unter `/events` anlegen (`EventData`). `EventType
 
 - [Lauf](/domain/run.md)
 - [Netzwerk-Events](/architecture/network-events.md)
+- [Hunger-Games-Plugin](/architecture/hunger-games.md)
