@@ -1,0 +1,10 @@
+# Specfold already serves knowledge/ and openspec/; generated and vendored files only cost tokens.
+knowledge/
+openspec/
+.specfold/
+scripts/specfold.mjs
+graphify-out/
+node_modules/
+dist/
+build/
+coverage/
