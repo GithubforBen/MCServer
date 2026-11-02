@@ -1,6 +1,7 @@
 package de.schnorrenbergers.survival.featrues.Shopkeeper;
 
 import de.hems.paper.CoreProtectLog;
+import de.hems.paper.money.MoneyService;
 import de.hems.paper.team.TeamService;
 import de.schnorrenbergers.survival.featrues.money.MoneyHandler;
 import net.kyori.adventure.text.Component;
@@ -316,6 +317,124 @@ public class Shopkeeper {
         ShopkeeperManager.saveAll();
         player.sendMessage("Gekauft: " + wanted.getAmount() + "x " + wanted.getType().name()
                 + " für " + item.getPrice() + " Bits.");
+    }
+
+    // ------------------------------------------------------------------ buying back
+
+    /**
+     * Buys one lot of an offer from a player, if the offer buys back.
+     * <p>
+     * The order is fixed by the change design: check everything and take the lot out of the player's
+     * inventory on the main thread, debit the team through the launcher (never the local copy, which two
+     * sellers could both be told yes), and only on its answer put the lot into the chest and pay the player.
+     * Any failure on the way gives the lot back and leaves no bits moved.
+     *
+     * @param player who is selling
+     * @param item   the offer being sold into
+     * @param done   run on the main thread once a started sale has ended, whatever its outcome (a sale
+     *               refused up front never starts and does not call it); may be {@code null}. Callers
+     *               redraw their menu here and must check the player still has it open.
+     */
+    public void sellItem(Player player, ItemForSale item, @Nullable Runnable done) {
+        Inventory stock = chestInventory();
+        ItemStack lot = item.getItemClone();
+        boolean valid = item.isValid() && lot != null;
+        int lotSize = valid ? lot.getAmount() : 0;
+        int price = item.getBuybackPrice();
+        BuybackRules.Refusal refusal = BuybackRules.check(valid, item.isBuyback(), stock != null,
+                TeamService.getTeam(ownerTeam) != null, lotSize,
+                valid ? countHeld(player, lot) : 0, valid && stock != null ? roomFor(stock, lot) : 0,
+                MoneyService.get(ownerTeam), price);
+        if (refusal != null) {
+            player.sendMessage(refusal.message());
+            return;
+        }
+
+        takeFromPlayer(player, lot);
+        MoneyService.changeAsync(ownerTeam, -price, true, "survival buyback", result -> {
+            if (!result.isSuccessful()) {
+                giveBack(player, lot);
+                player.sendMessage(result.getMessage() == null || result.getMessage().isBlank()
+                        ? "Der Verkauf hat nicht geklappt - nichts wurde bewegt."
+                        : "Der Verkauf hat nicht geklappt: " + result.getMessage());
+                finish(done);
+                return;
+            }
+            Inventory now = chestInventory();
+            Map<Integer, ItemStack> unplaced = now == null ? null : now.addItem(lot.clone());
+            if (now == null || !unplaced.isEmpty()) {
+                // the chest changed while the host was answering: what addItem did place comes out again,
+                // so the lot exists exactly once, and the team gets its bits back
+                if (now != null) {
+                    int left = 0;
+                    for (ItemStack rest : unplaced.values()) left += rest.getAmount();
+                    if (left < lotSize) {
+                        ItemStack placed = lot.clone();
+                        placed.setAmount(lotSize - left);
+                        now.removeItem(placed);
+                    }
+                }
+                MoneyService.change(ownerTeam, price, false, "survival buyback refund");
+                giveBack(player, lot);
+                player.sendMessage("Die Kiste des Shops ist inzwischen voll - nichts wurde verkauft.");
+                finish(done);
+                return;
+            }
+            CoreProtectLog.container(player.getName(), chest.getBlock().getLocation());
+            MoneyHandler.addMoney(price, player.getUniqueId());
+            item.setLastKnownStock(lotsIn(now, item));
+            player.sendMessage("Verkauft: " + lotSize + "x " + lot.getType().name() + " für " + price + " Bits.");
+            finish(done);
+        });
+    }
+
+    private static void finish(@Nullable Runnable done) {
+        if (done != null) done.run();
+    }
+
+    /** @return how many items identical to the lot the player carries, armor and off hand left out */
+    private static int countHeld(Player player, ItemStack lot) {
+        int held = 0;
+        for (ItemStack stack : player.getInventory().getStorageContents()) {
+            if (stack != null && stack.isSimilar(lot)) held += stack.getAmount();
+        }
+        return held;
+    }
+
+    /** @return how many items like the lot still fit into the inventory */
+    private static int roomFor(Inventory inventory, ItemStack lot) {
+        int room = 0;
+        for (ItemStack stack : inventory.getStorageContents()) {
+            if (stack == null || stack.getType().isAir()) room += lot.getMaxStackSize();
+            else if (stack.isSimilar(lot)) room += Math.max(0, stack.getMaxStackSize() - stack.getAmount());
+        }
+        return room;
+    }
+
+    /** Removes the lot from the player's storage slots; the caller has checked they hold it. */
+    private static void takeFromPlayer(Player player, ItemStack lot) {
+        ItemStack[] slots = player.getInventory().getStorageContents();
+        int open = lot.getAmount();
+        for (int i = 0; i < slots.length && open > 0; i++) {
+            ItemStack stack = slots[i];
+            if (stack == null || !stack.isSimilar(lot)) continue;
+            int take = Math.min(open, stack.getAmount());
+            open -= take;
+            if (take == stack.getAmount()) slots[i] = null;
+            else stack.setAmount(stack.getAmount() - take);
+        }
+        player.getInventory().setStorageContents(slots);
+    }
+
+    /** Hands a reserved lot back; what does not fit, or a player who left, ends up in the world. */
+    private void giveBack(Player player, ItemStack lot) {
+        Map<Integer, ItemStack> spill = player.isOnline()
+                ? player.getInventory().addItem(lot.clone()) : Map.of(0, lot.clone());
+        for (ItemStack rest : spill.values()) {
+            Location at = player.isOnline() ? player.getLocation()
+                    : chest.getBlock().getLocation().add(0.5, 1, 0.5);
+            at.getWorld().dropItemNaturally(at, rest);
+        }
     }
 
     // ------------------------------------------------------------------ plain data

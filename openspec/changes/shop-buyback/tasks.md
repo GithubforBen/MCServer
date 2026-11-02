@@ -44,7 +44,7 @@ agent: implementer
 
 - [x] 2.1 Write `BuybackRules` and `BuybackRulesCheck` for every refusal
   - Done when: `BuybackRulesCheck` runs and exits 0
-- [ ] 2.2 Add the sale to `Shopkeeper`: reserve the lot, debit through the launcher, deliver, roll back on any failure
+- [x] 2.2 Add the sale to `Shopkeeper`: reserve the lot, debit through the launcher, deliver, roll back on any failure
   - Done when: the sale compiles and `BuybackRulesCheck` still exits 0
 - [ ] 2.3 Show the buyback in the shop menu and sell on right click
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
