@@ -79,6 +79,10 @@ public class OfferListUi {
         lore.add("Pro Stück: " + String.format(java.util.Locale.ROOT, "%.2f", offer.unitPrice()) + " Bits");
         lore.add("Auf Lager: " + stock + "x");
         lore.add("Verkauft: " + offer.offer().getSold() + "x");
+        if (offer.offer().isBuyback()) {
+            lore.add("Rückkauf: " + offer.offer().getBuybackPrice() + " Bits für "
+                    + offer.offer().getItemClone().getAmount() + " Stück");
+        }
         lore.add("");
         if (stock <= 0) {
             lore.add("Ausverkauft");

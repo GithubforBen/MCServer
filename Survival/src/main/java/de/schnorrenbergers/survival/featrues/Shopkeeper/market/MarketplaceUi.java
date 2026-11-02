@@ -186,6 +186,12 @@ public class MarketplaceUi {
             for (MarketOffer offer : available) stock += offer.stock();
             lore.add("Verfügbar: " + stock + "x");
         }
+        MarketOffer buyer = listing.getBestBuyback();
+        if (buyer != null) {
+            lore.add("Rückkauf: " + String.format(java.util.Locale.ROOT, "%.2f", buyer.buybackUnitPrice())
+                    + " Bits pro Stück");
+            lore.add("bei " + buyer.sellerName());
+        }
         lore.add("Anbieter insgesamt: " + listing.sellerCount());
         lore.add("Bisher verkauft: " + listing.totalSold() + "x");
         lore.add("");

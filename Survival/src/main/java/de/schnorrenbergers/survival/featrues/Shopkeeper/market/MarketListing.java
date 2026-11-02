@@ -72,6 +72,23 @@ public class MarketListing {
         return tied;
     }
 
+    /**
+     * @return the offer that pays the most per item, or {@code null} when no offer buys back
+     */
+    public MarketOffer getBestBuyback() {
+        MarketOffer best = null;
+        for (MarketOffer offer : offers) {
+            if (offer.offer().isBuyback() && (best == null || offer.buybackUnitPrice() > best.buybackUnitPrice())) {
+                best = offer;
+            }
+        }
+        return best;
+    }
+
+    public boolean hasBuyback() {
+        return getBestBuyback() != null;
+    }
+
     public boolean isInStock() {
         return !getAvailableOffers().isEmpty();
     }

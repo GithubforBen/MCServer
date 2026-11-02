@@ -76,7 +76,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 4.1 Show the best buyback on listings and each offer's price in the offer list
+- [x] 4.1 Show the best buyback on listings and each offer's price in the offer list
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 - [ ] 4.2 Sell on right click in the offer list
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
