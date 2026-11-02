@@ -15,6 +15,7 @@
 
 - A member of the owning team can drain the team account; accepted by the user (brief Q5).
 - Selling from the marketplace may load the chest's chunk, as buying from it already does.
+- A server that stops while a sale waits for the launcher can lose the reserved lot, because the callback no longer runs. The window is at most the launcher timeout; accepted and named here rather than fixed.
 
 ## Commitments
 
