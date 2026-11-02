@@ -1,0 +1,341 @@
+# Migration report: MCServer
+
+## Result
+
+- Branch: specfold/migration (from master at 4399775)
+- Kit: 0.3.1 from v0.3.1
+- Concepts written: 22 (10 Component, 6 Term, 3 Interface, 2 Decision, 1 Runbook), all draft
+- Seeded from code: 19 of the cap 30
+- Checks: specfold validate, specfold index --check and openspec validate --strict pass
+- Always loaded: 2403 tokens (estimate from specfold stats); budgets exceeded: none
+
+## Needs human verification
+
+Alle Konzepte sind Entwürfe. Nach dem Lesen bestätigt ein Mensch sie mit `node scripts/specfold.mjs verify <path>`.
+
+- knowledge/runbooks/local-client-testing.md (from testing/README.md)
+- knowledge/decisions/gadget-choices.md (from GADGETS.md)
+- knowledge/decisions/bedwars-foundations.md (from Bedwars/PLAN.md)
+- knowledge/architecture/launcher.md (from ServerLauncherApplication/, README.md)
+- knowledge/architecture/common-code.md (from CommonCode/)
+- knowledge/architecture/lobby.md (from LobbyPlugin/)
+- knowledge/architecture/survival.md (from Survival/)
+- knowledge/architecture/bedwars.md (from Bedwars/)
+- knowledge/architecture/poker.md (from PokerPlugin/)
+- knowledge/architecture/hunger-games.md (from HungerGamesPlugin/)
+- knowledge/architecture/run-plugin.md (from RunPlugin/)
+- knowledge/architecture/backpack.md (from BackpackPlugin/, README.md)
+- knowledge/architecture/velocity.md (from VelocityPlugin/)
+- knowledge/architecture/network-events.md (from ListenerAdapter.java, communication/events/)
+- knowledge/architecture/server-api.md (from ServerApi.java, README.md)
+- knowledge/architecture/admin-website.md (from webconsole/, README.md)
+- knowledge/domain/event.md (from EventData.java, EventType.java)
+- knowledge/domain/run.md (from RunData.java, RunTracker.java)
+- knowledge/domain/round.md (from RoundData.java, README.md)
+- knowledge/domain/ghost-server.md (from GhostRunServers.java, RunTracker.java, testing/README.md)
+- knowledge/domain/bits.md (from MoneyService.java, README.md)
+- knowledge/domain/cosmetic.md (from types/cosmetic/, README.md, GADGETS.md)
+
+## Install conflicts
+
+none
+
+## Migration candidates
+
+none
+
+## Left out
+
+- `README.md`, `ABNAHME.md`, `Bedwars/TESTS.md` und `discord-info/`: bleiben unverändert (keep).
+- `TODO.md`: bleibt unverändert. Die Häkchen sind nicht aktuell, auch unter als erledigt markierten Abschnitten stehen noch offene Punkte. Laut Ben sind nur noch Survival, Bedwars, Speedrun und Lobby relevant. Kandidat für späteres Aufräumen in Backlog Items.
+- Weitere mögliche Konzepte, die nicht angelegt wurden: Data Flows (Geld, Server anlegen), Teams, Tickets, Whitelist, Lotto, Chunk Limiter, `ServerTemplate`.
+- `knowledge/runbooks/graphify.md` meldet Audit A4 (nichts verlinkt darauf). Die Datei stammt aus dem Kit und bleibt unverändert.
+
+## Beim Lesen aufgefallen
+
+Nichts davon wurde geändert.
+
+- Das README führt `RunPlugin` nicht in seiner Modultabelle.
+- `testing/README.md` nennt im Rezept zum Ender-Drachen-Event noch „Versuche 3" und „1/3". Seit PR #43 sind die Versuche standardmäßig unbegrenzt.
+- PR #43 ist auf `master`, wurde aber weder gebaut noch getestet.
+
+## Open questions
+
+- Soll `specfold-gate` ein Pflicht-Check auf `master` werden? Bis dahin blockiert G4 das direkte Mergen nicht.
+- Die Kit-Konvention `knowledge/conventions/code-comments.md` verlangt kurze Kommentare mit Verweis auf `knowledge/`. Der Code erklärt das Warum bisher ausführlich in den Kommentaren selbst. Gilt die Konvention künftig, oder wird sie angepasst?
+
+## Rationale comments in code
+
+Gefunden mit einer Heuristik: Blockkommentare ab 8 Zeilen in Java-Dateien mit einem begründenden Wort wie „because" oder „otherwise". Einzeilige Kommentarfolgen fehlen darin. Die Migration verschiebt keinen Kommentar; ein späterer Change kann sie mit `sf-capture` übernehmen. 271 Stellen in 196 Dateien:
+
+- BackpackPlugin/src/main/java/de/schnorrenbergers/backpack/BackpackManager.java:59
+- BackpackPlugin/src/main/java/de/schnorrenbergers/backpack/BackpackPlugin.java:10
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/Bedwars.java:294
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/Bedwars.java:396
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/addon/Addon.java:5
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/addon/impl/BedTokenAddon.java:48
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/addon/impl/BedTokenAddon.java:63
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/addon/impl/CustomItemsAddon.java:55
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/addon/impl/CustomItemsAddon.java:313
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/addon/impl/KitsAddon.java:45
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/addon/impl/RandomEventsAddon.java:291
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/config/ShopSettings.java:481
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/BlockTracker.java:8
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/Equipment.java:98
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/Equipment.java:113
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/Game.java:36
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/GameLoop.java:9
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/GameTeam.java:105
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/TeamBalancer.java:10
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/phase/LobbyPhase.java:100
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/timeline/SuddenDeath.java:47
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/game/timeline/Timeline.java:31
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/generator/Generator.java:145
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/generator/Generator.java:167
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/BedListener.java:29
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/CombatListener.java:41
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/CombatListener.java:52
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/CombatListener.java:124
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/CombatListener.java:180
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/CombatListener.java:358
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/OldCombatListener.java:39
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/OldCombatListener.java:221
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/SpecialItemListener.java:47
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/SpecialItemListener.java:172
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/SpecialItemListener.java:286
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/SuddenDeathListener.java:24
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/listener/TeamChestListener.java:36
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/map/MapLoader.java:15
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/map/MapLoader.java:84
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/map/VoidChunkGenerator.java:10
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/round/RoundStateListener.java:13
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/scoreboard/Sidebar.java:22
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/Cost.java:8
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/Currency.java:57
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/ShopMenu.java:25
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/ShopMenu.java:179
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/item/ShopChain.java:13
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/item/ShopItem.java:14
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/trap/Trap.java:7
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/trap/TrapService.java:22
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/shop/upgrade/UpgradeMenu.java:24
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/spectator/SpectatorListener.java:21
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/stats/RoundStats.java:13
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/stats/StatsRepository.java:3
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/util/ConfigFile.java:14
+- Bedwars/src/main/java/de/schnorrenbergers/bedwars/util/Messages.java:13
+- CommonCode/src/main/java/de/hems/FileHandler.java:42
+- CommonCode/src/main/java/de/hems/api/ServerApi.java:28
+- CommonCode/src/main/java/de/hems/api/ServerApi.java:242
+- CommonCode/src/main/java/de/hems/communication/ListenerAdapter.java:114
+- CommonCode/src/main/java/de/hems/communication/ListenerAdapter.java:140
+- CommonCode/src/main/java/de/hems/communication/ListenerAdapter.java:176
+- CommonCode/src/main/java/de/hems/communication/ListenerAdapter.java:257
+- CommonCode/src/main/java/de/hems/communication/events/event/ClaimAwardEvent.java:10
+- CommonCode/src/main/java/de/hems/communication/events/poker/SavePokerStatsEvent.java:10
+- CommonCode/src/main/java/de/hems/paper/CoreProtectLog.java:8
+- CommonCode/src/main/java/de/hems/paper/NetworkPlugin.java:19
+- CommonCode/src/main/java/de/hems/paper/NetworkSync.java:15
+- CommonCode/src/main/java/de/hems/paper/NetworkSync.java:54
+- CommonCode/src/main/java/de/hems/paper/NetworkSync.java:73
+- CommonCode/src/main/java/de/hems/paper/PayingPlayers.java:17
+- CommonCode/src/main/java/de/hems/paper/PluginCommands.java:8
+- CommonCode/src/main/java/de/hems/paper/admin/CoreProtectLookupHandler.java:27
+- CommonCode/src/main/java/de/hems/paper/admin/CoreProtectLookupHandler.java:134
+- CommonCode/src/main/java/de/hems/paper/admin/PlayerAdminHandler.java:32
+- CommonCode/src/main/java/de/hems/paper/admin/PlayerAdminHandler.java:328
+- CommonCode/src/main/java/de/hems/paper/commands/CosmeticsCommand.java:21
+- CommonCode/src/main/java/de/hems/paper/commands/LobbyCommand.java:12
+- CommonCode/src/main/java/de/hems/paper/commands/WarpCommand.java:79
+- CommonCode/src/main/java/de/hems/paper/cosmetic/BalloonGadget.java:20
+- CommonCode/src/main/java/de/hems/paper/cosmetic/ChatBubbleGadget.java:24
+- CommonCode/src/main/java/de/hems/paper/cosmetic/CosmeticEffects.java:9
+- CommonCode/src/main/java/de/hems/paper/cosmetic/CosmeticEffects.java:28
+- CommonCode/src/main/java/de/hems/paper/cosmetic/CosmeticService.java:33
+- CommonCode/src/main/java/de/hems/paper/cosmetic/CosmeticService.java:151
+- CommonCode/src/main/java/de/hems/paper/cosmetic/CosmeticService.java:215
+- CommonCode/src/main/java/de/hems/paper/cosmetic/CosmeticsUi.java:191
+- CommonCode/src/main/java/de/hems/paper/cosmetic/EndlessPearlGadget.java:19
+- CommonCode/src/main/java/de/hems/paper/cosmetic/Gadget.java:11
+- CommonCode/src/main/java/de/hems/paper/cosmetic/Gadget.java:51
+- CommonCode/src/main/java/de/hems/paper/cosmetic/GadgetEntities.java:13
+- CommonCode/src/main/java/de/hems/paper/cosmetic/Gadgets.java:26
+- CommonCode/src/main/java/de/hems/paper/cosmetic/Gadgets.java:133
+- CommonCode/src/main/java/de/hems/paper/cosmetic/Gadgets.java:196
+- CommonCode/src/main/java/de/hems/paper/cosmetic/GrappleGadget.java:25
+- CommonCode/src/main/java/de/hems/paper/cosmetic/KillEffects.java:15
+- CommonCode/src/main/java/de/hems/paper/cosmetic/RocketBootsGadget.java:25
+- CommonCode/src/main/java/de/hems/paper/cosmetic/SitGadget.java:22
+- CommonCode/src/main/java/de/hems/paper/cosmetic/TickingGadget.java:6
+- CommonCode/src/main/java/de/hems/paper/cosmetic/Trails.java:19
+- CommonCode/src/main/java/de/hems/paper/cosmetic/WinEffects.java:15
+- CommonCode/src/main/java/de/hems/paper/cosmetic/WorkbenchGadget.java:20
+- CommonCode/src/main/java/de/hems/paper/customInventory/CustomInventory.java:161
+- CommonCode/src/main/java/de/hems/paper/discord/AccountLinkService.java:118
+- CommonCode/src/main/java/de/hems/paper/event/EventCreateUi.java:154
+- CommonCode/src/main/java/de/hems/paper/event/PokerSettingsUi.java:19
+- CommonCode/src/main/java/de/hems/paper/event/RunHandOff.java:22
+- CommonCode/src/main/java/de/hems/paper/event/RunQueue.java:140
+- CommonCode/src/main/java/de/hems/paper/event/RunQueue.java:300
+- CommonCode/src/main/java/de/hems/paper/event/ServerEventStarter.java:33
+- CommonCode/src/main/java/de/hems/paper/hologram/Hologram.java:13
+- CommonCode/src/main/java/de/hems/paper/hologram/Holograms.java:62
+- CommonCode/src/main/java/de/hems/paper/item/ItemSpecs.java:28
+- CommonCode/src/main/java/de/hems/paper/money/MoneyService.java:22
+- CommonCode/src/main/java/de/hems/paper/money/MoneyService.java:140
+- CommonCode/src/main/java/de/hems/paper/money/MoneyService.java:179
+- CommonCode/src/main/java/de/hems/paper/round/RoundService.java:90
+- CommonCode/src/main/java/de/hems/paper/round/RoundStarter.java:21
+- CommonCode/src/main/java/de/hems/paper/round/RoundStarter.java:126
+- CommonCode/src/main/java/de/hems/paper/servermanager/CapacityUi.java:107
+- CommonCode/src/main/java/de/hems/paper/tablist/TabList.java:23
+- CommonCode/src/main/java/de/hems/paper/team/TeamService.java:28
+- CommonCode/src/main/java/de/hems/paper/team/TeamService.java:188
+- CommonCode/src/main/java/de/hems/paper/team/TeamService.java:218
+- CommonCode/src/main/java/de/hems/paper/util/ChatPrompt.java:31
+- CommonCode/src/main/java/de/hems/paper/warp/ServerStartup.java:21
+- CommonCode/src/main/java/de/hems/paper/warp/ServerStartup.java:110
+- CommonCode/src/main/java/de/hems/types/FileType.java:51
+- CommonCode/src/main/java/de/hems/types/ServerPhase.java:5
+- CommonCode/src/main/java/de/hems/types/admin/StashData.java:7
+- CommonCode/src/main/java/de/hems/types/cosmetic/GadgetSlot.java:6
+- CommonCode/src/main/java/de/hems/types/event/EventResultData.java:6
+- CommonCode/src/main/java/de/hems/types/event/EventSetting.java:7
+- CommonCode/src/main/java/de/hems/types/event/PokerEventSettings.java:173
+- CommonCode/src/main/java/de/hems/types/event/PrizeData.java:11
+- CommonCode/src/main/java/de/hems/types/event/PrizeData.java:137
+- CommonCode/src/main/java/de/hems/types/event/RunData.java:132
+- CommonCode/src/main/java/de/hems/types/event/RunData.java:199
+- CommonCode/src/main/java/de/hems/types/item/ItemSpec.java:19
+- CommonCode/src/main/java/de/hems/types/poker/PokerStatsData.java:6
+- CommonCode/src/main/java/de/hems/types/poker/PokerStatsData.java:33
+- CommonCode/src/main/java/de/hems/types/poker/PokerStatsData.java:61
+- CommonCode/src/main/java/de/hems/types/poker/PokerStatsData.java:75
+- CommonCode/src/main/java/de/hems/types/poker/PokerStatsData.java:236
+- CommonCode/src/main/java/de/hems/types/round/RoundData.java:173
+- CommonCode/src/main/java/de/hems/types/round/RoundPolicy.java:5
+- CommonCode/src/main/java/de/hems/types/round/RoundSnapshot.java:43
+- CommonCode/src/main/java/de/hems/types/server/CapacityData.java:7
+- CommonCode/src/main/java/de/hems/types/server/MemoryAdviceData.java:5
+- HungerGamesPlugin/src/main/java/de/schnorrenbergers/hungergames/ArenaContext.java:10
+- HungerGamesPlugin/src/main/java/de/schnorrenbergers/hungergames/ArenaMap.java:22
+- HungerGamesPlugin/src/main/java/de/schnorrenbergers/hungergames/ArenaMap.java:105
+- HungerGamesPlugin/src/main/java/de/schnorrenbergers/hungergames/HungerGamesPlugin.java:9
+- HungerGamesPlugin/src/main/java/de/schnorrenbergers/hungergames/SupplyDrops.java:27
+- LobbyPlugin/src/main/java/de/schnorrenbergers/lobby/LobbyProtectionListener.java:54
+- LobbyPlugin/src/main/java/de/schnorrenbergers/lobby/cosmetic/GadgetListener.java:16
+- LobbyPlugin/src/main/java/de/schnorrenbergers/lobby/npc/LobbyNpc.java:10
+- LobbyPlugin/src/main/java/de/schnorrenbergers/lobby/npc/LobbyNpcs.java:49
+- LobbyPlugin/src/main/java/de/schnorrenbergers/lobby/parkour/ParkourItems.java:16
+- LobbyPlugin/src/main/java/de/schnorrenbergers/lobby/parkour/ParkourPoint.java:8
+- LobbyPlugin/src/main/java/de/schnorrenbergers/lobby/rounds/RoundCommand.java:49
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/Casino.java:24
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/Casino.java:195
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/CasinoContext.java:11
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/CasinoContext.java:62
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/PokerPlugin.java:17
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/Tournament.java:20
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bank/Bank.java:17
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bank/Bank.java:43
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bank/Bank.java:95
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bank/Bank.java:130
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bot/BotBrain.java:12
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bot/BotBrain.java:134
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bot/BotBrain.java:326
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bot/BotVibe.java:5
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bot/BotVibe.java:141
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bot/Equity.java:13
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/bot/Equity.java:41
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/game/Deck.java:9
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/game/PokerTable.java:172
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/game/PokerTable.java:617
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/game/Suit.java:3
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/game/TableEvents.java:5
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/ui/ChipStack.java:10
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/ui/Displays.java:21
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/ui/TableView.java:27
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/ui/TableView.java:147
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/world/CasinoBuilder.java:16
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/world/TableSpot.java:9
+- PokerPlugin/src/main/java/de/schnorrenbergers/poker/world/TableSpot.java:58
+- PokerPlugin/src/test/java/de/schnorrenbergers/poker/bot/BotBalanceCheck.java:21
+- PokerPlugin/src/test/java/de/schnorrenbergers/poker/bot/BotCharacterCheck.java:21
+- PokerPlugin/src/test/java/de/schnorrenbergers/poker/bot/BotTableCheck.java:17
+- RunPlugin/src/main/java/de/schnorrenbergers/run/RunTracker.java:180
+- RunPlugin/src/main/java/de/schnorrenbergers/run/RunTracker.java:441
+- ServerLauncherApplication/src/main/java/de/hems/events/CapacityEvents.java:16
+- ServerLauncherApplication/src/main/java/de/hems/events/EventEvents.java:89
+- ServerLauncherApplication/src/main/java/de/hems/utils/QrCode.java:28
+- ServerLauncherApplication/src/main/java/de/hems/utils/YamlFiles.java:16
+- ServerLauncherApplication/src/main/java/de/hems/utils/admin/StashStore.java:18
+- ServerLauncherApplication/src/main/java/de/hems/utils/cosmetic/CosmeticStore.java:25
+- ServerLauncherApplication/src/main/java/de/hems/utils/event/EventForm.java:26
+- ServerLauncherApplication/src/main/java/de/hems/utils/event/EventForm.java:297
+- ServerLauncherApplication/src/main/java/de/hems/utils/event/EventSettlement.java:27
+- ServerLauncherApplication/src/main/java/de/hems/utils/event/EventSettlement.java:89
+- ServerLauncherApplication/src/main/java/de/hems/utils/event/EventSettlement.java:115
+- ServerLauncherApplication/src/main/java/de/hems/utils/event/EventSettlement.java:211
+- ServerLauncherApplication/src/main/java/de/hems/utils/event/EventSettlement.java:326
+- ServerLauncherApplication/src/main/java/de/hems/utils/event/EventSettlement.java:397
+- ServerLauncherApplication/src/main/java/de/hems/utils/lotto/LottoService.java:29
+- ServerLauncherApplication/src/main/java/de/hems/utils/money/MoneyStore.java:13
+- ServerLauncherApplication/src/main/java/de/hems/utils/money/MoneyStore.java:54
+- ServerLauncherApplication/src/main/java/de/hems/utils/money/MoneyStore.java:136
+- ServerLauncherApplication/src/main/java/de/hems/utils/poker/PokerSettlement.java:20
+- ServerLauncherApplication/src/main/java/de/hems/utils/poker/PokerSettlement.java:149
+- ServerLauncherApplication/src/main/java/de/hems/utils/poker/PokerStatsStore.java:129
+- ServerLauncherApplication/src/main/java/de/hems/utils/poker/PokerStatsStore.java:151
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/AssetInstaller.java:17
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/AssetInstaller.java:72
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/CasinoMap.java:7
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/IdleServerWatchdog.java:24
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/JvmFlags.java:6
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/LobbyMap.java:9
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/MemoryLimits.java:56
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/MemoryWatch.java:18
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/MemoryWatch.java:171
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/MemoryWatch.java:220
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/MemoryWatch.java:233
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/PaperConfigurator.java:216
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/ServerInstance.java:168
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/console/ConsoleBuffer.java:32
+- ServerLauncherApplication/src/main/java/de/hems/utils/server/console/StartupProgress.java:96
+- ServerLauncherApplication/src/main/java/de/hems/utils/team/BackpackStore.java:14
+- ServerLauncherApplication/src/main/java/de/hems/utils/team/TeamStore.java:18
+- ServerLauncherApplication/src/main/java/de/hems/utils/ticket/TicketService.java:18
+- ServerLauncherApplication/src/main/java/de/hems/utils/ticket/TicketStore.java:21
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/AdminNetwork.java:55
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/CommandHandler.java:10
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/WebServer.java:187
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/auth/AuthService.java:14
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/auth/AuthService.java:72
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/auth/AuthService.java:274
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/modules/AuthModule.java:42
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/modules/EventModule.java:154
+- ServerLauncherApplication/src/main/java/de/hems/utils/webconsole/modules/StashModule.java:14
+- ServerLauncherApplication/src/main/java/de/hems/utils/whitelist/WhitelistSync.java:23
+- ServerLauncherApplication/src/test/java/de/hems/utils/webconsole/AuthCheck.java:13
+- Survival/src/main/java/de/schnorrenbergers/survival/commands/AdminCommand.java:21
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/ShopChestListener.java:133
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/ShopEditorUi.java:26
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/ShopOwnership.java:10
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/ShopUi.java:69
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/Shopkeeper.java:25
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/Shopkeeper.java:216
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/Shopkeeper.java:249
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/ShopkeeperManager.java:82
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/ShopkeeperStore.java:79
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/adminabuse/LegitimizeCommand.java:23
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/adminjoin/AdminIdentity.java:13
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/adminjoin/AdminJoinService.java:35
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/chunklimiter/ChunkLimiter.java:20
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/chunklimiter/ChunkLimiterSettings.java:81
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/chunklimiter/ChunkLimiterSettings.java:105
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/chunklimiter/ChunkLimiterSettings.java:284
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/money/MoneyHandler.java:9
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/team/ClaimDisplay.java:34
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/team/ClaimManager.java:8
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/team/TeamManager.java:606
+- Survival/src/main/java/de/schnorrenbergers/survival/featrues/team/TeamMigration.java:16
+- VelocityPlugin/src/main/java/de/schnorrenbergers/velocityPlugin/VelocityPlugin.java:29
+- testing/probes/RunProbe.java:13

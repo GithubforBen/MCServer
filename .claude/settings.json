@@ -1,0 +1,84 @@
+{
+  "env": {
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"
+  },
+  "worktree": {
+    "baseRef": "head"
+  },
+  "permissions": {
+    "deny": [
+      "Read(**/package-lock.json)",
+      "Read(**/pnpm-lock.yaml)",
+      "Read(**/yarn.lock)",
+      "Read(**/bun.lockb)",
+      "Read(**/Cargo.lock)",
+      "Read(**/poetry.lock)",
+      "Read(**/uv.lock)",
+      "Read(**/go.sum)",
+      "Read(**/composer.lock)",
+      "Read(**/Gemfile.lock)",
+      "Read(**/node_modules/**)",
+      "Read(**/coverage/**)",
+      "Read(**/__snapshots__/**)",
+      "Read(**/*.min.js)",
+      "Read(**/*.map)",
+      "Read(/graphify-out/graph.json)",
+      "Read(/graphify-out/cache/**)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && node scripts/specfold.mjs hook claude-session-start"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && node scripts/specfold.mjs hook claude-post-tool-use"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && node scripts/specfold.mjs hook claude-stop"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v graphify >/dev/null 2>&1; then graphify hook-guard search; fi",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v graphify >/dev/null 2>&1; then graphify hook-guard read; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
