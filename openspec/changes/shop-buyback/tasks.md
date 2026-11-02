@@ -18,7 +18,7 @@ agent: implementer
 - [x] 1.1 Add the buyback setting and price to offers, preset from the sale price when switched on
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 - [x] 1.2 Read and write the optional `buyback.*` keys, missing means off
-  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; loading a real file needs a running server, so `shop-buyback#setting-survives-a-restart` and `shop-buyback#existing-offer-stays-sell-only` prove it in task 5.3
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; loading a real file needs a running server, so `shop-buyback#setting-survives-a-restart` and `shop-buyback#existing-offer-stays-sell-only` prove it in task 7.1
 
 ## 2. Selling
 
@@ -81,7 +81,7 @@ agent: implementer
 - [x] 4.2 Sell on right click in the offer list
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 
-## 5. Docs and in-game check
+## 5. Docs and recipe
 
 ```yaml
 files:
@@ -97,19 +97,49 @@ agent: implementer
   - Done when: both files describe the feature
 - [x] 5.2 Add `testing/shop-buyback/recipe.sh` naming, with a `spec: shop-buyback#<scenario>` comment, every scenario no check file covers
   - Done when: `specfold trace --change shop-buyback` reports 0 uncovered
-- [ ] 5.3 Run the recipe on a local network with real clients
+
+## 6. Expiring debits
+
+```yaml
+files:
+  - CommonCode/src/main/java/de/hems/communication/events/money/ChangeBalanceEvent.java
+  - CommonCode/src/main/java/de/hems/paper/money/MoneyService.java
+  - ServerLauncherApplication/src/main/java/de/hems/events/MoneyEvents.java
+  - ServerLauncherApplication/src/test/java/de/hems/events/**
+depends: [2]
+scenarios:
+  - shop-buyback#host-answers-too-late
+agent: implementer
+```
+
+- [ ] 6.1 Add the deadline to the request and set it in `changeBlocking`
+  - Done when: `./mvnw -B -q -pl ServerLauncherApplication,PokerPlugin,Survival -am compile` passes
+- [ ] 6.2 Refuse expired requests in the launcher with a pure rule and a check
+  - Done when: that check runs and exits 0
+
+## 7. In-game check
+
+```yaml
+files:
+  - testing/shop-buyback/**
+depends: [5, 6]
+scenarios: []
+agent: implementer
+```
+
+- [ ] 7.1 Run the recipe on a local network with real clients
   - Done when: every scenario of `shop-buyback` was seen working in game, or the failure is reported
 
-## 6. Knowledge
+## 8. Knowledge
 
 ```yaml
 files: [knowledge/**]
-depends: [5]
+depends: [7]
 scenarios: []
 agent: knowledge-curator
 ```
 
-- [ ] 6.1 Write the concepts listed in knowledge.md
+- [ ] 8.1 Write the concepts listed in knowledge.md
   - Done when: `specfold validate` exits 0
 
 ## Workflow follow-up
