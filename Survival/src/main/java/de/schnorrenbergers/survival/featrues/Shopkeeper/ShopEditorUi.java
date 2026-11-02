@@ -179,6 +179,23 @@ public final class ShopEditorUi {
                 ItemAction.NOTMOVABLE);
         inventory.setItem(5, new ItemApi(Material.CHEST, ChatColor.AQUA + "Menge ändern").build(),
                 SimpleItemAction.opens(() -> amount(shop, offer, AMOUNT_STEPS[0])));
+        boolean buyback = offer.isBuyback();
+        inventory.setItem(1, new ItemApi(buyback ? Material.LIME_DYE : Material.GRAY_DYE,
+                        (buyback ? ChatColor.GREEN + "Rückkauf: an" : ChatColor.RED + "Rückkauf: aus"),
+                        List.of(ChatColor.GRAY + "Klick: " + (buyback ? "ausschalten" : "einschalten"))).build(),
+                SimpleItemAction.opens(event -> {
+                    // the buyback price stays as it is; only the first switch-on presets it
+                    offer.setBuyback(!offer.isBuyback());
+                    ShopkeeperManager.saveAll();
+                }, () -> offer(shop, offer)));
+        if (buyback) {
+            inventory.setItem(2, new ItemApi(Material.EMERALD, ChatColor.AQUA + "Rückkaufpreis ändern",
+                            List.of(ChatColor.GRAY + "Aktuell: " + offer.getBuybackPrice() + " Bits")).build(),
+                    SimpleItemAction.opens(() -> buybackPrice(shop, offer, PRICE_STEPS[0])));
+        } else {
+            inventory.setItem(2, new ItemApi(Material.BARRIER, ChatColor.DARK_GRAY + "Rückkaufpreis",
+                    List.of(ChatColor.GRAY + "Erst den Rückkauf einschalten")).build(), ItemAction.NOTMOVABLE);
+        }
         inventory.setItem(6, new ItemApi(Material.ARROW, ChatColor.GRAY + "Zurück").build(),
                 SimpleItemAction.opens(() -> offers(shop, 1)));
         inventory.setItem(7, new ItemApi(Material.BARRIER, ChatColor.RED + "Angebot löschen").build(),
@@ -211,6 +228,18 @@ public final class ShopEditorUi {
         return stepper(shop, offer, PRICE_STEPS, step, shown,
                 by -> offer.setPrice(Math.max(0, Math.min(MAX_PRICE, offer.getPrice() + by))),
                 next -> price(shop, offer, next));
+    }
+
+    /**
+     * The editor for what the shop pays when buying this offer back; independent of the sale price.
+     */
+    static CustomInventory buybackPrice(Shopkeeper shop, ItemForSale offer, int step) {
+        ItemStack shown = ShopUi.withLoreOnTop(offer.getItemClone(),
+                ChatColor.WHITE + "Rückkauf: " + offer.getBuybackPrice() + " Bits",
+                ChatColor.GRAY + "Linksklick: -" + step + "   Rechtsklick: +" + step);
+        return stepper(shop, offer, PRICE_STEPS, step, shown,
+                by -> offer.setBuybackPrice(Math.max(0, Math.min(MAX_PRICE, offer.getBuybackPrice() + by))),
+                next -> buybackPrice(shop, offer, next));
     }
 
     /**
