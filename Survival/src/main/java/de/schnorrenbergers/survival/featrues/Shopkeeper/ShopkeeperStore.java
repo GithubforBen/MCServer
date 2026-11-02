@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  *   ids: [&lt;uuid&gt;, ...]
  *   &lt;uuid&gt;:
  *     name, ownerTeam, location.shop, location.chest
- *     items: { size: n, "[0]": { item, price, sold, stock }, ... }
+ *     items: { size: n, "[0]": { item, price, sold, stock, buyback.enabled, buyback.price }, ... }
  * </pre>
  */
 public final class ShopkeeperStore {
@@ -70,6 +70,8 @@ public final class ShopkeeperStore {
             ItemForSale offer = new ItemForSale(entry.getItemStack("item"), entry.getInt("price"),
                     entry.getInt("sold", 0));
             offer.setLastKnownStock(entry.getInt("stock", 0));
+            offer.restoreBuyback(entry.getBoolean("buyback.enabled", false),
+                    entry.contains("buyback.price") ? entry.getInt("buyback.price") : null);
             // an offer without an item cannot be drawn or bought, and would break every view it appears in
             if (offer.isValid()) offers.add(offer);
         }
@@ -112,6 +114,11 @@ public final class ShopkeeperStore {
             config.set(item + "price", offer.getPrice());
             config.set(item + "sold", offer.getSold());
             config.set(item + "stock", offer.getLastKnownStock());
+            // only offers that ever had buyback get the keys, so older shops save as before
+            if (offer.hasBuybackPrice()) {
+                config.set(item + "buyback.enabled", offer.isBuyback());
+                config.set(item + "buyback.price", offer.getBuybackPrice());
+            }
         }
         config.set(path + "items.size", items.size());
     }
