@@ -112,7 +112,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 6.1 Add the deadline to the request and set it in `changeBlocking`
+- [x] 6.1 Add the deadline to the request and set it in `changeBlocking`
   - Done when: `./mvnw -B -q -pl ServerLauncherApplication,PokerPlugin,Survival -am compile` passes
 - [ ] 6.2 Refuse expired requests in the launcher with a pure rule and a check
   - Done when: that check runs and exits 0
