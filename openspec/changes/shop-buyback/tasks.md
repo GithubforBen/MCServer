@@ -42,7 +42,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 2.1 Write `BuybackRules` and `BuybackRulesCheck` for every refusal
+- [x] 2.1 Write `BuybackRules` and `BuybackRulesCheck` for every refusal
   - Done when: `BuybackRulesCheck` runs and exits 0
 - [ ] 2.2 Add the sale to `Shopkeeper`: reserve the lot, debit through the launcher, deliver, roll back on any failure
   - Done when: the sale compiles and `BuybackRulesCheck` still exits 0
