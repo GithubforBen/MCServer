@@ -1,0 +1,27 @@
+---
+type: Term
+title: Bits
+description: "Die Währung des Netzwerks. Sie gehört dem Launcher, die Server halten nur Kopien."
+status: draft
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-02T22:20:03+01:00 }
+sources:
+  - id: service
+    resource: ../../CommonCode/src/main/java/de/hems/paper/money/MoneyService.java
+  - id: readme
+    resource: ../../README.md
+---
+
+# Meaning
+
+Die Währung des Netzwerks. Sie liegt beim Launcher in `money.yml`. Jede Änderung ist eine Differenz und keine neue Summe und wird unter einem Lock angewandt, damit sich zwei gleichzeitige Auszahlungen addieren. Server antworten aus ihrer lokalen Kopie; wo an der Antwort etwas Wertvolles hängt, wie beim Cosmetic-Kauf, gibt es `MoneyService.changeBlocking`.
+
+Ein Teamkonto hängt am Teamnamen. Bei einer Umbenennung zieht es mit, bei einer Auflösung bekommt der Anführer den Kontostand.
+
+# Not to be confused with
+
+- Chips: am Pokertisch ist ein Chip genau ein Bit, ohne Umrechnungskurs.
+
+# Related
+
+- [Launcher](/architecture/launcher.md)
+- [Poker-Plugin](/architecture/poker.md)
