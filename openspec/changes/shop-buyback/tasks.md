@@ -18,7 +18,7 @@ agent: implementer
 - [x] 1.1 Add the buyback setting and price to offers, preset from the sale price when switched on
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 - [x] 1.2 Read and write the optional `buyback.*` keys, missing means off
-  - Done when: a `shop-config.yml` without the keys loads with buyback off and a saved one keeps them, checked by loading a copy
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; loading a real file needs a running server, so `shop-buyback#setting-survives-a-restart` and `shop-buyback#existing-offer-stays-sell-only` prove it in task 5.3
 
 ## 2. Selling
 
