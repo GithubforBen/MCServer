@@ -10,8 +10,11 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Chest;
+import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mannequin;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.inventory.Inventory;
@@ -43,7 +46,8 @@ public class Shopkeeper {
     private Location chest;
     private String ownerTeam;
     private List<ItemForSale> items;
-    private @Nullable Villager villager;
+    private @Nullable String skin;
+    private @Nullable LivingEntity villager;
 
     /**
      * A shop as it is stored. No villager is put into the world here: see {@link #spawnOrAdoptVillager()}.
@@ -66,11 +70,22 @@ public class Shopkeeper {
     }
 
     /**
+     * A shop as it is stored, with the skin it wears.
+     *
+     * @param skin the Minecraft player name whose skin the figure wears, or {@code null} for a villager
+     */
+    public Shopkeeper(UUID uuid, String name, Location shop, Location chest, String ownerTeam,
+                      List<ItemForSale> items, @Nullable String skin) {
+        this(uuid, name, shop, chest, ownerTeam, items);
+        this.skin = skin;
+    }
+
+    /**
      * @param entity any entity
      * @return the id of the shop the entity is the villager of, or {@code null} when it is none
      */
     public static @Nullable UUID shopIdOf(Entity entity) {
-        if (!(entity instanceof Villager)) return null;
+        if (!(entity instanceof Villager) && !(entity instanceof Mannequin)) return null;
         String id = entity.getPersistentDataContainer().get(SHOP_ID, PersistentDataType.STRING);
         if (id == null) return null;
         try {
@@ -114,37 +129,87 @@ public class Shopkeeper {
      */
     public void spawnOrAdoptVillager() {
         if (shop == null || shop.getWorld() == null) return;
-        if (villager != null && villager.isValid()) return;
-        Villager existing = findOwnVillager(shop);
-        villager = existing != null ? existing
-                : (Villager) shop.getWorld().spawnEntity(shop, EntityType.VILLAGER);
-        applyVillagerSettings();
+        if (villager != null && villager.isValid()) {
+            if (isRightKind(villager)) return;
+            villager.remove();
+            villager = null;
+        }
+        LivingEntity existing = findOwnFigure(shop);
+        if (existing == null) {
+            existing = skin == null
+                    ? (LivingEntity) shop.getWorld().spawnEntity(shop, EntityType.VILLAGER)
+                    : shop.getWorld().spawn(shop, Mannequin.class);
+        }
+        villager = existing;
+        applyFigureSettings();
+    }
+
+    /** @return whether the entity is the kind this shop stands as now: a mannequin with a skin, else a villager */
+    private boolean isRightKind(Entity entity) {
+        return skin == null ? entity instanceof Villager : entity instanceof Mannequin;
     }
 
     /**
      * @param location the place to look at
-     * @return the villager of this shopkeeper standing in that chunk, or {@code null} - also when the chunk
-     *         is not loaded, which is never loaded just to look
+     * @return the figure of this shopkeeper standing in that chunk, or {@code null} - also when the chunk
+     *         is not loaded, which is never loaded just to look. A figure of the wrong kind, left over
+     *         from before the skin changed, is removed on the way, so exactly one figure is left.
      */
-    private @Nullable Villager findOwnVillager(Location location) {
+    private @Nullable LivingEntity findOwnFigure(Location location) {
         if (location.getWorld() == null) return null;
         if (!location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) return null;
+        LivingEntity found = null;
         for (Entity entity : location.getChunk().getEntities()) {
-            if (uuid.equals(shopIdOf(entity))) return (Villager) entity;
+            if (!uuid.equals(shopIdOf(entity))) continue;
+            if (!isRightKind(entity) || found != null) entity.remove();
+            else found = (LivingEntity) entity;
         }
-        return null;
+        return found;
     }
 
-    /** Puts the villager into the state a shopkeeper needs: named, still, and not killable. */
-    private void applyVillagerSettings() {
+    /** Puts the figure into the state a shopkeeper needs: named, still, and not killable. */
+    private void applyFigureSettings() {
         if (villager == null) return;
-        villager.setAdult();
+        if (villager instanceof Villager v) v.setAdult();
         villager.customName(Component.text(name == null ? "Shop" : name));
         villager.setCustomNameVisible(true);
         villager.setAI(false);
         villager.setInvulnerable(true);
         villager.setPersistent(true);
+        if (villager instanceof Mannequin m) {
+            m.setSilent(true);
+            m.setCollidable(false);
+            m.setImmovable(true);
+            // description null, so the nameplate reads like the villager's
+            m.setDescription(null);
+            if (skin != null) m.setProfile(ResolvableProfile.resolvableProfile().name(skin).build());
+        }
         villager.getPersistentDataContainer().set(SHOP_ID, PersistentDataType.STRING, uuid.toString());
+    }
+
+    /** @return the skin name, or {@code null} when the shop stands as a villager */
+    public @Nullable String getSkin() {
+        return skin;
+    }
+
+    /**
+     * Gives the shop another skin and swaps its figure at once when its chunk is loaded; otherwise the
+     * wrong figure is replaced when the chunk loads. Saves. The name is not validated here.
+     *
+     * @param name a Minecraft player name, or {@code null} to stand as a villager again
+     */
+    public void setSkin(@Nullable String name) {
+        this.skin = name;
+        if (villager != null && villager.isValid() && !isRightKind(villager)) {
+            villager.remove();
+            villager = null;
+        }
+        if (villager != null && villager.isValid()) applyFigureSettings();
+        else {
+            villager = null;
+            spawnOrAdoptVillager();
+        }
+        ShopkeeperManager.saveAll();
     }
 
     /**
@@ -178,12 +243,12 @@ public class Shopkeeper {
         this.shop = target;
         if (villager != null && villager.isValid()) {
             villager.teleport(target);
-            applyVillagerSettings();
+            applyFigureSettings();
             return;
         }
         // the old villager is not loaded, so it cannot be moved - it is taken out where it stands and a
         // new one is put down here, which keeps exactly one villager per shop either way
-        Villager stale = findOwnVillager(target);
+        LivingEntity stale = findOwnFigure(target);
         if (stale != null) stale.remove();
         this.villager = null;
         spawnOrAdoptVillager();

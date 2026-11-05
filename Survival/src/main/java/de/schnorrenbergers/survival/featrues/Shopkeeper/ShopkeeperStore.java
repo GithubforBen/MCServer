@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  * shopkeepers:
  *   ids: [&lt;uuid&gt;, ...]
  *   &lt;uuid&gt;:
- *     name, ownerTeam, location.shop, location.chest
+ *     name, ownerTeam, location.shop, location.chest, skin (optional)
  *     items: { size: n, "[0]": { item, price, sold, stock, buyback.enabled, buyback.price }, ... }
  * </pre>
  */
@@ -55,7 +55,7 @@ public final class ShopkeeperStore {
                 continue;
             }
             shops.add(new Shopkeeper(uuid, section.getString("name"), shop, section.getLocation("location.chest"),
-                    section.getString("ownerTeam"), readOffers(section.getConfigurationSection("items"))));
+                    section.getString("ownerTeam"), readOffers(section.getConfigurationSection("items")), section.getString("skin")));
         }
         return shops;
     }
@@ -104,6 +104,8 @@ public final class ShopkeeperStore {
         config.set(path + "location.chest", shop.getChest());
         config.set(path + "ownerTeam", shop.getOwnerTeam());
         config.set(path + "name", shop.getName());
+        // null removes the key, so a shop without a skin saves as before
+        config.set(path + "skin", shop.getSkin());
         // an offer that was taken out must not stay behind under its old index
         config.set(path + "items", null);
         List<ItemForSale> items = shop.getItems();

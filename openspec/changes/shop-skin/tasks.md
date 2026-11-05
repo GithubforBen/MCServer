@@ -21,7 +21,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 1.1 Store an optional skin on a shop, missing means none
+- [x] 1.1 Store an optional skin on a shop, missing means none
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; loading a real file needs a running server, so `shop-skin#existing-shop` and `shop-skin#restart` prove it in task 4.1
 - [ ] 1.2 Let a shop stand as a villager or a mannequin, with one adopt path for both
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
