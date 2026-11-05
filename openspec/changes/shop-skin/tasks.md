@@ -45,7 +45,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 2.1 Write the name rule as pure code with `SkinNameCheck`
+- [x] 2.1 Write the name rule as pure code with `SkinNameCheck`
   - Done when: `SkinNameCheck` runs and exits 0
 - [ ] 2.2 Add the skin button and the chat prompt to the settings menu
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
