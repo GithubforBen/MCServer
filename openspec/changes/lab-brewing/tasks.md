@@ -20,11 +20,11 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 1.1 Write the brew state as a pure class with `LabBrewCheck`, covering pause, resume, ingredient loss and double start
+- [x] 1.1 Write the brew state as a pure class with `LabBrewCheck`, covering pause, resume, ingredient loss and double start
   - Done when: `LabBrewCheck` runs and exits 0
-- [ ] 1.2 Run the own tick on a stand with empty slots, persisted in the block, with a placeholder result
+- [x] 1.2 Run the own tick on a stand with empty slots, persisted in the block, with a placeholder result
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; the server run is task 2.2
-- [ ] 1.3 Add the hopper-out rule and the progress arrow for viewers
+- [x] 1.3 Add the hopper-out rule and the progress arrow for viewers
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 
 ## 2. Prove empty slots on a server
