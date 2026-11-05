@@ -935,6 +935,76 @@ bleiben Villager, auch bestehende Shops ändern sich nicht.
 Wird ein Team umbenannt, meldet der Launcher den alten Namen mit (`TeamUpdatedEvent.getPreviousName()`),
 und die Shops ziehen mit. Vorher hat eine Umbenennung jeden Shop des Teams verwaist.
 
+## Labor (Survival)
+
+Ein Zusatz nur für Survival, kein neuer Spielmodus: Aus Zuckerrohr wird im Braustand Rohpaste, die sich
+in fünf Reinheitsstufen reinigen und mit Feenstaub zu Kokain machen lässt. Das ist absichtlich zäh und
+lang. Wer nicht mitmacht, merkt nichts davon: Laborgegenstände ersetzen keine normalen Zutaten, der
+normale Braustand arbeitet wie in Vanilla, und es gibt keine Meldungen oder Rezepthinweise für Spieler,
+die das Labor nie benutzen. Bits entstehen dadurch nicht, verkaufen lässt sich nur über Spieler-Shops.
+`/labor` zeigt den Baum im Chat, und jeder Laborgegenstand nennt seine Reinheit und seinen nächsten
+Schritt in der Beschreibung.
+
+**So läuft ein Labor:**
+- **Stand:** Zuckerrohr kommt oben in einen Braustand mit Brennstoff (Lohenstaub). Die drei unteren Slots
+  bleiben **leer**, Flaschen braucht es nicht. Ein Brauvorgang dauert 20 Sekunden und würfelt für jeden
+  freien Slot einzeln: Rohpaste (48 %), Pflanzenabfall (32 %) oder nichts (20 %). Ein Zuckerrohr je Slot.
+- **Filter:** Papier-, Kohle-, Seiden- und Goldfilter reinigen Paste von Reinheit 1, 2, 3 und 4 auf die
+  nächste Stufe (35 %, 15 %, 6 %, 4 %; der Rest ist Abfall oder nichts). Ein Filter reicht für bis zu
+  drei Stück. Der falsche Filter startet nichts.
+- **Kokain:** Feenstaub (Glowstone-Staub und Zucker) oben macht aus Paste Kokain gleicher Reinheit (83 %,
+  Abfall 12 %, nichts 5 %).
+- **Herstellen:** 3 Papier ergeben 8 Papierfilter, Kohlefilter aus Papierfilter und Holzkohle,
+  Seidenfilter aus Kohlefilter und 4 Fäden, Goldfilter aus Seidenfilter und 8 Goldnuggets.
+- **Trichter:** Oben nehmen Zutaten, Filter und Feenstaub, seitlich Paste und Brennstoff. Ein Trichter
+  darunter holt Ergebnisse und Abfall heraus, aber nichts, was oben noch ein gültiger Schritt wäre. Damit
+  läuft die ganze Linie ohne Spieler.
+- **Abfall:** Pflanzenabfall sieht aus wie ein toter Busch, lässt sich nicht platzieren und blockiert
+  seinen Slot, bis jemand ihn herausnimmt. Er wird nicht gewürfelt und muss aussortiert werden.
+- **Upgrades:** Vanilla-Blöcke bis zwei Felder um den Stand, jeder Typ zählt einmal. Wasserkessel und
+  Amethystblock erhöhen je die Chance auf Ware um 10 %, ein Blitzableiter verkürzt den Vorgang um ein
+  Viertel, ein Räucherofen macht den Brennstoff von 20 auf 30 Vorgänge ergiebig. Gelesen werden sie, wenn
+  ein Vorgang beginnt.
+- **Schneiden und Strecken:** Mit Kokain unten und einer Zutat oben bekommt jedes Kokain einen Effekt:
+  Goldkarotte (Nachtsicht), Phantomhaut (Sprungkraft), Feuerball (Feuerresistenz), Honigflasche
+  (Regeneration), Magmacreme (Stärke). Bis zu drei verschiedene, die Reihenfolge ist egal, die Reinheit
+  bleibt. Zucker streckt: aus einem Kokain ab Reinheit 2 werden drei mit einer Stufe weniger,
+  gestreckt lässt es sich nicht erneut strecken.
+- **Konsum:** Rechtsklick mit Kokain gibt Tempo und Eile nach Reinheit (Stufe 1 bis 3, 30 bis 120
+  Sekunden) und alle eingeschnittenen Effekte. Danach kommt ein Absturz aus Übelkeit und Langsamkeit,
+  auch wenn man sich ausgeloggt hat; Sterben bricht ihn ab. Zwischen zwei Kokain liegen 60 Sekunden. Bis
+  15 Sekunden nach einem Treffer von oder gegen einen anderen Spieler gilt Kampf: Tempo und Eile bleiben
+  dann auf Stufe II.
+
+**Rechnung:** Für ein Kokain von Reinheit 5 braucht ein Labor ohne Upgrades im Mittel rund 20.000
+Zuckerrohr, voll ausgebaut rund 6.500. Der Fortschritt steckt im Braustand selbst, überlebt also
+Chunk-Entladen, Neustart und Absturz.
+
+**Einstellungen** in `configs/lab.yml` (fehlende Werte werden mit Kommentar geschrieben, vorhandene
+bleiben):
+
+| Schlüssel | Bedeutung |
+|-----------|-----------|
+| `brew-seconds` | Dauer eines Vorgangs, Standard 20 |
+| `yield.<stufe>.goods` · `yield.<stufe>.waste` | Chance auf Ware und auf Abfall je Schritt; Stufen `sugar-cane`, `papierfilter`, `kohlefilter`, `seidenfilter`, `goldfilter`, `kokain` |
+| `upgrade.water-cauldron-factor` · `upgrade.amethyst-block-factor` | Faktor auf die Chance auf Ware, Standard 1,1 |
+| `upgrade.lightning-rod-time-factor` | Faktor auf die Brauzeit, Standard 0,75 |
+| `upgrade.smoker-brews-per-item` · `fuel.brews-per-item` | Vorgänge je Brennstoff mit und ohne Räucherofen, 30 und 20 |
+| `consume.combat-seconds` · `consume.cooldown-seconds` | Kampfdauer (15) und Pause zwischen zwei Kokain (60) |
+
+| Klasse | Aufgabe |
+|--------|---------|
+| `LabBrewing` | Der Takt des Labors, Fortschritt im Block, Start, Pause und Ende werden mit Position geloggt |
+| `LabPurifying` · `LabCutBrewing` | Rezepte fürs Reinigen und für Schneiden und Strecken |
+| `LabChain` · `LabSettings` | Würfeln der Schritte und die Zahlen aus `configs/lab.yml` |
+| `LabUpgradeReader` · `LabFuel` | Upgrades und Brennstoff |
+| `LabCrafting` · `LabItemListeners` | Filter und Feenstaub herstellen, Abfall nicht platzierbar |
+| `LabConsume` | Konsum, Kampfdeckel, Absturz, Pause |
+| `LabCommand` | `/labor` |
+
+Geprüft durch `LabBrewCheck`, `LabChainCheck`, `LabConsumeCheck`, `LabCuttingCheck`, `LabItemCheck`, `LabSettingsCheck` und `LabUpgradeCheck`; der Ablauf im Spiel steht in
+`testing/lab-brewing/recipe.sh`.
+
 ## Geld
 
 Die Bits gehören seit dieser Runde dem Launcher, nicht mehr dem Survival-Server. Vorher lagen sie in
