@@ -62,9 +62,9 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 3.1 Document skins in the README and add a recipe to `testing/README.md`
+- [x] 3.1 Document skins in the README and add a recipe to `testing/README.md`
   - Done when: both files describe the feature
-- [ ] 3.2 Add `testing/shop-skin/recipe.sh` naming, with a `spec: shop-skin#<scenario>` comment, every scenario no check file covers
+- [x] 3.2 Add `testing/shop-skin/recipe.sh` naming, with a `spec: shop-skin#<scenario>` comment, every scenario no check file covers
   - Done when: `specfold trace --change shop-skin` reports 0 uncovered
 
 ## 4. In-game check
