@@ -88,6 +88,8 @@ agent: implementer
 
 ```yaml
 files:
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/**
+  - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/brew/**
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/chain/**
   - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/chain/**
 depends: [3]
