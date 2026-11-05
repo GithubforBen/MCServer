@@ -19,9 +19,9 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 1.1 Write the signing rules as pure code with `SigningRulesCheck`
+- [x] 1.1 Write the signing rules as pure code with `SigningRulesCheck`
   - Done when: `SigningRulesCheck` runs and exits 0
-- [ ] 1.2 Add `/signItem` writing the signature and the lore line
+- [x] 1.2 Add `/signItem` writing the signature and the lore line
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 
 ## 2. Keep signed items out of recipes
