@@ -114,7 +114,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 5.1 Write the step table and rolling as pure code with `LabChainCheck`
+- [x] 5.1 Write the step table and rolling as pure code with `LabChainCheck`
   - Done when: `LabChainCheck` runs and exits 0
 - [ ] 5.2 Prove the chain's average with a seeded simulation
   - Done when: `lab-brewing#simulated-average` passes in `LabChainCheck`
