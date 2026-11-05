@@ -42,7 +42,7 @@ agent: implementer
 
 - [x] 2.1 Block signed items at the crafting table, the crafter and the smithing table
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
-- [ ] 2.2 Block signed items in furnaces and as the anvil sacrifice
+- [x] 2.2 Block signed items in furnaces and as the anvil sacrifice
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 - [ ] 2.3 Keep signed items out of lab brews, on top and in the bottom slots, and wire the guards into `Survival.java`
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and the lab checks still exit 0
