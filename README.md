@@ -955,7 +955,7 @@ Schritt in der Beschreibung.
   dann auf Stufe II.
 
 **Rechnung:** Für ein Kokain von Reinheit 5 braucht ein Labor ohne Upgrades im Mittel rund 20.000
-Zuckerrohr, voll ausgebaut rund 6.400. Der Fortschritt steckt im Braustand selbst, überlebt also
+Zuckerrohr, voll ausgebaut rund 6.500. Der Fortschritt steckt im Braustand selbst, überlebt also
 Chunk-Entladen, Neustart und Absturz.
 
 **Einstellungen** in `configs/lab.yml` (fehlende Werte werden mit Kommentar geschrieben, vorhandene
