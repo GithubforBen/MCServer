@@ -60,7 +60,7 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 3.1 Document signing in the README and add a recipe to `testing/README.md`
+- [x] 3.1 Document signing in the README and add a recipe to `testing/README.md`
   - Done when: both files describe the feature
 - [ ] 3.2 Add `testing/item-signing/recipe.sh` naming, with a `spec: item-signing#<scenario>` comment, every scenario no check file covers
   - Done when: `specfold trace --change item-signing` reports 0 uncovered
