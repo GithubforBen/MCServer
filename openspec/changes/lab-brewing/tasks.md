@@ -62,7 +62,7 @@ agent: implementer
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 - [x] 3.2 Read `configs/lab.yml` with defaults written back
   - Done when: a missing file is created with every default
-- [ ] 3.3 Refuse placing Pflanzenabfall
+- [x] 3.3 Refuse placing Pflanzenabfall
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; placing needs a running server, so `lab-brewing#placing-is-refused` is proven in task 10.1
 
 ## 4. Crafting
