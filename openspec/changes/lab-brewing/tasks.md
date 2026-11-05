@@ -1,6 +1,6 @@
 # Tasks
 
-## 1. Prove empty slots on a real server
+## 1. Brew engine
 
 ```yaml
 files:
@@ -22,40 +22,53 @@ agent: implementer
 
 - [ ] 1.1 Write the brew state as a pure class with `LabBrewCheck`, covering pause, resume, ingredient loss and double start
   - Done when: `LabBrewCheck` runs and exits 0
-- [ ] 1.2 Run the own tick on a stand with empty slots, persisted in the block
-  - Done when: sugar cane brews into a placeholder result on a local server
-- [ ] 1.3 Prove top-slot hoppers, the hopper-out rule and the progress arrow on a local server
-  - Done when: `lab-brewing#sugar-cane-through-a-hopper` and `lab-brewing#watching-a-brew` were seen working
-- [ ] 1.4 Run the unload matrix: chunk unload, repeated reloads with many stands, restart, `kill -9`, breaking, taking the ingredient
+- [ ] 1.2 Run the own tick on a stand with empty slots, persisted in the block, with a placeholder result
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; the server run is task 2.2
+- [ ] 1.3 Add the hopper-out rule and the progress arrow for viewers
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes
+
+## 2. Prove empty slots on a server
+
+```yaml
+files:
+  - testing/lab-brewing/proof/**
+depends: [1]
+scenarios: []
+agent: implementer
+```
+
+- [ ] 2.1 Write `testing/lab-brewing/proof/recipe.sh`, a checklist that prints numbered steps and exits 2, with a `spec: lab-brewing#<scenario>` comment at the step that exercises each scenario of group 1
+  - Done when: `specfold trace --change lab-brewing` lists none of group 1's scenarios as uncovered
+- [ ] 2.2 The orchestrator, not an implementer, runs the proof recipe on a local server: chunk unload, repeated reloads with many stands, restart, `kill -9`, breaking, taking the ingredient, hopper in from above, progress arrow
   - Done when: every case was seen working, or the failure is reported to the user with the glass bottle fallback as the question
 
-## 2. Items and config
+## 3. Items and config
 
 ```yaml
 files:
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/item/**
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/LabSettings.java
   - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/item/**
-depends: [1]
+depends: [2]
 scenarios:
   - lab-brewing#placing-is-refused
   - lab-brewing#item-names-the-next-step
 agent: implementer
 ```
 
-- [ ] 2.1 Build paste, Kokain, filters, Feenstaub and Pflanzenabfall without a resource pack
+- [ ] 3.1 Build paste, Kokain, filters, Feenstaub and Pflanzenabfall without a resource pack
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
-- [ ] 2.2 Read `configs/lab.yml` with defaults written back
+- [ ] 3.2 Read `configs/lab.yml` with defaults written back
   - Done when: a missing file is created with every default
-- [ ] 2.3 Refuse placing Pflanzenabfall
-  - Done when: `lab-brewing#placing-is-refused` was seen working
+- [ ] 3.3 Refuse placing Pflanzenabfall
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; placing needs a running server, so `lab-brewing#placing-is-refused` is proven in task 10.1
 
-## 3. Crafting
+## 4. Crafting
 
 ```yaml
 files:
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/craft/**
-depends: [2]
+depends: [3]
 scenarios:
   - lab-brewing#crafter-makes-filters
   - lab-brewing#plain-item-does-not-pass-as-a-filter
@@ -64,18 +77,18 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 3.1 Register the filter and Feenstaub recipes, undiscovered so nobody gets a notification
-  - Done when: `lab-brewing#crafter-makes-filters` was seen working
-- [ ] 3.2 Keep lab items out of normal recipes
-  - Done when: `lab-brewing#lab-item-in-a-normal-recipe` was seen working
+- [ ] 4.1 Register the filter and Feenstaub recipes, undiscovered so nobody gets a notification
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#crafter-makes-filters` is proven in task 10.1
+- [ ] 4.2 Keep lab items out of normal recipes
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#lab-item-in-a-normal-recipe` is proven in task 10.1
 
-## 4. Production chain
+## 5. Production chain
 
 ```yaml
 files:
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/chain/**
   - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/chain/**
-depends: [2]
+depends: [3]
 scenarios:
   - lab-brewing#three-empty-slots
   - lab-brewing#two-sugar-cane-left
@@ -97,24 +110,24 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 4.1 Write the step table and rolling as pure code with `LabChainCheck`
+- [ ] 5.1 Write the step table and rolling as pure code with `LabChainCheck`
   - Done when: `LabChainCheck` runs and exits 0
-- [ ] 4.2 Prove the chain's average with a seeded simulation
+- [ ] 5.2 Prove the chain's average with a seeded simulation
   - Done when: `lab-brewing#simulated-average` passes in `LabChainCheck`
-- [ ] 4.3 Connect sugar cane to the own tick
-  - Done when: `lab-brewing#three-empty-slots` was seen working
-- [ ] 4.4 Run purifying and Kokain through `BrewingRecipe` and `BrewEvent`
-  - Done when: `lab-brewing#matching-filter` was seen working
-- [ ] 4.5 Apply the hopper rule to all steps
-  - Done when: `lab-brewing#automatic-purification` was seen working
+- [ ] 5.3 Connect sugar cane to the own tick
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#three-empty-slots` is proven in task 10.1
+- [ ] 5.4 Run purifying and Kokain through `BrewingRecipe` and `BrewEvent`
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabChainCheck` still exits 0; `lab-brewing#matching-filter` is proven in task 10.1
+- [ ] 5.5 Apply the hopper rule to all steps
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#automatic-purification` is proven in task 10.1
 
-## 5. Upgrades
+## 6. Upgrades
 
 ```yaml
 files:
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/upgrade/**
   - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/upgrade/**
-depends: [4]
+depends: [5]
 scenarios:
   - lab-upgrades#water-cauldron-raises-the-yield
   - lab-upgrades#two-cauldrons-count-once
@@ -126,18 +139,18 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 5.1 Compute chances from upgrades as pure code with `LabUpgradeCheck`, including the 6,400 average
+- [ ] 6.1 Compute chances from upgrades as pure code with `LabUpgradeCheck`, including the 6,400 average
   - Done when: `LabUpgradeCheck` runs and exits 0
-- [ ] 5.2 Read the blocks around a stand when a brew starts
-  - Done when: `lab-upgrades#water-cauldron-raises-the-yield` was seen working
+- [ ] 6.2 Read the blocks around a stand when a brew starts
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabUpgradeCheck` still exits 0; `lab-upgrades#water-cauldron-raises-the-yield` is proven in task 10.1
 
-## 6. Cutting
+## 7. Cutting
 
 ```yaml
 files:
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/cutting/**
   - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/cutting/**
-depends: [4]
+depends: [5]
 scenarios:
   - lab-cutting#adding-an-effect
   - lab-cutting#fourth-ingredient
@@ -150,18 +163,18 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 6.1 Write cutting and stretching as pure code with `LabCuttingCheck`
+- [ ] 7.1 Write cutting and stretching as pure code with `LabCuttingCheck`
   - Done when: `LabCuttingCheck` runs and exits 0
-- [ ] 6.2 Run them through `BrewingRecipe` and `BrewEvent`, with stacking by sorted effects
-  - Done when: `lab-cutting#automatic-cutting` was seen working
+- [ ] 7.2 Run them through `BrewingRecipe` and `BrewEvent`, with stacking by sorted effects
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabCuttingCheck` still exits 0; `lab-cutting#automatic-cutting` is proven in task 10.1
 
-## 7. Consumption
+## 8. Consumption
 
 ```yaml
 files:
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/consume/**
   - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/consume/**
-depends: [2]
+depends: [3]
 scenarios:
   - lab-consumption#purity-3
   - lab-consumption#cut-in-effect
@@ -176,14 +189,14 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 7.1 Write effect tables and the combat cap as pure code with `LabConsumeCheck`
+- [ ] 8.1 Write effect tables and the combat cap as pure code with `LabConsumeCheck`
   - Done when: `LabConsumeCheck` runs and exits 0
-- [ ] 7.2 Consume on right click, with cooldown and crash, surviving a relog
-  - Done when: `lab-consumption#logging-out-does-not-skip-it` was seen working
-- [ ] 7.3 Track combat between players and cap the effects
-  - Done when: `lab-consumption#hit-during-purity-5` was seen working
+- [ ] 8.2 Consume on right click, with cooldown and crash, surviving a relog
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-consumption#logging-out-does-not-skip-it` is proven in task 10.1
+- [ ] 8.3 Track combat between players and cap the effects
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabConsumeCheck` still exits 0; `lab-consumption#hit-during-purity-5` is proven in task 10.1
 
-## 8. Command, docs and full run
+## 9. Command and docs
 
 ```yaml
 files:
@@ -192,29 +205,43 @@ files:
   - README.md
   - testing/README.md
   - ServerLauncherApplication/src/main/resources/discord-info/spieler.md
-depends: [3, 5, 6, 7]
+  - testing/lab-brewing/recipe.sh
+depends: [4, 6, 7, 8]
 scenarios:
   - lab-brewing#asking-for-the-tree
 agent: implementer
 ```
 
-- [ ] 8.1 Add `/labor` with the tree
-  - Done when: `lab-brewing#asking-for-the-tree` was seen working
-- [ ] 8.2 Document the lab in the README, the player info and `testing/README.md`
+- [ ] 9.1 Add `/labor` with the tree
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#asking-for-the-tree` is proven in task 10.1
+- [ ] 9.2 Document the lab in the README, the player info and `testing/README.md`
   - Done when: all three describe the feature
-- [ ] 8.3 Run a whole automated line on a local network from sugar cane to consumed Kokain
-  - Done when: the line ran without a player touching it, or the failure is reported
+- [ ] 9.3 Write `testing/lab-brewing/recipe.sh`, a checklist that prints numbered steps and exits 2, with a `spec: <capability>#<scenario>` comment for every scenario no check file covers
+  - Done when: `specfold trace --change lab-brewing` reports 0 uncovered
 
-## 9. Knowledge
+## 10. In-game check
+
+```yaml
+files:
+  - testing/lab-brewing/recipe.sh
+depends: [9]
+scenarios: []
+agent: implementer
+```
+
+- [ ] 10.1 The orchestrator, not an implementer, runs the recipe on a local network with real clients, including a whole automated line from sugar cane to consumed Kokain that no player touches
+  - Done when: every scenario was seen working in game, by name also `lab-brewing#placing-is-refused`, `lab-brewing#crafter-makes-filters`, `lab-brewing#lab-item-in-a-normal-recipe`, `lab-brewing#three-empty-slots`, `lab-brewing#matching-filter`, `lab-brewing#automatic-purification`, `lab-upgrades#water-cauldron-raises-the-yield`, `lab-cutting#automatic-cutting`, `lab-consumption#logging-out-does-not-skip-it`, `lab-consumption#hit-during-purity-5` and `lab-brewing#asking-for-the-tree`, or the failure is reported
+
+## 11. Knowledge
 
 ```yaml
 files: [knowledge/**]
-depends: [8]
+depends: [10]
 scenarios: []
 agent: knowledge-curator
 ```
 
-- [ ] 9.1 Write the concepts listed in knowledge.md
+- [ ] 11.1 Write the concepts listed in knowledge.md
   - Done when: `specfold validate` exits 0
 
 ## Workflow follow-up
