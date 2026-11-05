@@ -126,6 +126,8 @@ public final class LabBrewing implements Listener {
             event.setCancelled(true);
             return;
         }
+        // items leaving free a slot, so the source is checked on the next tick like the destination
+        watch(event.getSource());
         watch(event.getDestination());
     }
 
@@ -193,7 +195,11 @@ public final class LabBrewing implements Listener {
                 log("reset", block, "ingredient gone");
                 store(stand, brew);
             }
-            case FINISHED -> finish(block, stand, inventory);
+            case FINISHED -> {
+                finish(block, stand, inventory);
+                // stays in the set: if it can still brew, the next brew starts on the next tick
+                active.add(block);
+            }
         }
     }
 

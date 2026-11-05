@@ -26,7 +26,7 @@ agent: implementer
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; the server run is task 2.2
 - [x] 1.3 Add the hopper-out rule and the progress arrow for viewers
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
-- [ ] 1.4 Keep a stand brewing after a finish while it can brew, and wake it when items leave it, not only when they arrive
+- [x] 1.4 Keep a stand brewing after a finish while it can brew, and wake it when items leave it, not only when they arrive
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabBrewCheck` still exits 0; the server run in task 2.2 shows it
 
 ## 2. Prove empty slots on a server
