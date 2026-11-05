@@ -41,8 +41,8 @@ agent: implementer
 
 - [x] 2.1 Write `testing/lab-brewing/proof/recipe.sh`, a checklist that prints numbered steps and exits 2, with a `spec: lab-brewing#<scenario>` comment at the step that exercises each scenario of group 1
   - Done when: `specfold trace --change lab-brewing` lists none of group 1's scenarios as uncovered
-- [ ] 2.2 The orchestrator, not an implementer, runs the proof recipe on a local server: chunk unload, repeated reloads with many stands, restart, `kill -9`, breaking, taking the ingredient, hopper in from above, progress arrow
-  - Done when: every case was seen working, or the failure is reported to the user with the glass bottle fallback as the question
+- [x] 2.2 The orchestrator, not an implementer, runs the proof recipe on a local server: chunk unload, repeated reloads with many stands, restart, `kill -9`, breaking, taking the ingredient, hopper in from above
+  - Done when: every case was seen working, or the failure is reported to the user with the glass bottle fallback as the question; the progress arrow needs a client and is shown in task 10.1
 
 ## 3. Items and config
 
@@ -232,7 +232,7 @@ agent: implementer
 ```
 
 - [ ] 10.1 The orchestrator, not an implementer, runs the recipe on a local network with real clients, including a whole automated line from sugar cane to consumed Kokain that no player touches
-  - Done when: every scenario was seen working in game, by name also `lab-brewing#placing-is-refused`, `lab-brewing#crafter-makes-filters`, `lab-brewing#lab-item-in-a-normal-recipe`, `lab-brewing#three-empty-slots`, `lab-brewing#matching-filter`, `lab-brewing#automatic-purification`, `lab-upgrades#water-cauldron-raises-the-yield`, `lab-cutting#automatic-cutting`, `lab-consumption#logging-out-does-not-skip-it`, `lab-consumption#hit-during-purity-5` and `lab-brewing#asking-for-the-tree`, or the failure is reported
+  - Done when: every scenario was seen working in game, by name also `lab-brewing#placing-is-refused`, `lab-brewing#crafter-makes-filters`, `lab-brewing#lab-item-in-a-normal-recipe`, `lab-brewing#three-empty-slots`, `lab-brewing#matching-filter`, `lab-brewing#automatic-purification`, `lab-upgrades#water-cauldron-raises-the-yield`, `lab-cutting#automatic-cutting`, `lab-consumption#logging-out-does-not-skip-it`, `lab-consumption#hit-during-purity-5` and `lab-brewing#asking-for-the-tree`, or the failure is reported Also show `lab-brewing#watching-a-brew`, moved here from task 2.2.
 
 ## 11. Knowledge
 
