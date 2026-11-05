@@ -20,6 +20,8 @@ public final class StepRule {
 
     public static boolean isValidStep(ItemStack ingredient, ItemStack item) {
         if (ingredient == null || item == null) return false;
+        // a signed item is never a valid step, so a hopper below can always pull it out
+        if (LabSlots.signed(item) || LabSlots.signed(ingredient)) return false;
         return rule.test(ingredient, item);
     }
 }

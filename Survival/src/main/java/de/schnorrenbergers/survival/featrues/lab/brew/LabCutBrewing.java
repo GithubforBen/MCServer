@@ -59,12 +59,13 @@ final class LabCutBrewing implements Listener {
 
     /** Whether the vanilla item on top cuts or stretches the lab Kokain in the slot. */
     static boolean isStep(ItemStack ingredient, ItemStack item) {
-        if (ingredient == null) return false;
+        if (ingredient == null || LabSlots.signed(ingredient)) return false;
         Optional<Ingredient> cut = LabCutting.ingredient(ingredient.getType());
         return cut.isPresent() && isStep(cut.get(), item);
     }
 
     private static boolean isStep(Ingredient ingredient, ItemStack item) {
+        if (LabSlots.signed(item)) return false; // signed Kokain is never cut
         return LabItems.read(item).map(data -> LabCutting.isStep(ingredient, data)).orElse(false);
     }
 
@@ -73,7 +74,10 @@ final class LabCutBrewing implements Listener {
         ItemStack display = LabItems.create(LabData.of(LabKind.KOKAIN, 1));
         for (Ingredient ingredient : Ingredient.values()) {
             NamespacedKey key = new NamespacedKey(plugin, "lab_cut_" + ingredient.name().toLowerCase());
-            RecipeChoice ingredientChoice = new RecipeChoice.MaterialChoice(ingredient.material());
+            // a predicate instead of a MaterialChoice, so a signed ingredient never starts a vanilla brew
+            RecipeChoice ingredientChoice = RecipeChoice.predicateChoice(
+                    item -> item.getType() == ingredient.material() && !LabSlots.signed(item),
+                    new ItemStack(ingredient.material()));
             Predicate<ItemStack> accepts = item -> isStep(ingredient, item);
             // the predicate keeps vanilla from starting a brew when no Kokain can take the ingredient
             RecipeChoice input = RecipeChoice.predicateChoice(accepts, display);
@@ -116,7 +120,12 @@ final class LabCutBrewing implements Listener {
     public void onBrew(BrewEvent event) {
         BrewerInventory inventory = event.getContents();
         ItemStack top = inventory.getIngredient();
-        if (top == null || !hasCuttableKokain(top, inventory)) return; // anything else stays vanilla
+        if (top == null) return;
+        if (LabSlots.signed(top) && wouldCut(top, inventory)) {
+            event.setCancelled(true); // a signed ingredient is not consumed; vanilla's brew is stopped
+            return;
+        }
+        if (!hasCuttableKokain(top, inventory)) return; // anything else stays vanilla
         Ingredient ingredient = LabCutting.ingredient(top.getType()).orElseThrow();
         if (event.getBlock().getState(false) instanceof BrewingStand stand) {
             upgrades.clear(stand.getPersistentDataContainer());
@@ -124,11 +133,25 @@ final class LabCutBrewing implements Listener {
         List<ItemStack> results = event.getResults();
         for (int i = 0; i < 3 && i < results.size(); i++) {
             ItemStack before = inventory.getItem(i);
+            if (LabSlots.signed(before)) {
+                results.set(i, before.clone());
+                continue;
+            }
             LabData data = LabItems.read(before).orElse(null);
             if (data == null) continue; // not Kokain or paste: vanilla's own result stays
             LabCutting.Result cut = LabCutting.apply(ingredient, data).orElse(null);
             results.set(i, cut == null ? before.clone() : LabItems.create(cut.data(), cut.amount()));
         }
+    }
+
+    /** Whether a signed ingredient on top would have cut some unsigned Kokain in the stand. */
+    private static boolean wouldCut(ItemStack top, BrewerInventory inventory) {
+        Optional<Ingredient> ingredient = LabCutting.ingredient(top.getType());
+        if (ingredient.isEmpty()) return false;
+        for (int i = 0; i < 3; i++) {
+            if (isStep(ingredient.get(), inventory.getItem(i))) return true;
+        }
+        return false;
     }
 
     /** Whether the ingredient is a cutting item and some bottom slot holds Kokain it works on. */
