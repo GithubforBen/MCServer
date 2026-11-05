@@ -3,6 +3,9 @@ package de.schnorrenbergers.survival.featrues.lab.brew;
 import de.schnorrenbergers.survival.featrues.lab.LabSettings;
 import de.schnorrenbergers.survival.featrues.lab.chain.LabChain;
 import de.schnorrenbergers.survival.featrues.lab.item.LabData;
+import de.schnorrenbergers.survival.featrues.lab.upgrade.LabFuel;
+import de.schnorrenbergers.survival.featrues.lab.upgrade.LabUpgradeReader;
+import de.schnorrenbergers.survival.featrues.lab.upgrade.LabUpgrades;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
@@ -48,23 +51,31 @@ public final class LabBrewing implements Listener {
     private final JavaPlugin plugin;
     private final BrewSettings settings;
     private final LabChain chain;
+    private final LabSettings labSettings;
+    private final LabUpgradeReader upgrades;
     private final NamespacedKey progressKey;
     private final Set<Block> active = new HashSet<>();
 
-    private LabBrewing(JavaPlugin plugin, BrewSettings settings, LabChain chain) {
+    private LabBrewing(JavaPlugin plugin, BrewSettings settings, LabSettings labSettings, LabChain chain,
+                       LabUpgradeReader upgrades) {
         this.plugin = plugin;
         this.settings = settings;
         this.chain = chain;
+        this.labSettings = labSettings;
+        this.upgrades = upgrades;
         this.progressKey = new NamespacedKey(plugin, "lab_brew_progress");
     }
 
     /** Starts lab brewing: the reagent recipe, the listeners, the tick, and the stands already loaded. */
     public static LabBrewing init(JavaPlugin plugin) {
         File file = new File("./configs/lab.yml");
-        LabChain chain = LabChain.of(new LabSettings(file, plugin.getLogger()));
+        LabSettings labSettings = new LabSettings(file, plugin.getLogger());
+        LabChain chain = LabChain.of(labSettings);
         BrewSettings brewSettings = new BrewSettings(file, plugin.getLogger());
-        LabBrewing brewing = new LabBrewing(plugin, brewSettings, chain);
-        LabPurifying.init(plugin, chain, brewSettings);
+        LabUpgradeReader upgrades = new LabUpgradeReader(plugin);
+        LabBrewing brewing = new LabBrewing(plugin, brewSettings, labSettings, chain, upgrades);
+        LabPurifying.init(plugin, chain, brewSettings, labSettings, upgrades);
+        Bukkit.getPluginManager().registerEvents(new LabFuel(labSettings, upgrades), plugin);
         brewing.registerReagent();
         Bukkit.getPluginManager().registerEvents(brewing, plugin);
         Bukkit.getScheduler().runTaskTimer(plugin, brewing::tick, STEP_TICKS, STEP_TICKS);
@@ -186,14 +197,18 @@ public final class LabBrewing implements Listener {
         boolean eligible = isCane(inventory.getIngredient()) && stand.getFuelLevel() > 0
                 && firstEmptyOutput(inventory, 0) >= 0;
 
-        BrewState brew = BrewState.load(saved, settings.brewTicks());
+        // upgrades are read when a brew starts and kept for it; a running brew uses what it started with
+        LabUpgrades used = saved != null ? upgrades.stored(stand.getPersistentDataContainer())
+                : eligible ? upgrades.scan(block) : LabUpgrades.NONE;
+        BrewState brew = BrewState.load(saved, used.brewTicks(settings.brewTicks(), labSettings));
         BrewState.Step result = brew.advance(STEP_TICKS, eligible);
         switch (result) {
             case IDLE -> {
                 if (saved == null) active.remove(block);
             }
             case STARTED -> {
-                log("start", block, "ticks=" + brew.duration());
+                log("start", block, "ticks=" + brew.duration() + " upgrades=" + used.bits());
+                upgrades.store(stand.getPersistentDataContainer(), used);
                 store(stand, brew);
             }
             case RUNNING -> {
@@ -205,7 +220,7 @@ public final class LabBrewing implements Listener {
                 store(stand, brew);
             }
             case FINISHED -> {
-                finish(block, stand, inventory);
+                finish(block, stand, inventory, used);
                 // stays in the set: if it can still brew, the next brew starts on the next tick
                 active.add(block);
             }
@@ -214,18 +229,22 @@ public final class LabBrewing implements Listener {
 
     private void store(BrewingStand stand, BrewState brew) {
         String value = brew.save();
-        if (value == null) stand.getPersistentDataContainer().remove(progressKey);
+        if (value == null) {
+            stand.getPersistentDataContainer().remove(progressKey);
+            upgrades.clear(stand.getPersistentDataContainer());
+        }
         else stand.getPersistentDataContainer().set(progressKey, PersistentDataType.STRING, value);
         stand.update(true, false);
     }
 
-    private void finish(Block block, BrewingStand stand, BrewerInventory inventory) {
+    private void finish(Block block, BrewingStand stand, BrewerInventory inventory,
+                        LabUpgrades upgradesUsed) {
         ItemStack cane = inventory.getIngredient();
         LabData[] slots = new LabData[3];
         for (int i = 0; i < 3; i++) slots[i] = LabSlots.read(inventory.getItem(i));
         // one sugar cane per free output slot, and only as many slots as there is cane
         LabChain.Brew brew = chain.brew(null, cane == null ? 0 : cane.getAmount(), slots,
-                ThreadLocalRandom.current());
+                ThreadLocalRandom.current(), upgradesUsed.goodsFactor(labSettings));
         for (int i = 0; i < 3; i++) {
             if (brew.rolled()[i]) inventory.setItem(i, LabSlots.toItem(brew.slots()[i]));
         }
@@ -236,6 +255,7 @@ public final class LabBrewing implements Listener {
         }
         stand.setFuelLevel(Math.max(0, stand.getFuelLevel() - 1));
         stand.getPersistentDataContainer().remove(progressKey);
+        upgrades.clear(stand.getPersistentDataContainer());
         stand.update(true, false);
         log("finish", block, "slots=" + used);
         showProgress(block, new BrewState(settings.brewTicks()));

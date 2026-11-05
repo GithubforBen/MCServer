@@ -1,13 +1,17 @@
 package de.schnorrenbergers.survival.featrues.lab.brew;
 
+import de.schnorrenbergers.survival.featrues.lab.LabSettings;
 import de.schnorrenbergers.survival.featrues.lab.chain.LabChain;
 import de.schnorrenbergers.survival.featrues.lab.item.LabData;
 import de.schnorrenbergers.survival.featrues.lab.item.LabItems;
 import de.schnorrenbergers.survival.featrues.lab.item.LabKind;
 import de.schnorrenbergers.survival.featrues.lab.item.LabMaterials;
+import de.schnorrenbergers.survival.featrues.lab.upgrade.LabUpgradeReader;
+import de.schnorrenbergers.survival.featrues.lab.upgrade.LabUpgrades;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.BrewingStand;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BrewingStartEvent;
@@ -36,15 +40,21 @@ final class LabPurifying implements Listener {
     private final JavaPlugin plugin;
     private final LabChain chain;
     private final BrewSettings settings;
+    private final LabSettings labSettings;
+    private final LabUpgradeReader upgrades;
 
-    private LabPurifying(JavaPlugin plugin, LabChain chain, BrewSettings settings) {
+    private LabPurifying(JavaPlugin plugin, LabChain chain, BrewSettings settings, LabSettings labSettings,
+                         LabUpgradeReader upgrades) {
         this.plugin = plugin;
         this.chain = chain;
         this.settings = settings;
+        this.labSettings = labSettings;
+        this.upgrades = upgrades;
     }
 
-    static void init(JavaPlugin plugin, LabChain chain, BrewSettings settings) {
-        LabPurifying purifying = new LabPurifying(plugin, chain, settings);
+    static void init(JavaPlugin plugin, LabChain chain, BrewSettings settings, LabSettings labSettings,
+                    LabUpgradeReader upgrades) {
+        LabPurifying purifying = new LabPurifying(plugin, chain, settings, labSettings, upgrades);
         purifying.registerRecipes();
         // the hopper rule: a bottom item stays while the top ingredient is a valid step for it
         StepRule.rule = (ingredient, item) -> {
@@ -92,9 +102,16 @@ final class LabPurifying implements Listener {
     @EventHandler
     public void onStart(BrewingStartEvent event) {
         LabData top = LabItems.read(event.getSource()).orElse(null);
-        if (top == null || settings.brewTicks() == event.getTotalBrewTime()) return;
-        event.setTotalBrewTime(settings.brewTicks());
-        event.setBrewingTime(settings.brewTicks());
+        if (top == null) return;
+        // read once here and kept in the stand until this brew is done
+        LabUpgrades used = upgrades.scan(event.getBlock());
+        if (event.getBlock().getState(false) instanceof BrewingStand stand) {
+            upgrades.store(stand.getPersistentDataContainer(), used);
+        }
+        int ticks = used.brewTicks(settings.brewTicks(), labSettings);
+        if (ticks == event.getTotalBrewTime()) return;
+        event.setTotalBrewTime(ticks);
+        event.setBrewingTime(ticks);
     }
 
     @EventHandler
@@ -104,7 +121,12 @@ final class LabPurifying implements Listener {
         if (top == null || !isReagent(top.kind())) return; // anything without lab items stays vanilla
         LabData[] slots = new LabData[3];
         for (int i = 0; i < 3; i++) slots[i] = LabSlots.read(inventory.getItem(i));
-        LabChain.Brew brew = chain.brew(top, 1, slots, ThreadLocalRandom.current());
+        LabUpgrades used = LabUpgrades.NONE;
+        if (event.getBlock().getState(false) instanceof BrewingStand stand) {
+            used = upgrades.stored(stand.getPersistentDataContainer());
+            upgrades.clear(stand.getPersistentDataContainer());
+        }
+        LabChain.Brew brew = chain.brew(top, 1, slots, ThreadLocalRandom.current(), used.goodsFactor(labSettings));
         List<ItemStack> results = event.getResults();
         for (int i = 0; i < 3 && i < results.size(); i++) {
             ItemStack before = inventory.getItem(i);
