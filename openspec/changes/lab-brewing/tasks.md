@@ -201,7 +201,7 @@ agent: implementer
 
 - [x] 8.1 Write effect tables and the combat cap as pure code with `LabConsumeCheck`
   - Done when: `LabConsumeCheck` runs and exits 0
-- [ ] 8.2 Consume on right click, with cooldown and crash, surviving a relog
+- [x] 8.2 Consume on right click, with cooldown and crash, surviving a relog
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-consumption#logging-out-does-not-skip-it` is proven in task 10.1
 - [ ] 8.3 Track combat between players and cap the effects
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabConsumeCheck` still exits 0; `lab-consumption#hit-during-purity-5` is proven in task 10.1
