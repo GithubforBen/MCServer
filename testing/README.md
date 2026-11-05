@@ -203,6 +203,16 @@ Minuten „Discarded run server“. Die Probe-Läufe danach aus `runs.yml` nehme
 `de.hems.utils.bot.info` mit dem Launcher-Jar im Classpath prüft Zahl der Teile, Längen (≤ 4096 pro Text,
 ≤ 6000 pro Embed, ≤ 25 Menüpunkte) und die Aufteilung der Regeln (`DiscordInfo.rulesMarkdown`).
 
+### Labor (Survival, /labor)
+Der Ablauf steht in `testing/lab-brewing/recipe.sh` (druckt nur die Schritte und endet mit Exit 2, es ist kein
+Test). Die Teile ohne Spieler stehen mit Ergebnissen in `testing/lab-brewing/proof/` (`recipe.sh`,
+`results-*.md`). Das Netzwerk mit JDK 25 starten, im Log müssen stehen: `Lab: sugar cane reagent recipe
+added=true`, `Lab: 9 purifying recipes added`, `Lab: 6 cutting recipes added` (eine Warnung dort heißt, die
+Prädikat-Zutat ging nicht durch) und die Zeilen `Lab: brewing input …`. Danach: Filter herstellen, Abfall
+platzieren, Brauen auf leeren Slots, eine ganze Linie mit Trichtern, Wasserkessel, Schneiden,
+Konsum mit Relog und Treffer bei Reinheit 5, und `/labor`. Spieler schützen: Tag, `doMobSpawning false`,
+Resistenz; Blöcke vor dem Klick freiräumen; die Konsole nur über `testing/clients/con`.
+
 ### Admin-Passwort
 `./admin-passwort.sh` in einem Testordner mit einer kopierten `main-config.yml` laufen lassen (Eingaben per
 `printf 'admin\n\nn\n' |`), danach muss `password:` ein neuer `pbkdf2-…`-Hash sein und `totp-secret` gleich.
