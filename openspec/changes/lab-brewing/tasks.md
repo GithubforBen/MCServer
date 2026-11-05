@@ -58,7 +58,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 3.1 Build paste, Kokain, filters, Feenstaub and Pflanzenabfall without a resource pack
+- [x] 3.1 Build paste, Kokain, filters, Feenstaub and Pflanzenabfall without a resource pack
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 - [ ] 3.2 Read `configs/lab.yml` with defaults written back
   - Done when: a missing file is created with every default
