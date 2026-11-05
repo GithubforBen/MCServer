@@ -7,8 +7,8 @@ import java.util.function.BiPredicate;
 /**
  * The one question the hopper rule asks: is the top ingredient a valid next step for this item?
  * <p>
- * No lab item has a next step yet, so the answer is no; the groups that add purifying and cutting
- * replace {@link #rule}.
+ * Until {@code LabPurifying} sets {@link #rule} from the chain, the answer is no. Cutting adds its own
+ * steps to that rule later.
  */
 public final class StepRule {
 
