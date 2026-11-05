@@ -173,9 +173,9 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 7.1 Write cutting and stretching as pure code with `LabCuttingCheck`
+- [x] 7.1 Write cutting and stretching as pure code with `LabCuttingCheck`
   - Done when: `LabCuttingCheck` runs and exits 0
-- [ ] 7.2 Run them through `BrewingRecipe` and `BrewEvent`, with stacking by sorted effects
+- [x] 7.2 Run them through `BrewingRecipe` and `BrewEvent`, with stacking by sorted effects
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabCuttingCheck` still exits 0; `lab-cutting#automatic-cutting` is proven in task 10.1
 
 ## 8. Consumption
