@@ -230,7 +230,7 @@ agent: implementer
   - Done when: all three describe the feature
 - [x] 9.3 Write `testing/lab-brewing/recipe.sh`, a checklist that prints numbered steps and exits 2, with a `spec: <capability>#<scenario>` comment for every scenario no check file covers
   - Done when: `specfold trace --change lab-brewing` reports 0 uncovered
-- [ ] 9.4 Wire every lab `init` that is not yet called, such as `LabItemListeners.init`, into `Survival.java`, with one shared `LabSettings`
+- [x] 9.4 Wire every lab `init` that is not yet called, such as `LabItemListeners.init`, into `Survival.java`, with one shared `LabSettings`
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and each lab listener is registered once
 
 ## 10. In-game check
