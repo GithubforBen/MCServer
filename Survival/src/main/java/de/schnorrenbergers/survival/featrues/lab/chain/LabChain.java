@@ -4,6 +4,7 @@ import de.schnorrenbergers.survival.featrues.lab.LabSettings;
 import de.schnorrenbergers.survival.featrues.lab.LabSettings.Yield;
 import de.schnorrenbergers.survival.featrues.lab.item.LabData;
 import de.schnorrenbergers.survival.featrues.lab.item.LabKind;
+import de.schnorrenbergers.survival.featrues.lab.upgrade.LabUpgrades;
 
 import java.util.Optional;
 import java.util.random.RandomGenerator;
@@ -99,6 +100,11 @@ public final class LabChain {
      * @param slots three slots, null for empty, {@link #OCCUPIED} for something that is no lab item
      */
     public Brew brew(LabData top, int cane, LabData[] slots, RandomGenerator random) {
+        return brew(top, cane, slots, random, 1);
+    }
+
+    /** Like the plain brew, with every goods chance scaled by an upgrade factor (see {@link LabUpgrades#scale}). */
+    public Brew brew(LabData top, int cane, LabData[] slots, RandomGenerator random, double goodsFactor) {
         LabData[] after = slots.clone();
         boolean[] rolled = new boolean[slots.length];
         int used = 0;
@@ -115,7 +121,7 @@ public final class LabChain {
                 if (goods == null) continue;
                 odds = chances(top, slots[i]);
             }
-            after[i] = switch (roll(odds, random)) {
+            after[i] = switch (roll(LabUpgrades.scale(odds, goodsFactor), random)) {
                 case GOODS -> goods;
                 case WASTE -> LabData.of(LabKind.PFLANZENABFALL);
                 case NOTHING -> null;

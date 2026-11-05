@@ -3,6 +3,7 @@ package de.schnorrenbergers.survival.featrues.lab.chain;
 import de.schnorrenbergers.survival.featrues.lab.LabSettings;
 import de.schnorrenbergers.survival.featrues.lab.item.LabData;
 import de.schnorrenbergers.survival.featrues.lab.item.LabKind;
+import de.schnorrenbergers.survival.featrues.lab.upgrade.LabUpgrades;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -105,25 +106,37 @@ public final class LabChainCheck {
     /** One cane per item, items walk the whole chain; counts the cane per Kokain of purity 5. */
     // spec: lab-brewing#simulated-average
     private static void average(LabChain chain) {
-        Random random = new Random(20261105L);
-        long cane = 100_000_000L;
+        double perKokain = canePerKokain(chain, 1, 100_000_000L, 20261105L);
+        System.out.println("cane per kokain=" + perKokain);
+        check("average between 19000 and 21000", perKokain > 19_000 && perKokain < 21_000, true);
+    }
+
+    /**
+     * The seeded simulation, also used by the upgrade check: every chance is scaled by the goods factor
+     * as an upgraded brew does.
+     *
+     * @return sugar cane used per Kokain of purity 5
+     */
+    public static double canePerKokain(LabChain chain, double factor, long cane, long seed) {
+        Random random = new Random(seed);
         long kokain = 0;
         LabData feen = LabData.of(LabKind.FEENSTAUB);
         for (long c = 0; c < cane; c++) {
-            if (LabChain.roll(chain.caneYield(), random) != LabChain.Roll.GOODS) continue;
+            if (LabChain.roll(LabUpgrades.scale(chain.caneYield(), factor), random) != LabChain.Roll.GOODS) continue;
             LabData item = LabChain.caneGoods();
             boolean alive = true;
             while (alive && item.purity() < 5) {
                 LabData filter = LabData.of(FILTERS[item.purity() - 1]);
-                alive = LabChain.roll(chain.chances(filter, item), random) == LabChain.Roll.GOODS;
+                alive = LabChain.roll(LabUpgrades.scale(chain.chances(filter, item), factor), random)
+                        == LabChain.Roll.GOODS;
                 if (alive) item = chain.goods(filter, item).orElseThrow();
             }
             if (!alive) continue;
-            if (LabChain.roll(chain.chances(feen, item), random) == LabChain.Roll.GOODS) kokain++;
+            if (LabChain.roll(LabUpgrades.scale(chain.chances(feen, item), factor), random) == LabChain.Roll.GOODS) {
+                kokain++;
+            }
         }
-        double perKokain = cane / (double) kokain;
-        System.out.println("kokain=" + kokain + " cane per kokain=" + perKokain);
-        check("average between 19000 and 21000", perKokain > 19_000 && perKokain < 21_000, true);
+        return cane / (double) kokain;
     }
 
     private static void near(String what, double actual, double expected) {
