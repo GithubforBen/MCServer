@@ -62,7 +62,9 @@ public final class LabBrewing implements Listener {
     public static LabBrewing init(JavaPlugin plugin) {
         File file = new File("./configs/lab.yml");
         LabChain chain = LabChain.of(new LabSettings(file, plugin.getLogger()));
-        LabBrewing brewing = new LabBrewing(plugin, new BrewSettings(file, plugin.getLogger()), chain);
+        BrewSettings brewSettings = new BrewSettings(file, plugin.getLogger());
+        LabBrewing brewing = new LabBrewing(plugin, brewSettings, chain);
+        LabPurifying.init(plugin, chain, brewSettings);
         brewing.registerReagent();
         Bukkit.getPluginManager().registerEvents(brewing, plugin);
         Bukkit.getScheduler().runTaskTimer(plugin, brewing::tick, STEP_TICKS, STEP_TICKS);

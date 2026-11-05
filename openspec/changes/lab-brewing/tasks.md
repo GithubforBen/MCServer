@@ -120,7 +120,7 @@ agent: implementer
   - Done when: `lab-brewing#simulated-average` passes in `LabChainCheck`
 - [x] 5.3 Connect sugar cane to the own tick
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#three-empty-slots` is proven in task 10.1
-- [ ] 5.4 Run purifying and Kokain through `BrewingRecipe` and `BrewEvent`
+- [x] 5.4 Run purifying and Kokain through `BrewingRecipe` and `BrewEvent`
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabChainCheck` still exits 0; `lab-brewing#matching-filter` is proven in task 10.1
 - [ ] 5.5 Apply the hopper rule to all steps
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#automatic-purification` is proven in task 10.1
