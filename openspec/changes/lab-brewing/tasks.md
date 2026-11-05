@@ -79,7 +79,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 4.1 Register the filter and Feenstaub recipes, undiscovered so nobody gets a notification
+- [x] 4.1 Register the filter and Feenstaub recipes, undiscovered so nobody gets a notification
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#crafter-makes-filters` is proven in task 10.1
 - [ ] 4.2 Keep lab items out of normal recipes
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#lab-item-in-a-normal-recipe` is proven in task 10.1
