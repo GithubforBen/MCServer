@@ -118,7 +118,7 @@ agent: implementer
   - Done when: `LabChainCheck` runs and exits 0
 - [x] 5.2 Prove the chain's average with a seeded simulation
   - Done when: `lab-brewing#simulated-average` passes in `LabChainCheck`
-- [ ] 5.3 Connect sugar cane to the own tick
+- [x] 5.3 Connect sugar cane to the own tick
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#three-empty-slots` is proven in task 10.1
 - [ ] 5.4 Run purifying and Kokain through `BrewingRecipe` and `BrewEvent`
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabChainCheck` still exits 0; `lab-brewing#matching-filter` is proven in task 10.1

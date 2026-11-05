@@ -1,5 +1,8 @@
 package de.schnorrenbergers.survival.featrues.lab.brew;
 
+import de.schnorrenbergers.survival.featrues.lab.LabSettings;
+import de.schnorrenbergers.survival.featrues.lab.chain.LabChain;
+import de.schnorrenbergers.survival.featrues.lab.item.LabData;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
@@ -29,6 +32,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Brewing without bottles: sugar cane on top of a stand with empty bottom slots, run by our own tick
@@ -43,19 +47,22 @@ public final class LabBrewing implements Listener {
 
     private final JavaPlugin plugin;
     private final BrewSettings settings;
+    private final LabChain chain;
     private final NamespacedKey progressKey;
     private final Set<Block> active = new HashSet<>();
 
-    private LabBrewing(JavaPlugin plugin, BrewSettings settings) {
+    private LabBrewing(JavaPlugin plugin, BrewSettings settings, LabChain chain) {
         this.plugin = plugin;
         this.settings = settings;
+        this.chain = chain;
         this.progressKey = new NamespacedKey(plugin, "lab_brew_progress");
     }
 
     /** Starts lab brewing: the reagent recipe, the listeners, the tick, and the stands already loaded. */
     public static LabBrewing init(JavaPlugin plugin) {
-        LabBrewing brewing = new LabBrewing(plugin,
-                new BrewSettings(new File("./configs/lab.yml"), plugin.getLogger()));
+        File file = new File("./configs/lab.yml");
+        LabChain chain = LabChain.of(new LabSettings(file, plugin.getLogger()));
+        LabBrewing brewing = new LabBrewing(plugin, new BrewSettings(file, plugin.getLogger()), chain);
         brewing.registerReagent();
         Bukkit.getPluginManager().registerEvents(brewing, plugin);
         Bukkit.getScheduler().runTaskTimer(plugin, brewing::tick, STEP_TICKS, STEP_TICKS);
@@ -212,14 +219,15 @@ public final class LabBrewing implements Listener {
 
     private void finish(Block block, BrewingStand stand, BrewerInventory inventory) {
         ItemStack cane = inventory.getIngredient();
-        int used = 0;
-        int slot = firstEmptyOutput(inventory, 0);
+        LabData[] slots = new LabData[3];
+        for (int i = 0; i < 3; i++) slots[i] = LabSlots.read(inventory.getItem(i));
         // one sugar cane per free output slot, and only as many slots as there is cane
-        while (slot >= 0 && cane != null && used < cane.getAmount()) {
-            inventory.setItem(slot, placeholderResult());
-            used++;
-            slot = firstEmptyOutput(inventory, slot + 1);
+        LabChain.Brew brew = chain.brew(null, cane == null ? 0 : cane.getAmount(), slots,
+                ThreadLocalRandom.current());
+        for (int i = 0; i < 3; i++) {
+            if (brew.rolled()[i]) inventory.setItem(i, LabSlots.toItem(brew.slots()[i]));
         }
+        int used = brew.used();
         if (cane != null) {
             cane.setAmount(cane.getAmount() - used);
             inventory.setIngredient(cane.getAmount() > 0 ? cane : null);
@@ -229,13 +237,6 @@ public final class LabBrewing implements Listener {
         stand.update(true, false);
         log("finish", block, "slots=" + used);
         showProgress(block, new BrewState(settings.brewTicks()));
-    }
-
-    /** TEMPORARY: any harmless vanilla item. Group 5 replaces this with the real roll. */
-    private static ItemStack placeholderResult() {
-        ItemStack item = new ItemStack(Material.STICK);
-        item.editMeta(meta -> meta.setItemName("Lab-Platzhalter"));
-        return item;
     }
 
     private static boolean isCane(ItemStack item) {
