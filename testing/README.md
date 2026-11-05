@@ -202,6 +202,14 @@ Item-Stände vor und nach jedem Verkauf. Das Teamkonto lässt sich nicht per Kon
 antwortet nicht“ geht mit `kill -STOP` auf den Launcher-Prozess für wenige Sekunden, danach `kill -CONT`;
 nie `kill -9`. Neustart-Szenarien nur über `netstop` und `netstart`.
 
+### Shop-Skin (Survival)
+`testing/shop-skin/recipe.sh` druckt die Schritte als Checkliste (es prüft nichts selbst und endet mit
+Exit 2). Gebraucht werden ein Konto im Team und eins ohne Team. Vorher Tag setzen, Mob-Spawn aus, Resistenz,
+und die Blöcke um den Händler wegräumen, sonst setzt ein Rechtsklick mit Block den Block, statt die Figur zu
+treffen. Nach Neustart und Chunk-Reload die Figuren zählen (`execute if entity @e[type=mannequin,distance=..6]`
+über `testing/clients/con`): erwartet ist genau eine. „Skin entfernt, Chunk lädt später“ braucht einen
+entladenen Chunk beim Ändern und ist im Rezept beschrieben. `netstart` nur mit JDK 25 in `JAVA_HOME` und `PATH`.
+
 ### Team-Farbe (Survival, /cteam)
 `/cteam create Name TAG`, `/cteam` → Farb-Knopf (Wolle) → jede Farbe hat ihre Wolle, die aktuelle trägt
 „✔ Aktuelle Farbe“; der Team-Tag im Chat erscheint in der Farbe.
