@@ -61,7 +61,9 @@ public final class LabConsume implements Listener {
     /** Registers consuming, and the check that starts due crashes. */
     public static void init(Plugin plugin, LabSettings settings) {
         LabConsumeState state = new LabConsumeState(plugin);
-        LabConsume consume = new LabConsume(plugin, settings, state, player -> false);
+        LabCombat combat = new LabCombat(settings, state);
+        LabConsume consume = new LabConsume(plugin, settings, state, combat::inCombat);
+        Bukkit.getPluginManager().registerEvents(combat, plugin);
         Bukkit.getPluginManager().registerEvents(consume, plugin);
         Bukkit.getScheduler().runTaskTimer(plugin, consume::startDueCrashes, 20L, 20L);
     }
