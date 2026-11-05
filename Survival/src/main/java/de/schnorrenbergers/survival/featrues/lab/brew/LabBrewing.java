@@ -66,10 +66,9 @@ public final class LabBrewing implements Listener {
         this.progressKey = new NamespacedKey(plugin, "lab_brew_progress");
     }
 
-    /** Starts lab brewing: the reagent recipe, the listeners, the tick, and the stands already loaded. */
-    public static LabBrewing init(JavaPlugin plugin) {
+    /** Starts lab brewing with the one shared {@code LabSettings}: the reagent recipe, the listeners, the tick, and the stands already loaded. */
+    public static LabBrewing init(JavaPlugin plugin, LabSettings labSettings) {
         File file = new File("./configs/lab.yml");
-        LabSettings labSettings = new LabSettings(file, plugin.getLogger());
         LabChain chain = LabChain.of(labSettings);
         BrewSettings brewSettings = new BrewSettings(file, plugin.getLogger());
         LabUpgradeReader upgrades = new LabUpgradeReader(plugin);

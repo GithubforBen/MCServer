@@ -107,7 +107,16 @@ public final class Survival extends JavaPlugin {
         new CommandListener();
         new AntiEndListener();
         new EndListener();
-        de.schnorrenbergers.survival.featrues.lab.brew.LabBrewing.init(this);
+        // one LabSettings for the whole lab, so configs/lab.yml is read once
+        de.schnorrenbergers.survival.featrues.lab.LabSettings labSettings =
+                new de.schnorrenbergers.survival.featrues.lab.LabSettings(
+                        new java.io.File("./configs/lab.yml"), getLogger());
+        de.schnorrenbergers.survival.featrues.lab.item.LabItemListeners.init(this);
+        de.schnorrenbergers.survival.featrues.lab.craft.LabCrafting.init(this);
+        de.schnorrenbergers.survival.featrues.lab.brew.LabBrewing.init(this, labSettings);
+        de.schnorrenbergers.survival.featrues.lab.consume.LabConsume.init(this, labSettings);
+        PluginCommands.register(this, "labor",
+                new de.schnorrenbergers.survival.featrues.lab.LabCommand(labSettings));
     }
 
     @Override
