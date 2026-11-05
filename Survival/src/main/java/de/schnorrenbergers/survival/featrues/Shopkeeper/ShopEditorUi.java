@@ -4,6 +4,7 @@ import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.ItemAction;
 import de.hems.paper.customInventory.types.SimpleItemAction;
+import de.hems.paper.util.ChatPrompt;
 import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
 import org.bukkit.ChatColor;
@@ -74,7 +75,45 @@ public final class ShopEditorUi {
         inventory.setItem(14, new ItemApi(Material.DIAMOND, ChatColor.AQUA + "Gegenstände bearbeiten",
                         List.of(ChatColor.GRAY + "Angebote, Preise und Mengen")).build(),
                 SimpleItemAction.opens(() -> offers(shop, 1)));
+        skinButton(inventory, shop);
         return inventory;
+    }
+
+    /**
+     * The skin button: shows the current skin and asks for a player name in chat.
+     */
+    private static void skinButton(CustomInventory inventory, Shopkeeper shop) {
+        String skin = shop.getSkin();
+        inventory.setItem(16, new ItemApi(Material.PLAYER_HEAD, ChatColor.LIGHT_PURPLE + "Skin ändern",
+                        List.of(ChatColor.GRAY + "Aktuell: " + (skin == null ? "keiner (Dorfbewohner)" : skin),
+                                ChatColor.GRAY + "Danach den Spielernamen in den Chat schreiben",
+                                ChatColor.DARK_GRAY + "'aus' entfernt den Skin")).build(),
+                new SimpleItemAction(event -> askSkin(event, shop)));
+    }
+
+    private static void askSkin(InventoryClickEvent event, Shopkeeper shop) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        ChatPrompt.ask(player, "Schreibe den Spielernamen, dessen Skin der Shop tragen soll ('aus' entfernt den Skin).",
+                answer -> {
+                    SkinName.Result result = SkinName.parse(answer);
+                    if (result.kind() == SkinName.Kind.CANCEL) return;
+                    // the team may have changed while the player was typing
+                    if (!ShopOwnership.owns(player, shop)) {
+                        player.sendMessage(ChatColor.RED + "Dieser Shop gehört nicht mehr deinem Team.");
+                        return;
+                    }
+                    switch (result.kind()) {
+                        case NAME -> {
+                            shop.setSkin(result.name());
+                            player.sendMessage(ChatColor.GREEN + "Der Shop trägt jetzt den Skin von " + result.name() + ".");
+                        }
+                        case REMOVE -> {
+                            shop.setSkin(null);
+                            player.sendMessage(ChatColor.GREEN + "Der Skin wurde entfernt, der Shop ist wieder ein Dorfbewohner.");
+                        }
+                        default -> player.sendMessage(ChatColor.RED + "Das ist kein gültiger Spielername. Der Skin bleibt, wie er war.");
+                    }
+                });
     }
 
     /**
