@@ -199,7 +199,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 8.1 Write effect tables and the combat cap as pure code with `LabConsumeCheck`
+- [x] 8.1 Write effect tables and the combat cap as pure code with `LabConsumeCheck`
   - Done when: `LabConsumeCheck` runs and exits 0
 - [ ] 8.2 Consume on right click, with cooldown and crash, surviving a relog
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-consumption#logging-out-does-not-skip-it` is proven in task 10.1
