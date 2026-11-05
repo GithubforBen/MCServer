@@ -17,6 +17,10 @@ public class ItemForSale {
     private int sold;
     /** The stock seen the last time the chest was reachable, so an unloaded shop can still be listed. */
     private int lastKnownStock;
+    /** Whether the shop also buys this offer back; off for every new and every older offer. */
+    private boolean buyback;
+    /** What the shop pays per lot; null until a price was set, so 0 stays a valid price. */
+    private Integer buybackPrice;
 
     public ItemForSale(ItemStack item, int price) {
         this(item, price, 0);
@@ -86,5 +90,34 @@ public class ItemForSale {
 
     public void setLastKnownStock(int lastKnownStock) {
         this.lastKnownStock = lastKnownStock;
+    }
+
+    public boolean isBuyback() {
+        return buyback;
+    }
+
+    /** Switches buyback on or off; the first time it goes on, the price is preset from the sale price. */
+    public void setBuyback(boolean buyback) {
+        if (buyback && buybackPrice == null) buybackPrice = price;
+        this.buyback = buyback;
+    }
+
+    public int getBuybackPrice() {
+        return buybackPrice == null ? 0 : buybackPrice;
+    }
+
+    /** @return whether a buyback price was ever set, even if buyback is off now */
+    public boolean hasBuybackPrice() {
+        return buybackPrice != null;
+    }
+
+    public void setBuybackPrice(int buybackPrice) {
+        this.buybackPrice = buybackPrice;
+    }
+
+    /** Restores stored buyback values as they are, without the preset. */
+    void restoreBuyback(boolean buyback, Integer buybackPrice) {
+        this.buyback = buyback;
+        this.buybackPrice = buybackPrice;
     }
 }

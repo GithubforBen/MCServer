@@ -21,6 +21,8 @@ public class ChangeBalanceEvent extends EventFoundationData implements Event, Se
     private int delta;
     private boolean requireCover;
     private String reason;
+    /** Epoch millis after which the launcher must drop the request, {@code 0} for never. */
+    private long deadline;
 
     public ChangeBalanceEvent() {
     }
@@ -37,6 +39,28 @@ public class ChangeBalanceEvent extends EventFoundationData implements Event, Se
         this.delta = delta;
         this.requireCover = requireCover;
         this.reason = reason;
+    }
+
+    /**
+     * Like the other constructor, but the launcher drops the request once the deadline has passed.
+     *
+     * @param deadline epoch millis after which nobody waits for the answer any more
+     */
+    public ChangeBalanceEvent(String holder, int delta, boolean requireCover, String reason, long deadline) {
+        this(holder, delta, requireCover, reason);
+        this.deadline = deadline;
+    }
+
+    public long getDeadline() {
+        return deadline;
+    }
+
+    /**
+     * @param now epoch millis
+     * @return whether the request has a deadline and it is over; no deadline never expires
+     */
+    public boolean isExpired(long now) {
+        return deadline > 0 && now > deadline;
     }
 
     public String getHolder() {

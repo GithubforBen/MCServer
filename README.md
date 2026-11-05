@@ -900,6 +900,28 @@ Team und Chunk passen. Rechtsklick auf den Händler öffnet den Laden,
 Schleich-Rechtsklick für das Team die Einstellungen: Kiste wechseln, Händler versetzen, Angebote, Preise
 und Mengen. `/shop` öffnet den Marktplatz über alle Shops.
 
+**Rückkauf.** Ein Angebot kann auch Ware zurückkaufen: Wer einen Diamantblock hat und ein Angebot
+„Diamantblock für 900 Bits“ findet, bekommt mit Rechtsklick darauf Bits für den Block. Das Team schaltet
+das pro Angebot in den Einstellungen ein, **ab Werk ist es aus**, bestehende Shops ändern sich nicht.
+Der Rückkaufpreis ist ein eigener Preis (0 bis 1.000.000 Bits); beim Einschalten steht er auf dem
+Verkaufspreis, das Team kann ihn ändern, und spätere Änderungen am Verkaufspreis lassen ihn in Ruhe.
+Bezahlt wird vom Teamkonto, die Ware landet in der Lagerkiste, es entstehen keine neuen Bits. Pro Klick
+geht ein Los (die Menge des Angebots), nur Items, die dem Angebots-Item genau gleichen (umbenannt oder
+verzaubert zählt nicht). Reicht das Teamkonto nicht oder ist die Kiste voll, lehnt der Shop mit einer
+Meldung ab und nichts wechselt den Besitzer; antwortet der Launcher nicht, bekommt der Spieler die Ware
+zurück. Auch Teammitglieder dürfen an den eigenen Shop verkaufen, ein einzelnes Mitglied kann das Teamkonto
+also über einen hohen Preis leerräumen. Linksklick kauft wie bisher. Der Marktplatz zeigt je Eintrag den
+höchsten Rückkaufpreis pro Item, die Angebotsliste den Preis je Angebot, und ein Rechtsklick dort verkauft
+ebenfalls.
+
+**Skin.** Ein Händler kann statt des Villagers eine Spielerfigur sein, mit dem Skin eines Minecraft-Kontos
+wie bei den Lobby-NPCs (ein Villager kann keinen Skin tragen, die Figur ist eine Schaufensterpuppe).
+Das Team setzt ihn in den Einstellungen mit dem Spielerkopf-Knopf und tippt danach den Spielernamen in den
+Chat (3 bis 16 Buchstaben, Ziffern oder Unterstriche). `aus` entfernt den Skin, `abbrechen` lässt alles
+wie es ist; ein ungültiger Name wird abgelehnt. Ein Konto, das es nicht gibt, zeigt das Standardaussehen.
+Die Figur öffnet dieselben Menüs, ist unverwundbar, steht still und lässt sich versetzen. Händler ohne Skin
+bleiben Villager, auch bestehende Shops ändern sich nicht.
+
 | Klasse | Aufgabe |
 |--------|---------|
 | `Shopkeeper` | Ein Shop: Villager, Lager, Verkauf - sonst nichts |

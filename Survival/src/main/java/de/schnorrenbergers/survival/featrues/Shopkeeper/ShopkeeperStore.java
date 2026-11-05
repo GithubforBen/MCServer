@@ -19,8 +19,8 @@ import java.util.logging.Logger;
  * shopkeepers:
  *   ids: [&lt;uuid&gt;, ...]
  *   &lt;uuid&gt;:
- *     name, ownerTeam, location.shop, location.chest
- *     items: { size: n, "[0]": { item, price, sold, stock }, ... }
+ *     name, ownerTeam, location.shop, location.chest, skin (optional)
+ *     items: { size: n, "[0]": { item, price, sold, stock, buyback.enabled, buyback.price }, ... }
  * </pre>
  */
 public final class ShopkeeperStore {
@@ -55,7 +55,7 @@ public final class ShopkeeperStore {
                 continue;
             }
             shops.add(new Shopkeeper(uuid, section.getString("name"), shop, section.getLocation("location.chest"),
-                    section.getString("ownerTeam"), readOffers(section.getConfigurationSection("items"))));
+                    section.getString("ownerTeam"), readOffers(section.getConfigurationSection("items")), section.getString("skin")));
         }
         return shops;
     }
@@ -70,6 +70,8 @@ public final class ShopkeeperStore {
             ItemForSale offer = new ItemForSale(entry.getItemStack("item"), entry.getInt("price"),
                     entry.getInt("sold", 0));
             offer.setLastKnownStock(entry.getInt("stock", 0));
+            offer.restoreBuyback(entry.getBoolean("buyback.enabled", false),
+                    entry.contains("buyback.price") ? entry.getInt("buyback.price") : null);
             // an offer without an item cannot be drawn or bought, and would break every view it appears in
             if (offer.isValid()) offers.add(offer);
         }
@@ -102,6 +104,8 @@ public final class ShopkeeperStore {
         config.set(path + "location.chest", shop.getChest());
         config.set(path + "ownerTeam", shop.getOwnerTeam());
         config.set(path + "name", shop.getName());
+        // null removes the key, so a shop without a skin saves as before
+        config.set(path + "skin", shop.getSkin());
         // an offer that was taken out must not stay behind under its old index
         config.set(path + "items", null);
         List<ItemForSale> items = shop.getItems();
@@ -112,6 +116,11 @@ public final class ShopkeeperStore {
             config.set(item + "price", offer.getPrice());
             config.set(item + "sold", offer.getSold());
             config.set(item + "stock", offer.getLastKnownStock());
+            // only offers that ever had buyback get the keys, so older shops save as before
+            if (offer.hasBuybackPrice()) {
+                config.set(item + "buyback.enabled", offer.isBuyback());
+                config.set(item + "buyback.price", offer.getBuybackPrice());
+            }
         }
         config.set(path + "items.size", items.size());
     }
