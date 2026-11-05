@@ -37,7 +37,7 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 2.1 Write `testing/lab-brewing/proof/recipe.sh`, a checklist that prints numbered steps and exits 2, with a `spec: lab-brewing#<scenario>` comment at the step that exercises each scenario of group 1
+- [x] 2.1 Write `testing/lab-brewing/proof/recipe.sh`, a checklist that prints numbered steps and exits 2, with a `spec: lab-brewing#<scenario>` comment at the step that exercises each scenario of group 1
   - Done when: `specfold trace --change lab-brewing` lists none of group 1's scenarios as uncovered
 - [ ] 2.2 The orchestrator, not an implementer, runs the proof recipe on a local server: chunk unload, repeated reloads with many stands, restart, `kill -9`, breaking, taking the ingredient, hopper in from above, progress arrow
   - Done when: every case was seen working, or the failure is reported to the user with the glass bottle fallback as the question
