@@ -93,11 +93,37 @@ public final class LabChainCheck {
         LabChain.Brew full = chain.brew(null, 64, new LabData[]{p1, p2, LabChain.OCCUPIED}, new Random(12));
         check("no free slot uses no cane", full.used(), 0);
 
+        average(chain);
+
         if (failed > 0) {
             System.out.println(failed + " checks failed");
             System.exit(1);
         }
         System.out.println("LabChainCheck ok");
+    }
+
+    /** One cane per item, items walk the whole chain; counts the cane per Kokain of purity 5. */
+    // spec: lab-brewing#simulated-average
+    private static void average(LabChain chain) {
+        Random random = new Random(20261105L);
+        long cane = 100_000_000L;
+        long kokain = 0;
+        LabData feen = LabData.of(LabKind.FEENSTAUB);
+        for (long c = 0; c < cane; c++) {
+            if (LabChain.roll(chain.caneYield(), random) != LabChain.Roll.GOODS) continue;
+            LabData item = LabChain.caneGoods();
+            boolean alive = true;
+            while (alive && item.purity() < 5) {
+                LabData filter = LabData.of(FILTERS[item.purity() - 1]);
+                alive = LabChain.roll(chain.chances(filter, item), random) == LabChain.Roll.GOODS;
+                if (alive) item = chain.goods(filter, item).orElseThrow();
+            }
+            if (!alive) continue;
+            if (LabChain.roll(chain.chances(feen, item), random) == LabChain.Roll.GOODS) kokain++;
+        }
+        double perKokain = cane / (double) kokain;
+        System.out.println("kokain=" + kokain + " cane per kokain=" + perKokain);
+        check("average between 19000 and 21000", perKokain > 19_000 && perKokain < 21_000, true);
     }
 
     private static void near(String what, double actual, double expected) {

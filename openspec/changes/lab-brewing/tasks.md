@@ -116,7 +116,7 @@ agent: implementer
 
 - [x] 5.1 Write the step table and rolling as pure code with `LabChainCheck`
   - Done when: `LabChainCheck` runs and exits 0
-- [ ] 5.2 Prove the chain's average with a seeded simulation
+- [x] 5.2 Prove the chain's average with a seeded simulation
   - Done when: `lab-brewing#simulated-average` passes in `LabChainCheck`
 - [ ] 5.3 Connect sugar cane to the own tick
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#three-empty-slots` is proven in task 10.1
