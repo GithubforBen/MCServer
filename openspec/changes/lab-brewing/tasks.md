@@ -122,7 +122,7 @@ agent: implementer
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#three-empty-slots` is proven in task 10.1
 - [x] 5.4 Run purifying and Kokain through `BrewingRecipe` and `BrewEvent`
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabChainCheck` still exits 0; `lab-brewing#matching-filter` is proven in task 10.1
-- [ ] 5.5 Apply the hopper rule to all steps
+- [x] 5.5 Apply the hopper rule to all steps
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#automatic-purification` is proven in task 10.1
 
 ## 6. Upgrades

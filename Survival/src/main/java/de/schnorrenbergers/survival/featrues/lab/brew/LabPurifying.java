@@ -46,6 +46,12 @@ final class LabPurifying implements Listener {
     static void init(JavaPlugin plugin, LabChain chain, BrewSettings settings) {
         LabPurifying purifying = new LabPurifying(plugin, chain, settings);
         purifying.registerRecipes();
+        // the hopper rule: a bottom item stays while the top ingredient is a valid step for it
+        StepRule.rule = (ingredient, item) -> {
+            LabData top = LabItems.read(ingredient).orElse(null);
+            LabData bottom = LabItems.read(item).orElse(null);
+            return chain.isStep(top, bottom);
+        };
         Bukkit.getPluginManager().registerEvents(purifying, plugin);
     }
 
