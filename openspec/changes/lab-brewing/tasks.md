@@ -129,6 +129,9 @@ agent: implementer
 
 ```yaml
 files:
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/**
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/chain/**
+  - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/chain/**
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/upgrade/**
   - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/upgrade/**
 depends: [5]
@@ -152,9 +155,12 @@ agent: implementer
 
 ```yaml
 files:
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/**
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/chain/**
+  - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/chain/**
   - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/cutting/**
   - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/cutting/**
-depends: [5]
+depends: [6]
 scenarios:
   - lab-cutting#adding-an-effect
   - lab-cutting#fourth-ingredient
