@@ -224,7 +224,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 9.1 Add `/labor` with the tree
+- [x] 9.1 Add `/labor` with the tree
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#asking-for-the-tree` is proven in task 10.1
 - [ ] 9.2 Document the lab in the README, the player info and `testing/README.md`
   - Done when: all three describe the feature

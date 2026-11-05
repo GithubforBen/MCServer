@@ -108,6 +108,9 @@ public final class Survival extends JavaPlugin {
         new AntiEndListener();
         new EndListener();
         de.schnorrenbergers.survival.featrues.lab.brew.LabBrewing.init(this);
+        PluginCommands.register(this, "labor", new de.schnorrenbergers.survival.featrues.lab.LabCommand(
+                new de.schnorrenbergers.survival.featrues.lab.LabSettings(
+                        new java.io.File("./configs/lab.yml"), getLogger())));
     }
 
     @Override

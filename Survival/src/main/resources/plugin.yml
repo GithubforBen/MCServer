@@ -60,6 +60,9 @@ commands:
   verify:
     description: Deinen Discord-Account verknüpfen und nachschauen, wer wer ist
     usage: /verify <code> | /verify wer <spieler>
+  labor:
+    description: Zeigt, wie man im Braustand aus Zuckerrohr Kokain herstellt
+    usage: /labor
 permissions:
   network.lotto.admin:
     description: Das Lotto ziehen und Preis und Termin einstellen
