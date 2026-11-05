@@ -75,6 +75,7 @@ public final class LabBrewing implements Listener {
         LabUpgradeReader upgrades = new LabUpgradeReader(plugin);
         LabBrewing brewing = new LabBrewing(plugin, brewSettings, labSettings, chain, upgrades);
         LabPurifying.init(plugin, chain, brewSettings, labSettings, upgrades);
+        LabCutBrewing.init(plugin, brewSettings, labSettings, upgrades);
         Bukkit.getPluginManager().registerEvents(new LabFuel(labSettings, upgrades), plugin);
         brewing.registerReagent();
         Bukkit.getPluginManager().registerEvents(brewing, plugin);
