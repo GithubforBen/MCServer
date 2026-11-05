@@ -228,7 +228,7 @@ agent: implementer
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; `lab-brewing#asking-for-the-tree` is proven in task 10.1
 - [x] 9.2 Document the lab in the README, the player info and `testing/README.md`
   - Done when: all three describe the feature
-- [ ] 9.3 Write `testing/lab-brewing/recipe.sh`, a checklist that prints numbered steps and exits 2, with a `spec: <capability>#<scenario>` comment for every scenario no check file covers
+- [x] 9.3 Write `testing/lab-brewing/recipe.sh`, a checklist that prints numbered steps and exits 2, with a `spec: <capability>#<scenario>` comment for every scenario no check file covers
   - Done when: `specfold trace --change lab-brewing` reports 0 uncovered
 - [ ] 9.4 Wire every lab `init` that is not yet called, such as `LabItemListeners.init`, into `Survival.java`, with one shared `LabSettings`
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and each lab listener is registered once
