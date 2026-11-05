@@ -63,6 +63,9 @@ commands:
   labor:
     description: Zeigt, wie man im Braustand aus Zuckerrohr Kokain herstellt
     usage: /labor
+  signitem:
+    description: Signiert den Stapel in deiner Hand mit deinem Namen, endgültig und kostenlos
+    usage: /signItem
 permissions:
   network.lotto.admin:
     description: Das Lotto ziehen und Preis und Termin einstellen
