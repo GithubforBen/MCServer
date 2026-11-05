@@ -8,6 +8,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.BrewingStand;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -20,6 +21,7 @@ import org.bukkit.inventory.BrewingRecipe;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.view.BrewingStandView;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -37,6 +39,7 @@ import java.util.Set;
 public final class LabBrewing implements Listener {
 
     private static final int STEP_TICKS = 20;
+    private static final int VANILLA_BREW_TICKS = 400;
 
     private final JavaPlugin plugin;
     private final BrewSettings settings;
@@ -117,6 +120,12 @@ public final class LabBrewing implements Listener {
 
     @EventHandler
     public void onMove(InventoryMoveItemEvent event) {
+        // a hopper below may take results out, unless the ingredient on top still works on them
+        if (event.getSource() instanceof BrewerInventory source
+                && StepRule.isValidStep(source.getIngredient(), event.getItem())) {
+            event.setCancelled(true);
+            return;
+        }
         watch(event.getDestination());
     }
 
@@ -178,6 +187,7 @@ public final class LabBrewing implements Listener {
             }
             case RUNNING -> {
                 store(stand, brew);
+                showProgress(block, brew);
             }
             case RESET -> {
                 log("reset", block, "ingredient gone");
@@ -212,6 +222,7 @@ public final class LabBrewing implements Listener {
         stand.getPersistentDataContainer().remove(progressKey);
         stand.update(true, false);
         log("finish", block, "slots=" + used);
+        showProgress(block, new BrewState(settings.brewTicks()));
     }
 
     /** TEMPORARY: any harmless vanilla item. Group 5 replaces this with the real roll. */
@@ -231,6 +242,22 @@ public final class LabBrewing implements Listener {
             if (item == null || item.getType().isAir()) return i;
         }
         return -1;
+    }
+
+    /**
+     * Vanilla sets its own brew time to zero for a stand it cannot brew, so the arrow is pushed to
+     * everyone who has the stand open. It counts down from the recipe time, like vanilla's.
+     */
+    private void showProgress(Block block, BrewState brew) {
+        if (!(block.getState(false) instanceof BrewingStand stand)) return;
+        int remaining = brew.isRunning()
+                ? (int) Math.round(VANILLA_BREW_TICKS * (1 - brew.fraction())) : 0;
+        for (HumanEntity viewer : stand.getInventory().getViewers()) {
+            if (viewer.getOpenInventory() instanceof BrewingStandView view) {
+                view.setRecipeBrewTime(VANILLA_BREW_TICKS);
+                view.setBrewingTicks(remaining);
+            }
+        }
     }
 
     private void log(String what, Block block, String detail) {
