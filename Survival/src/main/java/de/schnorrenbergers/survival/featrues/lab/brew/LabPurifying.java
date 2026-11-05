@@ -119,6 +119,7 @@ final class LabPurifying implements Listener {
         BrewerInventory inventory = event.getContents();
         LabData top = LabItems.read(inventory.getIngredient()).orElse(null);
         if (top == null || !isReagent(top.kind())) return; // anything without lab items stays vanilla
+        if (LabSlots.signed(inventory.getIngredient())) return; // a signed reagent takes no part
         LabData[] slots = new LabData[3];
         for (int i = 0; i < 3; i++) slots[i] = LabSlots.read(inventory.getItem(i));
         LabUpgrades used = LabUpgrades.NONE;
