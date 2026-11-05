@@ -10,5 +10,6 @@ public final class LabCrafting {
 
     public static void init(Plugin plugin) {
         LabRecipes.init(plugin);
+        LabCraftGuard.init(plugin);
     }
 }
