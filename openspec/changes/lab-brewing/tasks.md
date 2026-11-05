@@ -148,7 +148,7 @@ agent: implementer
 
 - [x] 6.1 Compute chances from upgrades as pure code with `LabUpgradeCheck`, including the 6,400 average
   - Done when: `LabUpgradeCheck` runs and exits 0
-- [ ] 6.2 Read the blocks around a stand when a brew starts
+- [x] 6.2 Read the blocks around a stand when a brew starts
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabUpgradeCheck` still exits 0; `lab-upgrades#water-cauldron-raises-the-yield` is proven in task 10.1
 
 ## 7. Cutting
