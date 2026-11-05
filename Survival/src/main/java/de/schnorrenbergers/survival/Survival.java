@@ -107,6 +107,7 @@ public final class Survival extends JavaPlugin {
         new CommandListener();
         new AntiEndListener();
         new EndListener();
+        de.schnorrenbergers.survival.featrues.lab.brew.LabBrewing.init(this);
     }
 
     @Override
