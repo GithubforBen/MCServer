@@ -124,7 +124,7 @@ agent: implementer
   - Done when: `trace --change item-signing` reports 0 uncovered and `InfoTextCheck` passes
 - [x] 6.3 Knowledge: `capabilities/item-signing.md` names `SignedCraftGuard` for smithing, fixes the sentence about Brigadier, and adds the new stations; `domain/signature.md` says identical under the same name
   - Done when: `specfold validate` exits 0
-- [ ] 6.4 The orchestrator sees in game: crafting table with signed planks and an unsigned counter-check, smithing table, stonecutter, grindstone and potion brewing
+- [x] 6.4 The orchestrator sees in game: crafting table with signed planks and an unsigned counter-check, smithing table, stonecutter, grindstone and potion brewing
   - Done when: each is recorded in `testing/item-signing/results-2026-11-06.md`
 - [x] 6.5 A signed item cannot get into the ingredient (top) slot of a brewing stand by click, shift-click, drag or hopper, because a cancelled brew restarts every 20 seconds and burns fuel each time (seen in game: fuel 16 to 15)
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
