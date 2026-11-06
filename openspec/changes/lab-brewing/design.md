@@ -20,6 +20,7 @@ Minecraft 26.3 brews through data-driven `minecraft:brewing` recipes. `BrewingSt
 - **Empty slots hold.** The own tick passed a real server run: unload, restart, `kill -9` with the item balance kept, breaking, removing the ingredient, eight stands reloading. Results: `testing/lab-brewing/proof/results-2026-11-05.md`. A stand stays in the active set after a finish while it can brew, and an item leaving it wakes it too.
 - **Lab items are pottery sherds** with an `item_model`, one sherd type per kind (`LabMaterials`), because sherds have no brewing, smelting or eating use and cannot be placed. Their one vanilla use, the decorated pot, is blocked by the crafting group.
 - **Purifying uses nine exact recipes** (`ExactChoice` input and reagent per filter tier and Feenstaub per purity), so a plain sherd never brews. Cutting cannot enumerate effect combinations the same way and needs a broader input with the check in the `BrewEvent` handler.
+- **Progress arrow by packet.** Vanilla resets the brew time of a stand it cannot brew every tick, and the Bukkit view setters write that same value, so the own-tick path sends the arrow as a container data packet to each viewer, by reflection with Mojang names (`LabArrow`). A Minecraft update can break that reflection; the arrow then switches itself off with "Lab: progress arrow disabled" and brewing goes on.
 - **One settings instance.** `configs/lab.yml` is read by `BrewSettings` and `LabSettings`; task 9.4 wires one shared instance.
 
 ## Risks and the first task

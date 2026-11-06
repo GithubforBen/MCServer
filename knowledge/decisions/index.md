@@ -4,7 +4,8 @@
 * [Gadgets sind nie ein Spielvorteil und liegen in einem Slot pro Server](gadget-choices.md) - Warum die 18 Gadgets pro Server getrennt ausgewählt werden und warum Bedwars keine Gadgets einschaltet.
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/LabCommand.java:16
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/BrewState.java:7
-  * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabBrewing.java:44
+  * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabArrow.java:24
+  * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabBrewing.java:42
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabCutBrewing.java:34
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabPurifying.java:33
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/chain/LabChain.java:15
