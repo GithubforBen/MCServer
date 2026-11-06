@@ -130,7 +130,7 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 7.1 Run the recipe on a local network with real clients
+- [x] 7.1 Run the recipe on a local network with real clients
   - Done when: every scenario of `shop-buyback` was seen working in game, or the failure is reported
 
 ## 8. Knowledge
