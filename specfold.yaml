@@ -1,5 +1,5 @@
 # Specfold settings for this repository. Upgrades keep your values; see the kit docs for every key.
-kit_version: 0.3.1          # set by `specfold upgrade` x-release-please-version
+kit_version: 0.4.0          # set by `specfold upgrade` x-release-please-version
 profile_version: 1
 channel: stable
 
@@ -97,3 +97,15 @@ trace:
 # Extra commands per git hook, run after Specfold's own checks.
 hooks:
   extra: {}
+
+# What agents may do without asking: allow, ask or deny per action. force-push,
+# delete-remote-branch and push-tags must be at least as strict as push.
+# After a change: node scripts/specfold.mjs permissions sync, then commit .claude/settings.json.
+permissions:
+  push: allow
+  force-push: ask
+  delete-remote-branch: ask
+  push-tags: ask
+  open-pr: allow
+  merge-pr: allow
+  close-pr: ask

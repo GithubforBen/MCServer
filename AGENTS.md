@@ -38,6 +38,8 @@ Every behavior change is an OpenSpec change using the `specfold` schema: brief, 
 3. **Check:** `node scripts/specfold.mjs change check <change>` and `openspec validate --all --strict`.
 4. **Archive:** `/opsx:archive` (or `openspec archive <change>`), then skill `sf-sync` (`node scripts/specfold.mjs sync <change>`) in the same PR.
 
+Before an action set to `ask` under `permissions` in `specfold.yaml` (push, force-push, delete a remote branch, push tags, open, merge or close a PR), ask the user; never take one set to `deny`.
+
 OpenSpec must be installed, on the PATH or in `node_modules/.bin`; `node scripts/specfold.mjs doctor` checks the version.
 
 ## 6. When OpenSpec is not needed
