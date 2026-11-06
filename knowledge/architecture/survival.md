@@ -19,6 +19,8 @@ Shops können einen Spieler-Skin tragen und stehen dann als `Mannequin` statt al
 
 Survival enthält außerdem das Labor (`featrues/lab/`): eine Produktionskette im Braustand von Zuckerrohr bis Kokain mit Upgrades, Schneiden, Konsum und dem Befehl `/labor`, als Zusatz ohne Wirkung auf Spieler, die nicht mitmachen. Siehe [Labor: Brauen](/capabilities/lab-brewing.md).
 
+Spieler können Items mit `/signItem` signieren (`featrues/signing/`); signierte Ware wird nirgends als Zutat verbraucht und von Shops als eigene Ware gehandelt. Siehe [Items signieren](/capabilities/item-signing.md).
+
 # Interfaces
 
 - [Netzwerk-Events](/architecture/network-events.md)
@@ -28,5 +30,6 @@ Survival enthält außerdem das Labor (`featrues/lab/`): eine Produktionskette i
 - [Shop-Rückkauf](/capabilities/shop-buyback.md)
 - [Shop-Skin](/capabilities/shop-skin.md)
 - [Labor: Brauen](/capabilities/lab-brewing.md)
+- [Items signieren](/capabilities/item-signing.md)
 - [Bits](/domain/bits.md)
 - [Rucksack-Plugin](/architecture/backpack.md)
