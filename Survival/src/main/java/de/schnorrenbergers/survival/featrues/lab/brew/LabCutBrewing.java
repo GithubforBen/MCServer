@@ -65,7 +65,7 @@ final class LabCutBrewing implements Listener {
     }
 
     private static boolean isStep(Ingredient ingredient, ItemStack item) {
-        return LabItems.read(item).map(data -> LabCutting.isStep(ingredient, data)).orElse(false);
+        return LabItems.read(item).map(data -> LabCutting.isStep(ingredient, data, item.getAmount(), item.getMaxStackSize())).orElse(false);
     }
 
     private void registerRecipes() {
@@ -126,7 +126,7 @@ final class LabCutBrewing implements Listener {
             ItemStack before = inventory.getItem(i);
             LabData data = LabItems.read(before).orElse(null);
             if (data == null) continue; // not Kokain or paste: vanilla's own result stays
-            LabCutting.Result cut = LabCutting.apply(ingredient, data).orElse(null);
+            LabCutting.Result cut = LabCutting.apply(ingredient, data, before.getAmount(), before.getMaxStackSize()).orElse(null);
             results.set(i, cut == null ? before.clone() : LabItems.create(cut.data(), cut.amount()));
         }
     }

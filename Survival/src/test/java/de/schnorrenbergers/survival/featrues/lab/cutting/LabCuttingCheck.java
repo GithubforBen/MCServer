@@ -59,6 +59,18 @@ public final class LabCuttingCheck {
         check("stretch keeps effects", keeps.data().effects(), Set.of(LabEffect.NIGHT_VISION));
         check("stretched differs from plain", stretch.data().equals(LabData.of(LabKind.KOKAIN, 3)), false);
 
+        // a slot of three stretched Kokain keeps all three when an effect is cut in
+        check("3 stretched cut stay 3", LabCutting.apply(Ingredient.GOLDEN_CARROT, stretch.data(), 3, 64)
+                .orElseThrow().amount(), 3);
+        check("2 unstretched stretch to 6", LabCutting.apply(Ingredient.SUGAR, LabData.of(LabKind.KOKAIN, 4), 2, 64)
+                .orElseThrow().amount(), 6);
+        check("21 stretch to 63", LabCutting.apply(Ingredient.SUGAR, LabData.of(LabKind.KOKAIN, 4), 21, 64)
+                .orElseThrow().amount(), 63);
+        check("22 do not fit a stack, no step", LabCutting.apply(Ingredient.SUGAR, LabData.of(LabKind.KOKAIN, 4), 22, 64),
+                Optional.empty());
+        check("22 not a step", LabCutting.isStep(Ingredient.SUGAR, LabData.of(LabKind.KOKAIN, 4), 22, 64), false);
+        check("full stack still takes an effect", LabCutting.isStep(Ingredient.GOLDEN_CARROT, k3, 64, 64), true);
+
         // spec: lab-cutting#no-second-stretch
         check("second stretch", LabCutting.apply(Ingredient.SUGAR, stretch.data()), Optional.empty());
 
