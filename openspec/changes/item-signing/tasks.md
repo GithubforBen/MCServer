@@ -23,7 +23,7 @@ agent: implementer
   - Done when: `SigningRulesCheck` runs and exits 0
 - [x] 1.2 Add `/signItem` writing the signature and the lore line
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
-- [ ] 1.3 Accept `/signItem` in any letter case; the in-game run found that only `/signitem` worked
+- [x] 1.3 Accept `/signItem` in any letter case; the in-game run found that only `/signitem` worked
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes; the case rule has a pure check; the game run shows `/signItem` working
 
 ## 2. Keep signed items out of recipes
