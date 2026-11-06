@@ -3,6 +3,9 @@ type: Capability
 title: Items signieren
 description: "Warum Spieler Items signieren können und warum signierte Ware nie verbraucht wird."
 status: draft
+spec: openspec/specs/item-signing/spec.md
+resource: ../../openspec/specs/item-signing/spec.md
+change: 2026-11-06-item-signing
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T18:50:27+01:00 }
 sources:
   - id: rules
@@ -23,6 +26,10 @@ sources:
     resource: ../../README.md
   - id: results
     resource: ../../testing/item-signing/results-2026-11-06.md
+  - id: proposal-2026-11-06-item-signing
+    resource: ../../openspec/changes/archive/2026-11-06-item-signing/proposal.md
+  - id: design-2026-11-06-item-signing
+    resource: ../../openspec/changes/archive/2026-11-06-item-signing/design.md
 ---
 
 # Why

@@ -5,6 +5,7 @@
 * **Change**: 2026-11-06-shop-buyback: created 2, updated 2, deprecated 0
 * **Change**: 2026-11-06-shop-skin: created 2, updated 1, deprecated 0
 * **Change**: 2026-11-06-lab-brewing: created 7, updated 1, deprecated 0
+* **Change**: 2026-11-06-item-signing: created 2, updated 1, deprecated 0
 
 ## 2026-11-02
 
