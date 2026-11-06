@@ -27,7 +27,7 @@ Im Shop-Editor, den nur das besitzende Team erreicht, fragt der Skin-Knopf per C
 
 `Shopkeeper` hält ein `LivingEntity`; ob Villager oder Mannequin, folgt allein aus `skin`. Das Mannequin trägt dieselbe `SHOP_ID`, ist unverwundbar, ohne KI, lautlos, nicht schiebbar und zeigt den Shop-Namen wie der Villager (ohne Beschreibungszeile). Menüs, Editor und Verschieben laufen wie bisher. Ändert sich der Skin, tauscht `setSkin` die Figur sofort aus, bei entladenem Chunk beim nächsten Laden. Warum das Mannequin übernommen statt neu aufgebaut wird: [Shop-Mannequins werden übernommen](/decisions/shop-mannequin-lifecycle.md).
 
-Im Spiel wurden alle Szenarien gesehen (Lauf vom 2026-11-06), auch Neustart und Chunk-Nachladen mit genau einer Figur. Offen geblieben: mit dem Namen `Notch` erschien ein Alex-artiger Skin, ob das sein echter ist, ist nicht geklärt; `LongRangeMissile` zeigte den echten Skin.
+Im Spiel wurden alle Szenarien gesehen (Lauf vom 2026-11-06), auch Neustart und Chunk-Nachladen mit genau einer Figur und Skinwechsel, während der Chunk des Shops entladen war. Mit `Notch` trägt der Händler Notchs echten Skin; ein früherer "Alex"-Eindruck kam von der Rückansicht.
 
 # Related
 
