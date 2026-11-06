@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /**
  * Decides what {@code /signItem} does with the stack in the hand. No Bukkit types, so it can be checked
- * with a plain main. see knowledge: /conventions/code-comments.md
+ * with a plain main. see knowledge: /capabilities/item-signing.md
  */
 public final class SigningRules {
 
