@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * Cutting and stretching of Kokain, with no server in it. An effect ingredient adds its effect, sugar
  * turns one item into three of one purity lower. Both always succeed; what cannot be done is no step.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /capabilities/lab-cutting.md
  */
 public final class LabCutting {
 

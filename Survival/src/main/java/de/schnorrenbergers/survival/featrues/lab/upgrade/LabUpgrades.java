@@ -5,7 +5,7 @@ import de.schnorrenbergers.survival.featrues.lab.LabSettings.Yield;
 
 /**
  * Which upgrades a stand has and what they do, with no server in it. Each type counts once, however
- * many blocks of it stand within reach. see knowledge: /decisions/gadget-choices.md
+ * many blocks of it stand within reach. see knowledge: /capabilities/lab-upgrades.md
  *
  * @param water        a cauldron holding water: raises the goods chance
  * @param amethyst     an amethyst block: raises the goods chance

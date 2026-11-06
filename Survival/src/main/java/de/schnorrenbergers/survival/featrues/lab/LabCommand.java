@@ -13,7 +13,7 @@ import java.util.Locale;
 
 /**
  * {@code /labor}: the production tree in chat, from sugar cane to Kokain. Every number is read from the
- * settings, so the text follows {@code configs/lab.yml}. see knowledge: /decisions/gadget-choices.md
+ * settings, so the text follows {@code configs/lab.yml}. see knowledge: /capabilities/lab-brewing.md
  */
 public final class LabCommand implements CommandExecutor {
 

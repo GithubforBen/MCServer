@@ -4,7 +4,7 @@ package de.schnorrenbergers.survival.featrues.lab.brew;
  * The progress of one brew on one stand, without any Minecraft in it.
  * <p>
  * Time only moves when {@link #advance} is called, so a paused stand (chunk unloaded) costs nothing and
- * a fake clock drives it in {@code LabBrewCheck}. see knowledge: /decisions/gadget-choices.md
+ * a fake clock drives it in {@code LabBrewCheck}. see knowledge: /decisions/lab-brewing-engine.md
  */
 public final class BrewState {
 

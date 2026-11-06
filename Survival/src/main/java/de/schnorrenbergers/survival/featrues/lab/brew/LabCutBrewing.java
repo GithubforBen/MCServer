@@ -31,7 +31,7 @@ import java.util.function.Predicate;
  * ingredient whose input matches only Kokain the ingredient is a valid step for, so vanilla starts no brew
  * for any other item. The {@link BrewEvent} handler replaces what vanilla would produce, and only for
  * Kokain slots: a vanilla potion brew with the same ingredient stays vanilla.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /capabilities/lab-cutting.md
  */
 final class LabCutBrewing implements Listener {
 

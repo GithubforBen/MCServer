@@ -39,7 +39,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Brewing without bottles: sugar cane on top of a stand with empty bottom slots, run by our own tick
  * because vanilla never brews on empty slots. Progress lives in the block, so unloading, restarts and
  * crashes need no separate save. Every start, finish, pause and resume is logged with the position.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /decisions/lab-brewing-engine.md
  */
 public final class LabBrewing implements Listener {
 
