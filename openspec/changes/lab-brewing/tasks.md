@@ -293,6 +293,8 @@ agent: implementer
   - Done when: `LabUpgradeCheck` asserts fuel power for a non-default `fuel.brews-per-item` with and without a smoker, and passes
 - [x] 12.4 Item names in README, `spieler.md` and `/labor` match the German client: Feuerkugel, Goldene Karotte, Goldklumpen, Glowstonestaub
   - Done when: no old name is left (`grep -nE 'Feuerball|Goldkarotte|Goldnugget|Glowstone-Staub'` finds nothing in those files) and `InfoTextCheck` passes
+- [x] 12.5 README and `spieler.md` say that a line without players needs a redstone item filter the player builds, because the bottom hopper takes paste or Kokain out unchanged when its filter or ingredient is not on top yet (decided by the user: the hopper rule stays)
+  - Done when: both files say so and `InfoTextCheck` passes
 
 ## Workflow follow-up
 

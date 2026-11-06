@@ -957,8 +957,10 @@ Schritt in der Beschreibung.
 - **Herstellen:** 3 Papier ergeben 8 Papierfilter, Kohlefilter aus Papierfilter und Holzkohle,
   Seidenfilter aus Kohlefilter und 4 Fäden, Goldfilter aus Seidenfilter und 8 Goldklumpen.
 - **Trichter:** Oben nehmen Zutaten, Filter und Feenstaub, seitlich Paste und Brennstoff. Ein Trichter
-  darunter holt Ergebnisse und Abfall heraus, aber nichts, was oben noch ein gültiger Schritt wäre. Damit
-  läuft die ganze Linie ohne Spieler.
+  darunter holt Ergebnisse und Abfall heraus, aber nichts, was oben noch ein gültiger Schritt wäre. Liegt
+  Paste oder Kokain unten, bevor der passende Filter oder die Zutat oben ist, holt der untere Trichter es
+  unverändert heraus. Für eine Linie ganz ohne Spieler baut man deshalb selbst einen Itemfilter aus
+  Redstone, der den Braustand in der richtigen Reihenfolge füttert.
 - **Abfall:** Pflanzenabfall sieht aus wie ein toter Busch, lässt sich nicht platzieren und blockiert
   seinen Slot, bis jemand ihn herausnimmt. Er wird nicht gewürfelt und muss aussortiert werden.
 - **Upgrades:** Vanilla-Blöcke bis zwei Felder um den Stand, jeder Typ zählt einmal. Wasserkessel und
