@@ -33,7 +33,7 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 2.1 README, `testing/`, `Bedwars/PLAN.md` and the current specs name the new packages and paths
+- [x] 2.1 README, `testing/`, `Bedwars/PLAN.md` and the current specs name the new packages and paths
   - Done when: `openspec validate --all --strict` passes and no old package name is left in these files
 
 ## 3. In-game check
@@ -46,7 +46,7 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 3.1 The orchestrator starts the local network: launcher, proxy, Lobby and Survival start with all plugins enabled, a client joins, warps to Survival and opens a shop
+- [x] 3.1 The orchestrator starts the local network: launcher, proxy, Lobby and Survival start with all plugins enabled, a client joins, warps to Survival and opens a shop
   - Done when: the result is recorded in `testing/package-rename/results-2026-11-06.md`
 
 ## 4. Knowledge
