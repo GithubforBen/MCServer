@@ -80,7 +80,7 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 4.1 Run the recipe on a local network with real clients, including a restart
+- [x] 4.1 Run the recipe on a local network with real clients, including a restart
   - Done when: every scenario of `shop-skin` was seen working in game, or the failure is reported
 
 ## 5. Knowledge
