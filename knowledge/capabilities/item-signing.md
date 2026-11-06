@@ -9,19 +9,19 @@ change: 2026-11-06-item-signing
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T18:50:27+01:00 }
 sources:
   - id: rules
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/SigningRules.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/signing/SigningRules.java
   - id: command
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/SignItemCommand.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/signing/SignItemCommand.java
   - id: case
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/SignItemCaseListener.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/signing/SignItemCaseListener.java
   - id: craft-guard
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/guard/SignedCraftGuard.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/signing/guard/SignedCraftGuard.java
   - id: smelt-guard
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/guard/SignedSmeltAnvilGuard.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/signing/guard/SignedSmeltAnvilGuard.java
   - id: station-guard
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/guard/SignedStationGuard.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/signing/guard/SignedStationGuard.java
   - id: lab-cut
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabCutBrewing.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/lab/brew/LabCutBrewing.java
   - id: readme
     resource: ../../README.md
   - id: results

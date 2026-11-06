@@ -6,7 +6,7 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-02T22:20:03+01:00 }
 sources:
   - id: service
-    resource: ../../CommonCode/src/main/java/de/hems/paper/money/MoneyService.java
+    resource: ../../CommonCode/src/main/java/com/benschnorr/paper/money/MoneyService.java
   - id: readme
     resource: ../../README.md
 ---

@@ -1,6 +1,6 @@
 name: LobbyPlugin
 version: '1.0-SNAPSHOT'
-main: de.schnorrenbergers.lobby.LobbyPlugin
+main: com.benschnorr.lobby.LobbyPlugin
 api-version: '26.3'
 softdepend: [CoreProtect]
 commands:

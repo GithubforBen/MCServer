@@ -83,7 +83,7 @@ if [ ! -f "$JAR" ] || yes_no "Es gibt schon einen Build. Neu bauen?" no; then
   ./mvnw -B clean install package || { echo "Der Build ist fehlgeschlagen."; exit 1; }
 fi
 
-"$JAVA_BIN" -cp "$JAR" de.hems.setup.Installer || exit 1
+"$JAVA_BIN" -cp "$JAR" com.benschnorr.setup.Installer || exit 1
 
 if pgrep -f "java -jar $JAR" >/dev/null; then
   echo "Das Netzwerk läuft schon in der tmux-Session '$SESSION_NAME'. Die neuen Einstellungen gelten nach"

@@ -12,9 +12,9 @@ sources:
   - id: design
     resource: ../../openspec/changes/archive/2026-11-06-shop-buyback/design.md
   - id: money
-    resource: ../../CommonCode/src/main/java/de/hems/paper/money/MoneyService.java
+    resource: ../../CommonCode/src/main/java/com/benschnorr/paper/money/MoneyService.java
   - id: events
-    resource: ../../ServerLauncherApplication/src/main/java/de/hems/events/MoneyEvents.java
+    resource: ../../ServerLauncherApplication/src/main/java/com/benschnorr/events/MoneyEvents.java
 ---
 
 # Decision

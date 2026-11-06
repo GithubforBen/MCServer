@@ -6,9 +6,9 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-02T22:20:02+01:00 }
 sources:
   - id: data
-    resource: ../../CommonCode/src/main/java/de/hems/types/event/RunData.java
+    resource: ../../CommonCode/src/main/java/com/benschnorr/types/event/RunData.java
   - id: tracker
-    resource: ../../RunPlugin/src/main/java/de/schnorrenbergers/run/RunTracker.java
+    resource: ../../RunPlugin/src/main/java/com/benschnorr/run/RunTracker.java
 ---
 
 # Meaning

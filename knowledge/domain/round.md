@@ -6,7 +6,7 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-02T22:20:02+01:00 }
 sources:
   - id: data
-    resource: ../../CommonCode/src/main/java/de/hems/types/round/RoundData.java
+    resource: ../../CommonCode/src/main/java/com/benschnorr/types/round/RoundData.java
   - id: readme
     resource: ../../README.md
 ---

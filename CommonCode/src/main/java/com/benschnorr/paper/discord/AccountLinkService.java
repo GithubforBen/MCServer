@@ -1,0 +1,168 @@
+package com.benschnorr.paper.discord;
+
+import com.benschnorr.paper.NetworkSync;
+import com.benschnorr.communication.ListenerAdapter;
+import com.benschnorr.communication.events.discord.AccountLinkUpdatedEvent;
+import com.benschnorr.communication.events.discord.ConfirmAccountLinkEvent;
+import com.benschnorr.communication.events.discord.RequestAccountLinksEvent;
+import com.benschnorr.communication.events.discord.RespondAccountLinkEvent;
+import com.benschnorr.communication.events.types.RespondDataEvent;
+import com.benschnorr.paper.PaperContext;
+import com.benschnorr.types.discord.AccountLink;
+import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+
+/**
+ * Who is who, as seen from a game server.
+ * <p>
+ * Same shape as the other services: the launcher owns the links, this keeps a copy that is kept current by
+ * announcements, and the one write there is - handing in a code - goes to the launcher and waits for its
+ * answer, because a link that was not accepted must not be shown as one.
+ */
+public final class AccountLinkService {
+
+    private static final Duration TIMEOUT = Duration.ofSeconds(5);
+    private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
+
+    private static final Map<UUID, AccountLink> links = new ConcurrentHashMap<>();
+    private static volatile boolean loaded = false;
+    private static boolean initialized = false;
+
+    private AccountLinkService() {
+    }
+
+    /**
+     * Starts keeping the local copy up to date.
+     *
+     * @param plugin the plugin the background work belongs to
+     */
+    public static synchronized void init(Plugin plugin) {
+        if (initialized) return;
+        initialized = true;
+        PaperContext.setPlugin(plugin);
+        ListenerAdapter.register(AccountLinkUpdatedEvent.class, event -> {
+            AccountLinkUpdatedEvent updated = (AccountLinkUpdatedEvent) event;
+            if (updated.getMinecraftId() == null) return;
+            if (updated.isRemoved()) {
+                links.remove(updated.getMinecraftId());
+                return;
+            }
+            links.put(updated.getMinecraftId(), updated.getLink());
+        });
+        NetworkSync.keepFresh(plugin, AccountLinkService::refreshBlocking, () -> loaded, REFRESH_INTERVAL_TICKS);
+    }
+
+    public static boolean isLoaded() {
+        return loaded;
+    }
+
+    /**
+     * @param player a minecraft account
+     * @return the discord account behind it, or {@code null} when it has never been linked
+     */
+    public static @Nullable AccountLink of(UUID player) {
+        return player == null ? null : links.get(player);
+    }
+
+    /**
+     * Looks a link up by minecraft name, for somebody who is not online to be asked for their uuid.
+     *
+     * @param name a minecraft name, in any capitalisation
+     * @return the link, or {@code null}
+     */
+    public static @Nullable AccountLink byName(String name) {
+        if (name == null) return null;
+        String wanted = name.toLowerCase(Locale.ROOT);
+        for (AccountLink link : links.values()) {
+            if (link.getMinecraftName() != null
+                    && link.getMinecraftName().toLowerCase(Locale.ROOT).equals(wanted)) {
+                return link;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return every link the launcher knows
+     */
+    public static List<AccountLink> all() {
+        return new ArrayList<>(links.values());
+    }
+
+    /**
+     * Hands a code in and waits for the launcher to say whether it was right.
+     *
+     * @param player  who is typing it
+     * @param name    their name, so the link can carry it
+     * @param code    the code they were given on discord
+     * @param callback what to do with the answer, on the main thread
+     */
+    public static void confirmAsync(UUID player, String name, String code, Consumer<Result> callback) {
+        if (!PaperContext.hasPlugin()) return;
+        PaperContext.async(() -> {
+            Result result = confirmBlocking(player, name, code);
+            if (callback == null) return;
+            PaperContext.sync(() -> callback.accept(result));
+        });
+    }
+
+    /**
+     * Hands a code in. Blocks, so it must not run on the main thread.
+     *
+     * @param player who is typing it
+     * @param name   their name
+     * @param code   the code
+     * @return what the launcher made of it
+     */
+    public static Result confirmBlocking(UUID player, String name, String code) {
+        ConfirmAccountLinkEvent request = new ConfirmAccountLinkEvent(player, name, code);
+        RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
+        if (!(response instanceof RespondAccountLinkEvent answer)) {
+            return new Result(false, "Der Host antwortet nicht.", null);
+        }
+        AccountLink link = response.getData() instanceof AccountLink stored ? stored : null;
+        if (answer.isSuccessful() && link != null) links.put(link.getMinecraftId(), link);
+        return new Result(answer.isSuccessful(), answer.getMessage(), link);
+    }
+
+    /**
+     * What became of a code.
+     *
+     * @param successful whether the accounts are now linked
+     * @param message    what to tell the player
+     * @param link       the link, when there is one
+     */
+    public record Result(boolean successful, String message, @Nullable AccountLink link) {
+    }
+
+    public static void refreshAsync() {
+        if (!PaperContext.hasPlugin()) return;
+        PaperContext.async(AccountLinkService::refreshBlocking);
+    }
+
+    /**
+     * Fetches every link. Blocks, so it must not run on the main thread.
+     */
+    public static void refreshBlocking() {
+        RequestAccountLinksEvent request = new RequestAccountLinksEvent();
+        List<AccountLink> list = NetworkSync.fetchList(request, TIMEOUT, AccountLink.class);
+        if (list == null) return;
+        Map<UUID, AccountLink> fresh = new ConcurrentHashMap<>();
+        for (AccountLink link : list) {
+            if (link.getMinecraftId() != null) {
+                fresh.put(link.getMinecraftId(), link);
+            }
+        }
+        NetworkSync.replace(links, fresh);
+        loaded = true;
+    }
+}

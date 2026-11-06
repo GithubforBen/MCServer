@@ -6,9 +6,9 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T18:50:27+01:00 }
 sources:
   - id: rules
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/SigningRules.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/signing/SigningRules.java
   - id: command
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/SignItemCommand.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/signing/SignItemCommand.java
   - id: readme
     resource: ../../README.md
 ---

@@ -1,5 +1,5 @@
-import de.hems.communication.ListenerAdapter;
-import de.hems.communication.events.configs.PayingPlayersChangedEvent;
+import com.benschnorr.communication.ListenerAdapter;
+import com.benschnorr.communication.events.configs.PayingPlayersChangedEvent;
 import java.util.List;
 public class PaySend {
     public static void main(String[] a) throws Exception {

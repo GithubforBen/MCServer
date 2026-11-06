@@ -1,0 +1,128 @@
+package com.benschnorr.events;
+
+import com.benschnorr.communication.ListenerAdapter;
+import com.benschnorr.communication.events.cosmetic.BuyCosmeticEvent;
+import com.benschnorr.communication.events.cosmetic.CosmeticUpdatedEvent;
+import com.benschnorr.communication.events.cosmetic.PlayerCosmeticsUpdatedEvent;
+import com.benschnorr.communication.events.cosmetic.RequestCosmeticsEvent;
+import com.benschnorr.communication.events.cosmetic.RequestPlayerCosmeticsEvent;
+import com.benschnorr.communication.events.cosmetic.RespondCosmeticBuyEvent;
+import com.benschnorr.communication.events.cosmetic.RespondCosmeticsEvent;
+import com.benschnorr.communication.events.cosmetic.RespondPlayerCosmeticsEvent;
+import com.benschnorr.communication.events.cosmetic.SaveCosmeticEvent;
+import com.benschnorr.communication.events.cosmetic.SelectCosmeticEvent;
+import com.benschnorr.communication.events.money.BalanceUpdatedEvent;
+import com.benschnorr.types.cosmetic.CosmeticData;
+import com.benschnorr.types.cosmetic.CosmeticPurchase;
+import com.benschnorr.types.cosmetic.PlayerCosmetics;
+import com.benschnorr.types.money.BalanceResult;
+import com.benschnorr.utils.cosmetic.CosmeticStore;
+import com.benschnorr.utils.money.MoneyStore;
+
+import java.util.UUID;
+
+/**
+ * Serves the cosmetics, and sells them.
+ * <p>
+ * Selling belongs here and nowhere else. The price, the bits and the ownership are all things the launcher
+ * owns, so a purchase is one method under one lock: read the price, take the money, hand the cosmetic over.
+ * Split across two servers it would be three round trips with two places to fail halfway, and halfway means
+ * somebody paid for nothing.
+ */
+public class CosmeticEvents {
+
+    private final CosmeticStore cosmetics;
+    private final MoneyStore money;
+
+    public CosmeticEvents(CosmeticStore cosmetics, MoneyStore money) {
+        this.cosmetics = cosmetics;
+        this.money = money;
+        ListenerAdapter.register(RequestCosmeticsEvent.class, event -> onRequest((RequestCosmeticsEvent) event));
+        ListenerAdapter.register(RequestPlayerCosmeticsEvent.class,
+                event -> onPlayerRequest((RequestPlayerCosmeticsEvent) event));
+        ListenerAdapter.register(SaveCosmeticEvent.class, event -> onSave((SaveCosmeticEvent) event));
+        ListenerAdapter.register(BuyCosmeticEvent.class, event -> onBuy((BuyCosmeticEvent) event));
+        ListenerAdapter.register(SelectCosmeticEvent.class, event -> onSelect((SelectCosmeticEvent) event));
+    }
+
+    private void onRequest(RequestCosmeticsEvent request) throws Exception {
+        ListenerAdapter.sendListeners(new RespondCosmeticsEvent(
+                request.getSender(), cosmetics.snapshot(!request.isCatalogOnly()), request.getEventId()));
+    }
+
+    /**
+     * Answers what one player owns, which is what a game server asks when they walk in.
+     */
+    private void onPlayerRequest(RequestPlayerCosmeticsEvent request) throws Exception {
+        UUID player = request.getPlayerId();
+        if (player == null) return;
+        ListenerAdapter.sendListeners(new RespondPlayerCosmeticsEvent(
+                request.getSender(), cosmetics.snapshotOf(player), request.getEventId()));
+    }
+
+    private void onSave(SaveCosmeticEvent request) throws Exception {
+        CosmeticData stored = cosmetics.put(request.getCosmetic());
+        if (stored == null) return;
+        ListenerAdapter.sendListeners(new CosmeticUpdatedEvent(stored.copy()));
+        System.out.println("Cosmetic " + stored.getId() + ": " + (stored.isEnabled() ? "on" : "off")
+                + ", " + (stored.isBuyable() ? "for sale at " + stored.getPriceBits() + " bits" : "not for sale"));
+    }
+
+    /**
+     * Takes the money and hands the cosmetic over, in that order and under one lock.
+     */
+    private synchronized void onBuy(BuyCosmeticEvent request) throws Exception {
+        UUID player = request.getPlayerId();
+        String id = request.getCosmeticId();
+        String account = player == null ? null : player.toString();
+        int balance = money.get(account);
+
+        CosmeticData cosmetic = cosmetics.get(id);
+        if (player == null || cosmetic == null) {
+            respond(request, CosmeticPurchase.failed(id, balance, "Dieses Cosmetic gibt es nicht."));
+            return;
+        }
+        if (!cosmetic.isEnabled()) {
+            respond(request, CosmeticPurchase.failed(id, balance, "Dieses Cosmetic ist gerade abgeschaltet."));
+            return;
+        }
+        if (!cosmetic.isBuyable()) {
+            respond(request, CosmeticPurchase.failed(id, balance, "Dieses Cosmetic steht nicht zum Verkauf."));
+            return;
+        }
+        if (cosmetics.owns(player, id)) {
+            respond(request, CosmeticPurchase.failed(id, balance, "Du hast das schon."));
+            return;
+        }
+        int price = cosmetic.getPriceBits();
+        if (price > 0) {
+            BalanceResult paid = money.change(account, -price, true);
+            if (!paid.isSuccessful()) {
+                respond(request, CosmeticPurchase.failed(id, paid.getBalance(), paid.getMessage()));
+                return;
+            }
+            balance = paid.getBalance();
+            ListenerAdapter.sendListeners(new BalanceUpdatedEvent(account, balance));
+        }
+        PlayerCosmetics owned = cosmetics.grant(player, id);
+        respond(request, CosmeticPurchase.ok(id, price, balance));
+        ListenerAdapter.sendListeners(new PlayerCosmeticsUpdatedEvent(owned.copy()));
+        System.out.println("Cosmetic " + id + " sold to " + player + " for " + price + " bits.");
+    }
+
+    private void respond(BuyCosmeticEvent request, CosmeticPurchase purchase) throws Exception {
+        ListenerAdapter.sendListeners(new RespondCosmeticBuyEvent(
+                request.getSender(), purchase, request.getEventId()));
+    }
+
+    private void onSelect(SelectCosmeticEvent request) throws Exception {
+        PlayerCosmetics updated = cosmetics.select(
+                request.getPlayerId(), request.getType(), request.getSlot(), request.getCosmeticId());
+        if (updated == null) return;
+        ListenerAdapter.sendListeners(new PlayerCosmeticsUpdatedEvent(updated.copy()));
+    }
+
+    public CosmeticStore getCosmetics() {
+        return cosmetics;
+    }
+}

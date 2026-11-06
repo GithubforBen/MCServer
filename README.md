@@ -24,7 +24,7 @@ Gebaut wird weiter gegen die API von 24.1 aus Maven; alles, was der Code davon a
 unverändert (API-Version 13, mit dem 25.0-Jar kompiliert). Geprüft auf Paper 26.3 Build 134 und 140: startet,
 `/co status` antwortet, fährt sauber herunter.
 
-**Unsere Plugins schreiben selbst nach CoreProtect** (`de.hems.paper.CoreProtectLog`), wo sie die
+**Unsere Plugins schreiben selbst nach CoreProtect** (`com.benschnorr.paper.CoreProtectLog`), wo sie die
 Welt an CoreProtect vorbei ändern: der Shop-Kauf nimmt Items aus der Lagerkiste (steht unter dem Käufer),
 der Erntehelfer pflanzt neu (unter dem Spieler, die Ernte selbst loggt CoreProtect über das
 `BlockBreakEvent`). Geprüft auf Paper 26.3 mit 25.0: `/co lookup` zeigt beide Einträge. Bedwars-,
@@ -37,7 +37,7 @@ bleibt, setzt `database-type: sqlite` in `plugins/CoreProtect/config.yml`. Beim 
 die DuckDB-Bibliothek von Maven Central nach.
 
 Paper braucht **Java 25** - sowohl zum Bauen als auch zum Starten. Die Downloads stehen alle in
-`CommonCode/src/main/java/de/hems/types/FileType.java`, ein Update ist also ein Update dieser einen Datei
+`CommonCode/src/main/java/com/benschnorr/types/FileType.java`, ein Update ist also ein Update dieser einen Datei
 (plus `paper-api` in den poms und `api-version` in den `plugin.yml`).
 
 ### Backup vor einem Versionswechsel
@@ -167,7 +167,7 @@ verfügbaren Plugins lassen sich frei an- und abwählen.
 
 ## API
 
-Dieselben Aktionen gibt es programmatisch über `de.hems.api.ServerApi`, damit z.B. Events automatisch
+Dieselben Aktionen gibt es programmatisch über `com.benschnorr.api.ServerApi`, damit z.B. Events automatisch
 erstellt werden können:
 
 ```java
@@ -192,7 +192,7 @@ ServerApi.restartServer("SURVIVAL");
 `listServers()`, `isRunning()` und `freeName()` warten auf die Antwort des Hosts, gehören also nicht in den
 Main-Thread - dafür gibt es `listServersAsync()` bzw. `PaperContext.async(...)`.
 
-Vorlagen (`de.hems.types.ServerTemplate`) legen Software, Standard-RAM und die Pflichtplugins fest;
+Vorlagen (`com.benschnorr.types.ServerTemplate`) legen Software, Standard-RAM und die Pflichtplugins fest;
 `ServerTemplate.resolvePlugins(...)` mischt sie mit der freien Auswahl.
 
 ## Admin Website
@@ -704,7 +704,7 @@ wenn es vorbei ist, stoppt sich der Server über die `ServerApi` selbst.
 
 Die Runde läuft über eine Phasenmaschine (Warte-Lobby → Spiel → Ende) und **einen** wiederholenden
 Task. Alles, was passiert, wird zusätzlich als eigenes Bukkit-Event gefeuert
-(`de.schnorrenbergers.bedwars.api`) - das ist die einzige Stelle, an der Addons andocken.
+(`com.benschnorr.bedwars.api`) - das ist die einzige Stelle, an der Addons andocken.
 
 ### Configs
 
@@ -872,7 +872,7 @@ Server dazu wirklich läuft.
 
 ## Tabliste
 
-Jeder Server hat dieselbe Tabliste (`de.hems.paper.tablist.TabList`) mit dem Inhalt seines Spielmodus:
+Jeder Server hat dieselbe Tabliste (`com.benschnorr.paper.tablist.TabList`) mit dem Inhalt seines Spielmodus:
 
 - **Kopf:** Netzwerkname, Spielmodus in seiner Farbe, wie viele im ganzen Netzwerk online sind (alle
   10 Sekunden vom Proxy geholt) und wie viele davon hier.
@@ -1148,7 +1148,7 @@ an denen es auf halbem Weg schiefgehen kann, und auf halbem Weg heißt: bezahlt 
 
 Ein Cosmetic ist zwei Hälften, die sich über eine id treffen. Dem Launcher gehört die Hälfte, die
 eine Entscheidung ist (gibt es das, verkauft es sich, für wie viel), dem Spielserver die Hälfte, die
-Code ist. Ein neuer Effekt ist deshalb ein Eintrag in `de.hems.types.cosmetic.Cosmetics`, eine
+Code ist. Ein neuer Effekt ist deshalb ein Eintrag in `com.benschnorr.types.cosmetic.Cosmetics`, eine
 Klasse, die `WinEffect`, `KillEffect`, `TrailEffect` oder `Gadget` implementiert, und eine Zeile in
 `CosmeticEffects.init` - dazwischen darf jede Seite der anderen voraus sein. Im Verwalten-Menü steht
 bei jedem Eintrag, ob dieser Server Code dafür hat.
@@ -1338,7 +1338,7 @@ Hälfte davon wäre schlechter als nichts. Ein Cash Game benutzt alle Tische.
 
 ### Geprüft
 
-Die Regeln (`de.schnorrenbergers.poker.game`) enthalten nichts aus Bukkit. Sie zeichnen nichts und
+Die Regeln (`com.benschnorr.poker.game`) enthalten nichts aus Bukkit. Sie zeichnen nichts und
 verschicken nichts, sie melden über `TableEvents`, was passiert ist. Das ist kein Ordnungssinn: hier
 hängt echtes Geld dran, und Regeln, die man ohne Server laufen lassen kann, sind Regeln, die man
 nachprüfen kann. Vier Klassen mit `main` tun genau das:
@@ -1346,11 +1346,11 @@ nachprüfen kann. Vier Klassen mit `main` tun genau das:
 ```bash
 ./mvnw -q -pl PokerPlugin -am install -DskipTests
 CP=PokerPlugin/target/classes:PokerPlugin/target/test-classes
-java -cp $CP de.schnorrenbergers.poker.game.HandCheck        # 47 Prüfungen
-java -cp $CP de.schnorrenbergers.poker.game.TableCheck       # 38 Prüfungen
-java -cp $CP de.schnorrenbergers.poker.bot.BotBalanceCheck   # Bot gegen Maniac, Nit, Station
-java -cp $CP de.schnorrenbergers.poker.bot.BotTableCheck     # sechs Bots gegeneinander
-java -cp $CP de.schnorrenbergers.poker.bot.BotCharacterCheck # Spread, Mischung, Drift
+java -cp $CP com.benschnorr.poker.game.HandCheck        # 47 Prüfungen
+java -cp $CP com.benschnorr.poker.game.TableCheck       # 38 Prüfungen
+java -cp $CP com.benschnorr.poker.bot.BotBalanceCheck   # Bot gegen Maniac, Nit, Station
+java -cp $CP com.benschnorr.poker.bot.BotTableCheck     # sechs Bots gegeneinander
+java -cp $CP com.benschnorr.poker.bot.BotCharacterCheck # Spread, Mischung, Drift
 ```
 
 `HandCheck` prüft den Hand-Evaluator gegen die Fälle, die man normalerweise falsch macht: das Wheel
@@ -1644,7 +1644,7 @@ Die Tickets liegen in `tickets.yml` beim Launcher. Die alten Tickets aus der `ma
 danach aus der `main-config.yml` entfernt. Ist der Discord-Account des alten Autors verknüpft, bekommen
 sie auch seinen Minecraft-Namen.
 
-Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/ticket/TicketCheck.java` (Aufruf
+Geprüft mit `ServerLauncherApplication/src/test/java/com/benschnorr/utils/ticket/TicketCheck.java` (Aufruf
 steht in der Klasse, aus einem leeren Verzeichnis starten).
 
 **Ohne Discord:** Ein zweiter Rechner mit einer Kopie des Netzwerks (zum Testen) darf sich nicht mit
@@ -1690,7 +1690,7 @@ Discord zeigt keine Tabellen. Deshalb sind die Texte Listen, und pro Teil sind h
 möglich (längere werden an einem Absatz geteilt). Das Menü fasst höchstens 25 Teile.
 
 **Wer ein Feature baut, ergänzt den passenden Text.** Geprüft mit
-`ServerLauncherApplication/src/test/java/de/hems/utils/bot/info/InfoTextCheck.java` (Aufruf wie bei
+`ServerLauncherApplication/src/test/java/com/benschnorr/utils/bot/info/InfoTextCheck.java` (Aufruf wie bei
 `RewardCheck`, aus einem leeren Verzeichnis starten).
 
 ## Lobby-Schutz und Portal
@@ -1770,7 +1770,7 @@ jedem Start und nach dem Entladen seines Chunks neu hingestellt. Sein Platz steh
 Alles andere liegt in `lotto.yml` beim Launcher: Preis, Termin, Zeitzone (`settings.zone`), der Topf,
 die Tipps der laufenden Runde und die letzten 20 Ziehungen. Gezogen wird mit `SecureRandom`.
 
-Geprüft mit `ServerLauncherApplication/src/test/java/de/hems/utils/lotto/LottoCheck.java`.
+Geprüft mit `ServerLauncherApplication/src/test/java/com/benschnorr/utils/lotto/LottoCheck.java`.
 
 ## Module
 

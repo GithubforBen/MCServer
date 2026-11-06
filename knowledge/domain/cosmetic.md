@@ -6,7 +6,7 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-02T22:20:03+01:00 }
 sources:
   - id: types
-    resource: ../../CommonCode/src/main/java/de/hems/types/cosmetic/
+    resource: ../../CommonCode/src/main/java/com/benschnorr/types/cosmetic/
   - id: readme
     resource: ../../README.md
   - id: gadgets

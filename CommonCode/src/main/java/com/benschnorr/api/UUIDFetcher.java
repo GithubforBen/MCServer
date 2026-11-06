@@ -1,0 +1,100 @@
+package com.benschnorr.api;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.*;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class UUIDFetcher {
+    /**
+     * Names already looked up. A uuid never changes, and the account service turns lookups away when a
+     * launcher asks for the same few operators on every server start - so each name is asked for once.
+     */
+    private static final Map<String, UUID> BY_NAME = new ConcurrentHashMap<>();
+
+    private static String getApiReponse(String url, String jsonKey) {
+        try {
+            URI uri = new URI(url);
+            HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            connection.setRequestMethod("GET");
+            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(5000);
+            connection.connect();
+
+            if (connection.getResponseCode() != 200) {
+                return null;
+            }
+
+            InputStream inputStream = connection.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder response = new StringBuilder();
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+
+            reader.close();
+
+            JSONObject json = new JSONObject(response.toString());
+            return json.getString(jsonKey);
+
+        } catch (URISyntaxException | IOException | JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static String formatUUID(String raw) {
+        return raw.replaceFirst(
+                "(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})",
+                "$1-$2-$3-$4-$5"
+        );
+    }
+
+    public static String findNameByUUID(String uuid) {
+        try {
+            String apiEndPoint = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid.replace("-", "");
+            return getApiReponse(apiEndPoint, "name");
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String findNameByUUID(UUID uuid) {
+        return findNameByUUID(uuid.toString());
+    }
+
+    /**
+     * @param name            the minecraft name to look up
+     * @param returnFormatted kept for the callers that already pass it
+     * @return the uuid, or {@code null} if mojang does not know the name or can not be reached
+     */
+    public static UUID findUUIDByName(String name, boolean returnFormatted) {
+        String key = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        UUID known = BY_NAME.get(key);
+        if (known != null) return known;
+        try {
+            String apiEndPoint = "https://api.mojang.com/users/profiles/minecraft/" + name;
+            String raw = getApiReponse(apiEndPoint, "id");
+            // an unknown name and an unreachable api both end up here - neither is worth an exception
+            if (raw == null) return null;
+            UUID found = UUID.fromString(formatUUID(raw));
+            BY_NAME.put(key, found);
+            return found;
+        } catch (JSONException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}

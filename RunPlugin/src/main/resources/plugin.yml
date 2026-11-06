@@ -1,6 +1,6 @@
 name: RunPlugin
 version: '1.0-SNAPSHOT'
-main: de.schnorrenbergers.run.RunPlugin
+main: com.benschnorr.run.RunPlugin
 api-version: '26.3'
 softdepend: [CoreProtect]
 commands:

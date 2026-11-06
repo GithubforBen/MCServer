@@ -1,6 +1,6 @@
 name: HungerGamesPlugin
 version: '1.0-SNAPSHOT'
-main: de.schnorrenbergers.hungergames.HungerGamesPlugin
+main: com.benschnorr.hungergames.HungerGamesPlugin
 api-version: '26.3'
 softdepend: [CoreProtect]
 commands:

@@ -9,11 +9,11 @@ change: 2026-11-06-lab-brewing
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:48:32+01:00 }
 sources:
   - id: cutting
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/cutting/LabCutting.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/lab/cutting/LabCutting.java
   - id: cutbrew
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabCutBrewing.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/lab/brew/LabCutBrewing.java
   - id: check
-    resource: ../../Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/cutting/LabCuttingCheck.java
+    resource: ../../Survival/src/test/java/com/benschnorr/survival/featrues/lab/cutting/LabCuttingCheck.java
   - id: results
     resource: ../../testing/lab-brewing/results-2026-11-06.md
   - id: readme
