@@ -122,6 +122,7 @@ public final class Survival extends JavaPlugin {
         de.schnorrenbergers.survival.featrues.signing.SignItemCaseListener.init(this);
         de.schnorrenbergers.survival.featrues.signing.guard.SignedCraftGuard.init(this);
         de.schnorrenbergers.survival.featrues.signing.guard.SignedSmeltAnvilGuard.init(this);
+        de.schnorrenbergers.survival.featrues.signing.guard.SignedStationGuard.init(this);
     }
 
     @Override
