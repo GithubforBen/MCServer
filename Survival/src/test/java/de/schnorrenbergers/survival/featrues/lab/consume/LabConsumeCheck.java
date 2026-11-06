@@ -59,6 +59,24 @@ public final class LabConsumeCheck {
         check("crash due", LabConsumeRules.crashDue(10, 10), true);
         check("crash not due", LabConsumeRules.crashDue(11, 10), false);
 
+        // spec: lab-consumption#logging-out-does-not-skip-it, both join cases. Join with the crash not yet
+        // due: running effects (paused at 60 s) are set to the wall-clock rest, so they match the record
+        long end = 100_000;
+        long joinNow = 70_000;
+        int rest = LabConsumeRules.remainingTicks(end, joinNow);
+        check("rest ticks", rest, 600);
+        check("paused effect is shortened", LabConsumeRules.needsShortening(1200, end, joinNow), true);
+        check("fitting effect stays", LabConsumeRules.needsShortening(600, end, joinNow), false);
+        check("shortened effect is ours again",
+                LabConsumeRules.isOurs(2, joinNow + rest * 50L, 2, end, 2000), true);
+        check("paused effect was not ours", LabConsumeRules.isOurs(2, joinNow + 1200 * 50L, 2, end, 2000), false);
+        check("rest rounds up", LabConsumeRules.remainingTicks(end, end - 1), 1);
+        check("crash not due on join", LabConsumeRules.crashDue(end, joinNow), false);
+        // join with the crash already due: nothing is left to run, the effects end and the crash starts
+        check("no rest when due", LabConsumeRules.remainingTicks(end, end), 0);
+        check("no rest long after", LabConsumeRules.remainingTicks(end, end + 5000), 0);
+        check("crash due on join", LabConsumeRules.crashDue(end, end + 5000), true);
+
         if (failed > 0) {
             System.err.println(failed + " check(s) failed");
             System.exit(1);
