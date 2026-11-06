@@ -15,7 +15,7 @@ scenarios: []
 agent: implementer
 ```
 
-- [ ] 1.1 Move every package under `de.schnorrenbergers` and `de.hems` to `com.benschnorr` with `git mv`, and rewrite all references by script, including plugin mains, the launcher main class, scripts, probes and the Maven groupId
+- [x] 1.1 Move every package under `de.schnorrenbergers` and `de.hems` to `com.benschnorr` with `git mv`, and rewrite all references by script, including plugin mains, the launcher main class, scripts, probes and the Maven groupId
   - Done when: `./mvnw -B -q install -DskipTests` passes and no `de.hems` or `de.schnorrenbergers` is left outside `openspec/changes/archive/`
 - [x] 1.2 The existing check classes still pass under the new names
   - Done when: `LabBrewCheck`, `LabChainCheck`, `SigningRulesCheck`, `BuybackRulesCheck`, `SkinNameCheck` and `InfoTextCheck` exit 0

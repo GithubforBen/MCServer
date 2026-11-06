@@ -45,12 +45,12 @@ Beides wird in Phase 0 ersetzt, nicht geflickt.
 
 | Vorhanden | Wofür im Bedwars |
 |-----------|------------------|
-| `de.hems.paper.customInventory.CustomInventory` | Shop, Upgrade-Händler, Teamwahl, Kit-Auswahl, Addon-Menü |
-| `de.hems.api.ItemApi` | Alle Items inklusive Teamfarben und Lore |
-| `de.hems.api.ServerApi` | Debug-Command: Runden-Server erstellen, Zustand abfragen, am Ende stoppen |
-| `de.hems.paper.warp` | Spieler auf den frisch erstellten Server bringen |
-| `de.hems.paper.util.ChatPrompt` | Texteingaben im Setup (Map-Name, Anzeigename) |
-| `de.hems.paper.event.*` (Event-Branch) | Kalender, Warteschlange, Preisvergabe - siehe nächster Abschnitt |
+| `com.benschnorr.paper.customInventory.CustomInventory` | Shop, Upgrade-Händler, Teamwahl, Kit-Auswahl, Addon-Menü |
+| `com.benschnorr.api.ItemApi` | Alle Items inklusive Teamfarben und Lore |
+| `com.benschnorr.api.ServerApi` | Debug-Command: Runden-Server erstellen, Zustand abfragen, am Ende stoppen |
+| `com.benschnorr.paper.warp` | Spieler auf den frisch erstellten Server bringen |
+| `com.benschnorr.paper.util.ChatPrompt` | Texteingaben im Setup (Map-Name, Anzeigename) |
+| `com.benschnorr.paper.event.*` (Event-Branch) | Kalender, Warteschlange, Preisvergabe - siehe nächster Abschnitt |
 
 ## Anschluss an das Event-System
 
@@ -107,8 +107,8 @@ Nebenbei steht im `TODO.md` des Branches unter 1.5 offen: *"Eigene Lobby-Minispi
 Teilnehmerzahl und Preisen über einen kurzen Zeitraum - die Event-Typen dafür gibt es noch nicht."*
 Bedwars ist genau dieser fehlende Typ.
 
-**Eine Namenskollision vermeiden:** `de.hems.paper.event` sind die *Kalender*-Events des
-Netzwerks. Die Bukkit-Events des Bedwars-Plugins heißen deshalb `de.schnorrenbergers.bedwars.api`,
+**Eine Namenskollision vermeiden:** `com.benschnorr.paper.event` sind die *Kalender*-Events des
+Netzwerks. Die Bukkit-Events des Bedwars-Plugins heißen deshalb `com.benschnorr.bedwars.api`,
 nicht `...bedwars.event` - sonst steht in jeder Datei ein Import, der das Gegenteil von dem
 bedeutet, was er zu sagen scheint.
 
@@ -121,7 +121,7 @@ Zustand überschaubar: kein Arena-Register, keine Zuordnung Spieler → Arena, k
 Welt-Verwaltung zur Laufzeit.
 
 ```
-de.schnorrenbergers.bedwars
+com.benschnorr.bedwars
 ├── Bedwars.java                  Lifecycle, hängt alles zusammen
 ├── game/
 │   ├── Game.java                 der eine Spielzustand: Teams, Spieler, Map, Phase, Timeline

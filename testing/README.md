@@ -216,7 +216,7 @@ entladenen Chunk beim Ändern und ist im Rezept beschrieben. `netstart` nur mit 
 
 ### Discord-Infos (ohne Discord)
 `DiscordInfo.view(page, part)` ist package-private und lässt sich offline aufrufen: ein Testprogramm im Paket
-`de.hems.utils.bot.info` mit dem Launcher-Jar im Classpath prüft Zahl der Teile, Längen (≤ 4096 pro Text,
+`com.benschnorr.utils.bot.info` mit dem Launcher-Jar im Classpath prüft Zahl der Teile, Längen (≤ 4096 pro Text,
 ≤ 6000 pro Embed, ≤ 25 Menüpunkte) und die Aufteilung der Regeln (`DiscordInfo.rulesMarkdown`).
 
 ### Labor (Survival, /labor)
