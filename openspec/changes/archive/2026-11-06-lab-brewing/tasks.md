@@ -237,6 +237,31 @@ agent: implementer
 - [x] 9.4 Wire every lab `init` that is not yet called, such as `LabItemListeners.init`, into `Survival.java`, with one shared `LabSettings`
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and each lab listener is registered once
 
+## 10. In-game check
+
+```yaml
+files:
+  - testing/lab-brewing/recipe.sh
+depends: [12]
+scenarios: []
+agent: implementer
+```
+
+- [x] 10.1 The orchestrator, not an implementer, runs the recipe on a local network with real clients, including a whole automated line from sugar cane to consumed Kokain that no player touches
+  - Done when: every scenario was seen working in game, by name also `lab-brewing#placing-is-refused`, `lab-brewing#crafter-makes-filters`, `lab-brewing#lab-item-in-a-normal-recipe`, `lab-brewing#three-empty-slots`, `lab-brewing#matching-filter`, `lab-brewing#automatic-purification`, `lab-upgrades#water-cauldron-raises-the-yield`, `lab-cutting#automatic-cutting`, `lab-consumption#logging-out-does-not-skip-it`, `lab-consumption#hit-during-purity-5` and `lab-brewing#asking-for-the-tree`, or the failure is reported Also show `lab-brewing#watching-a-brew`, moved here from task 2.2.
+
+## 11. Knowledge
+
+```yaml
+files: [knowledge/**]
+depends: [10]
+scenarios: []
+agent: knowledge-curator
+```
+
+- [x] 11.1 Write the concepts listed in knowledge.md
+  - Done when: `specfold validate` exits 0
+
 ## 12. Fixes from verification
 
 ```yaml
@@ -270,31 +295,6 @@ agent: implementer
   - Done when: no old name is left (`grep -nE 'Feuerball|Goldkarotte|Goldnugget|Glowstone-Staub'` finds nothing in those files) and `InfoTextCheck` passes
 - [x] 12.5 README and `spieler.md` say that a line without players needs a redstone item filter the player builds, because the bottom hopper takes paste or Kokain out unchanged when its filter or ingredient is not on top yet (decided by the user: the hopper rule stays)
   - Done when: both files say so and `InfoTextCheck` passes
-
-## 10. In-game check
-
-```yaml
-files:
-  - testing/lab-brewing/recipe.sh
-depends: [12]
-scenarios: []
-agent: implementer
-```
-
-- [x] 10.1 The orchestrator, not an implementer, runs the recipe on a local network with real clients, including a whole automated line from sugar cane to consumed Kokain that no player touches
-  - Done when: every scenario was seen working in game, by name also `lab-brewing#placing-is-refused`, `lab-brewing#crafter-makes-filters`, `lab-brewing#lab-item-in-a-normal-recipe`, `lab-brewing#three-empty-slots`, `lab-brewing#matching-filter`, `lab-brewing#automatic-purification`, `lab-upgrades#water-cauldron-raises-the-yield`, `lab-cutting#automatic-cutting`, `lab-consumption#logging-out-does-not-skip-it`, `lab-consumption#hit-during-purity-5` and `lab-brewing#asking-for-the-tree`, or the failure is reported Also show `lab-brewing#watching-a-brew`, moved here from task 2.2.
-
-## 11. Knowledge
-
-```yaml
-files: [knowledge/**]
-depends: [10]
-scenarios: []
-agent: knowledge-curator
-```
-
-- [x] 11.1 Write the concepts listed in knowledge.md
-  - Done when: `specfold validate` exits 0
 
 ## Workflow follow-up
 
