@@ -82,7 +82,7 @@ scenarios:
 agent: implementer
 ```
 
-- [ ] 4.1 The orchestrator runs the recipe on a local network with real clients, including shop sales and buyback of signed goods
+- [x] 4.1 The orchestrator runs the recipe on a local network with real clients, including shop sales and buyback of signed goods
   - Done when: every scenario of `item-signing` was seen working in game, or the failure is reported
 
 ## 5. Knowledge
