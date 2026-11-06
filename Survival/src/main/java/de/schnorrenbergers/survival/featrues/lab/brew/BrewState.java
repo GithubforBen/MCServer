@@ -105,4 +105,14 @@ public final class BrewState {
     public double fraction() {
         return running ? (double) progress / duration : 0;
     }
+
+    /**
+     * Ticks left on a client's arrow of {@code total} ticks, counting down like vanilla's, so the arrow
+     * fills as the brew advances. {@code sinceStep} is the time since this state was last advanced.
+     */
+    public int arrowTicks(int sinceStep, int total) {
+        if (!running) return 0;
+        double done = Math.min(1.0, (double) (progress + Math.max(0, sinceStep)) / duration);
+        return (int) Math.round(total * (1 - done));
+    }
 }

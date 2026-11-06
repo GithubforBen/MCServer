@@ -14,7 +14,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.BrewingStand;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -27,7 +26,6 @@ import org.bukkit.inventory.BrewingRecipe;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.RecipeChoice;
-import org.bukkit.inventory.view.BrewingStandView;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -46,7 +44,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class LabBrewing implements Listener {
 
     private static final int STEP_TICKS = 20;
-    private static final int VANILLA_BREW_TICKS = 400;
 
     private final JavaPlugin plugin;
     private final BrewSettings settings;
@@ -55,6 +52,7 @@ public final class LabBrewing implements Listener {
     private final LabUpgradeReader upgrades;
     private final NamespacedKey progressKey;
     private final Set<Block> active = new HashSet<>();
+    private final LabArrow arrow;
 
     private LabBrewing(JavaPlugin plugin, BrewSettings settings, LabSettings labSettings, LabChain chain,
                        LabUpgradeReader upgrades) {
@@ -64,6 +62,7 @@ public final class LabBrewing implements Listener {
         this.labSettings = labSettings;
         this.upgrades = upgrades;
         this.progressKey = new NamespacedKey(plugin, "lab_brew_progress");
+        this.arrow = new LabArrow(plugin);
     }
 
     /** Starts lab brewing with the one shared {@code LabSettings}: the reagent recipe, the listeners, the tick, and the stands already loaded. */
@@ -204,6 +203,7 @@ public final class LabBrewing implements Listener {
         BrewState.Step result = brew.advance(STEP_TICKS, eligible);
         switch (result) {
             case IDLE -> {
+                arrow.stopped(block);
                 if (saved == null) active.remove(block);
             }
             case STARTED -> {
@@ -213,10 +213,11 @@ public final class LabBrewing implements Listener {
             }
             case RUNNING -> {
                 store(stand, brew);
-                showProgress(block, brew);
+                arrow.running(block, brew);
             }
             case RESET -> {
                 log("reset", block, "ingredient gone");
+                arrow.stopped(block);
                 store(stand, brew);
             }
             case FINISHED -> {
@@ -258,7 +259,7 @@ public final class LabBrewing implements Listener {
         upgrades.clear(stand.getPersistentDataContainer());
         stand.update(true, false);
         log("finish", block, "slots=" + used);
-        showProgress(block, new BrewState(settings.brewTicks()));
+        arrow.stopped(block);
     }
 
     private static boolean isCane(ItemStack item) {
@@ -271,22 +272,6 @@ public final class LabBrewing implements Listener {
             if (item == null || item.getType().isAir()) return i;
         }
         return -1;
-    }
-
-    /**
-     * Vanilla sets its own brew time to zero for a stand it cannot brew, so the arrow is pushed to
-     * everyone who has the stand open. It counts down from the recipe time, like vanilla's.
-     */
-    private void showProgress(Block block, BrewState brew) {
-        if (!(block.getState(false) instanceof BrewingStand stand)) return;
-        int remaining = brew.isRunning()
-                ? (int) Math.round(VANILLA_BREW_TICKS * (1 - brew.fraction())) : 0;
-        for (HumanEntity viewer : stand.getInventory().getViewers()) {
-            if (viewer.getOpenInventory() instanceof BrewingStandView view) {
-                view.setRecipeBrewTime(VANILLA_BREW_TICKS);
-                view.setBrewingTicks(remaining);
-            }
-        }
     }
 
     private void log(String what, Block block, String detail) {

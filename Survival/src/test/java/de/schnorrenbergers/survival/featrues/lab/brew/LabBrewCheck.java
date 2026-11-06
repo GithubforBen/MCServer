@@ -20,8 +20,19 @@ public final class LabBrewCheck {
         pauseAndResume();
         ingredientLost();
         doubleStart();
+        arrow();
         System.out.println(passed + " passed, " + failed + " failed");
         if (failed > 0) System.exit(1);
+    }
+
+    private static void arrow() {
+        BrewState brew = new BrewState(400);
+        check("arrow idle", brew.arrowTicks(0, 400), 0);
+        brew.advance(0, true);
+        brew.advance(100, true);
+        check("arrow at quarter", brew.arrowTicks(0, 400), 300);
+        check("arrow fills over time", brew.arrowTicks(100, 400), 200);
+        check("arrow never below empty", brew.arrowTicks(900, 400), 0);
     }
 
     private static void pauseAndResume() {
