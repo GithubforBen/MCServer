@@ -81,6 +81,7 @@ Die Teamkasse zieht bei einer Umbenennung mit. Wird ein Team aufgelöst, bekommt
 - **Marktplatz:** `/shop` zeigt die Angebote aller Shops auf einmal.
 - **Rückkauf:** Ein Shop kann Ware auch zurückkaufen. Rechtsklick auf ein Angebot (am Händler oder in der `/shop`-Liste) verkauft ein Los für den angezeigten „Rückkauf“-Preis, bezahlt vom Teamkonto. Es zählt nur genau das gleiche Item.
 - **Rückkauf einschalten:** Das Team aktiviert ihn pro Angebot in den Shop-Einstellungen, ab Werk ist er aus.
+- **Aussehen:** In den Shop-Einstellungen (Schleichen + Rechtsklick auf deinen Händler) kann das Team dem Händler das Aussehen eines beliebigen Spielers geben, einfach den Spielernamen eintippen. Mit „aus“ wird er wieder zum Dorfbewohner.
 
 ## Team-Rucksack
 
