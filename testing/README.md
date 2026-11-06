@@ -229,6 +229,14 @@ platzieren, Brauen auf leeren Slots, eine ganze Linie mit Trichtern, Wasserkesse
 Konsum mit Relog und Treffer bei Reinheit 5, und `/labor`. Spieler schützen: Tag, `doMobSpawning false`,
 Resistenz; Blöcke vor dem Klick freiräumen; die Konsole nur über `testing/clients/con`.
 
+### Item-Signatur (Survival, /signItem)
+`testing/item-signing/recipe.sh` druckt die Schritte als Checkliste (es prüft nichts selbst und endet mit
+Exit 2). Gebraucht werden zwei Konten und der Rückkauf-Shop aus dem Shop-Rückkauf-Rezept. Die Regeln
+stehen in `SigningRulesCheck`, im Spiel werden Signieren, Stapeln, Werktisch, Schmiedetisch, Crafter, Ofen per Trichter,
+Amboss links und rechts, Steinsäge, Schleifstein, Tränkebrauen, Laborbrau mit signierter Zutat und Verkauf und Rückkauf signierter Ware gesehen.
+Spieler schützen: Tag, `doMobSpawning false`, Resistenz; Blöcke vor dem Klick freiräumen; die Konsole nur
+über `testing/clients/con`; `netstart` nur mit JDK 25 in `JAVA_HOME` und `PATH`.
+
 ### Admin-Passwort
 `./admin-passwort.sh` in einem Testordner mit einer kopierten `main-config.yml` laufen lassen (Eingaben per
 `printf 'admin\n\nn\n' |`), danach muss `password:` ein neuer `pbkdf2-…`-Hash sein und `totp-secret` gleich.

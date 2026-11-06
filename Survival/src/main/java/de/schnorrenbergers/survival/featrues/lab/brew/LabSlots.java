@@ -3,6 +3,7 @@ package de.schnorrenbergers.survival.featrues.lab.brew;
 import de.schnorrenbergers.survival.featrues.lab.chain.LabChain;
 import de.schnorrenbergers.survival.featrues.lab.item.LabData;
 import de.schnorrenbergers.survival.featrues.lab.item.LabItems;
+import de.schnorrenbergers.survival.featrues.signing.SignItemCommand;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -12,9 +13,15 @@ final class LabSlots {
     private LabSlots() {
     }
 
-    /** Null for an empty slot, the lab content, or {@link LabChain#OCCUPIED} for any other item. */
+    /** Whether the item carries a signature; signed items are never consumed or changed by a brew. */
+    static boolean signed(ItemStack item) {
+        return SignItemCommand.signerOf(item) != null;
+    }
+
+    /** Null for an empty slot, the lab content, or {@link LabChain#OCCUPIED} for any other or a signed item. */
     static LabData read(ItemStack item) {
         if (item == null || item.getType().isAir()) return null;
+        if (signed(item)) return LabChain.OCCUPIED;
         return LabItems.read(item).orElse(LabChain.OCCUPIED);
     }
 

@@ -8,3 +8,4 @@
 * [Reinheit](purity.md) - Die fünf Reinheitsstufen von Paste und Kokain.
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/chain/LabChain.java:15
 * [Runde](round.md) - Eine Partie Bedwars auf einem eigenen Server, von einem Event oder einem Spieler gestartet.
+* [Signatur](signature.md) - Eine Signatur ordnet ein Item dauerhaft einem Spieler zu.

@@ -117,6 +117,12 @@ public final class Survival extends JavaPlugin {
         de.schnorrenbergers.survival.featrues.lab.consume.LabConsume.init(this, labSettings);
         PluginCommands.register(this, "labor",
                 new de.schnorrenbergers.survival.featrues.lab.LabCommand(labSettings));
+        PluginCommands.register(this, "signitem",
+                new de.schnorrenbergers.survival.featrues.signing.SignItemCommand());
+        de.schnorrenbergers.survival.featrues.signing.SignItemCaseListener.init(this);
+        de.schnorrenbergers.survival.featrues.signing.guard.SignedCraftGuard.init(this);
+        de.schnorrenbergers.survival.featrues.signing.guard.SignedSmeltAnvilGuard.init(this);
+        de.schnorrenbergers.survival.featrues.signing.guard.SignedStationGuard.init(this);
     }
 
     @Override

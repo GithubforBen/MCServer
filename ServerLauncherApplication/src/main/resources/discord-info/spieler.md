@@ -94,6 +94,16 @@ Ein Extra für Survival, das du nicht benutzen musst. Wer es lässt, merkt nicht
 - **Konsumieren:** Rechtsklick mit Kokain gibt dir Tempo und Eile, danach kommt ein Absturz. Im Kampf bleibt es bei Stufe II.
 - **Abfall:** Pflanzenabfall blockiert seinen Slot, nimm ihn heraus. Platzieren geht nicht.
 
+## Items signieren (Survival)
+
+Mit `/signItem` setzt du deinen Namen auf die Items in deiner Hand, so sind sie eindeutig dir zuzuordnen.
+
+- **Kostenlos:** Der ganze Stapel in der Haupthand wird signiert. In der Beschreibung steht „Signiert von <dein Name>“.
+- **Stapeln:** Was du signiert hast, ist gleich und stapelt sich, gleich wie oft du es getan hast, solange dein Name gleich ist. Nach einer Umbenennung tragen neue Signaturen den neuen Namen.
+- **Endgültig:** Was ein anderer signiert hat, kannst du nicht mehr signieren. Gadgets, Cosmetics und Menü-Items gehen nicht.
+- **Keine Zutat:** Signierte Items werden nicht verbraucht, weder am Werktisch noch im Crafter, im Ofen, am Schmiedetisch, an der Steinsäge, am Schleifstein, im Braustand, im Labor oder als Opfer im Amboss.
+- **Shops:** Shops verkaufen und kaufen signierte Ware zurück. Sie zählt als eigene Ware, getrennt von unsignierter und von der anderer Spieler.
+
 ## Team-Rucksack
 
 `/backpack` (oder `/bp`) öffnet den Rucksack, den sich dein ganzes Team teilt. Auf jedem Server ist es derselbe.

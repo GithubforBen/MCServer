@@ -1,5 +1,8 @@
 # Capability
 
+* [Items signieren](item-signing.md) - Warum Spieler Items signieren können und warum signierte Ware nie verbraucht wird.
+  * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/SigningRules.java:7
+  * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/guard/SignedStationGuard.java:30
 * [Labor: Brauen](lab-brewing.md) - Warum es eine lange, automatisierbare Produktionskette im Braustand gibt und wie sie Survival unberührt lässt.
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/LabCommand.java:16
 * [Labor: Konsum](lab-consumption.md) - Warum Konsum über Vanilla-Effekte gehen darf, aber im Kampf gedeckelt ist.

@@ -263,7 +263,8 @@ public final class LabBrewing implements Listener {
     }
 
     private static boolean isCane(ItemStack item) {
-        return item != null && item.getType() == Material.SUGAR_CANE && item.getAmount() > 0;
+        return item != null && item.getType() == Material.SUGAR_CANE && item.getAmount() > 0
+                && !LabSlots.signed(item); // signed cane is no ingredient
     }
 
     private static int firstEmptyOutput(BrewerInventory inventory, int from) {

@@ -1007,6 +1007,39 @@ bleiben):
 Geprüft durch `LabBrewCheck`, `LabChainCheck`, `LabConsumeCheck`, `LabCuttingCheck`, `LabItemCheck`, `LabSettingsCheck` und `LabUpgradeCheck`; der Ablauf im Spiel steht in
 `testing/lab-brewing/recipe.sh`.
 
+## Signieren (Survival)
+
+Mit `/signItem` setzt ein Spieler seinen Namen auf die Items in der Hand. So lässt sich Ware herstellen,
+die genau einem Spieler zuzuordnen ist. Die Regeln stehen als reiner Code in `SigningRules`, der Befehl in
+`SignItemCommand`, die Sperren in `featrues/signing/guard/` (`SignedCraftGuard`, `SignedSmeltAnvilGuard`, `SignedStationGuard`).
+
+- **Was passiert:** `/signItem` signiert den **ganzen Stapel** in der Haupthand. Es kostet nichts. Die
+  Signatur ist die UUID des Spielers in den Item-Daten, in der Beschreibung steht die Zeile
+  „Signiert von <Name>“. Der Name ist der zur Zeit des Signierens und zieht einer späteren Umbenennung
+  nicht nach. Es gibt keine Uhrzeit und keinen Zähler: Items derselben Sorte, die derselbe Spieler
+  signiert hat, sind identisch und stapeln sich, gleich wie oft, solange der Name gleich ist. Nach einer
+  Umbenennung tragen neue Signaturen den neuen Namen und stapeln sich nicht mit den alten.
+- **Endgültig:** Ein Item, das schon ein anderer signiert hat, bleibt bei der ersten Signatur, der
+  Spieler erfährt, wer es war. Wer sein eigenes noch einmal signiert, ändert nichts und bekommt den
+  Hinweis, dass es schon signiert ist. Leere Hand: Hinweis, sonst nichts.
+- **Nicht signierbar:** Items, die zum Netzwerk gehören: Gadgets, Cosmetics und Menü-Items.
+- **Nie Zutat:** Ein signiertes Item wird nicht verbraucht. Am Werktisch erscheint kein Ergebnis, der
+  Crafter fertigt nichts daraus (die Items bleiben signiert darin liegen), Ofen, Schmelzofen und
+  Räucherofen zünden nicht und verbrauchen keinen Brennstoff dafür, der Schmiedetisch, die Steinsäge und der
+  Schleifstein geben kein Ergebnis (an der Steinsäge lässt sich auch per Shift-Klick nichts nehmen), ein
+  signiertes Gut lässt sich nicht oben in einen Braustand legen (auch nicht per Trichter von oben), signierte
+  Flaschen unten bleiben unverändert,
+  Laborbrauvorgänge fassen sie nicht an, und als Opfer rechts im Amboss gibt es kein Ergebnis. Links im
+  Amboss ist es erlaubt: das Ergebnis behält die Signatur.
+- **Shops:** Ein Shop verkauft und kauft signierte Ware zurück wie jede andere. Signiert und unsigniert
+  sowie die Signaturen verschiedener Spieler sind **verschiedene Waren**: für Bestand, Verkauf und
+  Rückkauf. Wer Steine „von Ben“ anbietet, verkauft nur solche, und eine Kiste mit unsignierten Steinen
+  zeigt dafür keinen Bestand. Das ergibt sich daraus, dass Shops mit `ItemStack.isSimilar` vergleichen;
+  dafür gibt es keinen eigenen Code.
+- **Nur auf Survival.**
+
+Geprüft durch `SigningRulesCheck` (Regeln) und `SignItemLabelCheck` (Groß-/Kleinschreibung); der Ablauf im Spiel steht in `testing/item-signing/recipe.sh`.
+
 ## Geld
 
 Die Bits gehören seit dieser Runde dem Launcher, nicht mehr dem Survival-Server. Vorher lagen sie in
