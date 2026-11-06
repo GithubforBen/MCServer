@@ -924,7 +924,7 @@ bleiben Villager, auch bestehende Shops ändern sich nicht.
 
 | Klasse | Aufgabe |
 |--------|---------|
-| `Shopkeeper` | Ein Shop: Villager, Lager, Verkauf - sonst nichts |
+| `Shopkeeper` | Ein Shop: Figur (Villager oder Mannequin mit Skin), Lager, Verkauf und Rückkauf - sonst nichts |
 | `ShopkeeperManager` | Alle Shops: finden (nach Id, nach Kiste), anlegen, Autosave, folgt Team-Umbenennungen |
 | `ShopkeeperStore` | Liest und schreibt `configs/shop-config.yml` (Format unverändert) |
 | `ShopSettings` | `configs/shop.yml`: was ein Shop kostet |
