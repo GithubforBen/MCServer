@@ -1027,7 +1027,8 @@ die genau einem Spieler zuzuordnen ist. Die Regeln stehen als reiner Code in `Si
   Crafter fertigt nichts daraus (die Items bleiben signiert darin liegen), Ofen, Schmelzofen und
   Räucherofen zünden nicht und verbrauchen keinen Brennstoff dafür, der Schmiedetisch, die Steinsäge und der
   Schleifstein geben kein Ergebnis (an der Steinsäge lässt sich auch per Shift-Klick nichts nehmen), ein
-  Braustand mit signierter Zutat oben braut nichts und lässt signierte Flaschen unten unverändert,
+  signiertes Gut lässt sich nicht oben in einen Braustand legen (auch nicht per Trichter von oben), signierte
+  Flaschen unten bleiben unverändert,
   Laborbrauvorgänge fassen sie nicht an, und als Opfer rechts im Amboss gibt es kein Ergebnis. Links im
   Amboss ist es erlaubt: das Ergebnis behält die Signatur.
 - **Shops:** Ein Shop verkauft und kauft signierte Ware zurück wie jede andere. Signiert und unsigniert
