@@ -4,12 +4,13 @@ title: "Rückkauf zahlt die Teamkasse über den bestätigten Weg"
 description: "Rückkauf zahlt die Teamkasse über den bestätigten Weg, auch das eigene Team darf verkaufen."
 status: draft
 decision: accepted
+change: 2026-11-06-shop-buyback
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:19:23+01:00 }
 sources:
   - id: brief
-    resource: ../../openspec/changes/shop-buyback/brief.md
+    resource: ../../openspec/changes/archive/2026-11-06-shop-buyback/brief.md
   - id: design
-    resource: ../../openspec/changes/shop-buyback/design.md
+    resource: ../../openspec/changes/archive/2026-11-06-shop-buyback/design.md
   - id: money
     resource: ../../CommonCode/src/main/java/de/hems/paper/money/MoneyService.java
   - id: events

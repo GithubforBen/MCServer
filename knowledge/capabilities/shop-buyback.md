@@ -3,6 +3,9 @@ type: Capability
 title: "Shop-Rückkauf"
 description: "Warum Händler ankaufen können und warum das aus der Teamkasse statt aus neuen Bits kommt."
 status: draft
+spec: openspec/specs/shop-buyback/spec.md
+resource: ../../openspec/specs/shop-buyback/spec.md
+change: 2026-11-06-shop-buyback
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:19:23+01:00 }
 sources:
   - id: shop
@@ -11,6 +14,10 @@ sources:
     resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/BuybackRules.java
   - id: results
     resource: ../../testing/shop-buyback/results-2026-11-06.md
+  - id: proposal-2026-11-06-shop-buyback
+    resource: ../../openspec/changes/archive/2026-11-06-shop-buyback/proposal.md
+  - id: design-2026-11-06-shop-buyback
+    resource: ../../openspec/changes/archive/2026-11-06-shop-buyback/design.md
 ---
 
 # Why
