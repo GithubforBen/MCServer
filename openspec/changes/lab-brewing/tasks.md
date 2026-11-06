@@ -289,7 +289,7 @@ agent: implementer
   - Done when: `LabCuttingCheck` asserts that cutting a slot of three stretched Kokain gives three cut Kokain, and passes
 - [x] 12.2 After a relog with Kokain effects still due to run, the running effects match the recorded wall-clock end, so the crash starts only when they end and the combat cap still recognizes them; when the crash is already due on join, cut-in effects end with Speed and Haste
   - Done when: `LabConsumeCheck` covers both join cases and passes
-- [ ] 12.3 `fuel.brews-per-item` sets how many lab brews one fuel item lasts without a smoker, as its config comment and the README say; the default of 20 keeps today's behavior
+- [x] 12.3 `fuel.brews-per-item` sets how many lab brews one fuel item lasts without a smoker, as its config comment and the README say; the default of 20 keeps today's behavior
   - Done when: `LabUpgradeCheck` asserts fuel power for a non-default `fuel.brews-per-item` with and without a smoker, and passes
 - [ ] 12.4 Item names in README, `spieler.md` and `/labor` match the German client: Feuerkugel, Goldene Karotte, Goldklumpen, Glowstonestaub
   - Done when: no old name is left (`grep -nE 'Feuerball|Goldkarotte|Goldnugget|Glowstone-Staub'` finds nothing in those files) and `InfoTextCheck` passes
