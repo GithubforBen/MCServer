@@ -1,5 +1,5 @@
 # Specfold settings for this repository. Upgrades keep your values; see the kit docs for every key.
-kit_version: 0.3.1          # set by `specfold upgrade` x-release-please-version
+kit_version: 0.4.0          # set by `specfold upgrade` x-release-please-version
 profile_version: 1
 channel: stable
 

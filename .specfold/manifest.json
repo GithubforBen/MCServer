@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "kit_version": "0.3.1",
-  "ref": "v0.3.1",
+  "kit_version": "0.4.0",
+  "ref": "v0.4.0",
   "files": {
     ".agents/skills/sf-apply/SKILL.md": "sha256:f11234c197a26b22c9163e0b13dcf243dce6c0cfac96e400f4eb166d7dcb515a",
     ".agents/skills/sf-apply/references/packet-and-split.md": "sha256:5c251af88b9d3db92015d6c405b8a9b3d154092c3023f569ad7519fe4469e588",
@@ -35,7 +35,7 @@
     "openspec/schemas/specfold/templates/proposal.md": "sha256:0dd70e35db5c696ba8ac3cc3a53e2d6561865c1e4e7d49db5a1eaa3e4a6ad86e",
     "openspec/schemas/specfold/templates/spec.md": "sha256:1cccfb573f031c6352bed2a879b7035ff710bc909112fc23d10bdcfcdd8d4318",
     "openspec/schemas/specfold/templates/tasks.md": "sha256:2ef32ccb374fd2470cfea280eb0dd247679d46ac569a719d7e1afc3cae9f3529",
-    "scripts/specfold.mjs": "sha256:52d3196055b136aefa8112dfad3c82ed519787ee2554523f367b8df5d2c409c3"
+    "scripts/specfold.mjs": "sha256:43c4baae40df449068a0965db18390d48df1bc616e0a9e33315eb57d642f0059"
   },
   "blocks": {
     ".gitattributes": "sha256:1bf32920694d48900b707f228d8b154e37439df8994b68e4a4badc87d98e1d58",
@@ -43,7 +43,7 @@
     ".github/pull_request_template.md": "sha256:9d4bb9d55402391ab54b048a68650ba2ab6c426bb35410a584f437e44d8e544e",
     ".gitignore": "sha256:74c77fe126b78cd085e85acd08d041c77c75bcb952e8a27b548ee9aac661fffc",
     ".worktreeinclude": "sha256:098461b02af190467ac6a6ff0f49dadef3fd07a6c648c4f109241acbf7daf795",
-    "AGENTS.md": "sha256:a6bd30b8c573182e415f78c84cb89847f8c3e3e92cf4c312906174bc74b11339",
+    "AGENTS.md": "sha256:dce9448da93e31a763addd30215df3b2bc65b89985640a838bd93b71920b6048",
     "CLAUDE.md": "sha256:4137e4cc72fd622d72a6ded0921c27752cddcb98b6fd667d44e88c2e1f68d06c"
   }
 }
