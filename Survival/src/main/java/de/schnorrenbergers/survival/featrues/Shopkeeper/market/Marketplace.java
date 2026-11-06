@@ -64,7 +64,7 @@ public final class Marketplace {
         List<MarketListing> listings = new ArrayList<>();
         for (MarketListing listing : index()) {
             if (!category.matches(listing.getSample().getType())) continue;
-            if (!showOutOfStock && !listing.isInStock()) continue;
+            if (!showOutOfStock && !listing.isInStock() && !listing.hasBuyback()) continue;
             if (onlySold && listing.totalSold() <= 0) continue;
             listings.add(listing);
         }

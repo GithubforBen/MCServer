@@ -23,4 +23,4 @@ None.
 
 ## Impact
 
-Survival plugin only: offers and their storage in `configs/shop-config.yml` (new optional keys), shop and editor menus, marketplace menus. Relies on [Bits](/domain/bits.md) and the [Survival-Plugin](/architecture/survival.md). No rejected decision covers this idea.
+Survival plugin: offers and their storage in `configs/shop-config.yml` (new optional keys), shop and editor menus, marketplace menus. `CommonCode` and the launcher (`ServerLauncherApplication`): a blocking balance change carries a deadline and the launcher refuses it once expired, which `PokerPlugin`'s `Bank` gains too because it uses the same call. Relies on [Bits](/domain/bits.md) and the [Survival-Plugin](/architecture/survival.md). No rejected decision covers this idea.

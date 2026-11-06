@@ -13,3 +13,5 @@
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/upgrade/LabFuel.java:17
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/upgrade/LabUpgradeReader.java:14
   * Referenced from code: Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/upgrade/LabUpgrades.java:8
+* [Rückkauf zahlt die Teamkasse über den bestätigten Weg](shop-buyback-paid-by-team.md) - Rückkauf zahlt die Teamkasse über den bestätigten Weg, auch das eigene Team darf verkaufen.
+* [Shop-Mannequins werden übernommen](shop-mannequin-lifecycle.md) - Mannequins der Shops leben wie Villager persistent und werden übernommen, nicht neu aufgebaut wie in der Lobby.

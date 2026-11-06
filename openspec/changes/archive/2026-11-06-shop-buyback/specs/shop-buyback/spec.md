@@ -80,6 +80,11 @@ The shop SHALL refuse a sale with a clear message, leaving goods and bits unchan
 - **WHEN** the payment cannot be confirmed by the host
 - **THEN** the player gets the goods back and no bits move
 
+#### Scenario: Host answers too late
+
+- **WHEN** the host only gets to a debit after the seller's wait has ended
+- **THEN** the debit is dropped, the player has the goods back and no bits move
+
 #### Scenario: Two sellers against one account
 
 - **WHEN** two players sell at the same moment and the team account covers only one sale

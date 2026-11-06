@@ -4,6 +4,7 @@ import de.hems.api.ItemApi;
 import de.hems.paper.customInventory.CustomInventory;
 import de.hems.paper.customInventory.types.ItemAction;
 import de.hems.paper.customInventory.types.SimpleItemAction;
+import de.hems.paper.util.ChatPrompt;
 import de.schnorrenbergers.survival.Survival;
 import de.schnorrenbergers.survival.featrues.animations.ParticleLine;
 import org.bukkit.ChatColor;
@@ -74,7 +75,45 @@ public final class ShopEditorUi {
         inventory.setItem(14, new ItemApi(Material.DIAMOND, ChatColor.AQUA + "Gegenstände bearbeiten",
                         List.of(ChatColor.GRAY + "Angebote, Preise und Mengen")).build(),
                 SimpleItemAction.opens(() -> offers(shop, 1)));
+        skinButton(inventory, shop);
         return inventory;
+    }
+
+    /**
+     * The skin button: shows the current skin and asks for a player name in chat.
+     */
+    private static void skinButton(CustomInventory inventory, Shopkeeper shop) {
+        String skin = shop.getSkin();
+        inventory.setItem(16, new ItemApi(Material.PLAYER_HEAD, ChatColor.LIGHT_PURPLE + "Skin ändern",
+                        List.of(ChatColor.GRAY + "Aktuell: " + (skin == null ? "keiner (Dorfbewohner)" : skin),
+                                ChatColor.GRAY + "Danach den Spielernamen in den Chat schreiben",
+                                ChatColor.DARK_GRAY + "'aus' entfernt den Skin")).build(),
+                new SimpleItemAction(event -> askSkin(event, shop)));
+    }
+
+    private static void askSkin(InventoryClickEvent event, Shopkeeper shop) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        ChatPrompt.ask(player, "Schreibe den Spielernamen, dessen Skin der Shop tragen soll ('aus' entfernt den Skin).",
+                answer -> {
+                    SkinName.Result result = SkinName.parse(answer);
+                    if (result.kind() == SkinName.Kind.CANCEL) return;
+                    // the team may have changed while the player was typing
+                    if (!ShopOwnership.owns(player, shop)) {
+                        player.sendMessage(ChatColor.RED + "Dieser Shop gehört nicht mehr deinem Team.");
+                        return;
+                    }
+                    switch (result.kind()) {
+                        case NAME -> {
+                            shop.setSkin(result.name());
+                            player.sendMessage(ChatColor.GREEN + "Der Shop trägt jetzt den Skin von " + result.name() + ".");
+                        }
+                        case REMOVE -> {
+                            shop.setSkin(null);
+                            player.sendMessage(ChatColor.GREEN + "Der Skin wurde entfernt, der Shop ist wieder ein Dorfbewohner.");
+                        }
+                        default -> player.sendMessage(ChatColor.RED + "Das ist kein gültiger Spielername. Der Skin bleibt, wie er war.");
+                    }
+                });
     }
 
     /**
@@ -179,6 +218,23 @@ public final class ShopEditorUi {
                 ItemAction.NOTMOVABLE);
         inventory.setItem(5, new ItemApi(Material.CHEST, ChatColor.AQUA + "Menge ändern").build(),
                 SimpleItemAction.opens(() -> amount(shop, offer, AMOUNT_STEPS[0])));
+        boolean buyback = offer.isBuyback();
+        inventory.setItem(1, new ItemApi(buyback ? Material.LIME_DYE : Material.GRAY_DYE,
+                        (buyback ? ChatColor.GREEN + "Rückkauf: an" : ChatColor.RED + "Rückkauf: aus"),
+                        List.of(ChatColor.GRAY + "Klick: " + (buyback ? "ausschalten" : "einschalten"))).build(),
+                SimpleItemAction.opens(event -> {
+                    // the buyback price stays as it is; only the first switch-on presets it
+                    offer.setBuyback(!offer.isBuyback());
+                    ShopkeeperManager.saveAll();
+                }, () -> offer(shop, offer)));
+        if (buyback) {
+            inventory.setItem(2, new ItemApi(Material.EMERALD, ChatColor.AQUA + "Rückkaufpreis ändern",
+                            List.of(ChatColor.GRAY + "Aktuell: " + offer.getBuybackPrice() + " Bits")).build(),
+                    SimpleItemAction.opens(() -> buybackPrice(shop, offer, PRICE_STEPS[0])));
+        } else {
+            inventory.setItem(2, new ItemApi(Material.BARRIER, ChatColor.DARK_GRAY + "Rückkaufpreis",
+                    List.of(ChatColor.GRAY + "Erst den Rückkauf einschalten")).build(), ItemAction.NOTMOVABLE);
+        }
         inventory.setItem(6, new ItemApi(Material.ARROW, ChatColor.GRAY + "Zurück").build(),
                 SimpleItemAction.opens(() -> offers(shop, 1)));
         inventory.setItem(7, new ItemApi(Material.BARRIER, ChatColor.RED + "Angebot löschen").build(),
@@ -211,6 +267,18 @@ public final class ShopEditorUi {
         return stepper(shop, offer, PRICE_STEPS, step, shown,
                 by -> offer.setPrice(Math.max(0, Math.min(MAX_PRICE, offer.getPrice() + by))),
                 next -> price(shop, offer, next));
+    }
+
+    /**
+     * The editor for what the shop pays when buying this offer back; independent of the sale price.
+     */
+    static CustomInventory buybackPrice(Shopkeeper shop, ItemForSale offer, int step) {
+        ItemStack shown = ShopUi.withLoreOnTop(offer.getItemClone(),
+                ChatColor.WHITE + "Rückkauf: " + offer.getBuybackPrice() + " Bits",
+                ChatColor.GRAY + "Linksklick: -" + step + "   Rechtsklick: +" + step);
+        return stepper(shop, offer, PRICE_STEPS, step, shown,
+                by -> offer.setBuybackPrice(Math.max(0, Math.min(MAX_PRICE, offer.getBuybackPrice() + by))),
+                next -> buybackPrice(shop, offer, next));
     }
 
     /**

@@ -43,6 +43,8 @@ public final class MoneyService {
 
     /** How long to wait for the launcher to answer. */
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
+    /** How long before the wait ends the launcher must stop applying a debit, so the answer can travel. */
+    private static final long ANSWER_MARGIN_MS = 1000L;
     /** How often the whole list is refreshed as a safety net, in ticks. */
     private static final long REFRESH_INTERVAL_TICKS = 20L * 300L;
     /** How often a change is offered to the launcher before it is written off as lost. */
@@ -148,7 +150,8 @@ public final class MoneyService {
      */
     public static BalanceResult changeBlocking(String holder, int delta, boolean requireCover, String reason) {
         if (holder == null) return BalanceResult.failed(null, 0, "Kein Konto angegeben.");
-        ChangeBalanceEvent request = new ChangeBalanceEvent(holder, delta, requireCover, reason);
+        ChangeBalanceEvent request = new ChangeBalanceEvent(holder, delta, requireCover, reason,
+                System.currentTimeMillis() + TIMEOUT.toMillis() - ANSWER_MARGIN_MS);
         RespondDataEvent response = ListenerAdapter.ask(request, TIMEOUT);
         if (response == null || !(response.getData() instanceof BalanceResult result)) {
             return BalanceResult.failed(holder, get(holder), "Der Host antwortet nicht.");

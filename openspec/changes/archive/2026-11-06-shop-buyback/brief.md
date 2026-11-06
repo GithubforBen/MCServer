@@ -14,6 +14,7 @@
 | Q6 | Does the marketplace show buyback? | Yes, in this change | user |
 | Q7 | How is selling triggered? | Right click on an offer, one lot per click; left click stays buying, because it already buys | delegated |
 | Q8 | Which goods count? | Only items identical to the offer's item, in the offer's lot size, the same match the stock uses | delegated |
+| Q9 | What if the launcher answers too late? | A debit carries a deadline and the launcher drops it once expired, so a late launcher moves no bits | user |
 
 ## Out of scope
 
