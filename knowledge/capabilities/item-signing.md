@@ -15,6 +15,8 @@ sources:
     resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/guard/SignedCraftGuard.java
   - id: smelt-guard
     resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/guard/SignedSmeltAnvilGuard.java
+  - id: station-guard
+    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/guard/SignedStationGuard.java
   - id: lab-cut
     resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabCutBrewing.java
   - id: readme
@@ -29,9 +31,9 @@ Spieler wollten Ware herstellen, die sich genau einem Spieler zuordnen lässt, z
 
 # How it works
 
-`SignItemCommand` signiert den ganzen Stapel in der Haupthand: die UUID des Spielers liegt unter dem Schlüssel `survival:signed_by` in den Item-Daten, die Beschreibung bekommt die Zeile "Signiert von <Name>". Was mit dem Stapel geschieht, entscheidet `SigningRules` ohne Bukkit-Typen. Ergebnisse: leere Hand (nur ein Hinweis), nicht signierbar (Gadgets, Cosmetics und Menü-Items gehören zum Netzwerk), schon die eigene Signatur (nichts ändert sich, Hinweis), Signatur eines anderen (bleibt, der Spieler erfährt, wer es war), sonst wird signiert. Weil Brigadier Befehlsnamen nach Groß- und Kleinschreibung, schreibt `SignItemCaseListener` `/signItem` vor der Ausführung zu `/signitem` um; im ersten Spiellauf war die große Schreibweise unbekannt.
+`SignItemCommand` signiert den ganzen Stapel in der Haupthand: die UUID des Spielers liegt unter dem Schlüssel `survival:signed_by` in den Item-Daten, die Beschreibung bekommt die Zeile "Signiert von <Name>". Was mit dem Stapel geschieht, entscheidet `SigningRules` ohne Bukkit-Typen. Ergebnisse: leere Hand (nur ein Hinweis), nicht signierbar (Gadgets, Cosmetics und Menü-Items gehören zum Netzwerk), schon die eigene Signatur (nichts ändert sich, Hinweis), Signatur eines anderen (bleibt, der Spieler erfährt, wer es war), sonst wird signiert. Weil Brigadier Befehlsnamen nach Groß- und Kleinschreibung unterscheidet, schreibt `SignItemCaseListener` `/signItem` vor der Ausführung zu `/signitem` um; im ersten Spiellauf war die große Schreibweise unbekannt.
 
-Gesperrt als Zutat sind der Werktisch und der Crafter (`SignedCraftGuard`) sowie Ofen, Schmelzofen, Räucherofen, Schmiedetisch und Amboss (`SignedSmeltAnvilGuard`). Im Ofen zündet signiertes Gut nicht und verbraucht keinen Brennstoff; im Crafter bleibt es signiert liegen. Im Amboss darf es links liegen, das Ergebnis behält die Signatur, als Opfer rechts gibt es kein Ergebnis. Laborbrauvorgänge fassen signierte Zutaten nicht an; signiertes Kokain wird nicht geschnitten, siehe [Labor: Schneiden](/capabilities/lab-cutting.md).
+Gesperrt als Zutat sind der Werktisch, der Crafter und der Schmiedetisch (`SignedCraftGuard`), Ofen, Schmelzofen, Räucherofen und Amboss (`SignedSmeltAnvilGuard`) sowie Steinsäge, Schleifstein und das Tränkebrauen im Vanilla-Braustand (`SignedStationGuard`). An der Steinsäge lässt sich das Ergebnis auch per Shift-Klick nicht nehmen; ein Braustand mit signierter Zutat oben braut nichts, signierte Flaschen unten bleiben unverändert. Im Ofen zündet signiertes Gut nicht und verbraucht keinen Brennstoff; im Crafter bleibt es signiert liegen. Im Amboss darf es links liegen, das Ergebnis behält die Signatur, als Opfer rechts gibt es kein Ergebnis. Laborbrauvorgänge fassen signierte Zutaten nicht an; signiertes Kokain wird nicht geschnitten, siehe [Labor: Schneiden](/capabilities/lab-cutting.md).
 
 Shops verkaufen und kaufen signierte Ware zurück wie jede andere. Signiert und unsigniert sowie die Signaturen verschiedener Spieler sind verschiedene Waren, weil Shops genaue Items vergleichen; dafür gibt es keinen eigenen Code. Siehe [Shop-Rückkauf](/capabilities/shop-buyback.md). Stapeln: [Signatur](/domain/signature.md).
 
