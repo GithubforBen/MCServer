@@ -259,7 +259,7 @@ scenarios: []
 agent: knowledge-curator
 ```
 
-- [ ] 11.1 Write the concepts listed in knowledge.md
+- [x] 11.1 Write the concepts listed in knowledge.md
   - Done when: `specfold validate` exits 0
 
 ## 12. Fixes from verification
