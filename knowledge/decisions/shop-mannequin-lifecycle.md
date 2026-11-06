@@ -4,6 +4,7 @@ title: "Shop-Mannequins werden übernommen"
 description: "Mannequins der Shops leben wie Villager persistent und werden übernommen, nicht neu aufgebaut wie in der Lobby."
 status: draft
 decision: accepted
+change: 2026-11-06-shop-skin
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:30:10+01:00 }
 sources:
   - id: shop

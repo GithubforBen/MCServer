@@ -3,6 +3,9 @@ type: Capability
 title: Shop-Skin
 description: "Warum Händler einen Spieler-Skin tragen können und warum sie dafür ein Mannequin werden."
 status: draft
+spec: openspec/specs/shop-skin/spec.md
+resource: ../../openspec/specs/shop-skin/spec.md
+change: 2026-11-06-shop-skin
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:30:10+01:00 }
 sources:
   - id: shop
@@ -15,6 +18,10 @@ sources:
     resource: ../../testing/shop-skin/results-2026-11-06.md
   - id: readme
     resource: ../../README.md
+  - id: proposal-2026-11-06-shop-skin
+    resource: ../../openspec/changes/archive/2026-11-06-shop-skin/proposal.md
+  - id: design-2026-11-06-shop-skin
+    resource: ../../openspec/changes/archive/2026-11-06-shop-skin/design.md
 ---
 
 # Why
