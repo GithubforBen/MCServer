@@ -28,6 +28,8 @@ agent: implementer
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
 - [x] 1.4 Keep a stand brewing after a finish while it can brew, and wake it when items leave it, not only when they arrive
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabBrewCheck` still exits 0; the server run in task 2.2 shows it
+- [ ] 1.5 Make the progress arrow follow the own-tick brew for everyone who has the stand open; the game run showed it empty for the whole brew
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabBrewCheck` still exits 0; the game run shows `lab-brewing#watching-a-brew`
 
 ## 2. Prove empty slots on a server
 
