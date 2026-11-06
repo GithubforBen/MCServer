@@ -952,10 +952,10 @@ Schritt in der Beschreibung.
 - **Filter:** Papier-, Kohle-, Seiden- und Goldfilter reinigen Paste von Reinheit 1, 2, 3 und 4 auf die
   nächste Stufe (35 %, 15 %, 6 %, 4 %; der Rest ist Abfall oder nichts). Ein Filter reicht für bis zu
   drei Stück. Der falsche Filter startet nichts.
-- **Kokain:** Feenstaub (Glowstone-Staub und Zucker) oben macht aus Paste Kokain gleicher Reinheit (83 %,
+- **Kokain:** Feenstaub (Glowstonestaub und Zucker) oben macht aus Paste Kokain gleicher Reinheit (83 %,
   Abfall 12 %, nichts 5 %).
 - **Herstellen:** 3 Papier ergeben 8 Papierfilter, Kohlefilter aus Papierfilter und Holzkohle,
-  Seidenfilter aus Kohlefilter und 4 Fäden, Goldfilter aus Seidenfilter und 8 Goldnuggets.
+  Seidenfilter aus Kohlefilter und 4 Fäden, Goldfilter aus Seidenfilter und 8 Goldklumpen.
 - **Trichter:** Oben nehmen Zutaten, Filter und Feenstaub, seitlich Paste und Brennstoff. Ein Trichter
   darunter holt Ergebnisse und Abfall heraus, aber nichts, was oben noch ein gültiger Schritt wäre. Damit
   läuft die ganze Linie ohne Spieler.
@@ -966,7 +966,7 @@ Schritt in der Beschreibung.
   Viertel, ein Räucherofen macht den Brennstoff von 20 auf 30 Vorgänge ergiebig. Gelesen werden sie, wenn
   ein Vorgang beginnt.
 - **Schneiden und Strecken:** Mit Kokain unten und einer Zutat oben bekommt jedes Kokain einen Effekt:
-  Goldkarotte (Nachtsicht), Phantomhaut (Sprungkraft), Feuerball (Feuerresistenz), Honigflasche
+  Goldene Karotte (Nachtsicht), Phantomhaut (Sprungkraft), Feuerkugel (Feuerresistenz), Honigflasche
   (Regeneration), Magmacreme (Stärke). Bis zu drei verschiedene, die Reihenfolge ist egal, die Reinheit
   bleibt. Zucker streckt: aus einem Kokain ab Reinheit 2 werden drei mit einer Stufe weniger,
   gestreckt lässt es sich nicht erneut strecken.

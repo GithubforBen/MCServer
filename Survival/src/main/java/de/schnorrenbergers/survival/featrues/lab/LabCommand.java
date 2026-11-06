@@ -46,7 +46,7 @@ public final class LabCommand implements CommandExecutor {
                     + percent(settings.filter(tier).waste()) + ", sonst nichts. Ein Filter für bis zu drei Stück.");
         }
         lines.add(head + "Kokain" + text + ": Feenstaub oben macht aus jeder Paste Kokain gleicher Reinheit, " + chances(settings.kokain()) + ".");
-        lines.add(head + "Schneiden" + text + ": Goldkarotte (Nachtsicht), Phantomhaut (Sprungkraft), Feuerball (Feuerresistenz), Honigflasche (Regeneration), Magmacreme (Stärke). Bis zu drei verschiedene Effekte, die Reinheit bleibt.");
+        lines.add(head + "Schneiden" + text + ": Goldene Karotte (Nachtsicht), Phantomhaut (Sprungkraft), Feuerkugel (Feuerresistenz), Honigflasche (Regeneration), Magmacreme (Stärke). Bis zu drei verschiedene Effekte, die Reinheit bleibt.");
         lines.add(head + "Strecken" + text + ": Zucker oben macht aus einem Kokain ab Reinheit 2 drei Stück mit einer Reinheit weniger. Gestrecktes lässt sich nicht noch einmal strecken.");
         lines.add(head + "Upgrades" + text + " (Blöcke bis zwei Felder um den Stand, jeder zählt einmal): Wasserkessel und Amethystblock je Ausbeute mal "
                 + factor(settings.waterCauldronFactor()) + ", Blitzableiter Brauzeit mal " + factor(settings.lightningRodTimeFactor())

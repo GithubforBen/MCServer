@@ -291,7 +291,7 @@ agent: implementer
   - Done when: `LabConsumeCheck` covers both join cases and passes
 - [x] 12.3 `fuel.brews-per-item` sets how many lab brews one fuel item lasts without a smoker, as its config comment and the README say; the default of 20 keeps today's behavior
   - Done when: `LabUpgradeCheck` asserts fuel power for a non-default `fuel.brews-per-item` with and without a smoker, and passes
-- [ ] 12.4 Item names in README, `spieler.md` and `/labor` match the German client: Feuerkugel, Goldene Karotte, Goldklumpen, Glowstonestaub
+- [x] 12.4 Item names in README, `spieler.md` and `/labor` match the German client: Feuerkugel, Goldene Karotte, Goldklumpen, Glowstonestaub
   - Done when: no old name is left (`grep -nE 'Feuerball|Goldkarotte|Goldnugget|Glowstone-Staub'` finds nothing in those files) and `InfoTextCheck` passes
 
 ## Workflow follow-up
