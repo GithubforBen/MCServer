@@ -21,7 +21,7 @@ import java.util.Map;
  * never saw it. The value is sent to each viewer as a data packet instead: vanilla only resends a slot
  * when its own value changes, and that stays 0, so nothing overwrites ours. It counts down like
  * vanilla's, so the arrow fills as the brew advances. Only running brews with a viewer cost anything.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /decisions/lab-brewing-engine.md
  */
 final class LabArrow {
 
