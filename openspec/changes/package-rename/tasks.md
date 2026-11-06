@@ -58,7 +58,7 @@ scenarios: []
 agent: knowledge-curator
 ```
 
-- [ ] 4.1 Write the concepts listed in knowledge.md, and update every concept that names an old package or path
+- [x] 4.1 Write the concepts listed in knowledge.md, and update every concept that names an old package or path
   - Done when: `specfold validate` exits 0
 
 ## Workflow follow-up

@@ -8,9 +8,9 @@ change: 2026-11-06-shop-skin
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:30:10+01:00 }
 sources:
   - id: shop
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/Shopkeeper.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/Shopkeeper/Shopkeeper.java
   - id: lobby-npcs
-    resource: ../../LobbyPlugin/src/main/java/de/schnorrenbergers/lobby/npc/LobbyNpcs.java
+    resource: ../../LobbyPlugin/src/main/java/com/benschnorr/lobby/npc/LobbyNpcs.java
   - id: readme
     resource: ../../README.md
   - id: results

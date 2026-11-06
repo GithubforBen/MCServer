@@ -6,9 +6,9 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-02T22:20:02+01:00 }
 sources:
   - id: data
-    resource: ../../CommonCode/src/main/java/de/hems/types/event/EventData.java
+    resource: ../../CommonCode/src/main/java/com/benschnorr/types/event/EventData.java
   - id: type
-    resource: ../../CommonCode/src/main/java/de/hems/types/event/EventType.java
+    resource: ../../CommonCode/src/main/java/com/benschnorr/types/event/EventType.java
 ---
 
 # Meaning
@@ -17,7 +17,7 @@ Eine Veranstaltung, die Admins unter `/events` anlegen (`EventData`). `EventType
 
 # Not to be confused with
 
-- Netzwerk-Events: Nachrichten im Cluster (`de.hems.communication.events`), nichts, woran Spieler teilnehmen.
+- Netzwerk-Events: Nachrichten im Cluster (`com.benschnorr.communication.events`), nichts, woran Spieler teilnehmen.
 - Bukkit-Events: Ereignisse innerhalb eines Servers, etwa die `Bedwars…Event`-Klassen.
 
 # Related

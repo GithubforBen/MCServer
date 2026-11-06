@@ -13,7 +13,7 @@ sources:
 
 # Responsibility
 
-Der Launcher (`de.hems.Main`) läuft außerhalb der Minecraft-Server und ist der Host des Netzwerks. Er startet zuerst den Proxy, dann die Server aus `autostart` in der `main-config.yml`, und legt weitere Server an, wenn jemand sie anfordert. Netzwerkweite Daten gehören ihm: Geld, Teams, Events, Läufe und Ergebnisse liegen als `.yml` beim Launcher und nicht auf einem Spielserver, damit kein einzelner Server sie mitnimmt.
+Der Launcher (`com.benschnorr.Main`) läuft außerhalb der Minecraft-Server und ist der Host des Netzwerks. Er startet zuerst den Proxy, dann die Server aus `autostart` in der `main-config.yml`, und legt weitere Server an, wenn jemand sie anfordert. Netzwerkweite Daten gehören ihm: Geld, Teams, Events, Läufe und Ergebnisse liegen als `.yml` beim Launcher und nicht auf einem Spielserver, damit kein einzelner Server sie mitnimmt.
 
 Dazu kommen Discord-Bot, Admin-Website, Tickets, Lotto und der Ablauf von `/neustart`, der bei `update` auch `git pull` und den Build ausführt.
 

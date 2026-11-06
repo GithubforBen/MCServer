@@ -9,11 +9,11 @@ change: 2026-11-06-shop-skin
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:30:10+01:00 }
 sources:
   - id: shop
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/Shopkeeper.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/Shopkeeper/Shopkeeper.java
   - id: skin-name
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/SkinName.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/Shopkeeper/SkinName.java
   - id: editor
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/ShopEditorUi.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/Shopkeeper/ShopEditorUi.java
   - id: results
     resource: ../../testing/shop-skin/results-2026-11-06.md
   - id: readme

@@ -9,9 +9,9 @@ change: 2026-11-06-shop-buyback
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:19:23+01:00 }
 sources:
   - id: shop
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/Shopkeeper.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/Shopkeeper/Shopkeeper.java
   - id: rules
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/Shopkeeper/BuybackRules.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/Shopkeeper/BuybackRules.java
   - id: results
     resource: ../../testing/shop-buyback/results-2026-11-06.md
   - id: proposal-2026-11-06-shop-buyback

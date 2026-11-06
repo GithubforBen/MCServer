@@ -6,9 +6,9 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-02T22:20:03+01:00 }
 sources:
   - id: ghost
-    resource: ../../ServerLauncherApplication/src/main/java/de/hems/utils/event/GhostRunServers.java
+    resource: ../../ServerLauncherApplication/src/main/java/com/benschnorr/utils/event/GhostRunServers.java
   - id: tracker
-    resource: ../../RunPlugin/src/main/java/de/schnorrenbergers/run/RunTracker.java
+    resource: ../../RunPlugin/src/main/java/com/benschnorr/run/RunTracker.java
   - id: testing
     resource: ../../testing/README.md
 ---

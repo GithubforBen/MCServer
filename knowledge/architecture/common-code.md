@@ -13,9 +13,9 @@ sources:
 
 Die Bibliothek, auf der alle anderen Module aufbauen, und mit 310 Java-Dateien das größte Modul. Drei Bereiche:
 
-- `de.hems.communication`: die Netzwerk-Events und ihr Transport.
-- `de.hems.api` und `de.hems.types`: die `ServerApi` und die Datentypen, die zwischen Servern reisen.
-- `de.hems.paper`: fertige Bausteine für Paper-Plugins, etwa Cosmetics, Event-Oberflächen, Geld, Runden und das Warp-System.
+- `com.benschnorr.communication`: die Netzwerk-Events und ihr Transport.
+- `com.benschnorr.api` und `com.benschnorr.types`: die `ServerApi` und die Datentypen, die zwischen Servern reisen.
+- `com.benschnorr.paper`: fertige Bausteine für Paper-Plugins, etwa Cosmetics, Event-Oberflächen, Geld, Runden und das Warp-System.
 
 # Interfaces
 

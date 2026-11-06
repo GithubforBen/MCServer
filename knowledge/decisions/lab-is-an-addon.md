@@ -10,9 +10,9 @@ sources:
   - id: readme
     resource: ../../README.md
   - id: settings
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/LabSettings.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/lab/LabSettings.java
   - id: command
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/LabCommand.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/lab/LabCommand.java
 ---
 
 # Kontext

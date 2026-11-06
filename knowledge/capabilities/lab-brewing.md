@@ -9,11 +9,11 @@ change: 2026-11-06-lab-brewing
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:48:32+01:00 }
 sources:
   - id: brewing
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabBrewing.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/lab/brew/LabBrewing.java
   - id: chain
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/chain/LabChain.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/lab/chain/LabChain.java
   - id: settings
-    resource: ../../Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/LabSettings.java
+    resource: ../../Survival/src/main/java/com/benschnorr/survival/featrues/lab/LabSettings.java
   - id: results
     resource: ../../testing/lab-brewing/results-2026-11-06.md
   - id: proof
