@@ -97,6 +97,36 @@ agent: knowledge-curator
 - [x] 5.1 Write the concepts listed in knowledge.md
   - Done when: `specfold validate` exits 0
 
+## 6. Follow-up from verification
+
+```yaml
+files:
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/signing/guard/**
+  - Survival/src/main/java/de/schnorrenbergers/survival/Survival.java
+  - Survival/src/test/java/de/schnorrenbergers/survival/featrues/signing/**
+  - README.md
+  - testing/README.md
+  - testing/item-signing/**
+  - ServerLauncherApplication/src/main/resources/discord-info/spieler.md
+  - knowledge/**
+depends: [5]
+scenarios:
+  - item-signing#stonecutter
+  - item-signing#grindstone
+  - item-signing#potion-brewing
+  - item-signing#crafting-table
+agent: implementer
+```
+
+- [ ] 6.1 Block signed items at the stonecutter, the grindstone and in vanilla potion brewing (signed top ingredient: no brew; signed bottles below stay unchanged)
+  - Done when: `./mvnw -B -q -pl Survival -am compile` passes
+- [ ] 6.2 Docs: README, `testing/README.md`, `spieler.md` and `recipe.sh` name the three new stations, say that signatures stack under the same name (not "egal wann"), and the README lists `SignItemLabelCheck`
+  - Done when: `trace --change item-signing` reports 0 uncovered and `InfoTextCheck` passes
+- [ ] 6.3 Knowledge: `capabilities/item-signing.md` names `SignedCraftGuard` for smithing, fixes the sentence about Brigadier, and adds the new stations; `domain/signature.md` says identical under the same name
+  - Done when: `specfold validate` exits 0
+- [ ] 6.4 The orchestrator sees in game: crafting table with signed planks and an unsigned counter-check, smithing table, stonecutter, grindstone and potion brewing
+  - Done when: each is recorded in `testing/item-signing/results-2026-11-06.md`
+
 ## Workflow follow-up
 
 - Archive the change, then run `specfold sync item-signing` and commit the result in the same PR.

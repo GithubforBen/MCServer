@@ -20,7 +20,7 @@ Lets a player put their name on items so that goods can be traced to who made th
 
 ### Requirement: Same signer, same item
 
-Items of the same kind signed by the same player SHALL be identical, so they stack, whenever and however often they were signed. The description SHALL show the name the player had when signing.
+Items of the same kind signed by the same player under the same name SHALL be identical, so they stack, however often they were signed. The description SHALL show the name the player had when signing; after a rename, newly signed items show the new name and need not stack with older ones.
 
 #### Scenario: Signed ten times
 
@@ -48,7 +48,7 @@ An item signed by one player SHALL NOT be signed by another, and items that carr
 
 ### Requirement: Signed items are never consumed as an ingredient
 
-A signed item SHALL NOT be consumed by crafting at a crafting table, by a crafter, by smelting in a furnace, blast furnace or smoker, by a smithing table, by a lab brew, or as the sacrifice on the right of an anvil. Where an automatic block would pick a signed item, it SHALL not use it. As the left item of an anvil, the result SHALL keep the signature.
+A signed item SHALL NOT be consumed by crafting at a crafting table, by a crafter, by smelting in a furnace, blast furnace or smoker, by a smithing table, by a stonecutter, by a grindstone, by a lab brew or a vanilla potion brew, or as the sacrifice on the right of an anvil. Where an automatic block would pick a signed item, it SHALL not use it. As the left item of an anvil, the result SHALL keep the signature.
 
 #### Scenario: Crafting table
 
@@ -69,6 +69,21 @@ A signed item SHALL NOT be consumed by crafting at a crafting table, by a crafte
 
 - **WHEN** a signed sword lies on the left of an anvil with a book on the right
 - **THEN** the result keeps the signature, and a signed item on the right gives no result
+
+#### Scenario: Stonecutter
+
+- **WHEN** a player puts signed cobblestone into a stonecutter
+- **THEN** no result can be taken and the cobblestone stays signed
+
+#### Scenario: Grindstone
+
+- **WHEN** a player puts a signed item into a grindstone
+- **THEN** no result appears
+
+#### Scenario: Potion brewing
+
+- **WHEN** a brewing stand has signed nether wart on top and water bottles below
+- **THEN** it does not brew and the nether wart stays signed
 
 ### Requirement: Shops trade signed goods as their own goods
 
