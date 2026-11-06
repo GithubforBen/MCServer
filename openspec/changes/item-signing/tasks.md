@@ -120,7 +120,7 @@ agent: implementer
 
 - [x] 6.1 Block signed items at the stonecutter, the grindstone and in vanilla potion brewing (signed top ingredient: no brew; signed bottles below stay unchanged)
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes
-- [ ] 6.2 Docs: README, `testing/README.md`, `spieler.md` and `recipe.sh` name the three new stations, say that signatures stack under the same name (not "egal wann"), and the README lists `SignItemLabelCheck`
+- [x] 6.2 Docs: README, `testing/README.md`, `spieler.md` and `recipe.sh` name the three new stations, say that signatures stack under the same name (not "egal wann"), and the README lists `SignItemLabelCheck`
   - Done when: `trace --change item-signing` reports 0 uncovered and `InfoTextCheck` passes
 - [ ] 6.3 Knowledge: `capabilities/item-signing.md` names `SignedCraftGuard` for smithing, fixes the sentence about Brigadier, and adds the new stations; `domain/signature.md` says identical under the same name
   - Done when: `specfold validate` exits 0
