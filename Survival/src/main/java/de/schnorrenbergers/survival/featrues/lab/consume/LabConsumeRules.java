@@ -89,6 +89,22 @@ public final class LabConsumeRules {
         return nowMillis >= dueMillis;
     }
 
+    /**
+     * Ticks a running effect of a dose still has on the wall clock, at least 1 while the recorded end lies
+     * ahead and 0 once it has passed. Vanilla timers stand still while a player is offline, so on join they
+     * are set to this.
+     */
+    public static int remainingTicks(long endMillis, long nowMillis) {
+        long left = endMillis - nowMillis;
+        if (left <= 0) return 0;
+        return (int) Math.min(Integer.MAX_VALUE, (left + 49) / 50);
+    }
+
+    /** Whether a running effect lasts longer than the wall clock allows and so has to be shortened on join. */
+    public static boolean needsShortening(int activeTicks, long endMillis, long nowMillis) {
+        return activeTicks > remainingTicks(endMillis, nowMillis);
+    }
+
     /** When players last dealt or took a hit from another player. */
     public static final class CombatClock<K> {
         private final Map<K, Long> last = new HashMap<>();

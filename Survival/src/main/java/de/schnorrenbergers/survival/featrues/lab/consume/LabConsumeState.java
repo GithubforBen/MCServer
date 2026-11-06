@@ -1,5 +1,6 @@
 package de.schnorrenbergers.survival.featrues.lab.consume;
 
+import de.schnorrenbergers.survival.featrues.lab.item.LabEffect;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -20,6 +21,7 @@ final class LabConsumeState {
     private final NamespacedKey speedEnd;
     private final NamespacedKey hasteAmp;
     private final NamespacedKey hasteEnd;
+    private final NamespacedKey cutEffects;
 
     LabConsumeState(Plugin plugin) {
         last = new NamespacedKey(plugin, "lab_last_consume");
@@ -29,6 +31,7 @@ final class LabConsumeState {
         speedEnd = new NamespacedKey(plugin, "lab_speed_end");
         hasteAmp = new NamespacedKey(plugin, "lab_haste_amp");
         hasteEnd = new NamespacedKey(plugin, "lab_haste_end");
+        cutEffects = new NamespacedKey(plugin, "lab_cut_effects");
     }
 
     /** The recorded level of one of our effects. */
@@ -68,6 +71,37 @@ final class LabConsumeState {
         data.remove(speedEnd);
         data.remove(hasteAmp);
         data.remove(hasteEnd);
+        data.remove(cutEffects);
+    }
+
+    /** Records the cut-in effects of the dose, as their names. */
+    void setCutEffects(Player player, java.util.Collection<LabEffect> effects) {
+        PersistentDataContainer data = player.getPersistentDataContainer();
+        if (effects.isEmpty()) {
+            data.remove(cutEffects);
+            return;
+        }
+        StringBuilder names = new StringBuilder();
+        for (LabEffect effect : effects) {
+            if (names.length() > 0) names.append(',');
+            names.append(effect.name());
+        }
+        data.set(cutEffects, PersistentDataType.STRING, names.toString());
+    }
+
+    /** The cut-in effects recorded for the dose, empty when there are none. */
+    java.util.Set<LabEffect> cutEffects(Player player) {
+        String names = player.getPersistentDataContainer().get(cutEffects, PersistentDataType.STRING);
+        java.util.Set<LabEffect> result = java.util.EnumSet.noneOf(LabEffect.class);
+        if (names == null) return result;
+        for (String name : names.split(",")) {
+            try {
+                result.add(LabEffect.valueOf(name));
+            } catch (IllegalArgumentException ignored) {
+                // an unknown name is skipped
+            }
+        }
+        return result;
     }
 
     void setEffect(Player player, boolean speed, int amplifier, long endMillis) {

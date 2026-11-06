@@ -124,6 +124,7 @@ public final class LabConsume implements Listener {
         for (LabEffect effect : data.effects()) {
             player.addPotionEffect(new PotionEffect(type(effect), ticks, 0));
         }
+        state.setCutEffects(player, data.effects());
         state.setCrash(player, end, data.purity());
     }
 
@@ -144,16 +145,26 @@ public final class LabConsume implements Listener {
 
     /**
      * Starts the pending crash if it is due. The pending data is removed first, so a crash neither comes twice
-     * nor survives a restart. On join, what Kokain gave is taken away first: the clock of those effects stood
-     * still while the player was offline, but the crash does not wait for them.
+     * nor survives a restart. On join the clock of the running effects stood still while the player was
+     * offline, but the recorded end is wall clock: if the crash is due, what Kokain gave (Speed, Haste and the
+     * cut-in effects) is taken away; if not, those effects are set to the time that is left.
      */
     private void startCrashIfDue(Player player, boolean onJoin) {
         long[] pending = state.crash(player);
-        if (pending == null || !LabConsumeRules.crashDue(pending[0], System.currentTimeMillis())) return;
+        if (pending == null) return;
+        long now = System.currentTimeMillis();
+        if (!LabConsumeRules.crashDue(pending[0], now)) {
+            if (onJoin) shortenOurs(player, pending[0], now);
+            return;
+        }
         if (player.isDead()) return;
         if (onJoin) {
             removeOurs(player, PotionEffectType.SPEED, true);
             removeOurs(player, PotionEffectType.HASTE, false);
+            for (LabEffect effect : state.cutEffects(player)) {
+                PotionEffect active = player.getPotionEffect(type(effect));
+                if (active != null && active.getAmplifier() == 0) player.removePotionEffect(type(effect));
+            }
         }
         state.clearCrash(player);
 
@@ -163,6 +174,25 @@ public final class LabConsume implements Listener {
         if (crash.slowness() > 0) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, ticks, crash.slowness() - 1));
         }
+    }
+
+    /** Sets the running effects of the dose to the wall-clock time that is left. */
+    private void shortenOurs(Player player, long endMillis, long now) {
+        LabConsumeState.Recorded speed = state.effect(player, true);
+        if (speed != null) shorten(player, PotionEffectType.SPEED, speed.amplifier(), endMillis, now);
+        LabConsumeState.Recorded haste = state.effect(player, false);
+        if (haste != null) shorten(player, PotionEffectType.HASTE, haste.amplifier(), endMillis, now);
+        for (LabEffect effect : state.cutEffects(player)) shorten(player, type(effect), 0, endMillis, now);
+    }
+
+    private void shorten(Player player, PotionEffectType type, int amplifier, long endMillis, long now) {
+        PotionEffect active = player.getPotionEffect(type);
+        if (active == null || active.isInfinite() || active.getAmplifier() != amplifier) return;
+        if (!LabConsumeRules.needsShortening(active.getDuration(), endMillis, now)) return;
+        int ticks = LabConsumeRules.remainingTicks(endMillis, now);
+        player.removePotionEffect(type);
+        player.addPotionEffect(new PotionEffect(type, ticks, amplifier, active.isAmbient(),
+                active.hasParticles(), active.hasIcon()));
     }
 
     private void removeOurs(Player player, PotionEffectType type, boolean speed) {
