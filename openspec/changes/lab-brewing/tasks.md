@@ -30,7 +30,7 @@ agent: implementer
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabBrewCheck` still exits 0; the server run in task 2.2 shows it
 - [x] 1.5 Make the progress arrow follow the own-tick brew for everyone who has the stand open; the game run showed it empty for the whole brew
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabBrewCheck` still exits 0; the game run shows `lab-brewing#watching-a-brew`
-- [ ] 1.6 Also send the total brew time, data slot 2, because the client draws the arrow only when brewing ticks and total brewing ticks are both above 0; the game run after 1.5 still showed an empty arrow
+- [x] 1.6 Also send the total brew time, data slot 2, because the client draws the arrow only when brewing ticks and total brewing ticks are both above 0; the game run after 1.5 still showed an empty arrow
   - Done when: `./mvnw -B -q -pl Survival -am compile` passes and `LabBrewCheck` still exits 0; the game run shows `lab-brewing#watching-a-brew`
 
 ## 2. Prove empty slots on a server
