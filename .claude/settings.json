@@ -26,7 +26,6 @@
       "Read(/graphify-out/cache/**)"
     ],
     "ask": [
-      "Bash(git push *)",
       "Bash(git push *--force*)",
       "Bash(git push -f*)",
       "Bash(git push * -f*)",
@@ -36,11 +35,14 @@
       "Bash(git push * -d *)",
       "Bash(git push *--tags*)",
       "Bash(git push *--follow-tags*)",
-      "Bash(gh pr create *)",
-      "Bash(gh pr merge *)",
-      "Bash(gh api *pulls/*/merge*)",
       "Bash(gh pr close *)",
       "Bash(gh api *pulls/*state=closed*)"
+    ],
+    "allow": [
+      "Bash(git push *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh api *pulls/*/merge*)"
     ]
   },
   "hooks": {
