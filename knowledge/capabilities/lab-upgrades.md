@@ -3,6 +3,9 @@ type: Capability
 title: "Labor: Upgrades"
 description: "Warum Vanilla-Blöcke am Stand als Upgrades wirken statt eigener Blöcke oder Items."
 status: draft
+spec: openspec/specs/lab-upgrades/spec.md
+resource: ../../openspec/specs/lab-upgrades/spec.md
+change: 2026-11-06-lab-brewing
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:48:32+01:00 }
 sources:
   - id: reader
@@ -15,6 +18,10 @@ sources:
     resource: ../../testing/lab-brewing/results-2026-11-06.md
   - id: readme
     resource: ../../README.md
+  - id: proposal-2026-11-06-lab-brewing
+    resource: ../../openspec/changes/archive/2026-11-06-lab-brewing/proposal.md
+  - id: design-2026-11-06-lab-brewing
+    resource: ../../openspec/changes/archive/2026-11-06-lab-brewing/design.md
 ---
 
 # Warum

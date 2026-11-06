@@ -3,6 +3,9 @@ type: Capability
 title: "Labor: Konsum"
 description: "Warum Konsum über Vanilla-Effekte gehen darf, aber im Kampf gedeckelt ist."
 status: draft
+spec: openspec/specs/lab-consumption/spec.md
+resource: ../../openspec/specs/lab-consumption/spec.md
+change: 2026-11-06-lab-brewing
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:48:32+01:00 }
 sources:
   - id: consume
@@ -15,6 +18,10 @@ sources:
     resource: ../../testing/lab-brewing/results-2026-11-06.md
   - id: readme
     resource: ../../README.md
+  - id: proposal-2026-11-06-lab-brewing
+    resource: ../../openspec/changes/archive/2026-11-06-lab-brewing/proposal.md
+  - id: design-2026-11-06-lab-brewing
+    resource: ../../openspec/changes/archive/2026-11-06-lab-brewing/design.md
 ---
 
 # Warum

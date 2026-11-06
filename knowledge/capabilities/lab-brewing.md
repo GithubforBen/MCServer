@@ -3,6 +3,9 @@ type: Capability
 title: "Labor: Brauen"
 description: "Warum es eine lange, automatisierbare Produktionskette im Braustand gibt und wie sie Survival unberührt lässt."
 status: draft
+spec: openspec/specs/lab-brewing/spec.md
+resource: ../../openspec/specs/lab-brewing/spec.md
+change: 2026-11-06-lab-brewing
 generated: { by: claude-code/claude-opus-5-5, at: 2026-11-06T14:48:32+01:00 }
 sources:
   - id: brewing
@@ -17,6 +20,10 @@ sources:
     resource: ../../testing/lab-brewing/proof/results-2026-11-05.md
   - id: readme
     resource: ../../README.md
+  - id: proposal-2026-11-06-lab-brewing
+    resource: ../../openspec/changes/archive/2026-11-06-lab-brewing/proposal.md
+  - id: design-2026-11-06-lab-brewing
+    resource: ../../openspec/changes/archive/2026-11-06-lab-brewing/design.md
 ---
 
 # Warum
