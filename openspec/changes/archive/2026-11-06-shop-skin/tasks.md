@@ -67,7 +67,7 @@ agent: implementer
   - Done when: both files describe the feature
 - [x] 3.2 Add `testing/shop-skin/recipe.sh` naming, with a `spec: shop-skin#<scenario>` comment, every scenario no check file covers
   - Done when: `specfold trace --change shop-skin` reports 0 uncovered
-- [ ] 3.3 Describe the feature for players in `spieler.md`, under "Shops und Marktplatz (Survival)"
+- [x] 3.3 Describe the feature for players in `spieler.md`, under "Shops und Marktplatz (Survival)"
   - Done when: `InfoTextCheck` runs and exits 0
 
 ## 4. In-game check
@@ -92,7 +92,7 @@ scenarios: []
 agent: knowledge-curator
 ```
 
-- [ ] 5.1 Write the concepts listed in knowledge.md
+- [x] 5.1 Write the concepts listed in knowledge.md
   - Done when: `specfold validate` exits 0
 
 ## Workflow follow-up

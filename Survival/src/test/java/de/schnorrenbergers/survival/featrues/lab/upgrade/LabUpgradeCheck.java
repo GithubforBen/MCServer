@@ -41,6 +41,16 @@ public final class LabUpgradeCheck {
         check("smoker fuel", new LabUpgrades(false, false, false, true).fuelPower(20, settings), 30);
         check("no smoker fuel", LabUpgrades.NONE.fuelPower(20, settings), 20);
 
+        // fuel.brews-per-item sets the brews of one item without a smoker, the smoker setting with one
+        File custom = new File(Files.createTempDirectory("lab-fuel").toFile(), "configs/lab.yml");
+        custom.getParentFile().mkdirs();
+        Files.writeString(custom.toPath(), "fuel:\n  brews-per-item: 10\nupgrade:\n  smoker-brews-per-item: 50\n");
+        LabSettings fuelSettings = new LabSettings(custom, Logger.getLogger("check"));
+        check("custom fuel without smoker", LabUpgrades.NONE.fuelPower(20, fuelSettings), 10);
+        check("custom fuel with smoker", new LabUpgrades(false, false, false, true).fuelPower(20, fuelSettings), 50);
+        check("custom fuel scales the base", LabUpgrades.NONE.fuelPower(40, fuelSettings), 20);
+        check("fuel power at least 1", LabUpgrades.NONE.fuelPower(1, fuelSettings), 1);
+
         // the extra comes out of waste and nothing evenly, the sum stays 1
         Yield scaled = LabUpgrades.scale(cane, 1.21);
         near("scaled goods", scaled.goods(), 0.5808);
@@ -73,7 +83,7 @@ public final class LabUpgradeCheck {
         // both goods upgrades with the default 1.1 each; the lightning rod and the smoker leave the chance alone
         double perKokain = LabChainCheck.canePerKokain(chain, 1.1 * 1.1, 50_000_000L, 20261106L);
         System.out.println("fully upgraded: cane per kokain=" + perKokain);
-        check("fully upgraded about 6400 (" + perKokain + ")", perKokain > 6_000 && perKokain < 6_800, true);
+        check("fully upgraded about 6500 (" + perKokain + ")", perKokain > 6_000 && perKokain < 6_800, true);
     }
 
     private static void near(String what, double actual, double expected) {

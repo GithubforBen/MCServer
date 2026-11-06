@@ -14,7 +14,7 @@ import org.bukkit.inventory.ItemStack;
  * A smoker near a lab stand makes one fuel item give more fuel, and every brew, on the own tick and on
  * the vanilla engine alike, costs one level. Only a stand set up for the lab gets it, so a stand with
  * ordinary potions is refuelled as vanilla does.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /capabilities/lab-upgrades.md
  */
 public final class LabFuel implements Listener {
 

@@ -5,7 +5,7 @@ import de.schnorrenbergers.survival.featrues.lab.LabSettings.Yield;
 
 /**
  * Which upgrades a stand has and what they do, with no server in it. Each type counts once, however
- * many blocks of it stand within reach. see knowledge: /decisions/gadget-choices.md
+ * many blocks of it stand within reach. see knowledge: /capabilities/lab-upgrades.md
  *
  * @param water        a cauldron holding water: raises the goods chance
  * @param amethyst     an amethyst block: raises the goods chance
@@ -30,6 +30,9 @@ public record LabUpgrades(boolean water, boolean amethyst, boolean lightningRod,
         return (water ? settings.waterCauldronFactor() : 1) * (amethyst ? settings.amethystFactor() : 1);
     }
 
+    /** Brews one fuel item lasts in vanilla, the reference of the configured numbers. */
+    private static final int VANILLA_BREWS = 20;
+
     /** A brew of {@code base} ticks with these upgrades. */
     public int brewTicks(int base, LabSettings settings) {
         return Math.max(1, (int) Math.round(base * (lightningRod ? settings.lightningRodTimeFactor() : 1)));
@@ -38,11 +41,12 @@ public record LabUpgrades(boolean water, boolean amethyst, boolean lightningRod,
     /**
      * The fuel a fuel item gives. Every brew costs one level, so more levels mean more brews per item.
      *
-     * @param base what the item gives without upgrades (20 for blaze powder)
+     * @param base what the item gives in vanilla (20 for blaze powder); the configured brews per item
+     *             scale it, 20 brews being vanilla
      */
     public int fuelPower(int base, LabSettings settings) {
-        if (!smoker) return base;
-        return Math.max(base, (int) Math.round(base * settings.smokerFuelBrews() / (double) settings.fuelBrews()));
+        int brews = smoker ? settings.smokerFuelBrews() : settings.fuelBrews();
+        return Math.max(1, (int) Math.round(base * brews / (double) VANILLA_BREWS));
     }
 
     /**

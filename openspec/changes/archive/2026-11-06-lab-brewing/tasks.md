@@ -242,7 +242,7 @@ agent: implementer
 ```yaml
 files:
   - testing/lab-brewing/recipe.sh
-depends: [9]
+depends: [12]
 scenarios: []
 agent: implementer
 ```
@@ -259,8 +259,42 @@ scenarios: []
 agent: knowledge-curator
 ```
 
-- [ ] 11.1 Write the concepts listed in knowledge.md
+- [x] 11.1 Write the concepts listed in knowledge.md
   - Done when: `specfold validate` exits 0
+
+## 12. Fixes from verification
+
+```yaml
+files:
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/cutting/**
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/brew/LabCutBrewing.java
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/consume/**
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/upgrade/**
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/LabSettings.java
+  - Survival/src/main/java/de/schnorrenbergers/survival/featrues/lab/LabCommand.java
+  - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/cutting/**
+  - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/consume/**
+  - Survival/src/test/java/de/schnorrenbergers/survival/featrues/lab/upgrade/**
+  - README.md
+  - ServerLauncherApplication/src/main/resources/discord-info/spieler.md
+depends: [9]
+scenarios:
+  - lab-cutting#stretching
+  - lab-consumption#logging-out-does-not-skip-it
+  - lab-consumption#hit-during-purity-5
+agent: implementer
+```
+
+- [x] 12.1 Cutting a slot of stretched Kokain keeps every item of the slot; today three stretched Kokain come back as one
+  - Done when: `LabCuttingCheck` asserts that cutting a slot of three stretched Kokain gives three cut Kokain, and passes
+- [x] 12.2 After a relog with Kokain effects still due to run, the running effects match the recorded wall-clock end, so the crash starts only when they end and the combat cap still recognizes them; when the crash is already due on join, cut-in effects end with Speed and Haste
+  - Done when: `LabConsumeCheck` covers both join cases and passes
+- [x] 12.3 `fuel.brews-per-item` sets how many lab brews one fuel item lasts without a smoker, as its config comment and the README say; the default of 20 keeps today's behavior
+  - Done when: `LabUpgradeCheck` asserts fuel power for a non-default `fuel.brews-per-item` with and without a smoker, and passes
+- [x] 12.4 Item names in README, `spieler.md` and `/labor` match the German client: Feuerkugel, Goldene Karotte, Goldklumpen, Glowstonestaub
+  - Done when: no old name is left (`grep -nE 'Feuerball|Goldkarotte|Goldnugget|Glowstone-Staub'` finds nothing in those files) and `InfoTextCheck` passes
+- [x] 12.5 README and `spieler.md` say that a line without players needs a redstone item filter the player builds, because the bottom hopper takes paste or Kokain out unchanged when its filter or ingredient is not on top yet (decided by the user: the hopper rule stays)
+  - Done when: both files say so and `InfoTextCheck` passes
 
 ## Workflow follow-up
 

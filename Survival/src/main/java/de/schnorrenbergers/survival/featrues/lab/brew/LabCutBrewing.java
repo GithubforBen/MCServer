@@ -31,7 +31,7 @@ import java.util.function.Predicate;
  * ingredient whose input matches only Kokain the ingredient is a valid step for, so vanilla starts no brew
  * for any other item. The {@link BrewEvent} handler replaces what vanilla would produce, and only for
  * Kokain slots: a vanilla potion brew with the same ingredient stays vanilla.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /capabilities/lab-cutting.md
  */
 final class LabCutBrewing implements Listener {
 
@@ -66,7 +66,7 @@ final class LabCutBrewing implements Listener {
 
     private static boolean isStep(Ingredient ingredient, ItemStack item) {
         if (LabSlots.signed(item)) return false; // signed Kokain is never cut
-        return LabItems.read(item).map(data -> LabCutting.isStep(ingredient, data)).orElse(false);
+        return LabItems.read(item).map(data -> LabCutting.isStep(ingredient, data, item.getAmount(), item.getMaxStackSize())).orElse(false);
     }
 
     private void registerRecipes() {
@@ -139,7 +139,7 @@ final class LabCutBrewing implements Listener {
             }
             LabData data = LabItems.read(before).orElse(null);
             if (data == null) continue; // not Kokain or paste: vanilla's own result stays
-            LabCutting.Result cut = LabCutting.apply(ingredient, data).orElse(null);
+            LabCutting.Result cut = LabCutting.apply(ingredient, data, before.getAmount(), before.getMaxStackSize()).orElse(null);
             results.set(i, cut == null ? before.clone() : LabItems.create(cut.data(), cut.amount()));
         }
     }

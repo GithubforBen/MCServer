@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * Cutting and stretching of Kokain, with no server in it. An effect ingredient adds its effect, sugar
  * turns one item into three of one purity lower. Both always succeed; what cannot be done is no step.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /capabilities/lab-cutting.md
  */
 public final class LabCutting {
 
@@ -76,6 +76,23 @@ public final class LabCutting {
         Set<LabEffect> effects = EnumSet.of(ingredient.effect);
         effects.addAll(bottom.effects());
         return Optional.of(new Result(bottom.withEffects(effects), 1));
+    }
+
+    /**
+     * Like {@link #apply(Ingredient, LabData)} for a slot holding {@code slotAmount} of the same item that
+     * stacks to {@code maxStack}: an effect keeps every item, stretching makes three per item. When that
+     * would not fit one stack, it is no step, so nothing is used and nothing is lost.
+     */
+    public static Optional<Result> apply(Ingredient ingredient, LabData bottom, int slotAmount, int maxStack) {
+        int held = Math.max(1, slotAmount);
+        return apply(ingredient, bottom).flatMap(r -> {
+            long amount = (long) r.amount() * held;
+            return amount > maxStack ? Optional.<Result>empty() : Optional.of(new Result(r.data(), (int) amount));
+        });
+    }
+
+    public static boolean isStep(Ingredient ingredient, LabData bottom, int slotAmount, int maxStack) {
+        return apply(ingredient, bottom, slotAmount, maxStack).isPresent();
     }
 
     public static boolean isStep(Ingredient ingredient, LabData bottom) {

@@ -11,7 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Reads the upgrade blocks around a stand, and keeps what a running brew uses in the stand's persistent
  * data next to its progress, so unloading and restarts change nothing. Upgrades are read when a brew
- * starts and kept for that brew. see knowledge: /decisions/gadget-choices.md
+ * starts and kept for that brew. see knowledge: /capabilities/lab-upgrades.md
  */
 public final class LabUpgradeReader {
 

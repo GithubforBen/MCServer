@@ -30,7 +30,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Purifying and Kokain run on the vanilla engine: a registered {@link BrewingRecipe} per valid step lets
  * vanilla start the brew, and the {@link BrewEvent} handler replaces what vanilla would produce by
  * rolling. Inputs match lab items only, so vanilla never brews from a plain pottery sherd.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /decisions/lab-brewing-engine.md
  */
 final class LabPurifying implements Listener {
 

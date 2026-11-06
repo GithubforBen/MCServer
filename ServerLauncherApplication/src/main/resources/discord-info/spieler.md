@@ -79,6 +79,9 @@ Die Teamkasse zieht bei einer Umbenennung mit. Wird ein Team aufgelöst, bekommt
 - **Einstellen:** Schleichen + Rechtsklick auf deinen Händler. Dort stellst du Angebote, Preise und Mengen ein, wechselst die Kiste oder versetzt den Händler.
 - **Kaufen:** Rechtsklick auf einen Händler.
 - **Marktplatz:** `/shop` zeigt die Angebote aller Shops auf einmal.
+- **Rückkauf:** Ein Shop kann Ware auch zurückkaufen. Rechtsklick auf ein Angebot (am Händler oder in der `/shop`-Liste) verkauft ein Los für den angezeigten „Rückkauf“-Preis, bezahlt vom Teamkonto. Es zählt nur genau das gleiche Item.
+- **Rückkauf einschalten:** Das Team aktiviert ihn pro Angebot in den Shop-Einstellungen, ab Werk ist er aus.
+- **Aussehen:** In den Shop-Einstellungen (Schleichen + Rechtsklick auf deinen Händler) kann das Team dem Händler das Aussehen eines beliebigen Spielers geben, einfach den Spielernamen eintippen. Mit „aus“ wird er wieder zum Dorfbewohner.
 
 ## Labor (Survival)
 
@@ -86,8 +89,8 @@ Ein Extra für Survival, das du nicht benutzen musst. Wer es lässt, merkt nicht
 
 - **Anfang:** Zuckerrohr oben in einen Braustand mit Lohenstaub als Brennstoff, die drei unteren Slots bleiben leer. Nach 20 Sekunden liegt dort Rohpaste, Pflanzenabfall oder nichts.
 - **Reinigen:** Papier-, Kohle-, Seiden- und Goldfilter heben die Reinheit von 1 bis auf 5. Je reiner, desto weniger kommt dabei heraus. Für Reinheit 5 brauchst du im Schnitt rund 20.000 Zuckerrohr.
-- **Kokain:** Feenstaub oben macht aus Paste Kokain. Mit Goldkarotte, Phantomhaut, Feuerball, Honigflasche oder Magmacreme schneidest du Effekte hinein, mit Zucker streckst du es.
-- **Ausbauen:** Wasserkessel, Amethystblock, Blitzableiter und Räucherofen bis zwei Felder um den Braustand machen ihn besser. Trichter füllen und leeren ihn, die ganze Linie läuft von allein.
+- **Kokain:** Feenstaub oben macht aus Paste Kokain. Mit Goldener Karotte, Phantomhaut, Feuerkugel, Honigflasche oder Magmacreme schneidest du Effekte hinein, mit Zucker streckst du es.
+- **Ausbauen:** Wasserkessel, Amethystblock, Blitzableiter und Räucherofen bis zwei Felder um den Braustand machen ihn besser. Trichter füllen und leeren ihn. Damit die Linie von allein läuft, baust du dir einen Itemfilter aus Redstone, der erst Filter oder Zutat oben einlegt und dann Paste oder Kokain.
 - **Konsumieren:** Rechtsklick mit Kokain gibt dir Tempo und Eile, danach kommt ein Absturz. Im Kampf bleibt es bei Stufe II.
 - **Abfall:** Pflanzenabfall blockiert seinen Slot, nimm ihn heraus. Platzieren geht nicht.
 

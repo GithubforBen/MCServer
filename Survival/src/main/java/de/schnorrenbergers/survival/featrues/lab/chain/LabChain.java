@@ -12,7 +12,7 @@ import java.util.random.RandomGenerator;
 /**
  * The step table and the rolling, with no server in it. One rule table serves both brewing paths: sugar
  * cane on empty slots, and a filter or Feenstaub on top of paste.
- * see knowledge: /decisions/gadget-choices.md
+ * see knowledge: /domain/purity.md
  */
 public final class LabChain {
 
