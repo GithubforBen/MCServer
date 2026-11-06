@@ -232,8 +232,8 @@ Resistenz; Blöcke vor dem Klick freiräumen; die Konsole nur über `testing/cli
 ### Item-Signatur (Survival, /signItem)
 `testing/item-signing/recipe.sh` druckt die Schritte als Checkliste (es prüft nichts selbst und endet mit
 Exit 2). Gebraucht werden zwei Konten und der Rückkauf-Shop aus dem Shop-Rückkauf-Rezept. Die Regeln
-stehen in `SigningRulesCheck`, im Spiel werden Signieren, Stapeln, Werktisch, Crafter, Ofen per Trichter,
-Amboss links und rechts, Laborbrau mit signierter Zutat und Verkauf und Rückkauf signierter Ware gesehen.
+stehen in `SigningRulesCheck`, im Spiel werden Signieren, Stapeln, Werktisch, Schmiedetisch, Crafter, Ofen per Trichter,
+Amboss links und rechts, Steinsäge, Schleifstein, Tränkebrauen, Laborbrau mit signierter Zutat und Verkauf und Rückkauf signierter Ware gesehen.
 Spieler schützen: Tag, `doMobSpawning false`, Resistenz; Blöcke vor dem Klick freiräumen; die Konsole nur
 über `testing/clients/con`; `netstart` nur mit JDK 25 in `JAVA_HOME` und `PATH`.
 

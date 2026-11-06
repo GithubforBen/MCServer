@@ -67,6 +67,24 @@ ITEM-SIGNING - Schritte zum Abgehen (nichts davon wurde automatisch geprueft)
    (Beschreibung "Signiert von"). Dann ein signiertes Item rechts (z.B. signierter Eisenbarren, links
    ein Eisenschwert): kein Ergebnis.
 
+9a. Steinsaege
+   # spec: item-signing#stonecutter
+   Signierte Cobblestone in eine Steinsaege legen, ein Rezept anklicken. Erwartet: das Ergebnis laesst
+   sich nicht nehmen, auch nicht per Shift-Klick, der Cobblestone bleibt signiert. Gegenprobe mit
+   unsigniertem Cobblestone: Ergebnis nehmbar.
+
+9b. Schleifstein
+   # spec: item-signing#grindstone
+   Ein signiertes verzaubertes Item (z.B. das Schwert aus Schritt 9) in einen Schleifstein legen. Erwartet:
+   kein Ergebnis. Gegenprobe mit unsigniertem verzaubertem Item: Ergebnis erscheint.
+
+9c. Tränkebrauen (Vanilla)
+   # spec: item-signing#potion-brewing
+   Braustand mit Wasserflaschen unten und signiertem Netherwarze oben (Blaze-Pulver als Brennstoff).
+   Erwartet: der Braustand braut nicht, die Netherwarze bleibt signiert und wird nicht verbraucht. Mit
+   unsignierter Netherwarze braut er (Gegenprobe). Signierte Flaschen unten bei unsignierter Zutat
+   bleiben unveraendert.
+
 10. Laborbrau mit signierter Zutat
    Braustand wie in testing/lab-brewing/recipe.sh: Kokain unten und eine signierte Goldkarotte oben.
    Erwartet: der Schneide-Vorgang startet nicht. Dasselbe mit signiertem Zuckerrohr oben (kein Vorgang).

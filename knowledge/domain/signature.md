@@ -17,7 +17,7 @@ sources:
 
 Eine Signatur ordnet ein Item dauerhaft einem Spieler zu. Gespeichert ist die UUID des Spielers in den Item-Daten (`survival:signed_by`); sichtbar ist die Zeile "Signiert von <Name>" in der Beschreibung. Der Name ist der zur Zeit des Signierens und folgt einer späteren Umbenennung nicht.
 
-Es gibt weder Uhrzeit noch Zähler. Items derselben Sorte mit derselben Signatur sind deshalb identisch und stapeln sich, egal wann und wie oft sie signiert wurden: zehn einzeln signierte Steine ergeben einen Stapel von zehn. Eine Signatur ist endgültig, ein anderer Spieler kann sie nicht überschreiben.
+Es gibt weder Uhrzeit noch Zähler. Items derselben Sorte mit derselben Signatur sind deshalb identisch und stapeln sich, gleich wie oft sie signiert wurden, solange der Name gleich ist: zehn einzeln signierte Steine ergeben einen Stapel von zehn. Nach einer Umbenennung des Spielers tragen neue Signaturen den neuen Namen und stapeln sich nicht mit den alten. Eine Signatur ist endgültig, ein anderer Spieler kann sie nicht überschreiben.
 
 Für Shops ist ein signiertes Item eine eigene Ware: es unterscheidet sich vom unsignierten und von der Signatur eines anderen Spielers.
 
