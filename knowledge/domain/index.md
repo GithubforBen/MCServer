@@ -5,4 +5,5 @@
 * [Event](event.md) - Eine angekündigte Veranstaltung im Netzwerk mit Typ, Zeitraum, Einstellungen und Belohnungen.
 * [Ghost-Server](ghost-server.md) - Ein vorbereiteter Run-Server, den der Launcher bereithält, damit der nächste Lauf nicht auf die Weltgenerierung wartet.
 * [Lauf](run.md) - Ein Versuch in einem zeitgemessenen Event, auf einem eigenen Run-Server.
+* [Reinheit](purity.md) - Die fünf Reinheitsstufen von Paste und Kokain.
 * [Runde](round.md) - Eine Partie Bedwars auf einem eigenen Server, von einem Event oder einem Spieler gestartet.
