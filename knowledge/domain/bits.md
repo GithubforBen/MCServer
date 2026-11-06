@@ -13,7 +13,7 @@ sources:
 
 # Meaning
 
-Die Währung des Netzwerks. Sie liegt beim Launcher in `money.yml`. Jede Änderung ist eine Differenz und keine neue Summe und wird unter einem Lock angewandt, damit sich zwei gleichzeitige Auszahlungen addieren. Server antworten aus ihrer lokalen Kopie; wo an der Antwort etwas Wertvolles hängt, wie beim Cosmetic-Kauf, gibt es `MoneyService.changeBlocking`.
+Die Währung des Netzwerks. Sie liegt beim Launcher in `money.yml`. Jede Änderung ist eine Differenz und keine neue Summe und wird unter einem Lock angewandt, damit sich zwei gleichzeitige Auszahlungen addieren. Server antworten aus ihrer lokalen Kopie; wo an der Antwort etwas Wertvolles hängt, wie beim Cosmetic-Kauf, gibt es `MoneyService.changeBlocking`. Diese Abbuchung trägt eine Frist, kurz vor dem Ende der Wartezeit des Senders; kommt der Launcher erst danach dazu, verwirft er sie und antwortet mit einem Fehler, sodass keine Bits mehr bewegt werden, wenn niemand mehr wartet. Gesendete Änderungen ohne Frist gelten immer.
 
 Ein Teamkonto hängt am Teamnamen. Bei einer Umbenennung zieht es mit, bei einer Auflösung bekommt der Anführer den Kontostand.
 
@@ -23,5 +23,6 @@ Ein Teamkonto hängt am Teamnamen. Bei einer Umbenennung zieht es mit, bei einer
 
 # Related
 
+- [Rückkauf zahlt die Teamkasse](/decisions/shop-buyback-paid-by-team.md)
 - [Launcher](/architecture/launcher.md)
 - [Poker-Plugin](/architecture/poker.md)
