@@ -79,6 +79,8 @@ Die Teamkasse zieht bei einer Umbenennung mit. Wird ein Team aufgelöst, bekommt
 - **Einstellen:** Schleichen + Rechtsklick auf deinen Händler. Dort stellst du Angebote, Preise und Mengen ein, wechselst die Kiste oder versetzt den Händler.
 - **Kaufen:** Rechtsklick auf einen Händler.
 - **Marktplatz:** `/shop` zeigt die Angebote aller Shops auf einmal.
+- **Rückkauf:** Ein Shop kann Ware auch zurückkaufen. Rechtsklick auf ein Angebot (am Händler oder in der `/shop`-Liste) verkauft ein Los für den angezeigten „Rückkauf“-Preis, bezahlt vom Teamkonto. Es zählt nur genau das gleiche Item.
+- **Rückkauf einschalten:** Das Team aktiviert ihn pro Angebot in den Shop-Einstellungen, ab Werk ist er aus.
 
 ## Team-Rucksack
 

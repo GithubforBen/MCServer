@@ -98,7 +98,7 @@ agent: implementer
   - Done when: both files describe the feature
 - [x] 5.2 Add `testing/shop-buyback/recipe.sh` naming, with a `spec: shop-buyback#<scenario>` comment, every scenario no check file covers
   - Done when: `specfold trace --change shop-buyback` reports 0 uncovered
-- [ ] 5.3 Describe the feature for players in `spieler.md`, under "Shops und Marktplatz (Survival)"
+- [x] 5.3 Describe the feature for players in `spieler.md`, under "Shops und Marktplatz (Survival)"
   - Done when: `InfoTextCheck` runs and exits 0
 
 ## 6. Expiring debits
