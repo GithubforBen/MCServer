@@ -71,7 +71,7 @@ final class LabArrow {
         for (HumanEntity viewer : stand.getInventory().getViewers()) {
             if (viewer instanceof Player player && player.getOpenInventory() instanceof BrewingStandView) {
                 try {
-                    sender.send(player, ticks);
+                    sender.send(player, ticks, TOTAL);
                 } catch (ReflectiveOperationException | RuntimeException e) {
                     failed = true;
                     plugin.getLogger().warning("Lab: progress arrow disabled: " + e);
@@ -81,7 +81,7 @@ final class LabArrow {
         }
     }
 
-    /** Sends {@code ClientboundContainerSetDataPacket(containerId, 0, value)}; the names are Mojang's. */
+    /** Sends {@code ClientboundContainerSetDataPacket(containerId, 2, total)} then slot 0 as {@code value}; the names are Mojang's. */
     private static final class Sender {
         private Method getHandle;
         private Field menuField;
@@ -90,7 +90,7 @@ final class LabArrow {
         private Method send;
         private Constructor<?> packet;
 
-        void send(Player player, int value) throws ReflectiveOperationException {
+        void send(Player player, int value, int total) throws ReflectiveOperationException {
             if (getHandle == null) {
                 Method handleMethod = player.getClass().getMethod("getHandle");
                 Class<?> serverPlayer = handleMethod.getReturnType();
@@ -105,7 +105,10 @@ final class LabArrow {
             }
             Object handle = getHandle.invoke(player);
             int id = idField.getInt(menuField.get(handle));
-            send.invoke(connectionField.get(handle), packet.newInstance(id, 0, value));
+            Object connection = connectionField.get(handle);
+            // slot 2 is the total: the client draws the arrow only when slots 0 and 2 are both above 0
+            send.invoke(connection, packet.newInstance(id, 2, total));
+            send.invoke(connection, packet.newInstance(id, 0, value));
         }
     }
 }
