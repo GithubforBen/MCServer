@@ -31,7 +31,7 @@ The following blocks within two blocks of a stand in every direction SHALL act a
 #### Scenario: Fully upgraded
 
 - **WHEN** a stand has all four upgrades
-- **THEN** one Kokain of purity 5 costs about 6,400 sugar cane on average
+- **THEN** one Kokain of purity 5 costs about 6,500 sugar cane on average
 
 ### Requirement: Upgrades take effect without any setup
 

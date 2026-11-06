@@ -17,6 +17,8 @@ Shops kaufen optional an: je Angebot, standardmäßig aus. `Shopkeeper.sellItem`
 
 Shops können einen Spieler-Skin tragen und stehen dann als `Mannequin` statt als Villager; mit demselben Lebenszyklus (Übernahme statt Neuaufbau). Siehe [Shop-Skin](/capabilities/shop-skin.md).
 
+Survival enthält außerdem das Labor (`featrues/lab/`): eine Produktionskette im Braustand von Zuckerrohr bis Kokain mit Upgrades, Schneiden, Konsum und dem Befehl `/labor`, als Zusatz ohne Wirkung auf Spieler, die nicht mitmachen. Siehe [Labor: Brauen](/capabilities/lab-brewing.md).
+
 # Interfaces
 
 - [Netzwerk-Events](/architecture/network-events.md)
@@ -25,5 +27,6 @@ Shops können einen Spieler-Skin tragen und stehen dann als `Mannequin` statt al
 
 - [Shop-Rückkauf](/capabilities/shop-buyback.md)
 - [Shop-Skin](/capabilities/shop-skin.md)
+- [Labor: Brauen](/capabilities/lab-brewing.md)
 - [Bits](/domain/bits.md)
 - [Rucksack-Plugin](/architecture/backpack.md)

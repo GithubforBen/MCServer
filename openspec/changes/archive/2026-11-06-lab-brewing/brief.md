@@ -16,7 +16,7 @@
 | Q8 | How far does cutting go? | Up to 3 effect ingredients per item, order irrelevant, purity unchanged, and additionally stretching: one item becomes three, one purity lower | user |
 | Q9 | How strong may consumption be? | Above vanilla potions only out of combat | user |
 | Q10 | What must the waste not do? | Be placed as a block | user |
-| Q11 | Who does the 20,000 sugar cane apply to? | A lab without upgrades; fully upgraded about 6,400 | user |
+| Q11 | Who does the 20,000 sugar cane apply to? | A lab without upgrades; fully upgraded about 6,500 (first estimated at 6,400; the simulation gives 6,516 because the Kokain step is capped at 100 percent) | user |
 | Q12 | Tree and numbers | As presented: five purity tiers, four filters, Feenstaub, the yields in the spec | user |
 | Q13 | What counts as combat? | Dealing or taking a hit from another player within the last 15 seconds | delegated |
 | Q14 | What happens to above-vanilla effects in combat? | They drop to the vanilla cap and stay there until they run out | delegated |
