@@ -914,9 +914,17 @@ also über einen hohen Preis leerräumen. Linksklick kauft wie bisher. Der Markt
 höchsten Rückkaufpreis pro Item, die Angebotsliste den Preis je Angebot, und ein Rechtsklick dort verkauft
 ebenfalls.
 
+**Skin.** Ein Händler kann statt des Villagers eine Spielerfigur sein, mit dem Skin eines Minecraft-Kontos
+wie bei den Lobby-NPCs (ein Villager kann keinen Skin tragen, die Figur ist eine Schaufensterpuppe).
+Das Team setzt ihn in den Einstellungen mit dem Spielerkopf-Knopf und tippt danach den Spielernamen in den
+Chat (3 bis 16 Buchstaben, Ziffern oder Unterstriche). `aus` entfernt den Skin, `abbrechen` lässt alles
+wie es ist; ein ungültiger Name wird abgelehnt. Ein Konto, das es nicht gibt, zeigt das Standardaussehen.
+Die Figur öffnet dieselben Menüs, ist unverwundbar, steht still und lässt sich versetzen. Händler ohne Skin
+bleiben Villager, auch bestehende Shops ändern sich nicht.
+
 | Klasse | Aufgabe |
 |--------|---------|
-| `Shopkeeper` | Ein Shop: Villager, Lager, Verkauf - sonst nichts |
+| `Shopkeeper` | Ein Shop: Figur (Villager oder Mannequin mit Skin), Lager, Verkauf und Rückkauf - sonst nichts |
 | `ShopkeeperManager` | Alle Shops: finden (nach Id, nach Kiste), anlegen, Autosave, folgt Team-Umbenennungen |
 | `ShopkeeperStore` | Liest und schreibt `configs/shop-config.yml` (Format unverändert) |
 | `ShopSettings` | `configs/shop.yml`: was ein Shop kostet |
