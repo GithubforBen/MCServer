@@ -1,4 +1,4 @@
-import de.schnorrenbergers.bedwars.game.*;
+import com.benschnorr.bedwars.game.*;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -7,7 +7,7 @@ public class BalanceProbe {
     public static void main(String[] a) throws Exception {
         even = TeamBalancer.class.getDeclaredMethod("even", List.class, int.class, Set.class); even.setAccessible(true);
         opponent = TeamBalancer.class.getDeclaredMethod("opponent", List.class, int.class); opponent.setAccessible(true);
-        Class<?> color = Class.forName("de.schnorrenbergers.bedwars.game.TeamColor");
+        Class<?> color = Class.forName("com.benschnorr.bedwars.game.TeamColor");
         Object[] colors = color.getEnumConstants();
         // 4x2, two friends pick RED, one random player
         run("zwei waehlen dasselbe Team, einer zufaellig", colors, 4, 2, new int[]{2,0,0,0}, new boolean[]{false,false}, new int[]{0,0,0,0, 1});
@@ -18,7 +18,7 @@ public class BalanceProbe {
     }
     static void run(String name, Object[] colors, int count, int size, int[] start, boolean[] movable, int[] extra) throws Exception {
         List<GameTeam> teams = new ArrayList<>();
-        for (int i = 0; i < count; i++) teams.add(new GameTeam((de.schnorrenbergers.bedwars.game.TeamColor) colors[i]));
+        for (int i = 0; i < count; i++) teams.add(new GameTeam((com.benschnorr.bedwars.game.TeamColor) colors[i]));
         Set<GamePlayer> mov = new HashSet<>();
         int n = 0, k = 0;
         for (int t = 0; t < count; t++) for (int j = 0; j < start[t]; j++) {

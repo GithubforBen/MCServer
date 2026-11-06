@@ -1,0 +1,294 @@
+package com.benschnorr.types;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Every jar the launcher has to put onto a server, together with the place it is fetched from.
+ * <p>
+ * All downloads are pinned to builds that support {@link #MINECRAFT_VERSION}.
+ */
+public class FileType implements Serializable {
+    private static final long serialVersionUID = 100L;
+
+    /** The minecraft version the whole network is built and configured for. */
+    public static final String MINECRAFT_VERSION = "26.3";
+    /** The value plugins have to declare as {@code api-version} in their plugin.yml. */
+    public static final String API_VERSION = "26.3";
+
+    public enum SERVER {
+        PAPER,
+        VELOCITY;
+
+        public static String getFileURL(SERVER type) {
+            return switch (type) {
+                // Paper 26.3 build 140 (2026-09-29) - the newest there is, still BETA like every 26.3 build
+                case SERVER.PAPER ->
+                        "https://fill-data.papermc.io/v1/objects/98aabc113a80b9b5e183475e839a17cf99c39c915a1f46b8f35a5e89fd5de0f1/paper-26.3-140.jar";
+                // Velocity 4.2.0 build 30 (stable)
+                case SERVER.VELOCITY ->
+                        "https://fill-data.papermc.io/v1/objects/35a5596a5468a035d8a32c8de5ebb0dc6b8d8f0cc3ff5169d514aca762af8aa8/velocity-4.2.0-30.jar";
+            };
+        }
+
+        public static String getFileName(SERVER type) {
+            String url = getFileURL(type);
+            return url.split("/")[url.split("/").length - 1];
+        }
+
+        /**
+         * @return the name shown to players when they pick the software of a new server
+         */
+        public String getDisplayName() {
+            return switch (this) {
+                case PAPER -> "Paper " + MINECRAFT_VERSION;
+                case VELOCITY -> "Velocity Proxy";
+            };
+        }
+    }
+
+    /**
+     * Content a server needs next to its jars: worlds, and the configuration that belongs to them.
+     * <p>
+     * A plugin is code and is replaced on every start; an asset is content and must not be, because the
+     * whole point of shipping a map is that an admin can then edit it. So an asset is unpacked once, and
+     * again only when {@link #getVersion()} says a newer one is being shipped.
+     * <p>
+     * The zip is laid over the server directory as it is, which is what keeps this general: a bedwars map
+     * is {@code maps/<name>/} plus {@code maps/<name>.yml} in one archive, and a lobby world will be
+     * {@code world/} plus whatever configuration goes with it, with nothing here to change.
+     */
+    public enum ASSET {
+
+        /** The hypixel map "Speedway": eight bases, so it plays solo and doubles as 2v2 x8. */
+        BEDWARS_SPEEDWAY,
+        /** The hypixel map "Lighthouse": eight islands around a lighthouse. */
+        BEDWARS_LIGHTHOUSE,
+        /** The hypixel map "Orbit": eight bases around a star of walkways. */
+        BEDWARS_ORBIT,
+        /** The hypixel map "Aquarium": four bases, so it plays 3v3v3v3 and 4v4v4v4 only. */
+        BEDWARS_AQUARIUM,
+        /**
+         * The built spawn of the lobby. Unpacked as {@code lobby-world/}, which the lobby plugin restores
+         * its world from on every start - so the hub is always the map as it was built.
+         */
+        LOBBY_SPAWN;
+
+        /**
+         * @param type the asset
+         * @return where it is fetched from - {@code asset:/} for a file shipped in this repository
+         */
+        public static String getFileURL(ASSET type) {
+            return switch (type) {
+                case BEDWARS_SPEEDWAY -> "asset:/bedwars-speedway.zip";
+                case BEDWARS_LIGHTHOUSE -> "asset:/bedwars-lighthouse.zip";
+                case BEDWARS_ORBIT -> "asset:/bedwars-orbit.zip";
+                case BEDWARS_AQUARIUM -> "asset:/bedwars-aquarium.zip";
+                case LOBBY_SPAWN -> "asset:/lobby-spawn.zip";
+            };
+        }
+
+        public static String getFileName(ASSET type) {
+            String url = getFileURL(type);
+            return url.split("/")[url.split("/").length - 1];
+        }
+
+        /**
+         * The version of the content, not of the file.
+         * <p>
+         * Unpacking again would throw away whatever an admin changed - a map they moved a generator in, a
+         * world they built on. So it only happens when this string changes, which is the one moment where
+         * shipping a corrected version is worth more than keeping local edits.
+         *
+         * @param type the asset
+         * @return the version to record on the server
+         */
+        public static String getVersion(ASSET type) {
+            return switch (type) {
+                case BEDWARS_SPEEDWAY -> "3";
+                case BEDWARS_LIGHTHOUSE, BEDWARS_ORBIT, BEDWARS_AQUARIUM -> "1";
+                // 2: the spawn point of the map was set (it stood in the void)
+                case LOBBY_SPAWN -> "3";
+            };
+        }
+
+        /**
+         * @param type the asset
+         * @return whether it is shipped in this repository rather than downloaded
+         */
+        public static boolean isShipped(ASSET type) {
+            return getFileURL(type).startsWith("asset:");
+        }
+
+        public String getDisplayName() {
+            return switch (this) {
+                case BEDWARS_SPEEDWAY -> "Bedwars Map: Speedway";
+                case BEDWARS_LIGHTHOUSE -> "Bedwars Map: Lighthouse";
+                case BEDWARS_ORBIT -> "Bedwars Map: Orbit";
+                case BEDWARS_AQUARIUM -> "Bedwars Map: Aquarium";
+                case LOBBY_SPAWN -> "Lobby-Welt: Spawn";
+            };
+        }
+
+        /**
+         * Which bedwars map an asset installs.
+         * <p>
+         * The lobby offers the maps of a round before any bedwars server exists to ask, so the list has to
+         * be readable from the blueprint. A new map is therefore one entry here and one line in this
+         * switch, and it shows up in the round menu without anything else being touched.
+         *
+         * @param type the asset
+         * @return the id of the map it installs, or {@code null} when it is not a bedwars map
+         */
+        public static String getBedwarsMap(ASSET type) {
+            return switch (type) {
+                case BEDWARS_SPEEDWAY -> "speedway";
+                case BEDWARS_LIGHTHOUSE -> "lighthouse";
+                case BEDWARS_ORBIT -> "orbit";
+                case BEDWARS_AQUARIUM -> "aquarium";
+                case LOBBY_SPAWN -> null;
+            };
+        }
+    }
+
+    /**
+     * Where a plugin can be installed. Used to only offer plugins that actually fit the server software.
+     */
+    public enum PLATFORM {
+        PAPER,
+        VELOCITY
+    }
+
+    public enum PLUGIN {
+        SURVIVAL,
+        LOBBY,
+        BEDWARS,
+        POKER,
+        HUNGER_GAMES,
+        BACKPACK,
+        RUN,
+        VELOCITY,
+        WORLDEDIT,
+        CORE_PROTECT,
+        CHUNKY,
+        SIMPLE_VOICECHAT_PAPER,
+        SIMPLE_VOICECHAT_VELOCITY,
+        WORLD_GUARD;
+
+        public static String getFileURL(PLUGIN type) {
+            return switch (type) {
+                case SURVIVAL -> "build:/survival-1.0.jar";
+                case LOBBY -> "build:/lobby-1.0.jar";
+                case BEDWARS -> "build:/bedwars-1.0.jar";
+                case POKER -> "build:/poker-1.0.jar";
+                case HUNGER_GAMES -> "build:/hungergames-1.0.jar";
+                case BACKPACK -> "build:/backpack-1.0.jar";
+                case RUN -> "build:/run-1.0.jar";
+                case VELOCITY -> "build:/velocityplugin-1.0.jar";
+                case WORLDEDIT ->
+                        "https://cdn.modrinth.com/data/1u6JkXh5/versions/J1eeOh6C/worldedit-bukkit-7.4.6-beta-02.jar";
+                case WORLD_GUARD ->
+                        "https://cdn.modrinth.com/data/DKY9btbd/versions/TtfwTyi6/worldguard-bukkit-7.0.19.jar";
+                // CoreProtect 25.0, the first build for 26.3. Not on Modrinth or maven.playpro.com (both end
+                // at 24.1, which switches itself off on 26.3), so it comes from this link. The api it is
+                // compiled against stays 24.1 in the poms - our calls exist unchanged in 25.0 (API 13)
+                case CORE_PROTECT ->
+                        "https://www.dropbox.com/scl/fi/3e5qgkrfqnjoldx09k8w1/CoreProtect-25.0.jar?rlkey=vusyaidwm3mhacq2x2nh75o00&st=e3ufdrt1&dl=1";
+                case CHUNKY ->
+                        "https://cdn.modrinth.com/data/fALzjamp/versions/MdY6JATr/Chunky-Bukkit-1.5.3.jar";
+                case SIMPLE_VOICECHAT_PAPER ->
+                        "https://cdn.modrinth.com/data/9eGKb6K1/versions/EJth3OAr/voicechat-bukkit-2.6.24.jar";
+                case SIMPLE_VOICECHAT_VELOCITY ->
+                        "https://cdn.modrinth.com/data/9eGKb6K1/versions/ES87t4lm/voicechat-velocity-2.6.18.jar";
+            };
+        }
+
+        public static String getFileName(PLUGIN type) {
+            // a share link carries its key after the "?", which is no part of a file name
+            String url = getFileURL(type).split("\\?")[0];
+            return url.split("/")[url.split("/").length - 1];
+        }
+
+        public boolean isBuildable() {
+            return getFileURL(this).startsWith("build:");
+        }
+
+        /**
+         * @return the server software this plugin has to be installed on
+         */
+        public PLATFORM getPlatform() {
+            return switch (this) {
+                case VELOCITY, SIMPLE_VOICECHAT_VELOCITY -> PLATFORM.VELOCITY;
+                default -> PLATFORM.PAPER;
+            };
+        }
+
+        /**
+         * @param software the software of the server the plugin should run on
+         * @return whether the plugin can be installed on that software
+         */
+        public boolean supports(SERVER software) {
+            return switch (getPlatform()) {
+                case VELOCITY -> software == SERVER.VELOCITY;
+                case PAPER -> software == SERVER.PAPER;
+            };
+        }
+
+        /**
+         * @return the name shown in the plugin selection UI
+         */
+        public String getDisplayName() {
+            return switch (this) {
+                case SURVIVAL -> "Survival";
+                case LOBBY -> "Lobby";
+                case BEDWARS -> "Bedwars";
+                case POKER -> "Poker";
+                case HUNGER_GAMES -> "Hunger Games";
+                case BACKPACK -> "Team-Rucksack";
+                case RUN -> "Event-Läufe";
+                case VELOCITY -> "Netzwerk Proxy Plugin";
+                case WORLDEDIT -> "WorldEdit";
+                case WORLD_GUARD -> "WorldGuard";
+                case CORE_PROTECT -> "CoreProtect";
+                case CHUNKY -> "Chunky";
+                case SIMPLE_VOICECHAT_PAPER -> "Simple Voicechat";
+                case SIMPLE_VOICECHAT_VELOCITY -> "Simple Voicechat (Proxy)";
+            };
+        }
+
+        /**
+         * @return a short explanation shown as lore in the plugin selection UI
+         */
+        public String getDescription() {
+            return switch (this) {
+                case SURVIVAL -> "Das komplette Survival Spielsystem";
+                case LOBBY -> "Lobby Features, Parkour und Server Manager";
+                case BEDWARS -> "Bedwars Minispiel";
+                case POKER -> "Pokertische mit Bits als Einsatz";
+                case HUNGER_GAMES -> "Arena mit Füllhorn, Supply Drops und schrumpfender Grenze";
+                case BACKPACK -> "Geteilter Rucksack fuer jedes Team";
+                case RUN -> "Wertet Speedrun-Events aus und setzt den Server zurueck";
+                case VELOCITY -> "Verbindet den Proxy mit dem Netzwerk";
+                case WORLDEDIT -> "Welten schnell bearbeiten";
+                case WORLD_GUARD -> "Regionen schuetzen";
+                case CORE_PROTECT -> "Block Logging und Rollback";
+                case CHUNKY -> "Welt vorgenerieren";
+                case SIMPLE_VOICECHAT_PAPER -> "Proximity Voicechat";
+                case SIMPLE_VOICECHAT_VELOCITY -> "Voicechat Unterstuetzung auf dem Proxy";
+            };
+        }
+
+        /**
+         * @param software the software of the server
+         * @return every plugin that can be installed on that software
+         */
+        public static List<PLUGIN> selectableFor(SERVER software) {
+            List<PLUGIN> plugins = new ArrayList<>();
+            for (PLUGIN plugin : values()) {
+                if (plugin.supports(software)) plugins.add(plugin);
+            }
+            return plugins;
+        }
+    }
+}

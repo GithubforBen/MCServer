@@ -1,6 +1,6 @@
 name: PokerPlugin
 version: '1.0-SNAPSHOT'
-main: de.schnorrenbergers.poker.PokerPlugin
+main: com.benschnorr.poker.PokerPlugin
 api-version: '26.3'
 softdepend: [CoreProtect]
 commands:

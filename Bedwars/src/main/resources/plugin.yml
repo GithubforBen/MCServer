@@ -1,6 +1,6 @@
 name: Bedwars
 version: '1.0-SNAPSHOT'
-main: de.schnorrenbergers.bedwars.Bedwars
+main: com.benschnorr.bedwars.Bedwars
 api-version: '26.3'
 softdepend: [CoreProtect]
 commands:

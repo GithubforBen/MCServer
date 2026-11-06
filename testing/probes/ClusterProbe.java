@@ -1,5 +1,5 @@
-import de.hems.communication.ListenerAdapter;
-import de.hems.communication.events.discord.ConfirmAccountLinkEvent;
+import com.benschnorr.communication.ListenerAdapter;
+import com.benschnorr.communication.events.discord.ConfirmAccountLinkEvent;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -8,7 +8,7 @@ public class ClusterProbe {
         new ListenerAdapter(ListenerAdapter.ServerName.of("PROBE", -1));
         Thread.sleep(3000);
         long t = System.currentTimeMillis();
-        var servers = de.hems.api.ServerApi.listServers();
+        var servers = com.benschnorr.api.ServerApi.listServers();
         System.out.println("listServers: " + servers.length + " in " + (System.currentTimeMillis() - t) + " ms");
         for (var s : servers) System.out.println("  " + s.name + " " + s.port);
         t = System.currentTimeMillis();

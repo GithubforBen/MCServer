@@ -1,0 +1,251 @@
+package com.benschnorr.paper.event;
+
+import com.benschnorr.api.ItemApi;
+import com.benschnorr.paper.customInventory.CustomInventory;
+import com.benschnorr.paper.customInventory.types.SimpleItemAction;
+import com.benschnorr.types.event.EventData;
+import com.benschnorr.types.event.RunData;
+import com.benschnorr.types.event.UhcObjective;
+import com.benschnorr.types.event.UhcSettings;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * The panel of a run event: what the rules are, who is waiting, and who was fastest.
+ */
+public final class UhcEventUi {
+
+    /** How many places the leaderboard shows. */
+    private static final int LEADERBOARD_SIZE = 21;
+
+    private UhcEventUi() {
+    }
+
+    /**
+     * @param player who is looking
+     * @param event  the run event
+     * @return the panel
+     */
+    public static CustomInventory build(Player player, EventData event) {
+        UhcSettings settings = new UhcSettings(event);
+        List<UhcObjective> objectives = UhcObjective.of(event.getType());
+
+        CustomInventory ui = new CustomInventory(9 * 6, ChatColor.GOLD + event.getName(), close -> {
+        });
+        ui.fillPlaceHolder();
+
+        ui.setItem(4, EventCalendarUi.icon(event), SimpleItemAction.display());
+
+        List<String> goalLore = new ArrayList<>();
+        for (UhcObjective objective : objectives) {
+            goalLore.add(ChatColor.GRAY + "- " + ChatColor.WHITE + objective.getTitle());
+        }
+        ui.setItem(2, new ItemApi(Material.NETHER_STAR, ChatColor.AQUA + "Ziele", goalLore).build(),
+                SimpleItemAction.display());
+
+        ui.setItem(6, new ItemApi(Material.COMPARATOR, ChatColor.AQUA + "Regeln", List.of(
+                ChatColor.GRAY + "Hardcore: " + ChatColor.WHITE + (settings.isHardcore() ? "an" : "aus"),
+                ChatColor.GRAY + "Teamgröße: " + ChatColor.WHITE + settings.getTeamSize(),
+                ChatColor.GRAY + "Versuche: " + ChatColor.WHITE
+                        + (settings.getMaxRuns() == Integer.MAX_VALUE ? "unbegrenzt" : settings.getMaxRuns()),
+                ChatColor.GRAY + "Unterbesetzt starten: " + ChatColor.WHITE
+                        + (settings.isAllowUndermanned() ? "erlaubt" : "nein"))).build(),
+                SimpleItemAction.display());
+
+        drawQueue(ui, player, event, settings);
+        drawLeaderboard(ui, event, objectives);
+
+        ui.setItem(45, new ItemApi(Material.ARROW, ChatColor.YELLOW + "Zurück").build(),
+                new SimpleItemAction(click -> player.openInventory(
+                        EventCalendarUi.build(player, EventCalendarUi.Filter.ALL).getInventory())));
+
+        // the same two buttons as on the event panel, leading to the same two panels
+        EventEdit edit = EventEdit.live(event, back -> {
+            EventData current = EventService.getEvent(event.getId());
+            back.openInventory(build(back, current == null ? event : current).getInventory());
+        });
+        ui.setItem(8, RewardUi.icon(event, player.isOp()), player.isOp()
+                ? new SimpleItemAction(click -> RewardUi.open(player, edit))
+                : SimpleItemAction.display());
+
+        if (player.isOp()) {
+            ui.setItem(53, EventSettingsUi.icon(event, true),
+                    new SimpleItemAction(click -> EventSettingsUi.open(player, edit)));
+        }
+        return ui;
+    }
+
+    /**
+     * The queue: join, leave, and start once enough people are there.
+     */
+    private static void drawQueue(CustomInventory ui, Player player, EventData event, UhcSettings settings) {
+        List<UUID> queue = RunQueue.getWaiting(event);
+        boolean queued = RunQueue.isWaiting(event, player.getUniqueId());
+        RunData active = RunService.getActiveRunOf(event.getId(), player.getUniqueId());
+
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.GRAY + "Wartend: " + ChatColor.WHITE + queue.size() + "/" + settings.getTeamSize());
+        for (UUID member : queue) lore.add(ChatColor.DARK_GRAY + "- " + nameOf(member));
+        int used = RunService.countRunsOf(event.getId(), player.getUniqueId());
+        lore.add("");
+        lore.add(ChatColor.GRAY + "Deine Versuche: " + ChatColor.WHITE + used
+                + (settings.getMaxRuns() == Integer.MAX_VALUE ? "" : "/" + settings.getMaxRuns()));
+
+        if (active != null) {
+            boolean paused = active.getState() == RunData.State.PAUSED;
+            lore.add((paused ? ChatColor.YELLOW : ChatColor.GREEN) + "Zeit: "
+                    + RunData.formatTicks(active.getElapsedTicks()));
+            if (paused) lore.add(ChatColor.GRAY + "Die Zeit steht still, solange niemand spielt.");
+            lore.add("");
+            // a running one is clickable as well: its server may be gone without the run knowing, and
+            // then this is the only way back onto it
+            lore.add(ChatColor.GREEN + (paused ? "Klicken zum Weiterspielen" : "Klicken, um hinzuspringen"));
+            ui.setItem(20, new ItemApi(Material.CLOCK, paused ? ChatColor.YELLOW + "Lauf pausiert"
+                            : ChatColor.GREEN + "Dein Lauf läuft", lore).build(),
+                    new SimpleItemAction(click -> {
+                        player.sendMessage(ChatColor.AQUA + RunQueue.resume(event, player));
+                        player.closeInventory();
+                    }));
+            drawAbort(ui, player, event, active);
+            return;
+        }
+
+        // what a click would only answer in the chat, which this menu covers - a button that looks like
+        // it works and then does nothing is the worst way to say no
+        String closed = queued ? null : whyNot(player, event);
+        if (closed != null) {
+            lore.add("");
+            lore.add(ChatColor.RED + closed);
+            if (!RunService.hasRunsLeft(event, player.getUniqueId())) {
+                lore.add(ChatColor.GRAY + "Jeder Lauf zählt, auch ein gescheiterter");
+                lore.add(ChatColor.GRAY + "oder abgebrochener.");
+                if (player.isOp()) lore.add(ChatColor.YELLOW + "Mehr gibt es unter Einstellungen → Versuche.");
+            }
+            ui.setItem(20, new ItemApi(Material.BARRIER, ChatColor.RED + "Mitmachen geht gerade nicht", lore)
+                    .build(), SimpleItemAction.display());
+            return;
+        }
+
+        lore.add("");
+        lore.add(queued ? ChatColor.YELLOW + "Klicken zum Verlassen" : ChatColor.GREEN + "Klicken zum Mitmachen");
+        ui.setItem(20, new ItemApi(queued ? Material.RED_BED : Material.GREEN_BED,
+                queued ? ChatColor.YELLOW + "In der Warteschlange" : ChatColor.GREEN + "Mitmachen", lore).build(),
+                new SimpleItemAction(click -> {
+                    player.sendMessage(ChatColor.AQUA + RunQueue.toggle(event, player));
+                    player.openInventory(build(player, event).getInventory());
+                }));
+
+        if (queued && queue.size() > 0) {
+            boolean full = queue.size() >= settings.getTeamSize();
+            ui.setItem(24, new ItemApi(Material.LIME_DYE, ChatColor.GREEN + "Jetzt starten", List.of(
+                    full ? ChatColor.GRAY + "Ihr seid vollzählig."
+                            : ChatColor.YELLOW + "Ihr startet zu " + queue.size() + " statt zu "
+                            + settings.getTeamSize(),
+                    settings.isAllowUndermanned() || full
+                            ? ChatColor.GRAY + "Klicken zum Starten"
+                            : ChatColor.RED + "Unterbesetzt starten ist aus")).build(),
+                    new SimpleItemAction(click -> {
+                        player.sendMessage(ChatColor.AQUA + RunQueue.start(event, player));
+                        player.closeInventory();
+                    }));
+        }
+    }
+
+    /**
+     * @return why this player cannot join the queue right now, or {@code null} if they can
+     */
+    private static String whyNot(Player player, EventData event) {
+        if (!event.isRunning()) return "Dieses Event läuft gerade nicht.";
+        if (!RunService.hasRunsLeft(event, player.getUniqueId())) return "Du hast alle Versuche verbraucht.";
+        return null;
+    }
+
+    /** How long the second click on "abbrechen" is waited for. */
+    private static final long ABORT_CONFIRM_MS = 10_000L;
+    /** Who clicked "abbrechen" once and when, so the second click is what does it. */
+    private static final Map<UUID, Long> abortAsked = new ConcurrentHashMap<>();
+
+    /**
+     * The way out of an open run. Two clicks, because it ends the run for the whole team and cannot be
+     * taken back.
+     */
+    private static void drawAbort(CustomInventory ui, Player player, EventData event, RunData active) {
+        Long asked = abortAsked.get(player.getUniqueId());
+        boolean armed = asked != null && System.currentTimeMillis() - asked <= ABORT_CONFIRM_MS;
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.GRAY + "Beendet den Lauf für das ganze Team.");
+        lore.add(ChatColor.GRAY + "Danach könnt ihr einen neuen starten.");
+        lore.add(active.getElapsedTicksRaw() > 0 ? ChatColor.YELLOW + "Der Versuch zählt trotzdem."
+                : ChatColor.GRAY + "Er hat noch nicht begonnen und kostet keinen Versuch.");
+        lore.add("");
+        lore.add(armed ? ChatColor.RED + "Nochmal klicken zum Bestätigen" : ChatColor.RED + "Klicken zum Abbrechen");
+        ui.setItem(24, new ItemApi(armed ? Material.TNT : Material.BARRIER,
+                ChatColor.RED + (armed ? "Wirklich abbrechen?" : "Lauf abbrechen"), lore).build(),
+                new SimpleItemAction(click -> {
+                    if (!armed) {
+                        abortAsked.put(player.getUniqueId(), System.currentTimeMillis());
+                    } else {
+                        abortAsked.remove(player.getUniqueId());
+                        player.sendMessage(ChatColor.AQUA + RunQueue.abort(event, player));
+                    }
+                    player.openInventory(build(player, event).getInventory());
+                }));
+    }
+
+    /**
+     * The leaderboard: the finished runs, fastest first.
+     */
+    private static void drawLeaderboard(CustomInventory ui, EventData event, List<UhcObjective> objectives) {
+        List<RunData> ranked = RunService.getLeaderboard(event.getId());
+        if (ranked.isEmpty()) {
+            ui.setItem(31, new ItemApi(Material.PAPER, ChatColor.GRAY + "Noch keine Zeiten",
+                    List.of(ChatColor.GRAY + "Es hat noch niemand durchgespielt.")).build(),
+                    SimpleItemAction.display());
+            return;
+        }
+        for (int i = 0; i < ranked.size() && i < LEADERBOARD_SIZE; i++) {
+            RunData run = ranked.get(i);
+            List<String> lore = new ArrayList<>();
+            lore.add(ChatColor.GOLD + "Zeit: " + ChatColor.WHITE + RunData.formatTicks(run.getElapsedTicks()));
+            for (UUID member : run.getParticipants()) lore.add(ChatColor.GRAY + "- " + nameOf(member));
+            if (run.isUndermanned()) {
+                lore.add(ChatColor.YELLOW + "Unterbesetzt gelaufen (" + run.getParticipants().size()
+                        + "/" + run.getIntendedTeamSize() + ")");
+            }
+            ui.setItem(27 + i, new ItemApi(medal(i), ChatColor.WHITE + "#" + (i + 1) + " "
+                    + nameOf(run.getParticipants().stream().findFirst().orElse(null)), lore).build(),
+                    SimpleItemAction.display());
+        }
+    }
+
+    /**
+     * @param place the zero based place
+     * @return gold, silver, bronze, then plain
+     */
+    private static Material medal(int place) {
+        return switch (place) {
+            case 0 -> Material.GOLD_INGOT;
+            case 1 -> Material.IRON_INGOT;
+            case 2 -> Material.COPPER_INGOT;
+            default -> Material.PAPER;
+        };
+    }
+
+    /**
+     * @param id a player
+     * @return their name, or the id if the server has never seen them
+     */
+    static String nameOf(UUID id) {
+        if (id == null) return "?";
+        String name = Bukkit.getOfflinePlayer(id).getName();
+        return name == null ? id.toString().substring(0, 8) : name;
+    }
+}

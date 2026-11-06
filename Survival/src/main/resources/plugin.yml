@@ -1,6 +1,6 @@
 name: Survival
 version: '1.0-SNAPSHOT'
-main: de.schnorrenbergers.survival.Survival
+main: com.benschnorr.survival.Survival
 api-version: '26.3'
 softdepend: [CoreProtect]
 commands:

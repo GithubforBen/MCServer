@@ -1,6 +1,6 @@
 name: Backpack
 version: '1.0-SNAPSHOT'
-main: de.schnorrenbergers.backpack.BackpackPlugin
+main: com.benschnorr.backpack.BackpackPlugin
 api-version: '26.3'
 commands:
   backpack:

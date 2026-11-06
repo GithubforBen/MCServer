@@ -1,9 +1,9 @@
-import de.hems.api.ServerApi;
-import de.hems.communication.ListenerAdapter;
-import de.hems.communication.events.event.RequestRunsEvent;
-import de.hems.communication.events.event.SaveRunEvent;
-import de.hems.types.ServerTemplate;
-import de.hems.types.event.RunData;
+import com.benschnorr.api.ServerApi;
+import com.benschnorr.communication.ListenerAdapter;
+import com.benschnorr.communication.events.event.RequestRunsEvent;
+import com.benschnorr.communication.events.event.SaveRunEvent;
+import com.benschnorr.types.ServerTemplate;
+import com.benschnorr.types.event.RunData;
 
 import java.time.Duration;
 import java.util.List;
