@@ -46,7 +46,16 @@ public class MoneyEvents {
     }
 
     private void onChange(ChangeBalanceEvent request) throws Exception {
-        BalanceResult result = money.change(request.getHolder(), request.getDelta(), request.isRequireCover());
+        BalanceResult result = refuseExpired(money, request, System.currentTimeMillis());
+        if (result != null) {
+            System.out.println("Balance " + request.getHolder() + " " + (request.getDelta() >= 0 ? "+" : "")
+                    + request.getDelta() + " dropped: deadline passed, the sender no longer waits"
+                    + (request.getReason() == null ? "" : " (" + request.getReason() + ")"));
+            ListenerAdapter.sendListeners(new RespondBalanceChangeEvent(
+                    request.getSender(), result, request.getEventId()));
+            return;
+        }
+        result = money.change(request.getHolder(), request.getDelta(), request.isRequireCover());
         ListenerAdapter.sendListeners(new RespondBalanceChangeEvent(
                 request.getSender(), result, request.getEventId()));
         if (!result.isSuccessful()) return;
@@ -54,6 +63,18 @@ public class MoneyEvents {
                 + request.getDelta() + " -> " + result.getBalance()
                 + (request.getReason() == null ? "" : " (" + request.getReason() + ")"));
         ListenerAdapter.sendListeners(new BalanceUpdatedEvent(result.getHolder(), result.getBalance()));
+    }
+
+    /**
+     * @param money   the store, only read
+     * @param request the request
+     * @param now     epoch millis
+     * @return a failed result with the current balance when the request is too late, else {@code null}
+     */
+    static BalanceResult refuseExpired(MoneyStore money, ChangeBalanceEvent request, long now) {
+        if (!request.isExpired(now)) return null;
+        return BalanceResult.failed(request.getHolder(), money.get(request.getHolder()),
+                "Der Host war zu langsam, nichts wurde abgebucht.");
     }
 
     public MoneyStore getMoney() {

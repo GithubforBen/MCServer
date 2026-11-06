@@ -32,6 +32,17 @@ public record MarketOffer(Shopkeeper shopkeeper, ItemForSale offer) {
     }
 
     /**
+     * What this shop pays for one single item, compared per item like {@link #unitPrice()}.
+     *
+     * @return the buyback price per item, or 0 when this offer does not buy back
+     */
+    public double buybackUnitPrice() {
+        if (!offer.isBuyback()) return 0;
+        int amount = offer.getItemClone().getAmount();
+        return amount <= 0 ? 0 : (double) offer.getBuybackPrice() / amount;
+    }
+
+    /**
      * @return the name of the shop this offer belongs to
      */
     public String sellerName() {

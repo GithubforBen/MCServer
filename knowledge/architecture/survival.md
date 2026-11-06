@@ -13,11 +13,14 @@ sources:
 
 Der Survival-Spielmodus. Unter `featrues/` (Schreibweise wie im Code) liegen Shopkeeper und Marktplatz, Teams, Chunk Limiter, Geld, Admin-Funktionen und der End-Kampf. `MoneyHandler` antwortet aus der lokalen Kopie; das Geld selbst gehört dem Launcher.
 
+Shops kaufen optional an: je Angebot, standardmäßig aus. `Shopkeeper.sellItem` verkauft ein Los gegen die Teamkasse, die Vorprüfungen stehen in `BuybackRules`, der Marktplatz zeigt den Rückkauf mit an. Siehe [Shop-Rückkauf](/capabilities/shop-buyback.md).
+
 # Interfaces
 
 - [Netzwerk-Events](/architecture/network-events.md)
 
 # Related
 
+- [Shop-Rückkauf](/capabilities/shop-buyback.md)
 - [Bits](/domain/bits.md)
 - [Rucksack-Plugin](/architecture/backpack.md)
